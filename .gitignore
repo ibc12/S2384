@@ -1,0 +1,7 @@
+*.pdf
+*.png
+*.root
+**/Outputs/
+Outputs/7.5MeV/
+**Outputs/7.5MeV/
+**/DebugOutputs/
