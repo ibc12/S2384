@@ -85,7 +85,6 @@ void e864()
     // Source of ganil
     Calibration::Source source {};
     // source.Print();
-    // std::exit(1);
 
     // Correct by energy losses in Al dead layer
     ActPhysics::SRIM srim {"al", "./Inputs/alpha_Al.txt"};
@@ -167,6 +166,4 @@ void e864()
             if(o)
                 o->DrawClone("same");
     }
-    // Save graph
-    // gr->SaveAs("./Outputs/after_night_one_silicon.root");
 }
