@@ -66,37 +66,31 @@ void CorrectSource(Calibration::Source* source, ActPhysics::SRIM* srim, const st
     }
 }
 
-void e864()
+void SilCal()
 {
-    std::string which {"fu"};
-    std::string label {};
-    if(which == "fu")
-        label = "SI_";
-    else if(which == "fc")
-        label = "SI_MGP_";
-    else
-        throw std::runtime_error("Which can only be fu or fc");
+    std::string which {"f2"};
+    std::string label {"SI_"};
     // Read data
     // auto hs {ReadData("./Inputs/e864/Si_USC_for_e864_afterBOOM.root", "SI", label)};
-    auto hs {ReadData("./Inputs/e864/Si_USC_for_e864_6_6_24.root", "SI", label)};
+    auto hs {ReadData("./Inputs/DE_0deg_GAIN16_190725.root", "SI", label)};
     // Pick only necessary
-    // hs = {hs[0], hs[1]};
+    hs = {hs[2], hs[3], hs[5], hs[6]};
 
     // Source of ganil
     Calibration::Source source {};
     // source.Print();
 
     // Correct by energy losses in Al dead layer
-    ActPhysics::SRIM srim {"al", "./Inputs/alpha_Al.txt"};
+    ActPhysics::SRIM srim {"al", "./Inputs/4He_silicon.txt"};
     CorrectSource(&source, &srim, "al", 0.5e-3); // 0.5 um to mm
-    source.Print();
+    // source.Print();
 
     // Rebin
     std::vector<TH1D*> hsrebin;
     int idx {};
     for(auto& h : hs)
     {
-        h->Rebin(16);
+        h->Rebin(8);
         hsrebin.push_back((TH1D*)h->Clone());
         idx++;
     }
@@ -106,28 +100,25 @@ void e864()
     auto* gr {new TGraphErrors};
     gr->SetNameTitle("g", "Resolution;Silicon index;#sigma ^{241}Am [keV]");
     // Save
-    std::ofstream streamer {"./Outputs/junk_e864_" + which + ".dat"};
+    std::ofstream streamer {"./Outputs/s2384_0deg_quad.dat"};
     streamer << std::fixed << std::setprecision(8);
     std::vector<std::shared_ptr<TH1D>> hfs;
     for(int s = 0; s < hsrebin.size(); s++)
     {
-        runners.emplace_back(&source, hsrebin[s], hs[s]);
-        runners.back().SetGaussPreWidth(150);
-        if(which == "fc")
-            runners.back().SetRange(4500, 6500);
-        else
-            runners.back().SetRange(6000, 9500);
-        // if(s == 1)
-        runners.back().DisableXErrors();
-        runners.back().DoIt();
+        runners.emplace_back(&source, hsrebin[s], hs[s], false);
+        auto& run {runners.back()};
+        run.SetGaussPreWidth(150);
+        run.SetRange(4500, 6000);
+        run.DisableXErrors();
+        run.DoIt();
         auto* c {new TCanvas};
-        runners.back().Draw(c);
+        run.Draw(c);
         std::cout << "Sil index : " << s << " hist name : " << hs[s]->GetName() << '\n';
-        runners.back().PrintRes();
+        run.PrintRes();
         std::cout << '\n';
         gr->SetPoint(s, s + 1, runners.back().GetRes("241Am") * 1e3);
         gr->SetPointError(s, 0, runners.back().GetURes("241Am") * 1e3);
-        hfs.push_back(runners.back().GetHistFinal());
+        hfs.push_back(run.GetHistFinal());
 
         // Save calibration in file
         auto label {TString::Format("Sil_%s_%d_E", which.c_str(), s)};
