@@ -68,16 +68,16 @@ void CorrectSource(Calibration::Source* source, ActPhysics::SRIM* srim, const st
 
 void SilCal()
 {
-    std::string which {"f1"};
-    std::string label {"ADC3"};
+    std::string which {"f2"};
+    std::string label {"SI"};
     // Read data
-    auto hs {ReadData("./Inputs/siwall_15mm_Etot.root", "ADC3", label)};
+    auto hs {ReadData("./Inputs/DE_0deg_GAIN16_190725.root", "SI", label)};
     // Pick only necessary
     int isil {};
     std::vector<int> adcChannels {};
     for(auto it = hs.begin(); it != hs.end();)
     {
-        if(isil < 16 || isil > 27)
+        if(isil < 2 || isil > 6 || isil == 4)
             it = hs.erase(it);
         else
         {
@@ -110,9 +110,9 @@ void SilCal()
     std::vector<Calibration::Runner> runners;
     // Graph
     auto* gr {new TGraphErrors};
-    gr->SetNameTitle("g", "Resolution;ADC3 channel;#sigma ^{241}Am [keV]");
+    gr->SetNameTitle("g", "Resolution;SI channel;#sigma ^{241}Am [keV]");
     // Save
-    std::ofstream streamer {"./Outputs/s2384_f1.dat"};
+    std::ofstream streamer {"./Outputs/s2384_" + which + ".dat"};
     streamer << std::fixed << std::setprecision(8);
     std::vector<std::shared_ptr<TH1D>> hfs;
     for(int s = 0; s < hsrebin.size(); s++)
@@ -121,9 +121,7 @@ void SilCal()
         runners.emplace_back(&source, hsrebin[s], hs[s], false);
         auto& run {runners.back()};
         run.SetGaussPreWidth(40);
-        run.SetRange(1400, 1700);
-        if(adcChannel == 19)
-            run.SetRange(1000, 1300);
+        run.SetRange(4500, 5800);
         run.DisableXErrors();
         run.DoIt();
         auto* c {new TCanvas};
