@@ -71,7 +71,7 @@ double RandomizeBeamEnergy(double Tini, double sigma)
 
 
 void simu_18O_pd(const std::string& beam = "18O", const std::string& target = "1H", const std::string& light = "2H",
-                 double Tbeam = 7.5, double Ex = 0, bool inspect = true)
+                 double Tbeam = 135, double Ex = 0, bool inspect = true)
 {
     // Set number of iterations
     auto niter {static_cast<int>(1e6)};
@@ -81,8 +81,7 @@ void simu_18O_pd(const std::string& beam = "18O", const std::string& target = "1
     ActRoot::TPCParameters tpc {"Actar"};
     // Silicons
     auto* sils {new ActPhysics::SilSpecs};
-    std::string silConfig("silicons_reverse");
-    sils->ReadFile("../configs/" + silConfig + ".conf");
+    sils->ReadFile("../configs/silspecs_spacer.conf");
     sils->Print();
     const double sigmaSil {0.060 / 2.355}; // Si resolution
     auto silRes = std::make_unique<TF1>(
@@ -114,18 +113,20 @@ void simu_18O_pd(const std::string& beam = "18O", const std::string& target = "1
     bool RestOfBeamLine {true}; // If true enables CFA and mylar of entrance
     bool exResolution {true};
 
+    // Kinematics
+    auto* kin {new ActPhysics::Kinematics {beam, target, light, Tbeam, Ex}};
+    auto heavy {kin->GetParticle(4).GetName()};
+
     // SRIM
     auto* srim {new ActPhysics::SRIM};
-    std::string path {"../SRIM files/"};
-    std::string gas {"900mb_CF4_95-5"};
+    std::string path {"../Calibrations/SRIM/"};
+    std::string gas {"H2_CF4_95-5"};
     std::string silicon {"silicon"};
     srim->ReadTable("beam", path + beam + "_" + gas + ".txt");
     srim->ReadTable("light", path + light + "_" + gas + ".txt");
     srim->ReadTable("lightInSil", path + light + "_" + silicon + ".txt");
-
-    // Kinematics
-    auto* kin {new ActPhysics::Kinematics {beam, target, light, Tbeam, Ex}};
-
+    srim->ReadTable("heavy", path + heavy + "_" + gas + ".txt");
+    srim->ReadTable("heavyInSil", path + heavy + "_" + silicon + ".txt");
 
     // Declare histograms
     auto hKin {Histos::Kin.GetHistogram()};
@@ -224,6 +225,7 @@ void simu_18O_pd(const std::string& beam = "18O", const std::string& target = "1
     // Beam particle
     auto hTbeam {Histos::T1Lab.GetHistogram()};
 
+    auto beamThreshold {ActPhysics::Kinematics(beam, target, light, -1, Ex).GetT1Thresh()};
     // RUN!
     // print fancy info (dont pay attention to this)
     std::cout << BOLDMAGENTA << "Running for Ex = " << Ex << " MeV" << RESET << '\n';
@@ -251,7 +253,8 @@ void simu_18O_pd(const std::string& beam = "18O", const std::string& target = "1
         // Randomize beam energy, slow beam with straggling and check if reaction can happen
         auto TbeamRand = RandomizeBeamEnergy(Tbeam, sigmaPercentBeam * Tbeam);
         hTbeam->Fill(TbeamRand);
-        auto TbeamCorr {srim->SlowWithStraggling("beam", TbeamRand, vertex.X())};
+        // auto TbeamCorr {srim->SlowWithStraggling("beam", TbeamRand, vertex.X())};
+        auto TbeamCorr {Tbeam};
         // Initialize variables for both methods, kinGen and kin
         double T3Lab {};
         double T4Lab {};
@@ -265,7 +268,6 @@ void simu_18O_pd(const std::string& beam = "18O", const std::string& target = "1
         double theta3CMBefore {-1};
         double weight {1.};
         auto* silData {new ActRoot::SilData()};
-        auto beamThreshold {ActPhysics::Kinematics(beam, target, light, heavy, -1, randEx).GetT1Thresh()};
         if(std::isnan(TbeamCorr) || TbeamCorr < beamThreshold)
         {
             continue;
@@ -391,6 +393,8 @@ void simu_18O_pd(const std::string& beam = "18O", const std::string& target = "1
                 "heavyInSil", T4InSil1, sils->GetLayer(layerHeavy1).GetUnit().GetThickness(), angleWithNormalHeavy)};
             auto eLossf2 = T4InSil0 - T4AfterSil0;
             auto eLossf3 = T4InSil1 - T4AfterSil1;
+        }
+
         // "f0": key name of layer to check for SP
         // silIndex == -1 if NO SP
         // else, returns the silicon index
@@ -452,9 +456,6 @@ void simu_18O_pd(const std::string& beam = "18O", const std::string& target = "1
             auto boundaryPoint {line->MoveToX(256)};
             auto T3AtSilLight {T3Lab - srim->SlowWithStraggling("light", T3Lab, (boundaryPoint - vertex).R())};
             DeltaELength = T3AtSilLight / (boundaryPoint - vertex).R() * 1000;
-            hDeltaEGasThetaLight->Fill(theta3Lab * TMath::RadToDeg(), DeltaELength);
-            if(T3AtSilLight / (boundaryPoint - vertex).R() * 1000 > 2)
-                hKinDebug->Fill(theta3Lab * TMath::RadToDeg(), T3Lab);
             delete line;
         }
         if(layer0 == "l0")
@@ -464,10 +465,7 @@ void simu_18O_pd(const std::string& beam = "18O", const std::string& target = "1
             auto boundaryPoint {line->MoveToY(256)};
             auto T3AtSilLight {T3Lab - srim->SlowWithStraggling("light", T3Lab, (boundaryPoint - vertex).R())};
             DeltaELength = T3AtSilLight / (boundaryPoint - vertex).R() * 1000;
-            hDeltaEGasThetaLightSide->Fill(theta3Lab * TMath::RadToDeg(), DeltaELength);
             delete line;
-            if(T3AtSilLight / (boundaryPoint - vertex).R() * 1000 > 2)
-                hKinDebug->Fill(theta3Lab * TMath::RadToDeg(), T3Lab);
         }
         if(layer0 == "r0")
         {
@@ -476,10 +474,7 @@ void simu_18O_pd(const std::string& beam = "18O", const std::string& target = "1
             auto boundaryPoint {line->MoveToY(0)};
             auto T3AtSilLight {T3Lab - srim->SlowWithStraggling("light", T3Lab, (boundaryPoint - vertex).R())};
             DeltaELength = T3AtSilLight / (boundaryPoint - vertex).R() * 1000;
-            hDeltaEGasThetaLightSide->Fill(theta3Lab * TMath::RadToDeg(), DeltaELength);
             delete line;
-            if(T3AtSilLight / (boundaryPoint - vertex).R() * 1000 > 2)
-                hKinDebug->Fill(theta3Lab * TMath::RadToDeg(), T3Lab);
         }
 
         // Slow down in silicon
@@ -544,7 +539,7 @@ void simu_18O_pd(const std::string& beam = "18O", const std::string& target = "1
         }
 
         // Reconstruct!
-        bool isOk {T3AfterSil0 == 0 || T3AfterSil1 == 0 && DeltaELength > 2}; // no punchthrouhg
+        bool isOk {T3AfterSil0 == 0 || T3AfterSil1 == 0 && DeltaELength > 2}; // no punchthrouh
         if(isOk)
         {
             // Assuming no punchthrough!
@@ -569,7 +564,7 @@ void simu_18O_pd(const std::string& beam = "18O", const std::string& target = "1
 
             // Fill
             hKinRec->Fill(theta3Lab * TMath::RadToDeg(), T3Rec); // after reconstruction
-            hEx->Fill(ExRec, weight * alpha);
+            hEx->Fill(ExRec, weight);
             hRP->Fill(vertex.X(), vertex.Y());
             hRP_ZY->Fill(vertex.Y(), vertex.Z());
             if(layer0 == "f0")
@@ -597,26 +592,9 @@ void simu_18O_pd(const std::string& beam = "18O", const std::string& target = "1
 
             hThetaLabMeassureSil->Fill(theta3Lab * TMath::RadToDeg());
             hThetaCMMeassureSil->Fill(theta3CMBefore);
-
-            // write to TTree
-            Eex_tree = ExRec;
-            theta3CM_tree = theta3CM * TMath::RadToDeg();
-            EVertex_tree = T3Rec;
-            theta3Lab_tree = theta3Lab * TMath::RadToDeg();
-            phi3CM_tree = phi3CM;
-            outTree->Fill();
-            theta4Lab_tree = theta4Lab;
-            phi4Lab_tree = phi4Lab;
-            T4Lab_tree = T4Lab;
-            RP_tree = vertex;
-            weight_tree = weight;
-            outTreeHeavy->Fill();
         }
         delete silData; // delete silData to avoid memory leaks
     }
-
-    outFile->Write();
-    outFile->Close();
 
     // Compute efficiency
     auto* effCM {new TEfficiency {*hThetaCM, *hThetaCMAll}};
@@ -664,8 +642,8 @@ void simu_18O_pd(const std::string& beam = "18O", const std::string& target = "1
         c0->cd(1);
         hKin->DrawClone("colz");
         // Draw theo kin
-        kinTheo->SetBeamEnergyAndEx(Tbeam, Ex);
-        auto* gtheo {kinTheo->GetKinematicLine3()};
+        kin->SetBeamEnergyAndEx(Tbeam, Ex);
+        auto* gtheo {kin->GetKinematicLine3()};
         gtheo->Draw("same");
         c0->cd(2);
         hKinRec->DrawClone("colz");
@@ -825,14 +803,5 @@ void simu_18O_pd(const std::string& beam = "18O", const std::string& target = "1
         cBeam->DivideSquare(4);
         cBeam->cd(1);
         hTbeam->DrawClone();
-
-        auto cDebug {new TCanvas {"cDebug", "Debugging plots"}};
-        cDebug->DivideSquare(4);
-        cDebug->cd(2);
-        hDeltaEGasThetaLight->DrawClone("colz");
-        cDebug->cd(3);
-        hDeltaEGasThetaLightSide->DrawClone("colz");
-        cDebug->cd(4);
-        hKinDebug->DrawClone("colz");
     }
 }
