@@ -32,14 +32,14 @@ std::vector<TH1D*> ReadData(const std::string& file, const std::string& dir, con
     auto updir {f->Get<TDirectory>("Raw")};
     updir->ls();
     auto lowdir {updir->Get<TDirectory>(dir.c_str())};
-    // lowdir->ls();
+    lowdir->ls();
     // Read
     std::vector<TH1D*> ret;
     auto keys {lowdir->GetListOfKeys()};
     for(auto* key : *keys)
     {
         std::string str {key->GetName()};
-        auto idx {str.find_first_of("0123456789")};
+        auto idx {str.find_first_of("_")};
         auto name {str.substr(0, idx)};
         if(!(name == label))
             continue;
@@ -68,13 +68,25 @@ void CorrectSource(Calibration::Source* source, ActPhysics::SRIM* srim, const st
 
 void SilCal()
 {
-    std::string which {"f2"};
-    std::string label {"SI_"};
+    std::string which {"f1"};
+    std::string label {"ADC3"};
     // Read data
-    // auto hs {ReadData("./Inputs/e864/Si_USC_for_e864_afterBOOM.root", "SI", label)};
-    auto hs {ReadData("./Inputs/DE_0deg_GAIN16_190725.root", "SI", label)};
+    auto hs {ReadData("./Inputs/siwall_15mm_Etot.root", "ADC3", label)};
     // Pick only necessary
-    hs = {hs[2], hs[3], hs[5], hs[6]};
+    int isil {};
+    std::vector<int> adcChannels {};
+    for(auto it = hs.begin(); it != hs.end();)
+    {
+        if(isil < 16 || isil > 27)
+            it = hs.erase(it);
+        else
+        {
+            adcChannels.push_back(isil);
+            it++;
+        }
+        isil++;
+    }
+    // hs = {hs[2], hs[3], hs[5], hs[6]};
 
     // Source of ganil
     Calibration::Source source {};
@@ -90,25 +102,28 @@ void SilCal()
     int idx {};
     for(auto& h : hs)
     {
-        h->Rebin(8);
         hsrebin.push_back((TH1D*)h->Clone());
+        hsrebin.back()->Rebin(8);
         idx++;
     }
     // Runner per silicon
     std::vector<Calibration::Runner> runners;
     // Graph
     auto* gr {new TGraphErrors};
-    gr->SetNameTitle("g", "Resolution;Silicon index;#sigma ^{241}Am [keV]");
+    gr->SetNameTitle("g", "Resolution;ADC3 channel;#sigma ^{241}Am [keV]");
     // Save
-    std::ofstream streamer {"./Outputs/s2384_0deg_quad.dat"};
+    std::ofstream streamer {"./Outputs/s2384_f1.dat"};
     streamer << std::fixed << std::setprecision(8);
     std::vector<std::shared_ptr<TH1D>> hfs;
     for(int s = 0; s < hsrebin.size(); s++)
     {
+        const auto& adcChannel {adcChannels[s]};
         runners.emplace_back(&source, hsrebin[s], hs[s], false);
         auto& run {runners.back()};
-        run.SetGaussPreWidth(150);
-        run.SetRange(4500, 6000);
+        run.SetGaussPreWidth(40);
+        run.SetRange(1400, 1700);
+        if(adcChannel == 19)
+            run.SetRange(1000, 1300);
         run.DisableXErrors();
         run.DoIt();
         auto* c {new TCanvas};
@@ -116,7 +131,7 @@ void SilCal()
         std::cout << "Sil index : " << s << " hist name : " << hs[s]->GetName() << '\n';
         run.PrintRes();
         std::cout << '\n';
-        gr->SetPoint(s, s + 1, runners.back().GetRes("241Am") * 1e3);
+        gr->SetPoint(s, adcChannel, runners.back().GetRes("241Am") * 1e3);
         gr->SetPointError(s, 0, runners.back().GetURes("241Am") * 1e3);
         hfs.push_back(run.GetHistFinal());
 
@@ -151,7 +166,7 @@ void SilCal()
     for(int p = 0; p < hfs.size(); p++)
     {
         c2->cd(p + 1);
-        hfs[p]->SetTitle(TString::Format("%s%d", label.c_str(), p + 1));
+        hfs[p]->SetTitle(TString::Format("%s_%d", label.c_str(), p + 1));
         hfs[p]->DrawClone();
         for(auto* o : *(hfs[p]->GetListOfFunctions()))
             if(o)
