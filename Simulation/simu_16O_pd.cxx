@@ -70,7 +70,7 @@ double RandomizeBeamEnergy(double Tini, double sigma)
 }
 
 
-void simu_18O_pd(const std::string& beam = "18O", const std::string& target = "1H", const std::string& light = "2H",
+void simu_16O_pd(const std::string& beam = "16O", const std::string& target = "1H", const std::string& light = "1H",
                  double Tbeam = 135, double Ex = 0, bool inspect = true)
 {
     // Set number of iterations
@@ -224,6 +224,8 @@ void simu_18O_pd(const std::string& beam = "18O", const std::string& target = "1
     hThetaCMStopInside->SetTitle("ThetaCM for particles that stop inside chanber");
     // Beam particle
     auto hTbeam {Histos::T1Lab.GetHistogram()};
+    auto* hDeltaEGasSil {
+        new TH2D("hDeltaEGasSil", "gas - sil;E_{Sil} [MeV];#DeltaE_{gas} [MeV]", 300, 0, 50, 300, 0, 30)};
 
     auto beamThreshold {ActPhysics::Kinematics(beam, target, light, -1, Ex).GetT1Thresh()};
     // RUN!
@@ -539,7 +541,7 @@ void simu_18O_pd(const std::string& beam = "18O", const std::string& target = "1
         }
 
         // Reconstruct!
-        bool isOk {T3AfterSil0 == 0 || T3AfterSil1 == 0 && DeltaELength > 2}; // no punchthrouh
+        bool isOk {(T3AfterSil0 == 0 || T3AfterSil1 == 0) && silIndexHeavy0 != -1 && DeltaELength > 2}; // no punchthrouh
         if(isOk)
         {
             // Assuming no punchthrough!
@@ -592,6 +594,8 @@ void simu_18O_pd(const std::string& beam = "18O", const std::string& target = "1
 
             hThetaLabMeassureSil->Fill(theta3Lab * TMath::RadToDeg());
             hThetaCMMeassureSil->Fill(theta3CMBefore);
+            if(T3AfterSil0 <= 0)
+                hDeltaEGasSil->Fill(eLoss0, DeltaELength);
         }
         delete silData; // delete silData to avoid memory leaks
     }
@@ -769,21 +773,6 @@ void simu_18O_pd(const std::string& beam = "18O", const std::string& target = "1
         cProtonStopped->cd(3);
         hT3test->DrawClone();
 
-        auto cCheckAsymmetry {new TCanvas {"cCheckAsymmetry", "Check Assymetry"}};
-        cCheckAsymmetry->DivideSquare(6);
-        cCheckAsymmetry->cd(1);
-        hPhiCM->DrawClone();
-        cCheckAsymmetry->cd(2);
-        hPhiLab->DrawClone();
-        cCheckAsymmetry->cd(3);
-        hRP->DrawClone("colz");
-        cCheckAsymmetry->cd(4);
-        hRP_ZY->DrawClone("colz");
-        cCheckAsymmetry->cd(5);
-        hdistanceSPtol0->DrawClone();
-        cCheckAsymmetry->cd(6);
-        hdistanceSPtor0->DrawClone();
-
         auto cEfficiency {new TCanvas {"cEfficiency", "Efficiency"}};
         cEfficiency->DivideSquare(6);
         cEfficiency->cd(1);
@@ -799,9 +788,12 @@ void simu_18O_pd(const std::string& beam = "18O", const std::string& target = "1
         cEfficiency->cd(6);
         effDetectionL1CM->Draw("apl");
 
-        auto cBeam {new TCanvas {"cBeam", "Beam Spectra"}};
-        cBeam->DivideSquare(4);
-        cBeam->cd(1);
-        hTbeam->DrawClone();
+        auto cFinal {new TCanvas {"cBeam", "Final canvas"}};
+        cFinal->DivideSquare(4);
+        cFinal->cd(1);
+        hKinRec->DrawClone("colz");
+        gtheo->Draw("same");
+        cFinal->cd(2);
+        hDeltaEGasSil->DrawClone("colz");
     }
 }

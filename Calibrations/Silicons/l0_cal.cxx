@@ -66,24 +66,24 @@ void CorrectSource(Calibration::Source* source, ActPhysics::SRIM* srim, const st
     }
 }
 
-void SilCal()
+void l0_cal()
 {
-    std::string which {"f2"};
-    std::string label {"SI"};
+    std::string which {"l0"};
+    std::string label {"L0"};
     // Read data
-    auto hs {ReadData("./Inputs/DE_0deg_GAIN16_190725.root", "SI", label)};
+    auto hs {ReadData("./Inputs/si_l0.root", "L0", label)};
     // Pick only necessary
     int isil {};
     std::vector<int> adcChannels {};
     for(auto it = hs.begin(); it != hs.end();)
     {
-        if(isil < 2 || isil > 6 || isil == 4)
-            it = hs.erase(it);
-        else
-        {
-            adcChannels.push_back(isil);
-            it++;
-        }
+        // if(isil < 2 || isil > 6 || isil == 4)
+        //     it = hs.erase(it);
+        // else
+        // {
+        adcChannels.push_back(isil);
+        it++;
+        // }
         isil++;
     }
     // hs = {hs[2], hs[3], hs[5], hs[6]};
@@ -120,9 +120,11 @@ void SilCal()
         const auto& adcChannel {adcChannels[s]};
         runners.emplace_back(&source, hsrebin[s], hs[s], false);
         auto& run {runners.back()};
-        run.SetGaussPreWidth(40);
-        run.SetRange(4500, 5800);
+        run.SetGaussPreWidth(60);
+        run.SetRange(1700, 2700);
         run.DisableXErrors();
+        if(s == 10)
+            run.SetMaxSigma(0.1); // background prevents having a good fit
         run.DoIt();
         auto* c {new TCanvas};
         run.Draw(c);
