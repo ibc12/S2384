@@ -71,7 +71,7 @@ void r0_cal()
     std::string which {"r0"};
     std::string label {"R0"};
     // Read data
-    auto hs {ReadData("./Inputs/si_r0.root", "R0", label)};
+    auto hs {ReadData("./Inputs/SiWall_2025-07-21.root", "R0", label)};
     // Pick only necessary
     int isil {};
     std::vector<int> adcChannels {};
@@ -110,7 +110,7 @@ void r0_cal()
     std::vector<Calibration::Runner> runners;
     // Graph
     auto* gr {new TGraphErrors};
-    gr->SetNameTitle("g", "Resolution;SI channel;#sigma ^{241}Am [keV]");
+    gr->SetNameTitle("g", "Resolution;;#sigma ^{241}Am [keV]");
     // Save
     std::ofstream streamer {"./Outputs/s2384_" + which + ".dat"};
     streamer << std::fixed << std::setprecision(8);
@@ -123,16 +123,18 @@ void r0_cal()
         run.SetGaussPreWidth(60);
         run.SetRange(1700, 2900);
         run.DisableXErrors();
-        if(s == 11)
-            run.SetMaxSigma(0.1);
+        // if(s == 11)
+        //     run.SetMaxSigma(0.1);
         run.DoIt();
         auto* c {new TCanvas};
         run.Draw(c);
         std::cout << "Sil index : " << s << " hist name : " << hs[s]->GetName() << '\n';
         run.PrintRes();
         std::cout << '\n';
-        gr->SetPoint(s, adcChannel, runners.back().GetRes("241Am") * 1e3);
-        gr->SetPointError(s, 0, runners.back().GetURes("241Am") * 1e3);
+        auto sigma {run.GetRes("241Am")};
+        auto usigma {run.GetURes("241Am")};
+        gr->SetPoint(s, adcChannel, (sigma < 0 ? 0 : sigma) * 1e3);
+        gr->SetPointError(s, 0, (usigma < 0 ? 0 : usigma) * 1e3);
         hfs.push_back(run.GetHistFinal());
 
         // Save calibration in file
@@ -162,7 +164,9 @@ void r0_cal()
     gr->Draw("apl");
     for(int i = 0; i < hs.size(); i++)
     {
-        gr->GetXaxis()->ChangeLabel(i + 1, -1, -1, -1, -1, -1, hs[i]->GetTitle());
+        auto* ax {gr->GetXaxis()};
+        auto bin {ax->FindBin(i + 1)};
+        ax->SetBinLabel(bin, hs[i]->GetTitle());
     }
 
     auto* c2 {new TCanvas {"c2", "Final his canvas"}};
@@ -171,6 +175,8 @@ void r0_cal()
     for(int p = 0; p < hfs.size(); p++)
     {
         c2->cd(p + 1);
+        if(!hfs[p])
+            continue;
         // hfs[p]->SetTitle(TString::Format("%s_%d", label.c_str(), p + 1));
         hfs[p]->SetTitle(hs[p]->GetTitle());
         hfs[p]->DrawClone();

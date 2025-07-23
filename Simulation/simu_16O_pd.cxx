@@ -24,6 +24,8 @@
 #include "TString.h"
 #include "TTree.h"
 
+#include "Math/Point3Dfwd.h"
+
 #include <cmath>
 #include <iostream>
 #include <string>
@@ -128,6 +130,11 @@ void simu_16O_pd(const std::string& beam = "16O", const std::string& target = "1
     srim->ReadTable("heavy", path + heavy + "_" + gas + ".txt");
     srim->ReadTable("heavyInSil", path + heavy + "_" + silicon + ".txt");
 
+    // Cross section
+    auto* xs {new ActSim::CrossSection};
+    xs->ReadFile("../Fits/16O_pp/Inputs/gs/fort.201");
+    xs->Draw();
+
     // Declare histograms
     auto hKin {Histos::Kin.GetHistogram()};
     hKin->SetTitle("Sampled kinematics");
@@ -226,6 +233,8 @@ void simu_16O_pd(const std::string& beam = "16O", const std::string& target = "1
     auto hTbeam {Histos::T1Lab.GetHistogram()};
     auto* hDeltaEGasSil {
         new TH2D("hDeltaEGasSil", "gas - sil;E_{Sil} [MeV];#DeltaE_{gas} [MeV]", 300, 0, 50, 300, 0, 30)};
+    auto* hDeltaEGasTheta {
+        new TH2D("hDeltaEGasTheta", "DeltaEgas vs #theta;#theta_{Lab} [#circ];dE/dx [keV/mm]", 300, 0, 90, 300, 0, 20)};
 
     auto beamThreshold {ActPhysics::Kinematics(beam, target, light, -1, Ex).GetT1Thresh()};
     // RUN!
@@ -275,7 +284,8 @@ void simu_16O_pd(const std::string& beam = "16O", const std::string& target = "1
             continue;
         }
         kin->SetBeamEnergyAndEx(TbeamCorr, randEx);
-        theta3CMBefore = TMath::ACos(gRandom->Uniform(-1, 1)) * TMath::RadToDeg();
+        theta3CMBefore = xs->SampleCDF();
+        // theta3CMBefore = TMath::ACos(gRandom->Uniform(-1, 1)) * TMath::RadToDeg();
         phi3CM = gRandom->Uniform(0, 2 * TMath::Pi());
         kin->ComputeRecoilKinematics(theta3CMBefore * TMath::DegToRad(), phi3CM);
         // Get Lab kinematics
@@ -450,34 +460,17 @@ void simu_16O_pd(const std::string& beam = "16O", const std::string& target = "1
             }
             continue;
         }
-        double DeltaELength {-1};
+        ActRoot::Line heavyLine {ActRoot::CastXYZPoint<float>(vertex), ActRoot::CastXYZVector<float>(direction), 0};
+        ROOT::Math::XYZPointF bp {};
         if(layer0 == "f0")
-        {
-            auto line {
-                new ActRoot::Line(ActRoot::CastXYZPoint<float>(vertex), ActRoot::CastXYZVector<float>(direction), 0)};
-            auto boundaryPoint {line->MoveToX(256)};
-            auto T3AtSilLight {T3Lab - srim->SlowWithStraggling("light", T3Lab, (boundaryPoint - vertex).R())};
-            DeltaELength = T3AtSilLight / (boundaryPoint - vertex).R() * 1000;
-            delete line;
-        }
+            bp = heavyLine.MoveToX(256);
         if(layer0 == "l0")
-        {
-            auto line {
-                new ActRoot::Line(ActRoot::CastXYZPoint<float>(vertex), ActRoot::CastXYZVector<float>(direction), 0)};
-            auto boundaryPoint {line->MoveToY(256)};
-            auto T3AtSilLight {T3Lab - srim->SlowWithStraggling("light", T3Lab, (boundaryPoint - vertex).R())};
-            DeltaELength = T3AtSilLight / (boundaryPoint - vertex).R() * 1000;
-            delete line;
-        }
+            bp = heavyLine.MoveToY(256);
         if(layer0 == "r0")
-        {
-            auto line {
-                new ActRoot::Line(ActRoot::CastXYZPoint<float>(vertex), ActRoot::CastXYZVector<float>(direction), 0)};
-            auto boundaryPoint {line->MoveToY(0)};
-            auto T3AtSilLight {T3Lab - srim->SlowWithStraggling("light", T3Lab, (boundaryPoint - vertex).R())};
-            DeltaELength = T3AtSilLight / (boundaryPoint - vertex).R() * 1000;
-            delete line;
-        }
+            bp = heavyLine.MoveToY(0);
+        auto distRPtoBP {(vertex - bp).R()};
+        auto TAtBP {srim->SlowWithStraggling("light", T3Lab, distRPtoBP)};
+        auto DeltaELength {(T3Lab - TAtBP) * 1e3 / distRPtoBP};
 
         // Slow down in silicon
         auto normal {sils->GetLayer(layer0).GetNormal()};
@@ -541,7 +534,8 @@ void simu_16O_pd(const std::string& beam = "16O", const std::string& target = "1
         }
 
         // Reconstruct!
-        bool isOk {(T3AfterSil0 == 0 || T3AfterSil1 == 0) && silIndexHeavy0 != -1 && DeltaELength > 2}; // no punchthrouh
+        bool isOk {(T3AfterSil0 == 0 || T3AfterSil1 == 0) && silIndexHeavy0 != -1 &&
+                   DeltaELength > 0}; // no punchthrouh
         if(isOk)
         {
             // Assuming no punchthrough!
@@ -595,7 +589,10 @@ void simu_16O_pd(const std::string& beam = "16O", const std::string& target = "1
             hThetaLabMeassureSil->Fill(theta3Lab * TMath::RadToDeg());
             hThetaCMMeassureSil->Fill(theta3CMBefore);
             if(T3AfterSil0 <= 0)
+            {
                 hDeltaEGasSil->Fill(eLoss0, DeltaELength);
+                hDeltaEGasTheta->Fill(theta3Lab * TMath::RadToDeg(), DeltaELength);
+            }
         }
         delete silData; // delete silData to avoid memory leaks
     }
@@ -795,5 +792,7 @@ void simu_16O_pd(const std::string& beam = "16O", const std::string& target = "1
         gtheo->Draw("same");
         cFinal->cd(2);
         hDeltaEGasSil->DrawClone("colz");
+        cFinal->cd(3);
+        hDeltaEGasTheta->DrawClone("colz");
     }
 }

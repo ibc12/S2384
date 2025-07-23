@@ -71,19 +71,19 @@ void l0_cal()
     std::string which {"l0"};
     std::string label {"L0"};
     // Read data
-    auto hs {ReadData("./Inputs/si_l0.root", "L0", label)};
+    auto hs {ReadData("./Inputs/SiWall_2025-07-21.root", "L0", label)};
     // Pick only necessary
     int isil {};
     std::vector<int> adcChannels {};
     for(auto it = hs.begin(); it != hs.end();)
     {
-        // if(isil < 2 || isil > 6 || isil == 4)
-        //     it = hs.erase(it);
-        // else
-        // {
-        adcChannels.push_back(isil);
-        it++;
-        // }
+        if(isil == -1)
+            it = hs.erase(it);
+        else
+        {
+            adcChannels.push_back(isil);
+            it++;
+        }
         isil++;
     }
     // hs = {hs[2], hs[3], hs[5], hs[6]};
@@ -110,7 +110,7 @@ void l0_cal()
     std::vector<Calibration::Runner> runners;
     // Graph
     auto* gr {new TGraphErrors};
-    gr->SetNameTitle("g", "Resolution;SI channel;#sigma ^{241}Am [keV]");
+    gr->SetNameTitle("g", "Resolution;;#sigma ^{241}Am [keV]");
     // Save
     std::ofstream streamer {"./Outputs/s2384_" + which + ".dat"};
     streamer << std::fixed << std::setprecision(8);
@@ -123,8 +123,8 @@ void l0_cal()
         run.SetGaussPreWidth(60);
         run.SetRange(1700, 2700);
         run.DisableXErrors();
-        if(s == 10)
-            run.SetMaxSigma(0.1); // background prevents having a good fit
+        if(s == 6)
+            run.SertMinSigma(0.01);
         run.DoIt();
         auto* c {new TCanvas};
         run.Draw(c);
@@ -158,6 +158,12 @@ void l0_cal()
     auto* c1 {new TCanvas {"c11", "Resolution canvas"}};
     gr->SetMarkerStyle(25);
     gr->SetLineWidth(2);
+    for(int s = 0; s < hs.size(); s++)
+    {
+        auto* ax {gr->GetXaxis()};
+        auto bin {ax->FindBin(s + 1)};
+        ax->SetBinLabel(bin, hs[s]->GetTitle());
+    }
     gr->Draw("apl");
 
     auto* c2 {new TCanvas {"c2", "Final his canvas"}};
