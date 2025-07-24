@@ -23,8 +23,6 @@
 #include <string>
 #include <vector>
 
-const std::string layer {"f0"};
-
 std::vector<TH1D*> ReadData(const std::string& file, const std::string& dir, const std::string& label)
 {
     auto* f {new TFile {file.c_str()}};
@@ -44,7 +42,6 @@ std::vector<TH1D*> ReadData(const std::string& file, const std::string& dir, con
         if(!(name == label))
             continue;
         ret.push_back((TH1D*)lowdir->Get<TH1D>(key->GetName()));
-        ret.back()->SetDirectory(nullptr);
     }
     return ret;
 }
@@ -67,24 +64,24 @@ void CorrectSource(Calibration::Source* source, ActPhysics::SRIM* srim, const st
     }
 }
 
-void l0_cal()
+void f0_cal()
 {
-    std::string which {"l0"};
-    std::string label {"L0"};
+    std::string which {"f0"};
+    std::string label {"F0"};
     // Read data
-    auto hs {ReadData("../../Macros/Outputs/SiWall_gated_entry_run4.root", "L0", label)};
+    auto hs {ReadData("../../Macros/Outputs/SiWall_gated_entry_run4.root", "F0", label)};
     // Pick only necessary
     int isil {};
     std::vector<int> adcChannels {};
     for(auto it = hs.begin(); it != hs.end();)
     {
-        if(isil == -1)
-            it = hs.erase(it);
-        else
-        {
-            adcChannels.push_back(isil);
-            it++;
-        }
+        // if(isil < 2 || isil > 6 || isil == 4)
+        //     it = hs.erase(it);
+        // else
+        // {
+        adcChannels.push_back(isil);
+        it++;
+        // }
         isil++;
     }
     // hs = {hs[2], hs[3], hs[5], hs[6]};
@@ -122,18 +119,20 @@ void l0_cal()
         runners.emplace_back(&source, hsrebin[s], hs[s], false);
         auto& run {runners.back()};
         run.SetGaussPreWidth(60);
-        run.SetRange(1700, 2700);
+        run.SetRange(1200, 1500);
         run.DisableXErrors();
-        if(s == 6)
-            run.SertMinSigma(0.01);
+        // if(s == 11)
+        //     run.SetMaxSigma(0.1);
         run.DoIt();
         auto* c {new TCanvas};
         run.Draw(c);
         std::cout << "Sil index : " << s << " hist name : " << hs[s]->GetName() << '\n';
         run.PrintRes();
         std::cout << '\n';
-        gr->SetPoint(s, adcChannel, runners.back().GetRes("241Am") * 1e3);
-        gr->SetPointError(s, 0, runners.back().GetURes("241Am") * 1e3);
+        auto sigma {run.GetRes("241Am")};
+        auto usigma {run.GetURes("241Am")};
+        gr->SetPoint(s, adcChannel, (sigma < 0 ? 0 : sigma) * 1e3);
+        gr->SetPointError(s, 0, (usigma < 0 ? 0 : usigma) * 1e3);
         hfs.push_back(run.GetHistFinal());
 
         // Save calibration in file
@@ -160,13 +159,14 @@ void l0_cal()
     auto* c1 {new TCanvas {"c11", "Resolution canvas"}};
     gr->SetMarkerStyle(25);
     gr->SetLineWidth(2);
-    for(int s = 0; s < hs.size(); s++)
+    gr->GetXaxis()->SetNdivisions(515);
+    gr->Draw("apl");
+    for(int i = 0; i < hs.size(); i++)
     {
         auto* ax {gr->GetXaxis()};
-        auto bin {ax->FindBin(s)};
-        ax->SetBinLabel(bin, hs[s]->GetTitle());
+        auto bin {ax->FindBin(i)};
+        ax->SetBinLabel(bin, hs[i]->GetTitle());
     }
-    gr->Draw("apl");
 
     auto* c2 {new TCanvas {"c2", "Final his canvas"}};
     // gROOT->SetSelectedPad(nullptr);
@@ -174,7 +174,10 @@ void l0_cal()
     for(int p = 0; p < hfs.size(); p++)
     {
         c2->cd(p + 1);
-        hfs[p]->SetTitle(TString::Format("%s_%d", label.c_str(), p + 1));
+        if(!hfs[p])
+            continue;
+        // hfs[p]->SetTitle(TString::Format("%s_%d", label.c_str(), p + 1));
+        hfs[p]->SetTitle(hs[p]->GetTitle());
         hfs[p]->DrawClone();
         for(auto* o : *(hfs[p]->GetListOfFunctions()))
             if(o)

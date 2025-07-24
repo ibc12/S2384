@@ -43,7 +43,7 @@ std::vector<TH1D*> ReadData(const std::string& file, const std::string& dir, con
         auto name {str.substr(0, idx)};
         if(!(name == label))
             continue;
-        ret.push_back((TH1D*)lowdir->Get<TH1I>(key->GetName()));
+        ret.push_back((TH1D*)lowdir->Get<TH1D>(key->GetName()));
     }
     return ret;
 }
@@ -71,7 +71,7 @@ void r0_cal()
     std::string which {"r0"};
     std::string label {"R0"};
     // Read data
-    auto hs {ReadData("./Inputs/SiWall_2025-07-21.root", "R0", label)};
+    auto hs {ReadData("../../Macros/Outputs/SiWall_gated_entry_run4.root", "R0", label)};
     // Pick only necessary
     int isil {};
     std::vector<int> adcChannels {};
@@ -154,6 +154,7 @@ void r0_cal()
     {
         c0->cd(i + 1);
         gPad->SetLogy();
+        hs[i]->GetXaxis()->SetRangeUser(0, 3000);
         hs[i]->Draw();
     }
 
@@ -165,7 +166,7 @@ void r0_cal()
     for(int i = 0; i < hs.size(); i++)
     {
         auto* ax {gr->GetXaxis()};
-        auto bin {ax->FindBin(i + 1)};
+        auto bin {ax->FindBin(i)};
         ax->SetBinLabel(bin, hs[i]->GetTitle());
     }
 
