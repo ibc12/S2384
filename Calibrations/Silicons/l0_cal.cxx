@@ -43,8 +43,7 @@ std::vector<TH1D*> ReadData(const std::string& file, const std::string& dir, con
         auto name {str.substr(0, idx)};
         if(!(name == label))
             continue;
-        ret.push_back((TH1D*)lowdir->Get<TH1D>(key->GetName()));
-        ret.back()->SetDirectory(nullptr);
+        ret.push_back((TH1D*)lowdir->Get<TH1I>(key->GetName()));
     }
     return ret;
 }
@@ -72,7 +71,7 @@ void l0_cal()
     std::string which {"l0"};
     std::string label {"L0"};
     // Read data
-    auto hs {ReadData("../../Macros/Outputs/SiWall_gated_entry_run4.root", "L0", label)};
+    auto hs {ReadData("./Inputs/siWallCal_26_07_20h14min.root", "L0", label)};
     // Pick only necessary
     int isil {};
     std::vector<int> adcChannels {};
@@ -104,7 +103,7 @@ void l0_cal()
     for(auto& h : hs)
     {
         hsrebin.push_back((TH1D*)h->Clone());
-        hsrebin.back()->Rebin(8);
+        hsrebin.back()->Rebin(16);
         idx++;
     }
     // Runner per silicon
@@ -121,11 +120,9 @@ void l0_cal()
         const auto& adcChannel {adcChannels[s]};
         runners.emplace_back(&source, hsrebin[s], hs[s], false);
         auto& run {runners.back()};
-        run.SetGaussPreWidth(60);
-        run.SetRange(1700, 2700);
+        run.SetGaussPreWidth(80);
+        run.SetRange(3500, 5750);
         run.DisableXErrors();
-        if(s == 6)
-            run.SertMinSigma(0.01);
         run.DoIt();
         auto* c {new TCanvas};
         run.Draw(c);
@@ -153,7 +150,7 @@ void l0_cal()
     {
         c0->cd(i + 1);
         gPad->SetLogy();
-        hs[i]->GetXaxis()->SetRangeUser(0, 3000);
+        // hs[i]->GetXaxis()->SetRangeUser(0, 3000);
         hs[i]->Draw();
     }
 
