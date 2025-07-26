@@ -68,10 +68,10 @@ void CorrectSource(Calibration::Source* source, ActPhysics::SRIM* srim, const st
 
 void SilCal_otherWalls()
 {
-    std::string which {"f2"};
-    std::string label {"F2"};
+    std::string which {"f0"};
+    std::string label {"F0"};
     // Read data
-    auto hs {ReadData("./Inputs/SiWall_2025-07-21.root", "F2", label)};
+    auto hs {ReadData("./Inputs/siWallCal_26_07_20h14min.root", "F0", label)};
     // Pick only necessary
     int isil {};
     std::vector<int> adcChannels {};
@@ -117,16 +117,20 @@ void SilCal_otherWalls()
     auto* gr {new TGraphErrors};
     gr->SetNameTitle("g", "Resolution;SI channel;#sigma ^{241}Am [keV]");
     // Save
-    std::ofstream streamer {"./Outputs/s2384_" + which + ".dat"};
-    streamer << std::fixed << std::setprecision(8);
+    //std::ofstream streamer {"./Outputs/s2384_" + which + ".dat"};
+    //streamer << std::fixed << std::setprecision(8);
     std::vector<std::shared_ptr<TH1D>> hfs;
     for(int s = 0; s < hsrebin.size(); s++)
     {
         const auto& adcChannel {adcChannels[s]};
         runners.emplace_back(&source, hsrebin[s], hs[s], false);
         auto& run {runners.back()};
-        run.SetGaussPreWidth(20);
-        run.SetRange(2550, 3200);
+        run.SetGaussPreWidth(30);
+        run.SetRange(1200, 1500);
+        if(s == 1)
+        {
+            run.SertMinSigma(0.02);
+        }
         run.DisableXErrors();
         run.DoIt();
         auto* c {new TCanvas};
@@ -142,11 +146,11 @@ void SilCal_otherWalls()
         auto label {TString::Format("Sil_%s_%d_E", which.c_str(), s)};
         auto labelp {TString::Format("Sil_%s_%d_P", which.c_str(), s)};
         auto [p0, p1] {runners.back().GetParameters()};
-        streamer << label << " " << p0 << " " << p1 << '\n';
+        //streamer << label << " " << p0 << " " << p1 << '\n';
         auto [ped, peds] {runners.back().GetPedestal()};
-        streamer << labelp << " " << ped << " " << peds << '\n';
+        //streamer << labelp << " " << ped << " " << peds << '\n';
     }
-    streamer.close();
+    //streamer.close();
 
     // Plot
     auto* c0 {new TCanvas {"c0", "Raw silicon data"}};
@@ -169,7 +173,7 @@ void SilCal_otherWalls()
     for(int p = 0; p < hfs.size(); p++)
     {
         c2->cd(p + 1);
-        hfs[p]->SetTitle(TString::Format("%s_%d", label.c_str(), p + 1));
+        hfs[p]->SetTitle(TString::Format("%s_%d", label.c_str(), p));
         hfs[p]->DrawClone();
         for(auto* o : *(hfs[p]->GetListOfFunctions()))
             if(o)
