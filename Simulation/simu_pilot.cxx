@@ -28,6 +28,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 
@@ -72,18 +73,18 @@ double RandomizeBeamEnergy(double Tini, double sigma)
 }
 
 
-void simu_16O_pd(const std::string& beam = "16O", const std::string& target = "1H", const std::string& light = "1H",
-                 double Tbeam = 135, double Ex = 0, bool inspect = true)
+void simu_pilot(const std::string& beam = "7Li", const std::string& target = "2H", const std::string& light = "1H",
+                double Tbeam = 52.5, double Ex = 0, bool inspect = true)
 {
     // Set number of iterations
-    auto niter {static_cast<int>(1e6)};
+    auto niter {static_cast<int>(2e6)};
     gRandom->SetSeed(0);
     // Initialize detectors
     // TPC
     ActRoot::TPCParameters tpc {"Actar"};
     // Silicons
     auto* sils {new ActPhysics::SilSpecs};
-    sils->ReadFile("../configs/silspecs_spacer.conf");
+    sils->ReadFile("../configs/silspecs.conf");
     sils->Print();
     const double sigmaSil {0.060 / 2.355}; // Si resolution
     auto silRes = std::make_unique<TF1>(
@@ -122,7 +123,13 @@ void simu_16O_pd(const std::string& beam = "16O", const std::string& target = "1
     // SRIM
     auto* srim {new ActPhysics::SRIM};
     std::string path {"../Calibrations/SRIM/"};
-    std::string gas {"H2_CF4_95-5"};
+    std::string gas {};
+    if(TString aux {beam}; aux.Contains("16O"))
+        gas = "H2_CF4_95-5";
+    else if(aux.Contains("7Li"))
+        gas = "900mb_CF4_95-5";
+    else
+        throw std::runtime_error("Pilot beams available are 16O and 7Li only");
     std::string silicon {"silicon"};
     srim->ReadTable("beam", path + beam + "_" + gas + ".txt");
     srim->ReadTable("light", path + light + "_" + gas + ".txt");
@@ -131,9 +138,31 @@ void simu_16O_pd(const std::string& beam = "16O", const std::string& target = "1
     srim->ReadTable("heavyInSil", path + heavy + "_" + silicon + ".txt");
 
     // Cross section
-    auto* xs {new ActSim::CrossSection};
-    xs->ReadFile("../Fits/16O_pp/Inputs/gs/fort.201");
-    xs->Draw();
+    ActSim::CrossSection* xs {nullptr};
+    if(beam == "7Li" && light == "2H")
+    {
+        xs = new ActSim::CrossSection;
+        auto* gxs {new TGraphErrors {"../Fits/7Li_dd/gs/fort.201", "%lg %lg"}};
+        xs->ReadGraph(gxs);
+        xs->Draw();
+    }
+    else if (beam == "7Li" && light == "3H")
+    {
+        xs = new ActSim::CrossSection;
+        auto* gxs {new TGraphErrors{"../Fits/7Li_dt/gs/21.gs", "%lg %lg"}};
+        xs->ReadGraph(gxs);
+        xs->Draw();
+    }
+    else if(beam == "7Li" && light == "1H")
+    {
+        xs = new ActSim::CrossSection;
+        auto* gxs {new TGraphErrors{"../Fits/7Li_dp/gs/21.gs", "%lg %lg"}};
+        xs->ReadGraph(gxs);
+        xs->Draw();
+    }
+    // auto* xs {new ActSim::CrossSection};
+    // xs->ReadFile("../Fits/16O_pp/Inputs/gs/fort.201");
+    // xs->Draw();
 
     // Declare histograms
     auto hKin {Histos::Kin.GetHistogram()};
@@ -232,9 +261,9 @@ void simu_16O_pd(const std::string& beam = "16O", const std::string& target = "1
     // Beam particle
     auto hTbeam {Histos::T1Lab.GetHistogram()};
     auto* hDeltaEGasSil {
-        new TH2D("hDeltaEGasSil", "gas - sil;E_{Sil} [MeV];#DeltaE_{gas} [MeV]", 300, 0, 50, 300, 0, 30)};
+        new TH2D("hDeltaEGasSil", "#DeltaE-E;E_{Sil} [MeV];#DeltaE_{gas} [MeV]", 300, 0, 50, 300, 0, 30)};
     auto* hDeltaEGasTheta {
-        new TH2D("hDeltaEGasTheta", "DeltaEgas vs #theta;#theta_{Lab} [#circ];dE/dx [keV/mm]", 300, 0, 90, 300, 0, 20)};
+        new TH2D("hDeltaEGasTheta", "dE/dx vs #theta;#theta_{Lab} [#circ];dE/dx [keV/mm]", 300, 0, 90, 300, 0, 20)};
 
     auto beamThreshold {ActPhysics::Kinematics(beam, target, light, -1, Ex).GetT1Thresh()};
     // RUN!
@@ -284,8 +313,10 @@ void simu_16O_pd(const std::string& beam = "16O", const std::string& target = "1
             continue;
         }
         kin->SetBeamEnergyAndEx(TbeamCorr, randEx);
-        theta3CMBefore = xs->SampleCDF();
-        // theta3CMBefore = TMath::ACos(gRandom->Uniform(-1, 1)) * TMath::RadToDeg();
+        if(xs)
+            theta3CMBefore = xs->SampleCDF();
+        else
+            theta3CMBefore = TMath::ACos(gRandom->Uniform(-1, 1)) * TMath::RadToDeg();
         phi3CM = gRandom->Uniform(0, 2 * TMath::Pi());
         kin->ComputeRecoilKinematics(theta3CMBefore * TMath::DegToRad(), phi3CM);
         // Get Lab kinematics
@@ -337,7 +368,7 @@ void simu_16O_pd(const std::string& beam = "16O", const std::string& target = "1
         {
             double distanceXY {
                 TMath::Sqrt(pow(vertex.X() - finalPointGas.X(), 2) + pow(vertex.Y() - finalPointGas.Y(), 2))};
-            if(distanceXY >= 0)
+            if(distanceXY >= 20)
             {
                 hThetaVertexInGas->Fill(theta3Lab * TMath::RadToDeg(), vertex.X());
                 hRangeGas->Fill(rangeInGas);
@@ -534,8 +565,7 @@ void simu_16O_pd(const std::string& beam = "16O", const std::string& target = "1
         }
 
         // Reconstruct!
-        bool isOk {(T3AfterSil0 == 0 || T3AfterSil1 == 0) && silIndexHeavy0 != -1 &&
-                   DeltaELength > 0}; // no punchthrouh
+        bool isOk {(T3AfterSil0 == 0 || T3AfterSil1 == 0) && DeltaELength > 0}; // no punchthrouh
         if(isOk)
         {
             // Assuming no punchthrough!
@@ -599,7 +629,7 @@ void simu_16O_pd(const std::string& beam = "16O", const std::string& target = "1
 
     // Compute efficiency
     auto* effCM {new TEfficiency {*hThetaCM, *hThetaCMAll}};
-    effCM->SetNameTitle("effCM", " #epsilon_{TOT} (#theta_{CM});#epsilon;#theta_{CM} [#circ]");
+    effCM->SetNameTitle("effCM", "Total #epsilon with L1;#epsilon;#theta_{CM} [#circ]");
     auto* effLab {new TEfficiency {*hThetaLab, *hThetaLabAll}};
     effLab->SetNameTitle("effLab", "#epsilon_{TOT} (#theta_{Lab});#epsilon;#theta_{Lab} [#circ]");
     auto* effLatSil {new TEfficiency {*hTheta3LabReachLatSil, *hThetaLabAll}};
@@ -794,5 +824,7 @@ void simu_16O_pd(const std::string& beam = "16O", const std::string& target = "1
         hDeltaEGasSil->DrawClone("colz");
         cFinal->cd(3);
         hDeltaEGasTheta->DrawClone("colz");
+        cFinal->cd(4);
+        effCM->DrawClone("apl");
     }
 }

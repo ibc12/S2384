@@ -14,7 +14,7 @@ void comp_f0s()
     calman.ReadCalibration("./Outputs/s2384_f0.dat");
 
     ActRoot::CalibrationManager calold;
-    calold.ReadCalibration("./Outputs/s2384_f0_run3.dat");
+    calold.ReadCalibration("./Outputs/s2384_f0_old_24_07_2025.dat");
 
     int nsil {12};
     std::vector<TMultiGraph*> mgs;
