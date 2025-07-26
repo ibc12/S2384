@@ -39,7 +39,7 @@ void Pipe1_PID(std::string beam, std::string target, std::string light)
     // Fill histograms
     std::map<std::string, ROOT::TThreadedObject<TH2D>> hsgas, hstwo;
     // Histogram models
-    auto hGasSil {new TH2D {"hGasSil", ";E_{Sil} [MeV];#Delta E_{gas} [arb. units]", 500, 0, 80, 800, 0, 4000}};
+    auto hGasSil {new TH2D {"hGasSil", ";E_{Sil} [MeV];#Delta E_{gas} [arb. units]", 450, 0, 70, 600, 0, 3000}};
     auto hTwoSils {new TH2D {"hTwoSils", ";#DeltaE_{0} [MeV];#DeltaE_{1} [MeV]", 300, 0, 30, 300, 0, 30}};
     for(const auto& layer : {"f0", "l0", "r0"})
     {
@@ -69,19 +69,28 @@ void Pipe1_PID(std::string beam, std::string target, std::string light)
     // If cuts are present, apply them
     ActRoot::CutsManager<std::string> cuts;
     // Gas PID
-    cuts.ReadCut("gas", TString::Format("./Cuts/pid_%s_%s_gas.root", target.c_str(), light.c_str()).Data());
+    cuts.ReadCut("l0", TString::Format("./Cuts/pid_%s_l0.root", light.c_str()).Data());
+    cuts.ReadCut("r0", TString::Format("./Cuts/pid_%s_r0.root", light.c_str()).Data());
+    cuts.ReadCut("f0", TString::Format("./Cuts/pid_%s_f0.root", light.c_str()).Data());
     // Two sils PID
-    cuts.ReadCut("sils", TString::Format("./Cuts/pid_%s_%s_sils.root", target.c_str(), light.c_str()).Data());
-    if(cuts.GetCut("gas") || cuts.GetCut("sils"))
+    cuts.ReadCut("f0-f1", TString::Format("./Cuts/pid_%s_f0_f1.root", light.c_str()).Data());
+    if(cuts.GetListOfKeys().size())
     {
         // Apply PID and save in file
         auto gated {df.Filter(
             [&](ActRoot::MergerData& m)
             {
-                if(cuts.GetCut("gas") && lambdaOne(m))
-                    return cuts.IsInside("gas", m.fLight.fEs[0], m.fLight.fQave);
-                else if(cuts.GetCut("sils") && lambdaTwo(m))
-                    return cuts.IsInside("sils", m.fLight.fEs[0], m.fLight.fEs[1]);
+                // One silicon
+                if(lambdaOne(m))
+                {
+                    auto layer {m.fLight.GetLayer(0)};
+                    if(cuts.GetCut(layer))
+                        return cuts.IsInside(layer, m.fLight.fEs[0], m.fLight.fQave);
+                    else
+                        return false;
+                }
+                else if(cuts.GetCut("f0-f1") && lambdaTwo(m))
+                    return cuts.IsInside("f0-f1", m.fLight.fEs[0], m.fLight.fEs[1]);
                 else
                     return false;
             },
@@ -95,10 +104,12 @@ void Pipe1_PID(std::string beam, std::string target, std::string light)
     auto* c0 {new TCanvas {"c0", "PID canvas"}};
     c0->DivideSquare(4);
     int p {1};
+    c0->cd(1);
     for(auto& [layer, h] : hsgas)
     {
         c0->cd(p);
         h.Merge()->DrawClone("colz");
+        cuts.DrawCut(layer);
         p++;
     }
     for(auto& [layer, h] : hstwo)

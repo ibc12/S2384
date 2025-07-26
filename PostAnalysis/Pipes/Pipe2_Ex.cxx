@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include "../HistConfig.h"
 
 void Pipe2_Ex(const std::string& beam, const std::string& target, const std::string& light)
 {
@@ -30,17 +31,20 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     ROOT::RDataFrame df {"PID_Tree", filename};
 
     // Book histograms
-    auto hPID {df.Define("ESil0", "fSilEs.front()").Histo2D(HistConfig::PID, "ESil0", "fQave")};
+    auto hPID {df.Define("ESil0", "fSilEs.front()").Histo2D(HistConfig::PID, "ESil0", "fLight.fQave")};
 
     // Init SRIM
     auto* srim {new ActPhysics::SRIM};
-    srim->ReadTable(
-        light,
-        TString::Format("../../Calibrations/SRIM/%s_900mb_CF4_95-5.txt", light.c_str()).Data());
-    srim->ReadTable(
-        beam,
-        TString::Format("../../Calibrations/SRIM/", beam.c_str()).Data());
-
+    // Correct SRIM names
+    std::string srimName {};
+    if(light == "d")
+        srimName = "2H";
+    else if(light == "p")
+        srimName = "1H";
+    else if(light == "t")
+        srimName = "3H";
+    srim->ReadTable(light, TString::Format("../Calibrations/SRIM/%s_900mb_CF4_95-5.txt", srimName.c_str()).Data());
+    srim->ReadTable(beam, TString::Format("../Calibrations/SRIM/%s_900mb_CF4_95-5.txt", beam.c_str()).Data());
     // Build energy at vertex
     auto def = df.Define("EVertex", [&](const ActRoot::MergerData& d)
                          { return srim->EvalInitialEnergy(light, d.fSilEs.front(), d.fTrackLength); }, {"MergerData"});
@@ -52,59 +56,41 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
 
     // Build beam energy
     def = def.Define("EBeam", [&](const ActRoot::MergerData& d)
-                     { return srim->Slow(beam, 35 * pb.GetAMU(), d.fRP.X()); }, {"MergerData"});
+                     { return srim->Slow(beam, 7.5 * pb.GetAMU(), d.fRP.X()); }, {"MergerData"});
 
-    ActPhysics::Kinematics kin {pb, pt, pl, 35 * pb.GetAMU()};
+    ActPhysics::Kinematics kin {pb, pt, pl, 7.5 * pb.GetAMU()};
     // Vector of kinematics as one object is needed per
     // processing slot (since we are changing EBeam in each entry)
     std::vector<ActPhysics::Kinematics> vkins {def.GetNSlots()};
     for(auto& k : vkins)
         k = kin;
-    def = def.DefineSlot("Ex",
-                         [&](unsigned int slot, const ActRoot::MergerData& d, double EVertex, double EBeam)
-                         {
-                             vkins[slot].SetBeamEnergy(EBeam);
-                             return vkins[slot].ReconstructExcitationEnergy(
-                                 EVertex, ((debug) ? d.fThetaDebug : d.fThetaLight) * TMath::DegToRad());
-                         },
-                         {"MergerData", "EVertex", "EBeam"});
     def =
-        def.DefineSlot("ExLegacy",
+        def.DefineSlot("Ex",
                        [&](unsigned int slot, const ActRoot::MergerData& d, double EVertex, double EBeam)
                        {
                            vkins[slot].SetBeamEnergy(EBeam);
-                           return vkins[slot].ReconstructExcitationEnergy(EVertex, d.fThetaLegacy * TMath::DegToRad());
+                           return vkins[slot].ReconstructExcitationEnergy(EVertex, (d.fThetaLight) * TMath::DegToRad());
                        },
                        {"MergerData", "EVertex", "EBeam"});
-    def = def.DefineSlot("ThetaCM",
-                         [&](unsigned int slot, const ActRoot::MergerData& d, double EVertex, double EBeam)
-                         {
-                             vkins[slot].SetBeamEnergy(EBeam);
-                             return vkins[slot].ReconstructTheta3CMFromLab(
-                                        EVertex, ((debug) ? d.fThetaDebug : d.fThetaLight) * TMath::DegToRad()) *
-                                    TMath::RadToDeg();
-                         },
-                         {"MergerData", "EVertex", "EBeam"});
     def =
-        def.DefineSlot("ThetaCMLegacy",
+        def.DefineSlot("ThetaCM",
                        [&](unsigned int slot, const ActRoot::MergerData& d, double EVertex, double EBeam)
                        {
                            vkins[slot].SetBeamEnergy(EBeam);
-                           return vkins[slot].ReconstructTheta3CMFromLab(EVertex, d.fThetaLegacy * TMath::DegToRad()) *
+                           return vkins[slot].ReconstructTheta3CMFromLab(EVertex, (d.fThetaLight) * TMath::DegToRad()) *
                                   TMath::RadToDeg();
                        },
                        {"MergerData", "EVertex", "EBeam"});
 
     // Book new histograms
-    auto hKin {def.Histo2D((isSide) ? HistConfig::KinEl : HistConfig::Kin, (debug) ? "fThetaDebug" : "fThetaLight",
-                           "EVertex")};
+    auto hKin {def.Histo2D(HistConfig::KinEl, "fThetaLight", "EVertex")};
 
     auto hKinCM {def.Histo2D(HistConfig::KinCM, "ThetaCM", "EVertex")};
 
     auto hEBeam {def.Histo1D("EBeam")};
     auto hEx {def.Histo1D(HistConfig::Ex, "Ex")};
 
-    auto hTheta {def.Histo1D((debug) ? "fThetaDebug" : "fThetaLight")};
+    auto hTheta {def.Histo1D("fThetaLight")};
 
     auto hThetaBeam {def.Histo2D(HistConfig::ThetaBeam, "fRP.fCoordinates.fX", "fThetaBeam")};
 
@@ -115,17 +101,14 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     // Ex dependences
     auto hExThetaCM {def.Histo2D(HistConfig::ExThetaCM, "ThetaCM", "Ex")};
     auto hExThetaLab {def.Histo2D(HistConfig::ExThetaLab, "fThetaLight", "Ex")};
-    auto hExThetaLegacy {
-        def.Histo2D(HistConfig::ChangeTitle(HistConfig::ExThetaLab, "E_{x}^{Legacy} vs #theta_{Legacy}"),
-                    "fThetaLegacy", "ExLegacy")};
     auto hExRP {def.Histo2D(HistConfig::ExRPx, "fRP.fCoordinates.fX", "Ex")};
 
     // Heavy histograms
     auto hThetaHLLab {def.Histo2D(HistConfig::ChangeTitle(HistConfig::ThetaHeavyLight, "Lab correlations"),
                                   "fThetaLight", "fThetaHeavy")};
     // Save!
-    auto outfile {gSelector->GetAnaFile(2, beam, target, light, false)};
-    def.Snapshot("Final_Tree", outfile);
+    // auto outfile {gSelector->GetAnaFile(2, beam, target, light, false)};
+    // def.Snapshot("Final_Tree", outfile);
 
     // Save also RP histogram!
     // auto* pRPx {hRP->ProjectionX("px")};
@@ -170,6 +153,5 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     c23->cd(2);
     hThetaCMLab->DrawClone("colz");
     c23->cd(3);
-    hExThetaLegacy->DrawClone("colz");
 }
 #endif

@@ -31,4 +31,11 @@ void Runner(TString what = "")
         gROOT->LoadMacro(path + func + ext);
         gROOT->ProcessLine(func + args);
     }
+    // Kin + Ex
+    if(what.Contains("2"))
+    {
+        func = "Pipe2_Ex";
+        gROOT->LoadMacro(path + func + ext);
+        gROOT->ProcessLine(func + args);
+    }
 }
