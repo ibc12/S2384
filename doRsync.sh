@@ -5,8 +5,10 @@ if [ "$1" == "ibc" ]; then
   SSH_KEY="$HOME/.ssh/rcmp_at_triumf_ibc"
 elif [ "$1" == "mlg" ]; then
   SSH_KEY="$HOME/.ssh/rcmp_at_triumf"
+elif [ "$1" == "ld" ]; then
+  SSH_KEY="$HOME/.ssh/rcmp_at_triumf_ld"
 else
-  echo "Error: first argument must be either ibc or mlg."
+  echo "Error: first argument must be either ibc, mlg or ld"
   exit 1
 fi
 
