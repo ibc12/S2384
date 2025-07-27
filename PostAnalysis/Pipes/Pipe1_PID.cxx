@@ -84,9 +84,9 @@ void Pipe1_PID(std::string beam, std::string target, std::string light)
     // Gas PID
     cuts.ReadCut("l0", TString::Format("./Cuts/pid_%s_l0.root", light.c_str()).Data());
     cuts.ReadCut("r0", TString::Format("./Cuts/pid_%s_r0.root", light.c_str()).Data());
-    cuts.ReadCut("f0", TString::Format("./Cuts/pid_%s_f0.root", light.c_str()).Data());
+    // cuts.ReadCut("f0", TString::Format("./Cuts/pid_%s_f0.root", light.c_str()).Data());
     // Two sils PID
-    cuts.ReadCut("f0-f1", TString::Format("./Cuts/pid_%s_f0_f1.root", light.c_str()).Data());
+    // cuts.ReadCut("f0-f1", TString::Format("./Cuts/pid_%s_f0_f1.root", light.c_str()).Data());
     if(cuts.GetListOfKeys().size())
     {
         // Apply PID and save in file
