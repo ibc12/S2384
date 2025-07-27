@@ -28,7 +28,7 @@ void DeltaE_Ef2f3()
     }
 
     auto dfFilterGATCONF = df.Filter(
-        [](ActRoot::ModularData& d) { return d.Get("GATCONF") == 64; }, {"ModularData"});
+        [](ActRoot::ModularData& d) { return d.Get("GATCONF") == 4; }, {"ModularData"});
 
     auto gated {
         dfFilterGATCONF.Filter([](ActRoot::SilData& d) { return (d.fSiE["f2"].size() && d.fSiE["f3"].size()); }, {"SilData"})};
