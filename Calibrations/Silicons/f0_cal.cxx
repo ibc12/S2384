@@ -115,6 +115,12 @@ void f0_cal()
     std::vector<std::shared_ptr<TH1D>> hfs;
     for(int s = 0; s < hsrebin.size(); s++)
     {
+        // Extract sil idx from hist name
+        std::string name {hs[s]->GetName()};
+        auto it {name.find_first_of("_")};
+        auto idxStr {name.substr(it + 1)};
+        int idx {std::stoi(idxStr)};
+
         const auto& adcChannel {adcChannels[s]};
         runners.emplace_back(&source, hsrebin[s], hs[s], false);
         auto& run {runners.back()};
@@ -136,8 +142,8 @@ void f0_cal()
         hfs.push_back(run.GetHistFinal());
 
         // Save calibration in file
-        auto label {TString::Format("Sil_%s_%d_E", which.c_str(), s)};
-        auto labelp {TString::Format("Sil_%s_%d_P", which.c_str(), s)};
+        auto label {TString::Format("Sil_%s_%d_E", which.c_str(), idx)};
+        auto labelp {TString::Format("Sil_%s_%d_P", which.c_str(), idx)};
         auto [p0, p1] {runners.back().GetParameters()};
         streamer << label << " " << p0 << " " << p1 << '\n';
         auto [ped, peds] {runners.back().GetPedestal()};
