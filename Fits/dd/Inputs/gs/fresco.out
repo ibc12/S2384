@@ -15,7 +15,7 @@
  Range of total J is     0.0 <= J <=    50.0 (at least     0.0) and Absorbtion =>    -1.0000 mb.
  Dry Run = F, CC set limits =  0  0, Relativistic kinematics =  , Both/Far/Near Analyses =  1                     
 
- Cross Sections (and up to T0 for 0=projectile) for Theta from   0.0 to-180.0 in steps of  1.0 degrees, DGAM=0,  Coordinates = 0 (Mads)
+ Cross Sections (and up to T0 for 0=projectile) for Theta from   1.0 to-180.0 in steps of  1.0 degrees, DGAM=0,  Coordinates = 0 (Mads)
 
  Lower Radial Cutoff = maximum of -1.60*L*h &       0.0 fm.,  Lower Cutoff for Couplings =   0.0  fm.
 
@@ -71,7 +71,7 @@
    from    0.00000     to   0.00000     in     0 intervals
 
  Largest real,imaginary parts of any form factor at R=   59.52 are   2.42E-02  1.32E-31 MeV
- Finished all Couplings @    3.94999981E-04           4
+ Finished all Couplings @    1.33300014E-03           4
 
  Symmetric Hamiltonian
 1***********************************************************************************************************************************
@@ -3320,7 +3320,7 @@
       50.5  1.00000000 -0.00000000i: elastic S-matrix  @@      0.00  0   0 F  0
  Reaction Xsec    50.5-/52 @ 6 =   0.000#, Out:   0.000#
 
- Finished all CC sets @    3.89849991E-02
+ Finished all CC sets @    4.69119996E-02
 0CUMULATIVE REACTION cross section                 = 1016.30763  <L> =     4.15  <L**2> =     20.6
 0CUMULATIVE outgoing cross sections in partition 1 :    0.00000
 0Cumulative ABSORBTION by Imaginary Potentials     = 1016.30763  <L> =     4.15  <L**2> =     20.6
@@ -3331,8 +3331,6 @@
 
  CROSS SECTIONS FOR OUTGOING d        & Li11     in state #   1 with spins & parities 1.0  + &  1.5  -;  0
 
-     0.01 deg.: X-S =   1.2495E+15 mb/sr,
-+                                         /R =   1.0000E+00
      1.00 deg.: X-S =   1.2199E+07 mb/sr,
 +                                         /R =   9.7624E-01
      2.00 deg.: X-S =   7.1952E+05 mb/sr,
@@ -3693,8 +3691,8 @@
 +                                         /R =   2.3797E+01
    179.99 deg.: X-S =     1.726375 mb/sr,
 +                                         /R =   2.3823E+01
-                                           Integrated********** mb, over [   0.000, 180.000] at    15.0000 MeV 
- Finished all xsecs @    5.20900004E-02
+                                           Integrated28190.5219 mb, over [   1.000, 180.000] at    15.0000 MeV 
+ Finished all xsecs @    5.99960014E-02
 
   The following files have been created:
    3:local copy of User input.            6:standard output.                   
@@ -3723,4 +3721,4 @@
  Forward-angle excitation cut off below   0.389 deg by max JT =      50.5
                               and below   0.325 deg by max R.
 
- Total CPU  0 time =       0.05 seconds
+ Total CPU  0 time =       0.06 seconds

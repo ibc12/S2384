@@ -37,10 +37,10 @@ void Pipe1_PID(std::string beam, std::string target, std::string light)
                     }};
 
     // Fill histograms
-    std::map<std::string, ROOT::TThreadedObject<TH2D>> hsgas, hstwo;
+    std::map<std::string, ROOT::TThreadedObject<TH2D>> hsgas, hstwo, hszero;
     // Histogram models
     auto hGasSil {new TH2D {"hGasSil", ";E_{Sil} [MeV];#Delta E_{gas} [arb. units]", 450, 0, 70, 600, 0, 3000}};
-    auto hTwoSils {new TH2D {"hTwoSils", ";#DeltaE_{0} [MeV];#DeltaE_{1} [MeV]", 300, 0, 30, 300, 0, 30}};
+    auto hTwoSils {new TH2D {"hTwoSils", ";#DeltaE_{0} [MeV];#DeltaE_{1} [MeV]", 500, 0, 80, 400, 0, 30}};
     for(const auto& layer : {"f0", "l0", "r0"})
     {
         hsgas.emplace(layer, *hGasSil);
@@ -48,11 +48,17 @@ void Pipe1_PID(std::string beam, std::string target, std::string light)
     }
     hstwo.emplace("f0-f1", *hTwoSils);
     hstwo["f0-f1"]->SetTitle("f0-f1");
+    for(int s = 0; s < 4; s++)
+    {
+        hszero.emplace(std::to_string(s), *hTwoSils);
+        hszero[std::to_string(s)]->SetTitle(TString::Format("f2_%d vs f3;E_{f3} [MeV];#DeltaE_{f2} [MeV]", s));
+    }
 
     // Fill them
     df.Foreach(
         [&](ActRoot::MergerData& m)
         {
+            // Light
             if(lambdaOne(m)) // Gas-E0 PID
             {
                 auto layer {m.fLight.GetLayer(0)};
@@ -62,6 +68,13 @@ void Pipe1_PID(std::string beam, std::string target, std::string light)
             else if(lambdaTwo(m)) // E0-E1 PID
             {
                 hstwo["f0-f1"]->Fill(m.fLight.fEs[0], m.fLight.fEs[1]);
+            }
+            // Heavy
+            if(m.fHeavy.GetNLayers() == 2)
+            {
+                auto n {std::to_string(m.fHeavy.fNs[0])};
+                if(hszero.count(n))
+                    hszero[n]->Fill(m.fHeavy.fEs[1], m.fHeavy.fEs[0]);
             }
         },
         {"MergerData"});
@@ -102,7 +115,7 @@ void Pipe1_PID(std::string beam, std::string target, std::string light)
 
     // Draw
     auto* c0 {new TCanvas {"c0", "PID canvas"}};
-    c0->DivideSquare(4);
+    c0->DivideSquare(6);
     int p {1};
     c0->cd(1);
     for(auto& [layer, h] : hsgas)
@@ -115,6 +128,16 @@ void Pipe1_PID(std::string beam, std::string target, std::string light)
     for(auto& [layer, h] : hstwo)
     {
         c0->cd(p);
+        h.Merge()->DrawClone("colz");
+        p++;
+    }
+
+    auto* c1 {new TCanvas {"c1", "PID canvas for 0 deg"}};
+    c1->DivideSquare(hszero.size());
+    p = 1;
+    for(auto& [s, h] : hszero)
+    {
+        c1->cd(p);
         h.Merge()->DrawClone("colz");
         p++;
     }

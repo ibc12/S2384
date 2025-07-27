@@ -1,4 +1,4 @@
-# 181 angles,  1 tensor ranks for 0=projectile
+# 180 angles,  1 tensor ranks for 0=projectile
 @subtitle   "11Li + d g.s with Daehnick OMP;"                                               
 @legend ON
 @legend x1 0.2
@@ -8,7 +8,6 @@
 @legend string   0 "Lab energy =   15.0000"
 #legend string   0 "Partition=  1 Excit=  1 near/far= 1"
 #  Theta       sigma       iT11        T20         T21         T22         Kyy for projectile
-  0.1000E-01  0.1250E+16
    1.000      0.1220E+08
    2.000      0.7195E+06
    3.000      0.1319E+06
