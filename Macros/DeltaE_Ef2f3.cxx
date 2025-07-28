@@ -105,5 +105,9 @@ void DeltaE_Ef2f3()
         hs[s]->SetStats(0);
         hs[s]->DrawClone("colz");
     }
+
+    auto* c2 = new TCanvas("c2", "Delta E f2 vs f3 for 1 cuadrant sils", 800, 600);
+    c2->cd();
+    hs[1]->DrawClone("colz");
        
 }
