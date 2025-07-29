@@ -10,7 +10,7 @@ void Runner(TString what = "")
 {
     std::string beam {"11Li"};
     std::string target {"d"};
-    std::string light {"p"};
+    std::string light {"t"};
 
     std::cout << BOLDGREEN << "···· Runner ····" << '\n';
     std::cout << "-> Beam   : " << beam << '\n';
@@ -24,6 +24,13 @@ void Runner(TString what = "")
     TString func {};
     TString ext {".cxx"};
 
+    // CFA counter
+    if(what.Contains("0"))
+    {
+        func = "Pipe0_Beam";
+        gROOT->LoadMacro(path + func + ext);
+        gROOT->ProcessLine(func + "()");
+    }
     // PID
     if(what.Contains("1"))
     {
