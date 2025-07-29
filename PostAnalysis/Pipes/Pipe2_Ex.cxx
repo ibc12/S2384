@@ -24,6 +24,7 @@
 
 void Pipe2_Ex(const std::string &beam, const std::string &target, const std::string &light)
 {
+    // gStyle->SetOptStat(0);
     // Read data
     auto filename{TString::Format("./Outputs/tree_pid_%s_%s.root", target.c_str(), light.c_str())};
     ROOT::EnableImplicitMT();
@@ -45,7 +46,7 @@ void Pipe2_Ex(const std::string &beam, const std::string &target, const std::str
     srim->ReadTable(light, TString::Format("../Calibrations/SRIM/%s_900mb_CF4_95-5.txt", srimName.c_str()).Data());
     srim->ReadTable(beam, TString::Format("../Calibrations/SRIM/%s_900mb_CF4_95-5.txt", beam.c_str()).Data());
     // Build energy at vertex
-    auto dfVertex = df.Define("EVertex", [&](const ActRoot::MergerData &d)
+    auto def = df.Define("EVertex", [&](const ActRoot::MergerData &d)
                               { return srim->EvalInitialEnergy(light, d.fSilEs.front(), d.fTrackLength); }, {"MergerData"});
 
     // Init particles
@@ -54,19 +55,11 @@ void Pipe2_Ex(const std::string &beam, const std::string &target, const std::str
     ActPhysics::Particle pl{light};
 
     // Filter on heavy particle hit in the telescope
-    auto def = dfVertex.Filter([](const ActRoot::MergerData &m)
-                               { if(!m.fHeavy.fLayers.empty() && m.fHeavy.fLayers.front() == "f2")
-                               {
-                                    if(m.fHeavy.fEs[0] > 9.5)
-                                    {
-                                        return true;
-                                    }
-                                    else
-                                        return false;
-                               }
-                                    
-                               else
-                                    return false; }, {"MergerData"});
+    // auto def = dfVertex.Filter([](const ActRoot::MergerData &m)
+    //                            { if(!m.fHeavy.fLayers.empty() && m.fHeavy.fLayers.front() == "f2")
+    //                                 return true;
+    //                            else
+    //                                 return false; }, {"MergerData"});
 
     // Build beam energy
     def = def.Define("EBeam", [&](const ActRoot::MergerData &d)
