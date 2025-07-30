@@ -121,17 +121,10 @@ void checkL1Events()
             return false;
     },
     {"L1Vars"})};
-<<<<<<< HEAD
     std::ofstream outFile("./Outputs/L1_events_run_22.dat");
     dfAll.Foreach([&](ActRoot::MergerData &m)
                        { m.Stream(outFile); }, {"MergerData"});
     outFile.close();
-=======
-    // std::ofstream outFile("./Outputs/L1_events_only_protons.dat");
-    // gated.Foreach([&](ActRoot::MergerData &m)
-    //                    { m.Stream(outFile); }, {"MergerData"});
-    // outFile.close();
->>>>>>> 3fdf758d8d11854924ceea6cee6dd1a10a5c1a7c
 
     auto hitsLengthCharge {dfAll.Define("x", "L1Vars.fTL")
                                .Define("y", "L1Vars.fQtotal")
