@@ -29,9 +29,6 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     ROOT::EnableImplicitMT();
     ROOT::RDataFrame df {"PID_Tree", filename};
 
-    // Book histograms
-    auto hPID {df.Define("ESil0", "fSilEs.front()").Histo2D(HistConfig::PID, "ESil0", "fLight.fQave")};
-
     // Init SRIM
     auto* srim {new ActPhysics::SRIM};
     // Correct SRIM names
@@ -45,9 +42,17 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     srim->ReadTable(light, TString::Format("../Calibrations/SRIM/%s_900mb_CF4_95-5.txt", srimName.c_str()).Data());
     srim->ReadTable(beam, TString::Format("../Calibrations/SRIM/%s_900mb_CF4_95-5.txt", beam.c_str()).Data());
     // Build energy at vertex
-    auto dfVertex =
-        df.Define("EVertex", [&](const ActRoot::MergerData& d)
-                  { return srim->EvalInitialEnergy(light, d.fSilEs.front(), d.fTrackLength); }, {"MergerData"});
+    auto dfVertex = df.Define("EVertex",
+                              [&](const ActRoot::MergerData& d)
+                              {
+                                  double ret {};
+                                  if(d.fLight.IsFilled())
+                                      ret = srim->EvalInitialEnergy(light, d.fLight.fEs.front(), d.fLight.fTL);
+                                  else // L1 trigger
+                                      ret = srim->EvalEnergy(light, d.fLight.fTL);
+                                  return ret;
+                              },
+                              {"MergerData"});
 
     // Init particles
     ActPhysics::Particle pb {beam};
@@ -98,13 +103,20 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
                        },
                        {"MergerData", "EVertex", "EBeam"});
 
+
     // Book new histograms
     auto hKin {def.Histo2D(HistConfig::KinEl, "fThetaLight", "EVertex")};
 
     auto hKinCM {def.Histo2D(HistConfig::KinCM, "ThetaCM", "EVertex")};
 
     auto hEBeam {def.Histo1D("EBeam")};
-    auto hEx {def.Histo1D(HistConfig::Ex, "Ex")};
+
+    auto hExSil {def.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})
+                     .Histo1D(HistConfig::Ex, "Ex")};
+    hExSil->SetTitle("Ex with silicons");
+    auto hExL1 {def.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; }, {"MergerData"})
+                    .Histo1D(HistConfig::Ex, "Ex")};
+    hExL1->SetTitle("Ex with L1");
 
     auto hTheta {def.Histo1D("fThetaLight")};
 
@@ -127,9 +139,6 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     def.Snapshot("Final_Tree", outfile);
     std::cout << "Saving Final_Tree in " << outfile << '\n';
 
-    // plot
-    auto* c20 {new TCanvas("c20", "Pipe2 canvas 0")};
-    hPID->DrawClone("colz");
 
     auto* c22 {new TCanvas("c22", "Pipe2 canvas 2")};
     c22->DivideSquare(4);
@@ -149,11 +158,12 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     auto* theo {kin.GetKinematicLine3()};
     theo->Draw("same");
     c21->cd(2);
-    hEx->DrawClone();
+    hExSil->DrawClone();
     c21->cd(3);
     hKinCM->DrawClone("colz");
     c21->cd(4);
-    hExThetaLab->DrawClone("colz");
+    hExL1->DrawClone();
+    // hExThetaLab->DrawClone("colz");
     c21->cd(5);
     hExThetaCM->DrawClone("colz");
     c21->cd(6);

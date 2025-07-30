@@ -2,6 +2,7 @@
 #include "ActDataManager.h"
 #include "ActKinematics.h"
 #include "ActMergerData.h"
+#include "ActModularData.h"
 #include "ActTypes.h"
 
 #include "ROOT/RDataFrame.hxx"
@@ -19,33 +20,22 @@ void Pipe1_PID(std::string beam, std::string target, std::string light)
     // Read data
     ActRoot::DataManager dataman {"../configs/data.conf", ActRoot::ModeType::EMerge};
     auto chain {dataman.GetChain()};
+    auto chain2 {dataman.GetChain(ActRoot::ModeType::EReadSilMod)};
+    chain->AddFriend(chain2.get());
 
     // RDataFrame
     ROOT::EnableImplicitMT();
     ROOT::RDataFrame dforigin {*chain};
 
-    // Filter some of the silicons
-    auto dfFilterLeftSilicon = dforigin.Filter(
+    // Filter silicon pads
+    auto df = dforigin.Filter(
         [](ActRoot::MergerData& m)
         {
-            if(!m.fLight.fLayers.empty() && m.fLight.fLayers.front() == "l0")
-            {
-                if(!m.fLight.fNs.empty() && m.fLight.fNs.front() == 9)
-                {
+            // Mask L0_9
+            if(m.fLight.fNs.size())
+                if((m.fLight.fLayers.front() == "l0") && (m.fLight.fNs.front() == 9))
                     return false;
-                }
-                else
-                    return true;
-            }
-            else
-                return true;
-        },
-        {"MergerData"});
-
-    // Filter the right wall for the runs in 27/07 night
-    auto df = dfFilterLeftSilicon.Filter(
-        [](ActRoot::MergerData& m)
-        {
+            // Mask R0 sils depending on run number
             if(m.fRun > 29 && m.fRun < 37)
             {
                 if(m.fRun == 30 || m.fRun == 31)
@@ -104,6 +94,9 @@ void Pipe1_PID(std::string beam, std::string target, std::string light)
                     }};
     // 3-> Heavy particle
     auto lambdaHeavy {[](ActRoot::MergerData& m) { return m.fHeavy.GetNLayers() == 2; }};
+    // 4-> L1
+    auto lambdaIsL1 {[](ActRoot::MergerData& mer, ActRoot::ModularData& mod)
+                     { return (mod.Get("GATCONF") == 8) && (mer.fLightIdx != -1); }};
 
     // Fill histograms
     std::map<std::string, ROOT::TThreadedObject<TH2D>> hsgas, hstwo, hszero;
@@ -122,11 +115,21 @@ void Pipe1_PID(std::string beam, std::string target, std::string light)
         hszero.emplace(std::to_string(s), *hTwoSils);
         hszero[std::to_string(s)]->SetTitle(TString::Format("f2_%d vs f3;E_{f3} [MeV];#DeltaE_{f2} [MeV]", s));
     }
+    ROOT::TThreadedObject<TH2D> hl1 {"hl1", "L1 PID;Raw TL [au];Q_{total} [au]", 200, 0, 120, 2000, 0, 3e5};
+    ROOT::TThreadedObject<TH2D> hl1theta {
+        "hl1theta", "L1 #theta;#theta_{L1} [#circ];Q_{total} [au]", 200, 0, 120, 2000, 0, 3e5};
 
     // Fill them
     df.Foreach(
-        [&](ActRoot::MergerData& m)
+        [&](ActRoot::MergerData& m, ActRoot::ModularData& mod)
         {
+            // L1
+            if(lambdaIsL1(m, mod))
+            {
+                hl1->Fill(m.fLight.fRawTL, m.fLight.fQtotal);
+                hl1theta->Fill(m.fThetaLight, m.fLight.fQtotal);
+                return;
+            }
             // Light
             if(lambdaOne(m)) // Gas-E0 PID
             {
@@ -146,7 +149,7 @@ void Pipe1_PID(std::string beam, std::string target, std::string light)
                     hszero[n]->Fill(m.fHeavy.fEs[1], m.fHeavy.fEs[0]);
             }
         },
-        {"MergerData"});
+        {"MergerData", "ModularData"});
 
     // If cuts are present, apply them
     ActRoot::CutsManager<std::string> cuts;
@@ -154,6 +157,7 @@ void Pipe1_PID(std::string beam, std::string target, std::string light)
     cuts.ReadCut("l0", TString::Format("./Cuts/pid_%s_l0.root", light.c_str()).Data());
     cuts.ReadCut("r0", TString::Format("./Cuts/pid_%s_r0.root", light.c_str()).Data());
     // cuts.ReadCut("f0", TString::Format("./Cuts/pid_%s_f0.root", light.c_str()).Data());
+    cuts.ReadCut("l1", TString::Format("./Cuts/pid_%s_l1.root", light.c_str()).Data());
     // Read indivitual cuts for heavy particle
     if(light == "p")
     {
@@ -174,10 +178,18 @@ void Pipe1_PID(std::string beam, std::string target, std::string light)
     {
         // Apply PID and save in file
         auto gated {df.Filter(
-            [&](ActRoot::MergerData& m)
+            [&](ActRoot::MergerData& m, ActRoot::ModularData& mod)
             {
+                // L1
+                if(lambdaIsL1(m, mod))
+                {
+                    if(cuts.GetCut("l1"))
+                        return cuts.IsInside("l1", m.fLight.fRawTL, m.fLight.fQtotal);
+                    else
+                        return false;
+                }
                 // One silicon
-                if(lambdaOne(m))
+                else if(lambdaOne(m))
                 {
                     auto layer {m.fLight.GetLayer(0)};
                     if(cuts.GetCut(layer))
@@ -216,7 +228,7 @@ void Pipe1_PID(std::string beam, std::string target, std::string light)
                 else
                     return false;
             },
-            {"MergerData"})};
+            {"MergerData", "ModularData"})};
         auto name {TString::Format("./Outputs/tree_pid_%s_%s.root", target.c_str(), light.c_str())};
         std::cout << "Saving PID_Tree in file : " << name << '\n';
         gated.Snapshot("PID_Tree", name.Data());
@@ -240,6 +252,11 @@ void Pipe1_PID(std::string beam, std::string target, std::string light)
         h.Merge()->DrawClone("colz");
         p++;
     }
+    c0->cd(5);
+    hl1.Merge()->DrawClone("colz");
+    cuts.DrawCut("l1");
+    c0->cd(6);
+    hl1theta.Merge()->DrawClone("colz");
 
     auto* c1 {new TCanvas {"c1", "PID canvas for 0 deg"}};
     c1->DivideSquare(hszero.size());
