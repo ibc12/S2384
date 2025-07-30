@@ -15,8 +15,15 @@ fi
 # From where
 remote="rcmp@142.90.96.93"
 
-# Set directories
-dirs=("Raw" "Cluster" "Data" "Filter" "Merger")
+# Skip first argument
+shift
+
+# And now read directiories if passed
+if [ "$#" -eq 0 ]; then
+  dirs=("Raw" "Cluster" "Data" "Filter" "Merger") # default case
+else
+  dirs=("$@")
+fi
 
 #Act on dirs
 for d in "${dirs[@]}"; do
