@@ -4,6 +4,7 @@
 #include "ActSilData.h"
 #include "ActTPCData.h"
 #include "ActTPCParameters.h"
+#include "ActCutsManager.h"
 
 #include <ROOT/RDataFrame.hxx>
 
@@ -109,6 +110,25 @@ void checkL1Events()
                                        return vars;
                                    },
                                    {"MergerData", "TPCData"});
+
+    // If cuts are present, apply them
+    ActRoot::CutsManager<std::string> cuts;
+    // Gas PID
+    cuts.ReadCut("L1_p", "./Outputs/p_events_L1.root");
+
+    // Apply PID and save in file
+    auto gated {dfAll.Filter(
+    [&](const L1Vars& vars) {
+        if (cuts.GetCut("L1_p"))
+            return cuts.IsInside("L1_p", vars.fTL, vars.fQtotal);
+        else
+            return false;
+    },
+    {"L1Vars"})};
+    // std::ofstream outFile("./Outputs/L1_events_only_protons.dat");
+    // gated.Foreach([&](ActRoot::MergerData &m)
+    //                    { m.Stream(outFile); }, {"MergerData"});
+    // outFile.close();
 
     auto hitsLengthCharge {dfAll.Define("x", "L1Vars.fTL")
                                .Define("y", "L1Vars.fQtotal")
