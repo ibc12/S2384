@@ -8,12 +8,21 @@
 #include "TROOT.h"
 
 #include <atomic>
+#include <stdexcept>
 
-void Pipe0_Beam()
+void Pipe0_Beam(const std::string& beam)
 {
+    std::string dataconf {};
+    if(beam == "11Li")
+        dataconf = "./../configs/data.conf";
+    else if(beam == "7Li")
+        dataconf = "./../configs/data_7Li.conf";
+    else
+        throw std::runtime_error("Beam cannot differ from 11Li or 7Li");
+
     ROOT::EnableImplicitMT();
     // Read data
-    ActRoot::DataManager datman {"./../configs/data.conf", ActRoot::ModeType::EReadSilMod};
+    ActRoot::DataManager datman {dataconf, ActRoot::ModeType::EReadSilMod};
     auto chain {datman.GetJoinedData()};
     ROOT::RDataFrame df {*chain};
 

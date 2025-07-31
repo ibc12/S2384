@@ -1,7 +1,6 @@
 #ifndef Pipe2_Ex_cxx
 #define Pipe2_Ex_cxx
 
-#include "ActColors.h"
 #include "ActKinematics.h"
 #include "ActMergerData.h"
 #include "ActParticle.h"
@@ -15,7 +14,6 @@
 #include "TROOT.h"
 #include "TString.h"
 
-#include <ios>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -25,7 +23,7 @@
 void Pipe2_Ex(const std::string& beam, const std::string& target, const std::string& light)
 {
     // Read data
-    auto filename {TString::Format("./Outputs/tree_pid_%s_%s.root", target.c_str(), light.c_str())};
+    auto filename {TString::Format("./Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
     ROOT::EnableImplicitMT();
     ROOT::RDataFrame df {"PID_Tree", filename};
 
@@ -135,7 +133,7 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     auto hThetaHLLab {def.Histo2D(HistConfig::ChangeTitle(HistConfig::ThetaHeavyLight, "Lab correlations"),
                                   "fThetaLight", "fThetaHeavy")};
     // Save!
-    auto outfile {TString::Format("./Outputs/tree_ex_%s_%s.root", target.c_str(), light.c_str())};
+    auto outfile {TString::Format("./Outputs/tree_ex_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
     def.Snapshot("Final_Tree", outfile);
     std::cout << "Saving Final_Tree in " << outfile << '\n';
 

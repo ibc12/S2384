@@ -15,10 +15,18 @@
 #include <map>
 #include <string>
 
-void Pipe1_PID(std::string beam, std::string target, std::string light)
+void Pipe1_PID(const std::string& beam, const std::string& target, const std::string& light)
 {
+    std::string dataconf {};
+    if(beam == "11Li")
+        dataconf = "./../configs/data.conf";
+    else if(beam == "7Li")
+        dataconf = "./../configs/data_7Li.conf";
+    else
+        throw std::runtime_error("Beam cannot differ from 11Li or 7Li");
+
     // Read data
-    ActRoot::DataManager dataman {"../configs/data.conf", ActRoot::ModeType::EMerge};
+    ActRoot::DataManager dataman {dataconf, ActRoot::ModeType::EMerge};
     auto chain {dataman.GetChain()};
     auto chain2 {dataman.GetChain(ActRoot::ModeType::EReadSilMod)};
     chain->AddFriend(chain2.get());
@@ -116,8 +124,12 @@ void Pipe1_PID(std::string beam, std::string target, std::string light)
         hszero[std::to_string(s)]->SetTitle(TString::Format("f2_%d vs f3;E_{f3} [MeV];#DeltaE_{f2} [MeV]", s));
     }
     ROOT::TThreadedObject<TH2D> hl1 {"hl1", "L1 PID;Raw TL [au];Q_{total} [au]", 200, 0, 120, 2000, 0, 3e5};
+    ROOT::TThreadedObject<TH2D> hl1Gated {"hl1", "L1 PID > 100#circ;Raw TL [au];Q_{total} [au]", 200, 0, 120, 2000, 0,
+                                          3e5};
     ROOT::TThreadedObject<TH2D> hl1theta {
-        "hl1theta", "L1 #theta;#theta_{L1} [#circ];Q_{total} [au]", 200, 0, 120, 2000, 0, 3e5};
+        "hl1theta", "L1 #theta;#theta_{L1} [#circ];Q_{total} [au]", 240, 0, 180, 2000, 0, 3e5};
+    ROOT::TThreadedObject<TH2D> hl1thetaCorr {
+        "hl1thetaCorr", "L1 #thetas;#theta_{Light} [#circ];#theta_{Heavy} [#circ]", 240, 0, 180, 200, 0, 100};
 
     // Fill them
     df.Foreach(
@@ -128,6 +140,9 @@ void Pipe1_PID(std::string beam, std::string target, std::string light)
             {
                 hl1->Fill(m.fLight.fRawTL, m.fLight.fQtotal);
                 hl1theta->Fill(m.fThetaLight, m.fLight.fQtotal);
+                hl1thetaCorr->Fill(m.fThetaLight, m.fThetaHeavy);
+                if(m.fThetaLight > 100)
+                    hl1Gated->Fill(m.fLight.fRawTL, m.fLight.fQtotal);
                 return;
             }
             // Light
@@ -159,7 +174,7 @@ void Pipe1_PID(std::string beam, std::string target, std::string light)
     // cuts.ReadCut("f0", TString::Format("./Cuts/pid_%s_f0.root", light.c_str()).Data());
     cuts.ReadCut("l1", TString::Format("./Cuts/pid_%s_l1.root", light.c_str()).Data());
     // Read indivitual cuts for heavy particle
-    if(light == "p")
+    if(beam == "11Li" && light == "p")
     {
         for(const auto& heavy : {"11Li", "9Li"}) // these two particles are bound to (d,p) reaction
         {
@@ -229,13 +244,13 @@ void Pipe1_PID(std::string beam, std::string target, std::string light)
                     return false;
             },
             {"MergerData", "ModularData"})};
-        auto name {TString::Format("./Outputs/tree_pid_%s_%s.root", target.c_str(), light.c_str())};
+        auto name {TString::Format("./Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
         std::cout << "Saving PID_Tree in file : " << name << '\n';
         gated.Snapshot("PID_Tree", name.Data());
     }
 
     // Draw
-    auto* c0 {new TCanvas {"c0", "PID canvas"}};
+    auto* c0 {new TCanvas {"c0", "Pipe 1 PID canvas 0"}};
     c0->DivideSquare(6);
     int p {1};
     c0->cd(1);
@@ -258,7 +273,7 @@ void Pipe1_PID(std::string beam, std::string target, std::string light)
     c0->cd(6);
     hl1theta.Merge()->DrawClone("colz");
 
-    auto* c1 {new TCanvas {"c1", "PID canvas for 0 deg"}};
+    auto* c1 {new TCanvas {"c1", "Pipe1 PID canvas 1"}};
     c1->DivideSquare(hszero.size());
     p = 1;
     for(auto& [s, h] : hszero)
@@ -272,4 +287,18 @@ void Pipe1_PID(std::string beam, std::string target, std::string light)
         }
         p++;
     }
+
+    auto* c2 {new TCanvas {"c2", "Pipe1 PID canvas 2"}};
+    c2->DivideSquare(4);
+    c2->cd(1);
+    hl1.GetAtSlot(0)->DrawClone("colz");
+    c2->cd(2);
+    hl1theta.GetAtSlot(0)->DrawClone("colz");
+    c2->cd(3);
+    hl1thetaCorr.Merge()->DrawClone("colz");
+    auto* gtheo {ActPhysics::Kinematics(TString::Format("%s(d,p)@82.5", beam.c_str()).Data()).GetTheta3vs4Line()};
+    gtheo->SetLineColor(46);
+    gtheo->Draw("l");
+    c2->cd(4);
+    hl1Gated.Merge()->DrawClone("colz");
 }
