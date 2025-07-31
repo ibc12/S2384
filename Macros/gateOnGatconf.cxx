@@ -17,11 +17,11 @@ void gateOnGatconf()
     ROOT::RDataFrame df {*chain};
 
     // Stream entry number
-    std::ofstream streamer {"./Outputs/gatconf_f0.dat"};
+    std::ofstream streamer {"./Outputs/gatconf_l1_mlg.dat"};
     df.Foreach(
         [&](ActRoot::ModularData& mod, ActRoot::MergerData& mer)
         {
-            if(mod.Get("GATCONF") == 4) // f0
+            if(mod.Get("GATCONF") == 8)
                 mer.Stream(streamer);
         },
         {"ModularData", "MergerData"});
