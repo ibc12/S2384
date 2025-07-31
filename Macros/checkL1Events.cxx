@@ -51,7 +51,7 @@ void checkL1Events()
         {
             if(mod.Get("GATCONF") == 8)
             {
-                if(d.fLightIdx >= tpc.fClusters.size())
+                if(d.fLightIdx == -1)
                     return false;
 
                 auto& light = tpc.fClusters[d.fLightIdx];
@@ -113,18 +113,18 @@ void checkL1Events()
     cuts.ReadCut("L1_p", "./Outputs/p_events_L1.root");
 
     // Apply PID and save in file
-    auto gated {dfAll.Filter(
-    [&](const L1Vars& vars) {
-        if (cuts.GetCut("L1_p"))
-            return cuts.IsInside("L1_p", vars.fTL, vars.fQtotal);
-        else
-            return false;
-    },
-    {"L1Vars"})};
-    std::ofstream outFile("./Outputs/L1_events_run_22.dat");
-    dfAll.Foreach([&](ActRoot::MergerData &m)
-                       { m.Stream(outFile); }, {"MergerData"});
-    outFile.close();
+    // auto gated {dfAll.Filter(
+    // [&](const L1Vars& vars) {
+    //     if (cuts.GetCut("L1_p"))
+    //         return cuts.IsInside("L1_p", vars.fTL, vars.fQtotal);
+    //     else
+    //         return false;
+    // },
+    // {"L1Vars"})};
+    // std::ofstream outFile("./Outputs/L1_events_run_22.dat");
+    // dfAll.Foreach([&](ActRoot::MergerData &m)
+    //                    { m.Stream(outFile); }, {"MergerData"});
+    // outFile.close();
 
     auto hitsLengthCharge {dfAll.Define("x", "L1Vars.fTL")
                                .Define("y", "L1Vars.fQtotal")
