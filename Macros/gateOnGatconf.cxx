@@ -16,12 +16,23 @@ void gateOnGatconf()
 
     ROOT::RDataFrame df {*chain};
 
+    auto dfFilter {df.Filter(
+        [](ActRoot::MergerData& m)
+        {
+            if(!m.fLight.IsFilled() || m.fLight.fLayers.front() != "f0")
+                return false;
+            if(m.fLight.fNs.front() == 2)
+                return true;
+            return false;
+        },
+        {"MergerData"})};
+
     // Stream entry number
-    std::ofstream streamer {"./Outputs/gatconf_l1_mlg.dat"};
-    df.Foreach(
+    std::ofstream streamer {"./Outputs/gatconf_f0_sil2.dat"};
+    dfFilter.Foreach(
         [&](ActRoot::ModularData& mod, ActRoot::MergerData& mer)
         {
-            if(mod.Get("GATCONF") == 8)
+            if(mod.Get("GATCONF") == 4)
                 mer.Stream(streamer);
         },
         {"ModularData", "MergerData"});

@@ -30,7 +30,7 @@ void PlotSP()
 
     // Gate on events (L1 trigger has no good z relative point)
     auto gated{df.Filter([](ActRoot::ModularData &d)
-                         { return d.Get("GATCONF") == 4; }, {"ModularData"})
+                         { return d.Get("GATCONF") == 2; }, {"ModularData"})
                    .Filter(
                        [](ActRoot::MergerData &m)
                        {
@@ -41,7 +41,7 @@ void PlotSP()
                        {"MergerData"})};
 
     // Fill histograms
-    int nsils{11};
+    int nsils{12};
     std::map<std::string, std::map<int, ROOT::TThreadedObject<TH2D>>> hs;
     // Histogram model
     auto *h2d{new TH2D{"h2d", "SP;X or Y [pad];Z [btb]", 300, 0, 300, 500, 0, 500}};
@@ -77,12 +77,22 @@ void PlotSP()
     auto *c0{new TCanvas{"c0", "SP canvas"}};
     c0->DivideSquare(4);
     int p{1};
+    int canvasIdx {0};
     for (auto &[layer, hsils] : hs)
     {
-        c0->cd(p);
+        // Crear un nuevo canvas para cada histograma
+        auto cname = Form("c%d", canvasIdx++);
+        auto c = new TCanvas{cname, Form("SP canvas %d", canvasIdx), 800, 600};
+        if(layer == "l0" || layer == "r0")
+            c->Divide(3,4);
+        if(layer == "f0")
+            c->Divide(4,3);
+        //c0->cd(p);
         int idx{};
+        std::cout<<hsils.size() << " histograms for layer " << layer << std::endl;
         for (auto &[s, h] : hsils)
         {
+            c->cd(idx + 1);
             auto color{idx + 1};
             if (color == 10) // 10 is white, as well as 0
                 color = 46;
@@ -94,8 +104,10 @@ void PlotSP()
             // Set size
             h.GetAtSlot(0)->SetMarkerSize(0.8);
             h->SetMarkerStyle(20);
+            // Set title
+            h->SetTitle(TString::Format("Layer %s, S%d", layer.c_str(), s));
             // Draw
-            h.GetAtSlot(0)->DrawClone(opts);
+            h.GetAtSlot(0)->DrawClone("colz");
             idx++;
         }
         p++;
