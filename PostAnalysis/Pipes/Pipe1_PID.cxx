@@ -169,10 +169,10 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     // If cuts are present, apply them
     ActRoot::CutsManager<std::string> cuts;
     // Gas PID
-    cuts.ReadCut("l0", TString::Format("./Cuts/pid_%s_l0.root", light.c_str()).Data());
-    cuts.ReadCut("r0", TString::Format("./Cuts/pid_%s_r0.root", light.c_str()).Data());
-    // cuts.ReadCut("f0", TString::Format("./Cuts/pid_%s_f0.root", light.c_str()).Data());
-    cuts.ReadCut("l1", TString::Format("./Cuts/pid_%s_l1.root", light.c_str()).Data());
+    cuts.ReadCut("l0", TString::Format("./Cuts/pid_%s_l0_%s.root", light.c_str(), beam.c_str()).Data());
+    cuts.ReadCut("r0", TString::Format("./Cuts/pid_%s_r0_%s.root", light.c_str(), beam.c_str()).Data());
+    // cuts.ReadCut("f0", TString::Format("./Cuts/pid_%s_f0_%s.root", light.c_str(), beam.c_str()).Data());
+    cuts.ReadCut("l1", TString::Format("./Cuts/pid_%s_l1_%s.root", light.c_str(), beam.c_str()).Data());
     // Read indivitual cuts for heavy particle
     if(beam == "11Li" && light == "p")
     {
@@ -180,13 +180,13 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
         {
             for(int s = 0; s < 4; s++) // one cut per f2 quad pad
             {
-                cuts.ReadCut(TString::Format("%s_f2_%d_f3", heavy, s).Data(),
-                             TString::Format("./Cuts/pid_%s_f2_%d.root", heavy, s).Data());
+                //cuts.ReadCut(TString::Format("%s_f2_%d_f3", heavy, s).Data(),
+                //             TString::Format("./Cuts/pid_%s_f2_%d.root", heavy, s).Data());
             }
         }
     }
     // Two sils PID
-    // cuts.ReadCut("f0-f1", TString::Format("./Cuts/pid_%s_f0_f1.root", light.c_str()).Data());
+    // cuts.ReadCut("f0-f1", TString::Format("./Cuts/pid_%s_f0_f1_%s.root", light.c_str(), beam.c_str()).Data());
     // Get list of cuts
     auto listOfCuts {cuts.GetListOfKeys()};
     if(listOfCuts.size())

@@ -30,7 +30,7 @@ void PlotSP()
 
     // Gate on events (L1 trigger has no good z relative point)
     auto gated{df.Filter([](ActRoot::ModularData &d)
-                         { return d.Get("GATCONF") == 2; }, {"ModularData"})
+                         { return d.Get("GATCONF") == 4; }, {"ModularData"})
                    .Filter(
                        [](ActRoot::MergerData &m)
                        {
