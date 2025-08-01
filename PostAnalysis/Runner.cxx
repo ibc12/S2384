@@ -8,9 +8,9 @@
 
 void Runner(TString what = "")
 {
-    std::string beam {"7Li"};
+    std::string beam {"11Li"};
     std::string target {"d"};
-    std::string light {"p"};
+    std::string light {"t"};
 
     std::cout << BOLDGREEN << "···· Runner ····" << '\n';
     std::cout << "-> Beam   : " << beam << '\n';
