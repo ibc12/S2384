@@ -176,12 +176,12 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     // Read indivitual cuts for heavy particle
     if(beam == "11Li" && light == "p")
     {
-        for(const auto& heavy : {"11Li", "9Li"}) // these two particles are bound to (d,p) reaction
+        for(const auto& heavy : { "9Li"}) // these two particles are bound to (d,p) reaction
         {
             for(int s = 0; s < 4; s++) // one cut per f2 quad pad
             {
-                //cuts.ReadCut(TString::Format("%s_f2_%d_f3", heavy, s).Data(),
-                //             TString::Format("./Cuts/pid_%s_f2_%d.root", heavy, s).Data());
+                cuts.ReadCut(TString::Format("%s_f2_%d_f3", heavy, s).Data(),
+                             TString::Format("./Cuts/pid_%s_f2_%d_%s.root", heavy, s, beam.c_str()).Data());
             }
         }
     }
