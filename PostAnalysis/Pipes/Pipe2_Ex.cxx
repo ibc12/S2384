@@ -15,6 +15,7 @@
 #include "TString.h"
 
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -136,6 +137,11 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     auto outfile {TString::Format("./Outputs/tree_ex_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
     def.Snapshot("Final_Tree", outfile);
     std::cout << "Saving Final_Tree in " << outfile << '\n';
+    // Save Ex histos on file
+    auto file {std::make_shared<TFile>(outfile.Data(), "update")};
+    hExSil->Write("hExSil");
+    hExL1->Write("hExL1");
+    file->Close();
 
 
     auto* c22 {new TCanvas("c22", "Pipe2 canvas 2")};
