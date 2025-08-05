@@ -13,7 +13,7 @@ std::vector<double> GetPeaks(TH2D *h, int c)
     auto *proj{h->ProjectionY("proj", c, c)};
 
     auto *spe{new TSpectrum(11)}; // max nums of peaks, is overstimated
-    int nPeaks{spe->Search(proj, 2, "nodraw", 0.05)};
+    int nPeaks{spe->Search(proj, 2, "nodraw", 0.025)};
 
     double *xPositions{spe->GetPositionX()}; // We have to sort them
 
@@ -40,6 +40,7 @@ void FillGraph(TGraph *graph, const std::vector<double> &x, const std::vector<do
 {
     if (x.size() != y.size())
     {
+        std::cout << "Vectors x and y have different sizes!" << '\n';
         streamer << 0 << " " << 0 << " " << 0 << std::endl;
         return;
     }
@@ -63,7 +64,7 @@ void FillGraph(TGraph *graph, const std::vector<double> &x, const std::vector<do
 
 void DoGainMatching()
 {
-    auto *file{new TFile{"./Inputs/gain.root"}};
+    auto *file{new TFile{"./Inputs/gain_85.root"}};
     auto *h{file->Get<TH2D>("h")};
 
     int channels{17408};
@@ -75,11 +76,11 @@ void DoGainMatching()
         peaks.push_back(GetPeaks(h, c));
     }
 
-    int channelRef{4196};
+    int channelRef{515};
 
     // Now we have to do the fit Q vs Q ref, we use a TGraph, for filling it need a for loop
 
-    std::ofstream streamer{"./Outputs/gain_matching_v0.dat"};
+    std::ofstream streamer{"./Outputs/gain_matching_s2384_v0.dat"};
 
     std::vector<TGraph *> gs;
     for (const auto &peak : peaks)
@@ -93,7 +94,7 @@ void DoGainMatching()
 
     gStyle->SetOptFit(true);
     auto *c{new TCanvas("c")};
-    int chosen{4196};
+    int chosen{418};
     gs[chosen]->Draw("ap");
     for (auto *ptr : *(gs[chosen]->GetListOfFunctions()))
         if (ptr)

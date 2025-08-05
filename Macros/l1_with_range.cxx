@@ -61,7 +61,7 @@ void l1_with_range()
                                  "fThetaLight")};
     // Count
     auto count {gated.Count()};
-    std::ofstream streamer {"./Outputs/L1_events_run_22_mlg.dat"};
+    std::ofstream streamer {"./Outputs/L1_events.dat"};
     gated.Foreach([&](ActRoot::MergerData& mer) { mer.Stream(streamer); }, {"MergerData"});
     streamer.close();
     std::cout << "Gated : " << *count << '\n';
