@@ -36,7 +36,7 @@ void FillHistogram(ActRoot::CalibrationManager *calman, ActRoot::TPCParameters *
                             Qiaux = calman->ApplyPadAlignment(where, Qiaux);
                         // Fill histogram
 
-                        if (Qiaux >= 00) // in this experiment all runs have a baseline that we eliminate
+                        if (Qiaux >= 200) // in this experiment all runs have a baseline that we eliminate
                         {
                             h->Fill(where, Qiaux);
                         }
@@ -52,7 +52,7 @@ void ReadGainMatching(bool isMatched = true)
 
     // Get the data into TChain
     auto chain{new TChain("ACTAR_TTree")};
-    std::vector<int> runs{85}; // Put whichever runs needed (this was for e796)
+    std::vector<int> runs{85, 86, 87, 89, 91, 92}; // Put whichever runs needed (this was for e796)
     for (const auto &run : runs)
     {
         chain->Add(TString::Format("../../RootFiles/Raw/Tree_Run_%04d_Merged.root", run));
@@ -86,5 +86,5 @@ void ReadGainMatching(bool isMatched = true)
     h->Draw("colz");
 
     if (!isMatched)
-        h->SaveAs("./Inputs/gain_85.root");
+        h->SaveAs("./Inputs/gain.root");
 }

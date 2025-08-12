@@ -10,7 +10,8 @@
 
 std::vector<double> GetPeaks(TH2D *h, int c)
 {
-    auto *proj{h->ProjectionY("proj", c, c)};
+    auto bin {h->GetXaxis()->FindBin(c)}; // Get the bin number for the channel c
+    auto *proj{h->ProjectionY("proj", bin, bin)};
 
     auto *spe{new TSpectrum(11)}; // max nums of peaks, is overstimated
     int nPeaks{spe->Search(proj, 2, "nodraw", 0.025)};
@@ -21,7 +22,7 @@ std::vector<double> GetPeaks(TH2D *h, int c)
 
     std::vector<double> peaks(xPositions, xPositions + nPeaks); // convert the pointer to a vector to easier use
 
-    double width{50.};
+    double width{40.};
     std::vector<double> meanPeak;
 
     for (auto &peak : peaks)
@@ -32,11 +33,13 @@ std::vector<double> GetPeaks(TH2D *h, int c)
         proj->Fit("gaus", "0Q", "", xmin, xmax);
         meanPeak.push_back(proj->GetFunction("gaus")->GetParameter("Mean"));
     }
+    delete proj;
+    delete spe;
 
     return meanPeak;
 }
 
-void FillGraph(TGraph *graph, const std::vector<double> &x, const std::vector<double> &y, std::ofstream &streamer)
+void FillGraph(int channel, TGraph *graph, const std::vector<double> &x, const std::vector<double> &y, std::ofstream &streamer, TGraph* gcal)
 {
     if (x.size() != y.size())
     {
@@ -59,12 +62,14 @@ void FillGraph(TGraph *graph, const std::vector<double> &x, const std::vector<do
     else
     {
         streamer << f->GetParameter(0) << " " << f->GetParameter(1) << " " << f->GetParameter(2) << std::endl;
+        //Apply calibrationto first peak
+        gcal->AddPoint(channel, f->Eval(x.front()));
     }
 }
 
 void DoGainMatching()
 {
-    auto *file{new TFile{"./Inputs/gain_85.root"}};
+    auto *file{new TFile{"./Inputs/gain.root"}};
     auto *h{file->Get<TH2D>("h")};
 
     int channels{17408};
@@ -76,27 +81,50 @@ void DoGainMatching()
         peaks.push_back(GetPeaks(h, c));
     }
 
-    int channelRef{515};
+    int channelRef{8124};
 
     // Now we have to do the fit Q vs Q ref, we use a TGraph, for filling it need a for loop
 
     std::ofstream streamer{"./Outputs/gain_matching_s2384_v0.dat"};
 
     std::vector<TGraph *> gs;
+    TGraph* graphParams{new TGraph()};
+    int idx {-1};
+    for (const auto &peak : peaks)
+    {
+        idx++;
+        if (peak.size() != peaks[channelRef-1].size())
+        {
+            std::cout<<"Channel : "<<idx<<'\n';
+            for(const auto& val : peak)
+            {
+                std::cout<<"   " << val<<' ';
+            }
+            continue;
+        }
+        graphParams->SetPoint(idx, idx, peak[0]);
+    }
+    auto* gCal {new TGraph};
+    gCal->SetTitle("First peak cal;Channel;Charge");
+    int channel {0};
     for (const auto &peak : peaks)
     {
         TGraph *graph{new TGraph()};
-        FillGraph(graph, peak, peaks[channelRef-1], streamer); //channelRef-1 takes into acount that the bins start in 1 but channels in 0
+        FillGraph(channel, graph, peak, peaks[channelRef-1], streamer, gCal);
         graph->SetMarkerStyle(24);
         gs.push_back(graph);
+        channel++;
     }
     streamer.close();
 
     gStyle->SetOptFit(true);
     auto *c{new TCanvas("c")};
-    int chosen{418};
+    int chosen{3196};
     gs[chosen]->Draw("ap");
     for (auto *ptr : *(gs[chosen]->GetListOfFunctions()))
         if (ptr)
             ptr->Draw("same");
+
+    auto c1{new TCanvas("c1")};
+    gCal->Draw("ap");
 }
