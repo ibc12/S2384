@@ -17,9 +17,14 @@
 
 void gainVSmeshV()
 {
+    std::vector<TH1D*> chargeHistograms;
     std::vector<double> maxCharges {};
     for (int run = 124; run <= 128; ++run)
     {
+        // build charge distribution histogram
+        auto hist {new TH1D(("chargeDist_Run" + std::to_string(run)).c_str(),
+                                    ("Charge Distribution Run " + std::to_string(run)).c_str(),
+                                    100, 0, 5000)};
         // Construir nombre del archivo
         std::string filename = "../RootFiles/Cluster/Clusters_Run_0" + std::to_string(run) + ".root";
 
@@ -32,7 +37,7 @@ void gainVSmeshV()
 
         // Obtener TTree
         TTree *tree = nullptr;
-        file.GetObject("GETTree", tree); // cambia "tree" por el nombre real
+        file.GetObject("GETTree", tree);
         if (!tree) {
             std::cerr << "No se encontró TTree en " << filename << "\n";
             continue;
@@ -44,9 +49,11 @@ void gainVSmeshV()
 
         double sumCharge = 0;
         Long64_t nEvents = tree->GetEntries();
+        std::cout << "Procesando run " << run << " con " << nEvents << " eventos.\n";
+        int charge0events = 0;
 
         // Recorrer eventos
-        for (Long64_t i = 0; i < nEvents; ++i)
+        for (Long64_t i = 0; i < tree->GetEntries(); ++i)
         {
             tree->GetEntry(i);
 
@@ -62,12 +69,21 @@ void gainVSmeshV()
                         maxCharge = v.GetCharge();
                 }
             }
+            if(maxCharge == 0)
+            {
+                charge0events++;
+                nEvents = nEvents - 1;
+            }
+            else
+                hist->Fill(maxCharge);
             sumCharge += maxCharge;
         }
 
+        chargeHistograms.push_back(hist);
+
         double meanCharge = (nEvents > 0) ? sumCharge / nEvents : 0;
         maxCharges.push_back(meanCharge);
-        std::cout << "Run " << run << " -> media maxCharge = " << meanCharge << "\n";
+        std::cout << "Run " << run << " -> media maxCharge = " << meanCharge << " charge 0 events " << charge0events <<"\n";
     }
 
     std::vector<int> meshVoltages = {540, 530, 520, 510, 500};
@@ -81,11 +97,20 @@ void gainVSmeshV()
     graph->SetMarkerColor(kBlue);
     graph->SetMarkerSize(1.2);
     // Fit the data
-    graph->Fit("pol2", "0Q"); // Fit with a polynomial of degree 2
-    TF1 *fitFunc = graph->GetFunction("pol2");
+    graph->Fit("pol1", "0Q"); // Fit with a polynomial of degree 2
+    TF1 *fitFunc = graph->GetFunction("pol1");
     // Plot graph
     TCanvas *c1 = new TCanvas("c1", "Gain vs Mesh Voltage", 800, 600);
     graph->DrawClone("AP");
     fitFunc->SetLineColor(kRed);
     fitFunc->Draw("same");
+
+    // Plot charge hists 
+    TCanvas *c2 = new TCanvas("c2", "Charge Distributions", 1200, 800);
+    c2->Divide(3, 2);
+    for (int i = 0; i < chargeHistograms.size(); ++i)
+    {
+        c2->cd(i + 1);
+        chargeHistograms[i]->DrawClone();
+    }
 }
