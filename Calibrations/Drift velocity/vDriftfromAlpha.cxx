@@ -17,6 +17,7 @@
 #include "TF1.h"
 #include "TLatex.h"
 #include "TLine.h"
+#include "TEllipse.h"
 
 void vDriftfromAlpha()
 {
@@ -216,7 +217,43 @@ void vDriftfromAlpha()
     t1->DrawClone();
     t2->DrawClone();
     t3->DrawClone();
-
+    // Add in the filtered plot the elipses
+    // TEllipse(x_center, y_center, r_x, r_y, theta1, theta2, angle_rotation)
+    // theta1/theta2 = ángulos de barrido (0–360), angle_rotation = rotación de la elipse en grados
+    c2->cd(1);
+    // First peak ellipses
+    auto e1_1st = new TEllipse(0.0, 0.0, 13.0, 116.0, 60.0, 120.0, 0.0); // rotada 30°
+    e1_1st->SetFillStyle(0);
+    e1_1st->SetNoEdges();
+    auto e2_1st = new TEllipse(0.0, 0.0, 14.7, 124.0, 60.0, 120.0, 0.0); // rotada 30°
+    e2_1st->SetFillStyle(0);
+    e2_1st->SetNoEdges();
+    e1_1st->SetLineColor(kRed);
+    e1_1st->DrawClone("same");
+    e2_1st->SetLineColor(kRed);
+    e2_1st->DrawClone("same");
+    // Second peak ellipses
+    auto e1_2nd = new TEllipse(0.0, 0.0, 16.0, 128.0, 60.0, 120.0, 0.0); // rotada 30°
+    e1_2nd->SetFillStyle(0);
+    e1_2nd->SetNoEdges();
+    auto e2_2nd = new TEllipse(0.0, 0.0, 17, 137.0, 60.0, 120.0, 0.0); // rotada 30°
+    e2_2nd->SetFillStyle(0);
+    e2_2nd->SetNoEdges();
+    e1_2nd->SetLineColor(kGreen);
+    e1_2nd->DrawClone("same");
+    e2_2nd->SetLineColor(kGreen);
+    e2_2nd->DrawClone("same");
+    // Third peak ellipses
+    auto e1_3rd = new TEllipse(0.0, 0.0, 17.2, 143.0, 60.0, 120.0, 0.0); // rotada 30°
+    e1_3rd->SetFillStyle(0);
+    e1_3rd->SetNoEdges();
+    auto e2_3rd = new TEllipse(0.0, 0.0, 18.5, 151.0, 60.0, 120.0, 0.0); // rotada 30°
+    e2_3rd->SetFillStyle(0);
+    e2_3rd->SetNoEdges();
+    e1_3rd->SetLineColor(kBlue);
+    e1_3rd->DrawClone("same");
+    e2_3rd->SetLineColor(kBlue);
+    e2_3rd->DrawClone("same");
 
     
 }
