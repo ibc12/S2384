@@ -36,7 +36,7 @@ void FillHistogram(ActRoot::CalibrationManager *calman, ActRoot::TPCParameters *
                             Qiaux = calman->ApplyPadAlignment(where, Qiaux);
                         // Fill histogram
 
-                        if (Qiaux >= 200) // in this experiment all runs have a baseline that we eliminate
+                        if (Qiaux >= 00) // in this experiment all runs have a baseline that we eliminate
                         {
                             h->Fill(where, Qiaux);
                         }
@@ -67,7 +67,7 @@ void ReadGainMatching(bool isMatched = true)
         calman.ReadPadAlign("./Outputs/gain_matching_s2384_v0.dat");
 
     // Create histogram
-    auto *h{new TH2D{"h", "pads;Channel;Q", 17408, 0, 17408, 800, 0, 5000}};
+    auto *h{new TH2D{"h", "pads;Channel number;Calibrated charge [u.a.]", 17408, 0, 17408, 800, 0, 5000}};
 
     // Set MEventReduced
     MEventReduced *evt{new MEventReduced};
@@ -82,9 +82,18 @@ void ReadGainMatching(bool isMatched = true)
     }
 
     // Plot
+    gStyle->SetOptStat(0);
     auto *c0{new TCanvas{"c0", "Gain matching canvas"}};
-    h->Draw("colz");
+    h->GetXaxis()->SetLabelSize(0.03);   // tamaño de los números en el eje X
+    h->GetYaxis()->SetLabelSize(0.03);   // tamaño de los números en el eje Y
+
+    h->GetXaxis()->SetTitleSize(0.04);   // tamaño del título del eje X
+    h->GetYaxis()->SetTitleSize(0.04);
+    h->GetYaxis()->SetTitleOffset(0.4);  // separa el título del eje Y
+    h->GetXaxis()->SetTitleOffset(0.2);
+    h->SetFillColor(kAzure+1);  // pick any ROOT color
+    h->Draw("BOX");
 
     if (!isMatched)
-        h->SaveAs("./Inputs/gain.root");
+        h->SaveAs("./Inputs/gain.root");    
 }

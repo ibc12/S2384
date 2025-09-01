@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 
-const std::string layer {"f0"};
+const std::string layer {"r0"};
 
 std::vector<TH1D*> ReadData(const std::string& file, const std::string& dir, const std::string& label)
 {
@@ -43,7 +43,7 @@ std::vector<TH1D*> ReadData(const std::string& file, const std::string& dir, con
         auto name {str.substr(0, idx)};
         if(!(name == label))
             continue;
-        ret.push_back((TH1D*)lowdir->Get<TH1I>(key->GetName()));
+        ret.push_back((TH1D*)lowdir->Get<TH1D>(key->GetName()));
     }
     return ret;
 }
@@ -71,7 +71,7 @@ void r0_cal()
     std::string which {"r0"};
     std::string label {"R0"};
     // Read data
-    auto hs {ReadData("./Inputs/siWallCal_26_07_20h14min.root", "R0", label)};
+    auto hs {ReadData("./Inputs/Si_cal_histos_run0130.root", "R0", label)};
     // Pick only necessary
     int isil {};
     std::vector<int> adcChannels {};
@@ -113,7 +113,7 @@ void r0_cal()
     auto* gr {new TGraphErrors};
     gr->SetNameTitle("g", "Resolution;;#sigma ^{241}Am [keV]");
     // Save
-    std::ofstream streamer {"./Outputs/s2384_" + which + ".dat"};
+    std::ofstream streamer {"./Outputs/post_experiment_cals/s2384_" + which + "_last.dat"};
     streamer << std::fixed << std::setprecision(8);
     std::vector<std::shared_ptr<TH1D>> hfs;
     for(int s = 0; s < hsrebin.size(); s++)

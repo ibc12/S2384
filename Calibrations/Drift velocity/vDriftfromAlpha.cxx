@@ -124,18 +124,18 @@ void vDriftfromAlpha()
             auto lastVoxel {cluster.GetRefToVoxels().back()};
             auto projectionPointLine {line.ProjectionPointOnLine(lastVoxel.GetPosition())};
             double lxy = TMath::Sqrt(TMath::Power(projectionPointLine.X() - xSource, 2) + TMath::Power(projectionPointLine.Y() - ySource, 2));
-            return lxy * 2; // Conversion factor from pads to mm
+            return (lxy * 2) / 10; // Conversion factor from pads to cm
         } }, {"TPCData"})
                        .Define("fDeltaZSquare", "fDeltaZ * fDeltaZ")
                        .Define("fLxySquare", "fLxy * fLxy");
 
     // Plot the DeltaZ and lxy
     auto graphDrift = dfDrift.Graph("fDeltaZ", "fLxy");
-    graphDrift->SetTitle("Delta Z vs Lxy;#Delta Z [#mus]; Lxy [mm]");
+    graphDrift->SetTitle("Delta Z vs Lxy;#Deltat [#mus]; #Deltaxy [cm]");
 
     // Linearize the graph
     auto graphDriftLinear = dfDrift.Graph("fDeltaZSquare", "fLxySquare");
-    graphDriftLinear->SetTitle("Delta Z^2 vs Lxy^2;#Delta Z^2 [#mus^2]; Lxy^2 [mm^2]");
+    graphDriftLinear->SetTitle("Delta Z^2 vs Lxy^2;(#Deltat)^{2} [#mus^{2}];(#Deltaxy)^{2} [cm^{2}]");
 
 
     auto c1 = new TCanvas("c1", "Delta Z vs Lxy", 1400, 800);
@@ -154,13 +154,13 @@ void vDriftfromAlpha()
     cuts.ReadCut("third", "./Inputs/cut_thirdPeak.root");
 
     auto dfFiltered = dfDrift.Filter([&](double lxy, double deltaZ)
-                                { return cuts.IsInside("goodEvents", lxy, deltaZ); },
+                                { return cuts.IsInside("goodEvents", deltaZ, lxy); },
                                 {"fLxy", "fDeltaZ"});
 
     auto graphDriftFiltered = dfFiltered.Graph("fDeltaZ", "fLxy");
-    graphDriftFiltered->SetTitle("Delta Z vs Lxy ;#Delta Z [#mus]; Lxy [mm]");
+    graphDriftFiltered->SetTitle("Delta Z vs Lxy ;#Deltat [#mus]; #Deltaxy [cm]");
     auto graphDriftFilteredLinear = dfFiltered.Graph("fDeltaZSquare", "fLxySquare");
-    graphDriftFilteredLinear->SetTitle("Delta Z^2 vs Lxy^2;#Delta Z^2 [#mus^2];Lxy^2 [mm^2]");
+    graphDriftFilteredLinear->SetTitle("Delta Z^2 vs Lxy^2;(#Deltat)^{2} [#mus^{2}];(#Deltaxy)^{2} [cm^{2}]");
     auto c2 = new TCanvas("c2", "Delta Z vs Lxy filtered", 1400, 800);
     c2->DivideSquare(2);
     c2->cd(1);
@@ -170,25 +170,25 @@ void vDriftfromAlpha()
 
     // Do graphs for each peak
     auto dfFirst = dfFiltered.Filter([&](double lxy2, double deltaZ2)
-                                { return cuts.IsInside("first", lxy2, deltaZ2); },
+                                { return cuts.IsInside("first", deltaZ2, lxy2); },
                                 {"fLxySquare", "fDeltaZSquare"});
     auto graphDriftLineFirst = dfFirst.Graph("fDeltaZSquare", "fLxySquare");
-    graphDriftLineFirst->SetTitle("Delta Z^2 vs Lxy^2 (first peak);#Delta Z^2 [#mus^2];Lxy^2 [mm^2]");
+    graphDriftLineFirst->SetTitle("Delta Z^2 vs Lxy^2 (first peak);(#Deltat)^{2} [#mus^{2}];(#Deltaxy)^{2} [cm^{2}]");
     graphDriftLineFirst->Fit("pol1");
     auto f1 {graphDriftLineFirst->GetFunction("pol1")};
     f1->SetLineColor(kRed);
     auto dfSecond = dfFiltered.Filter([&](double lxy2, double deltaZ2)
-                                { return cuts.IsInside("second", lxy2, deltaZ2); },
+                                { return cuts.IsInside("second", deltaZ2, lxy2); },
                                 {"fLxySquare", "fDeltaZSquare"});
     auto graphDriftLineSecond = dfSecond.Graph("fDeltaZSquare", "fLxySquare");
-    graphDriftLineSecond->SetTitle("Delta Z^2 vs Lxy^2 (second peak);#Delta Z^2 [#mus^2];Lxy^2 [mm^2]");
+    graphDriftLineSecond->SetTitle("Delta Z^2 vs Lxy^2 (second peak);(#Deltat)^{2} [#mus^{2}];(#Deltaxy)^{2} [cm^{2}]");
     graphDriftLineSecond->Fit("pol1");
     auto f2 {graphDriftLineSecond->GetFunction("pol1")};
     auto dfThird = dfFiltered.Filter([&](double lxy2, double deltaZ2)
-                                { return cuts.IsInside("third", lxy2, deltaZ2); },
+                                { return cuts.IsInside("third", deltaZ2, lxy2); },
                                 {"fLxySquare", "fDeltaZSquare"});
     auto graphDriftLineThird = dfThird.Graph("fDeltaZSquare", "fLxySquare");
-    graphDriftLineThird->SetTitle("Delta Z^2 vs Lxy^2 (third peak);#Delta Z^2 [#mus^2];Lxy^2 [mm^2]");
+    graphDriftLineThird->SetTitle("Delta Z^2 vs Lxy^2 (third peak);(#Deltat)^{2} [#mus^{2}];(#Deltaxy)^{2} [cm^{2}]");
     graphDriftLineThird->Fit("pol1");
     auto f3 {graphDriftLineThird->GetFunction("pol1")};
     auto c3 = new TCanvas("c3", "Delta Z vs Lxy lines", 2100, 700);
@@ -211,9 +211,9 @@ void vDriftfromAlpha()
     f3->SetLineColor(kBlue);
     f3->DrawClone("same");
     // Text of the fit parameters
-    auto t1 = new TLatex(100, 23000, TString::Format("First peak: Vdrift = %.2f #pm ", TMath::Sqrt(-f1->GetParameter(1))));
-    auto t2 = new TLatex(100, 21000, TString::Format("Second peak: Vdrift = %.2f #pm ", TMath::Sqrt(-f2->GetParameter(1))));
-    auto t3 = new TLatex(100, 19000, TString::Format("Third peak: Vdrift = %.2f #pm ", TMath::Sqrt(-f3->GetParameter(1))));
+    auto t1 = new TLatex(40, 230, TString::Format("First peak: Vdrift = %.4f #pm %.4f", TMath::Sqrt(-f1->GetParameter(1)), f1->GetParError(1)/(2 * TMath::Sqrt(-f1->GetParameter(1)))));
+    auto t2 = new TLatex(40, 210, TString::Format("Second peak: Vdrift = %.4f #pm %.4f", TMath::Sqrt(-f2->GetParameter(1)), f2->GetParError(1)/(2 * TMath::Sqrt(-f2->GetParameter(1)))));
+    auto t3 = new TLatex(40, 190, TString::Format("Third peak: Vdrift = %.4f #pm %.4f", TMath::Sqrt(-f3->GetParameter(1)), f3->GetParError(1)/(2 * TMath::Sqrt(-f3->GetParameter(1)))));
     t1->DrawClone();
     t2->DrawClone();
     t3->DrawClone();
@@ -222,33 +222,39 @@ void vDriftfromAlpha()
     // theta1/theta2 = ángulos de barrido (0–360), angle_rotation = rotación de la elipse en grados
     c2->cd(1);
     // First peak ellipses
-    auto e1_1st = new TEllipse(0.0, 0.0, 13.0, 116.0, 60.0, 120.0, 0.0); // rotada 30°
+    auto e1_1st = new TEllipse(0.0, 0.0, 13.0, 11.60, 60.0, 120.0, 0.0); // rotada 30°
     e1_1st->SetFillStyle(0);
+    e1_1st->SetLineWidth(3);
     e1_1st->SetNoEdges();
-    auto e2_1st = new TEllipse(0.0, 0.0, 14.7, 124.0, 60.0, 120.0, 0.0); // rotada 30°
+    auto e2_1st = new TEllipse(0.0, 0.0, 14.7, 12.40, 60.0, 120.0, 0.0); // rotada 30°
     e2_1st->SetFillStyle(0);
+    e2_1st->SetLineWidth(3);
     e2_1st->SetNoEdges();
     e1_1st->SetLineColor(kRed);
     e1_1st->DrawClone("same");
     e2_1st->SetLineColor(kRed);
     e2_1st->DrawClone("same");
     // Second peak ellipses
-    auto e1_2nd = new TEllipse(0.0, 0.0, 16.0, 128.0, 60.0, 120.0, 0.0); // rotada 30°
+    auto e1_2nd = new TEllipse(0.0, 0.0, 16.0, 12.80, 60.0, 120.0, 0.0); // rotada 30°
     e1_2nd->SetFillStyle(0);
+    e1_2nd->SetLineWidth(3);
     e1_2nd->SetNoEdges();
-    auto e2_2nd = new TEllipse(0.0, 0.0, 17, 137.0, 60.0, 120.0, 0.0); // rotada 30°
+    auto e2_2nd = new TEllipse(0.0, 0.0, 17, 13.70, 60.0, 120.0, 0.0); // rotada 30°
     e2_2nd->SetFillStyle(0);
+    e2_2nd->SetLineWidth(3);
     e2_2nd->SetNoEdges();
     e1_2nd->SetLineColor(kGreen);
     e1_2nd->DrawClone("same");
     e2_2nd->SetLineColor(kGreen);
     e2_2nd->DrawClone("same");
     // Third peak ellipses
-    auto e1_3rd = new TEllipse(0.0, 0.0, 17.2, 143.0, 60.0, 120.0, 0.0); // rotada 30°
+    auto e1_3rd = new TEllipse(0.0, 0.0, 17.2, 14.30, 60.0, 120.0, 0.0); // rotada 30°
     e1_3rd->SetFillStyle(0);
+    e1_3rd->SetLineWidth(3);
     e1_3rd->SetNoEdges();
-    auto e2_3rd = new TEllipse(0.0, 0.0, 18.5, 151.0, 60.0, 120.0, 0.0); // rotada 30°
+    auto e2_3rd = new TEllipse(0.0, 0.0, 18.5, 15.10, 60.0, 120.0, 0.0); // rotada 30°
     e2_3rd->SetFillStyle(0);
+    e2_3rd->SetLineWidth(3);
     e2_3rd->SetNoEdges();
     e1_3rd->SetLineColor(kBlue);
     e1_3rd->DrawClone("same");

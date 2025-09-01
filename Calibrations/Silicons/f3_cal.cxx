@@ -23,6 +23,8 @@
 #include <string>
 #include <vector>
 
+const std::string layer {"f2"};
+
 std::vector<TH1D*> ReadData(const std::string& file, const std::string& dir, const std::string& label)
 {
     auto* f {new TFile {file.c_str()}};
@@ -41,7 +43,7 @@ std::vector<TH1D*> ReadData(const std::string& file, const std::string& dir, con
         auto name {str.substr(0, idx)};
         if(!(name == label))
             continue;
-        ret.push_back((TH1D*)lowdir->Get<TH1I>(key->GetName()));
+        ret.push_back((TH1D*)lowdir->Get<TH1D>(key->GetName()));
     }
     return ret;
 }
@@ -66,22 +68,22 @@ void CorrectSource(Calibration::Source* source, ActPhysics::SRIM* srim, const st
 
 void f3_cal()
 {
-    std::string which {"f3"};
-    std::string label {"SI"};
+    std::string which {"f2"};
+    std::string label {"F2"};
     // Read data
-    auto hs {ReadData("./Inputs/si_15mm_e_0deg_total.root", "SI", label)};
+    auto hs {ReadData("./Inputs/Si_cal_histos_run0130.root", "F2", label)};
     // Pick only necessary
     int isil {};
     std::vector<int> adcChannels {};
     for(auto it = hs.begin(); it != hs.end();)
     {
-        if(isil != 4)
-            it = hs.erase(it);
-        else
-        {
+        //if(isil != 4)
+        //    it = hs.erase(it);
+        //else
+        //{
         adcChannels.push_back(isil);
         it++;
-        }
+        //}
         isil++;
     }
     // hs = {hs[2], hs[3], hs[5], hs[6]};
@@ -110,7 +112,7 @@ void f3_cal()
     auto* gr {new TGraphErrors};
     gr->SetNameTitle("g", "Resolution;;#sigma ^{241}Am [keV]");
     // Save
-    std::ofstream streamer {"./Outputs/s2384_" + which + ".dat"};
+    std::ofstream streamer {"./Outputs/post_experiment_cals/s2384_" + which + "_last.dat"};
     streamer << std::fixed << std::setprecision(8);
     std::vector<std::shared_ptr<TH1D>> hfs;
     for(int s = 0; s < hsrebin.size(); s++)
@@ -118,11 +120,11 @@ void f3_cal()
         const auto& adcChannel {adcChannels[s]};
         runners.emplace_back(&source, hsrebin[s], hs[s], false);
         auto& run {runners.back()};
-        run.SetGaussPreWidth(30);
-        run.SetRange(650, 900);
+        run.SetGaussPreWidth(80);
+        run.SetRange(2500, 3150);
         run.DisableXErrors();
-        // if(s == 11)
-        //     run.SetMaxSigma(0.1);
+        if(s == 3)
+            run.SetMaxSigma(0.2);
         run.DoIt();
         auto* c {new TCanvas};
         run.Draw(c);

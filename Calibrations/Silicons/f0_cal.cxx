@@ -69,7 +69,7 @@ void f0_cal()
     std::string which {"f0"};
     std::string label {"F0"};
     // Read data
-    auto hs {ReadData("../../Macros/Outputs/SiWall_gated_entry_run4.root", "F0", label)};
+    auto hs {ReadData("./Inputs/Si_cal_histos_run0130.root", "F0", label)};
     // Pick only necessary
     int isil {};
     std::vector<int> adcChannels {};
@@ -110,7 +110,7 @@ void f0_cal()
     auto* gr {new TGraphErrors};
     gr->SetNameTitle("g", "Resolution;;#sigma ^{241}Am [keV]");
     // Save
-    std::ofstream streamer {"./Outputs/s2384_" + which + ".dat"};
+    std::ofstream streamer {"./Outputs/post_experiment_cals/s2384_" + which + "_last.dat"};
     streamer << std::fixed << std::setprecision(8);
     std::vector<std::shared_ptr<TH1D>> hfs;
     for(int s = 0; s < hsrebin.size(); s++)
