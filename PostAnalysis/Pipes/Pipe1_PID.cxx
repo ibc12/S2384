@@ -43,10 +43,18 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
             if(m.fLight.fNs.size())
                 if((m.fLight.fLayers.front() == "l0") && (m.fLight.fNs.front() == 9))
                     return false;
+            // Mask F0_2
+            if(m.fLight.fNs.size())
+                if((m.fLight.fLayers.front() == "f0") && (m.fLight.fNs.front() == 2))
+                    return false;
+            // Mask R0_3
+            if(m.fLight.fNs.size())
+                if((m.fLight.fLayers.front() == "r0") && (m.fLight.fNs.front() == 3))
+                    return false;
             // Mask R0 sils depending on run number
-            if(m.fRun > 29 && m.fRun < 37)
+            if(m.fRun > 29 && m.fRun < 35)
             {
-                if(m.fRun == 30 || m.fRun == 31)
+                if(m.fRun == 30 || m.fRun == 31 || m.fRun == 33)
                 {
                     if(!m.fLight.fLayers.empty() && m.fLight.fLayers.front() == "r0")
                     {
@@ -81,6 +89,34 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
                 }
                 else
                     return true;
+            }
+            if(m.fRun > 35 && m.fRun < 45)
+            {
+                if(!m.fLight.fLayers.empty() && m.fLight.fLayers.front() == "f0")
+                    {
+                        if(!m.fLight.fNs.empty() && m.fLight.fNs.front() == 5)
+                        {
+                            return false;
+                        }
+                        else
+                            return true;
+                    }
+                    else
+                        return true;
+            }
+            if(m.fRun == 116 || m.fRun == 117)
+            {
+                if(!m.fLight.fLayers.empty() && m.fLight.fLayers.front() == "r0")
+                    {
+                        if(!m.fLight.fNs.empty() && m.fLight.fNs.front() == 2)
+                        {
+                            return false;
+                        }
+                        else
+                            return true;
+                    }
+                    else
+                        return true;
             }
             else
                 return true;
