@@ -62,6 +62,10 @@
         "thread": "cpp",
         "cinttypes": "cpp",
         "typeinfo": "cpp",
-        ".rootlogon.C": "cpp"
+        ".rootlogon.C": "cpp",
+        "charconv": "cpp",
+        "chrono": "cpp",
+        "format": "cpp",
+        "variant": "cpp"
     }
 }

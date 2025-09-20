@@ -11,6 +11,7 @@
 #include "TCanvas.h"
 #include "TH2.h"
 #include "TString.h"
+#include "TH2D.h"
 
 #include <map>
 #include <string>
@@ -323,6 +324,47 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
         }
         p++;
     }
+    auto c1All {new TCanvas {"c1All", "Pipe1 PID canvas 1 all"}};
+    c1All->cd();
+
+    // Obtener el merge del slot 0 como unique_ptr
+    auto h0 = hszero["0"].Merge();
+    auto h1 = hszero["1"].Merge();
+    auto h2 = hszero["2"].Merge();
+    auto h3 = hszero["3"].Merge();
+
+    // Crear histograma combinado como copia del slot 0
+    auto* hsum = (TH2D*)h0->Clone("hsum");
+    hsum->Reset(); // vaciarlo antes de sumar
+
+    // Sumar los histogramas 0 y 2
+    hsum->Add(h0.get());
+    hsum->Add(h1.get());
+    hsum->Add(h2.get());
+    hsum->Add(h3.get());
+
+    // Dibujar el histograma combinado
+    hsum->Draw("colz");
+    // auto c1All {new TCanvas {"c1All", "Pipe1 PID canvas 1 all"}};
+    // c1All->cd();
+    // p = 0;
+    // for(auto& [s, h] : hszero)
+    // {
+    //     if(p == 0)
+    //         h.Merge()->DrawClone("colz");
+    //     else if(p == 3)
+    //         continue;
+    //     else if(p == 1)
+    //         continue;
+    //     else if(p == 2)
+    //         h.Merge()->DrawClone("SAME");
+    //     for(const auto& particle : {"11Li", "9Li"})
+    //     {
+    //         auto key {TString::Format("%s_f2_%s_f3", particle, s.c_str())};
+    //         cuts.DrawCut(key.Data());
+    //     }
+    //     p++;
+    // }
 
     auto* c2 {new TCanvas {"c2", "Pipe1 PID canvas 2"}};
     c2->DivideSquare(4);
