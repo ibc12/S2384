@@ -210,18 +210,20 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     cuts.ReadCut("r0", TString::Format("./Cuts/pid_%s_r0_%s.root", light.c_str(), beam.c_str()).Data());
     cuts.ReadCut("f0", TString::Format("./Cuts/pid_%s_f0_%s.root", light.c_str(), beam.c_str()).Data());
     cuts.ReadCut("l1", TString::Format("./Cuts/pid_%s_l1_%s.root", light.c_str(), beam.c_str()).Data());
-    // Read indivitual cuts for heavy particle
-    if(beam == "11Li" && light == "p")
-    {
-        for(const auto& heavy : { "9Li"}) // these two particles are bound to (d,p) reaction
-        {
-            for(int s = 0; s < 4; s++) // one cut per f2 quad pad
-            {
-                cuts.ReadCut(TString::Format("%s_f2_%d_f3", heavy, s).Data(),
-                             TString::Format("./Cuts/pid_%s_f2_%d_%s.root", heavy, s, beam.c_str()).Data());
-            }
-        }
-    }
+    
+    // Read indivitual cuts for heavy particle --- NOW IN PIPE3
+    // if(beam == "11Li" && light == "p")
+    // {
+    //     for(const auto& heavy : {"11Li", "9Li"}) // these two particles are bound to (d,p) reaction
+    //     {
+    //         for(int s = 0; s < 4; s++) // one cut per f2 quad pad
+    //         {
+    //             cuts.ReadCut(TString::Format("%s_f2_%d_f3", heavy, s).Data(),
+    //                          TString::Format("./Cuts/pid_%s_f2_%d_%s.root", heavy, s, beam.c_str()).Data());
+    //         }
+    //     }
+    // }
+
     // Two sils PID
     // cuts.ReadCut("f0-f1", TString::Format("./Cuts/pid_%s_f0_f1_%s.root", light.c_str(), beam.c_str()).Data());
     // Get list of cuts
@@ -248,29 +250,29 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
                     {
                         // LIGHT particle
                         auto l {cuts.IsInside(layer, m.fLight.fEs[0], m.fLight.fQave)};
-                        // HEAVY for (d,p)
-                        bool h {true};
-                        if(lambdaHeavy(m) && light == "p")
-                        {
-                            auto n {m.fHeavy.fNs[0]};
-                            std::set<bool> isInHeavyCuts;
-                            for(const auto& particle : {"11Li", "9Li"})
-                            {
-                                std::string key {TString::Format("%s_f2_%d_f3", particle, n).Data()};
-                                if(std::find(listOfCuts.begin(), listOfCuts.end(), key) != listOfCuts.end())
-                                    isInHeavyCuts.insert(cuts.IsInside(key, m.fHeavy.fEs[1], m.fHeavy.fEs[0]));
-                            }
-                            if(isInHeavyCuts.size())
-                            {
-                                if(isInHeavyCuts.find(true) != isInHeavyCuts.end())
-                                {
-                                    h = true;
-                                }
-                                else
-                                    h = false;
-                            }
-                        }
-                        return l && h;
+                        // HEAVY for (d,p) NOT USED, now in Pipe3
+                        // bool h {true};
+                        // if(lambdaHeavy(m) && light == "p")
+                        // {
+                        //     auto n {m.fHeavy.fNs[0]};
+                        //     std::set<bool> isInHeavyCuts;
+                        //     for(const auto& particle : {"11Li", "9Li"})
+                        //     {
+                        //         std::string key {TString::Format("%s_f2_%d_f3", particle, n).Data()};
+                        //         if(std::find(listOfCuts.begin(), listOfCuts.end(), key) != listOfCuts.end())
+                        //             isInHeavyCuts.insert(cuts.IsInside(key, m.fHeavy.fEs[1], m.fHeavy.fEs[0]));
+                        //     }
+                        //     if(isInHeavyCuts.size())
+                        //     {
+                        //         if(isInHeavyCuts.find(true) != isInHeavyCuts.end())
+                        //         {
+                        //             h = true;
+                        //         }
+                        //         else
+                        //             h = false;
+                        //     }
+                        // }
+                        return l;
                     }
                     else
                         return false;
@@ -287,7 +289,7 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     }
 
     // Draw
-    auto* c0 {new TCanvas {"c0", "Pipe 1 PID canvas 0"}};
+    auto* c0 {new TCanvas {"c10", "Pipe 1 PID canvas 0"}};
     c0->DivideSquare(6);
     int p {1};
     c0->cd(1);
@@ -310,7 +312,7 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     c0->cd(6);
     hl1theta.Merge()->DrawClone("colz");
 
-    auto* c1 {new TCanvas {"c1", "Pipe1 PID canvas 1"}};
+    auto* c1 {new TCanvas {"c11", "Pipe1 PID canvas 1"}};
     c1->DivideSquare(hszero.size());
     p = 1;
     for(auto& [s, h] : hszero)
@@ -366,7 +368,7 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     //     p++;
     // }
 
-    auto* c2 {new TCanvas {"c2", "Pipe1 PID canvas 2"}};
+    auto* c2 {new TCanvas {"c12", "Pipe1 PID canvas 2"}};
     c2->DivideSquare(4);
     c2->cd(1);
     hl1.GetAtSlot(0)->DrawClone("colz");
