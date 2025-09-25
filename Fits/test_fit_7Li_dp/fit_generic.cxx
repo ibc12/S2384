@@ -189,12 +189,12 @@ void fit_generic()
     const char* histoFile = "../../PostAnalysis/Outputs/tree_ex_7Li_d_p.root";
     const char* histoName = "hExSil";
     const char* psFile    = "./Inputs/1nPS_7Li_latSil.root";
-    double fLim = 6.5;
+    double fLim = 8.5;
     int rebinFactor = 2;
 
     // --- Números de picos ---
     gNumGauss = 3;
-    gNumVoigt = 2;
+    gNumVoigt = 4;
     gNumPS    = 1;
 
     // --- Abrir histograma ---
@@ -220,7 +220,7 @@ void fit_generic()
     // --- Declaración de vectores de parámetros iniciales ---
     std::vector<double> gaussMean   = {0,1,2};
     std::vector<double> gaussSigma  = {0.08,0.08,0.08};
-    std::vector<double> voigtMean   = {3.2,5.4};
+    std::vector<double> voigtMean   = {3.2,5.4, 6.5, 7.1};
     std::vector<double> voigtSigma  = {0.08,0.08};
     std::vector<double> voigtGamma  = {0.05,0.05};
     std::vector<double> ampGauss    = {700,30,60};
@@ -233,17 +233,17 @@ void fit_generic()
     std::vector<double> gaussSigmaMin= {0.05,0.05,0.05};
     std::vector<double> gaussSigmaMax= {0.5,0.5,0.5};
 
-    std::vector<double> voigtMeanMin = {2.8,4.6};
-    std::vector<double> voigtMeanMax = {3.8,6.5};
-    std::vector<double> voigtSigmaMin= {0.08,0.08};
-    std::vector<double> voigtSigmaMax= {0.5,0.5};
-    std::vector<double> voigtGammaMin= {0.01,0.01};
-    std::vector<double> voigtGammaMax= {0.5,0.5};
+    std::vector<double> voigtMeanMin = {2.8,4.6, 6.2, 6.8};
+    std::vector<double> voigtMeanMax = {3.8,6,6.7,7.5};
+    std::vector<double> voigtSigmaMin= {0.08,0.08,0.08,0.08};
+    std::vector<double> voigtSigmaMax= {0.5,0.5,0.5,0.5};
+    std::vector<double> voigtGammaMin= {0.01,0.01,0.01,0.01};
+    std::vector<double> voigtGammaMax= {1,0.5,0.5,0.5};
 
     std::vector<double> ampGaussMin = {0,0,0};
     std::vector<double> ampGaussMax = {1000,100,100};
-    std::vector<double> ampVoigtMin = {0.1,0.1};
-    std::vector<double> ampVoigtMax = {30,30};
+    std::vector<double> ampVoigtMin = {0.1,0.1,0.1,0.1};
+    std::vector<double> ampVoigtMax = {30,30,30,30};
     std::vector<double> ampPSMin    = {0};
     std::vector<double> ampPSMax    = {200};
 
@@ -272,4 +272,10 @@ void fit_generic()
     // --- Canvas componentes ---
     // (Puedes usar la función DrawFitComponentsGeneric si la tienes definida)
     DrawFitComponentsGeneric(h, fTotal, fLim);
+
+    // Guardar el histograma y la función
+    TFile *fout = new TFile("./Outputs/ExFitTotal.root","RECREATE");
+    h->Write("hExTotal");
+    fTotal->Write("fExTotal");
+    fout->Close();
 }
