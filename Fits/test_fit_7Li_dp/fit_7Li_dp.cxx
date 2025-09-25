@@ -4,6 +4,8 @@
 #include "TF1.h"
 #include "TSpline.h"
 #include "TMath.h"
+#include "TLegend.h"
+#include "TStyle.h"
 
 #include "ROOT/RDataFrame.hxx"
 
@@ -29,40 +31,92 @@ double fitFunc(double *x, double *p) {
     return g1 + g2 + g3 + splineVal + g4 + g5;
 }
 
+void DrawFitComponents(TH1D *histo, TF1 *fTotal, double fLim, TSpline3 *spline = nullptr) {
+    gStyle->SetOptStat(0);
+    gStyle->SetOptFit(0); // quitar también la caja del fit
+    
+    TCanvas *cComp = new TCanvas("cComp","Componentes del ajuste",900,700);
+    histo->Draw();
+
+    // Colores para gaussianas
+    Color_t colors[] = {kAzure+1, kOrange+7, kViolet+6, kTeal+3, kPink+9};
+
+    // Crear la leyenda en la parte superior derecha
+    TLegend *leg = new TLegend(0.60,0.60,0.88,0.88);
+    leg->SetBorderSize(0);
+    leg->SetFillStyle(0);
+
+    // Dibujar las 5 gaussianas
+    const char* labels[5] = {"g.s.", "1st", "2nd", "3rd", "4th"};
+    for (int j = 0; j < 5; j++) {
+        int idx = j*3;
+        if (j >= 3) idx += 1; // saltar AmpSpline
+
+        double mean  = fTotal->GetParameter(idx+1); // en MeV
+        double sigma = fTotal->GetParameter(idx+2); // en MeV
+
+        TF1 *g = new TF1(Form("g%d",j+1),
+                         "[0]*TMath::Gaus(x,[1],[2],true)", -2, fLim);
+        g->SetParameters(fTotal->GetParameter(idx),
+                         mean, sigma);
+        g->SetLineColor(colors[j]);
+        g->Draw("same");
+
+        // Texto con nombre + mean en MeV + sigma en keV
+        TString entry = Form("%s (%.2f MeV, #sigma=%.0f keV)", 
+                             labels[j], mean, sigma*1000.0);
+        leg->AddEntry(g, entry, "l");
+    }
+
+    // spline (si no está fijada a 0)
+    if (spline && fTotal->GetParameter(9) != 0.0) {
+        TF1 *fspline = new TF1("fspline",
+            [spline](double *x,double *p){ return p[0]*spline->Eval(x[0]); },
+            -2,fLim,1);
+        fspline->SetParameter(0, fTotal->GetParameter(9));
+        fspline->SetLineColor(kGray+2);
+        fspline->SetLineStyle(2);
+        fspline->Draw("same");
+
+        leg->AddEntry(fspline, "PS (S_{n} = 2.04 MeV)", "l");
+    }
+
+    leg->Draw();
+}
+
 void fit_7Li_dp() {
-    // Get file and Ex histo for 8Li excitation energy spectrum
+    // Get file and Ex histo
     TFile *file = TFile::Open("../../PostAnalysis/Outputs/tree_ex_7Li_d_p.root");
     TH1D *hEx_7Li_dp = (TH1D *)file->Get("hExSil");
+    bool rebin {true};
+    if (rebin)
+    {
+        int rebinFactor = 2;
+        hEx_7Li_dp->Rebin(2);
+        TString title {Form("Ex with silicons;E_{x} [MeV];Counts / (%i keV)", 75*rebinFactor)};
+        hEx_7Li_dp->SetTitle(title);
+    }
+    
 
-    // Get file and Ex for the PS simulated
-    TFile *filePS = TFile::Open("./Inputs/1nPS_7Li.root");
+    // Get PS file
+    TFile *filePS = TFile::Open("./Inputs/1nPS_7Li_latSil.root");
     TH1D *hPS_1n = (TH1D *)filePS->Get("hEx");
 
     // spline global
     gSplinePS = new TSpline3(hPS_1n);
 
-    // TF1 con 16 parámetros (3*3 + 1 + 2*3)
-    TF1 *fTotal = new TF1("fTotal", fitFunc, -2, 6, 16);
+    // TF1 con 16 parámetros
+    double fLim {6.5};
+    TF1 *fTotal = new TF1("fTotal", fitFunc, -2, fLim, 16);
 
-    // nombres de parámetros: hay que asignarlos de a uno
-    fTotal->SetParName(0,"A1");
-    fTotal->SetParName(1,"mean1");
-    fTotal->SetParName(2,"sigma1");
-    fTotal->SetParName(3,"A2");
-    fTotal->SetParName(4,"mean2");
-    fTotal->SetParName(5,"sigma2");
-    fTotal->SetParName(6,"A3");
-    fTotal->SetParName(7,"mean3");
-    fTotal->SetParName(8,"sigma3");
-    fTotal->SetParName(9,"AmpSpline");
-    fTotal->SetParName(10,"A4");
-    fTotal->SetParName(11,"mean4");
-    fTotal->SetParName(12,"sigma4");
-    fTotal->SetParName(13,"A5");
-    fTotal->SetParName(14,"mean5");
-    fTotal->SetParName(15,"sigma5");
+    // nombres de parámetros
+    const char* names[16] = {
+        "A1","mean1","sigma1","A2","mean2","sigma2","A3","mean3","sigma3",
+        "AmpSpline","A4","mean4","sigma4","A5","mean5","sigma5"
+    };
+    for (int i=0;i<16;i++) fTotal->SetParName(i,names[i]);
 
-    // parámetros iniciales: usar un array
+    // parámetros iniciales
     double initPars[16] = {
         700, 0,   0.08,  // g1
         30, 1,   0.08,  // g2
@@ -73,32 +127,34 @@ void fit_7Li_dp() {
     };
     fTotal->SetParameters(initPars);
 
-    // Set limits for parameters
-    for (int i = 0; i < 16; i++) 
-    {
-        if(i == 1)
-            fTotal->SetParLimits(i, -0.5, 0.5);
-        else if(i == 4)
-            fTotal->SetParLimits(i, 0.5, 1.5);
-        else if(i == 7)
-            fTotal->SetParLimits(i, 1.5, 2.5);
-        else if(i == 11)
-            fTotal->SetParLimits(i, 2.5, 3.9);
-        else if(i == 14)
-            fTotal->SetParLimits(i, 4.5, 6.0);
+    // límites
+    for (int i = 0; i < 16; i++) {
+        //if (i == 9) continue;
+        if(i == 1)       fTotal->SetParLimits(i, -0.5, 0.5); // g1 mean
+        else if(i == 4)  fTotal->SetParLimits(i, 0.5, 1.5); // g2 mean
+        else if(i == 7)  fTotal->SetParLimits(i, 2, 2.5); // g3 mean
+        else if(i == 11) fTotal->SetParLimits(i, 2.7, 3.9); // g4 mean
+        else if(i == 14) fTotal->SetParLimits(i, 4.5, 6.0); // g5 mean
+        else if(i == 2 || i == 5 || i == 8 || i == 12 || i == 15) // sigmas
+            fTotal->SetParLimits(i, 0.05, 0.5);
+        else if(i == 13) fTotal->SetParLimits(i, 0.0, 30); // A5
         else
-            fTotal->SetParLimits(i, 0.01, 1e6); // mínimo=0, máximo grande
+            fTotal->SetParLimits(i, 0.0, 100);
     }
+    // fTotal->FixParameter(9, 0.);
 
     // fit
     hEx_7Li_dp->Fit(fTotal,"R");
 
-    // Plot resultado
+    // Canvas con el ajuste total
     TCanvas *c1 = new TCanvas("c1", "Ex 7Li(d,p)", 900, 700);
     hEx_7Li_dp->Draw();
     fTotal->Draw("same");
 
-    // spline check
+    // Canvas con componentes
+    DrawFitComponents(hEx_7Li_dp, fTotal, fLim, gSplinePS);
+
+    // Canvas para revisar spline original
     TCanvas *c2 = new TCanvas("c2", "PS 1n 7Li", 800, 600);
     hPS_1n->Draw();
     gSplinePS->Draw("same");
