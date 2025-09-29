@@ -190,7 +190,7 @@ void fit_generic()
     const char* histoName = "hExSil";
     const char* psFile    = "./Inputs/1nPS_7Li_latSil.root";
     double fLim = 8.5;
-    int rebinFactor = 2;
+    int rebinFactor = 1;
 
     // --- Números de picos ---
     gNumGauss = 3;

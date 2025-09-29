@@ -213,9 +213,9 @@ void DrawFitComponentsGeneric(TH1D *histo, TF1 *fTotal, double fLim) {
 }
 
 // --- Macro principal para intervalos ---
-void fit_generic_intervals() {
+void fit_dd_intervals() {
     // --- Configuración ---
-    gNumGauss = 2;  // deben coincidir con la macro global
+    gNumGauss = 1;  // deben coincidir con la macro global
     gNumVoigt = 0;
     gNumPS    = 0;
     double fLim = 8.5;
@@ -229,10 +229,10 @@ void fit_generic_intervals() {
 
     // === 2. Cargar histos de intervalos ===
     // Angular intervals
-    std::vector<double> minAngle {25, 40, 55};
-    std::vector<double> maxAngle {40, 55, 70};
+    std::vector<double> minAngle {10, 25, 40, 55, 70};
+    std::vector<double> maxAngle {25, 40, 55, 70, 85};
     // File and getter
-    TFile *fData = TFile::Open("../../PostAnalysis/Outputs/tree_ex_7Li_d_p.root"); 
+    TFile *fData = TFile::Open("../../PostAnalysis/Outputs/tree_ex_7Li_d_d.root"); 
     std::vector<TH1D*> hists;
     GetIntervalHists(fData, hists, hRef, minAngle, maxAngle);
 
