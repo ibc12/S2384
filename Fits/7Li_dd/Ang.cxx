@@ -73,12 +73,11 @@ void Ang()
     Angular::Comparator comp {"g.s", xs.Get("g0")};
     comp.Add("Haixia", "./Inputs/gsH/fort.201");
     comp.Fit();
+    comp.Add("Daehnick", "./Inputs/gsD/fort.201");
+    comp.Fit();
+    comp.Add("DA1p", "./Inputs/gsDA1p/fort.201");
+    comp.Fit();
     comp.Draw("", true);
-    // Plot
-    Angular::Comparator compD {"g.s", xs.Get("g0")};
-    compD.Add("Daehnick", "./Inputs/gsD/fort.201");
-    compD.Fit();
-    compD.Draw("", true);
 
     auto* c0 {new TCanvas {"c0", "(d,d) canvas"}};
     c0->DivideSquare(2);
