@@ -127,6 +127,8 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
 
     auto hRP {def.Histo2D(HistConfig::RP, "fRP.fCoordinates.fX", "fRP.fCoordinates.fY")};
 
+    auto hRPx {def.Histo1D(HistConfig::RPx, "fRP.fCoordinates.fX")};
+
     auto hThetaCMLab {def.Histo2D(HistConfig::ThetaCMLab, "fThetaLight", "ThetaCM")};
 
     // Ex dependences
@@ -149,7 +151,7 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
 
 
     auto* c22 {new TCanvas("c22", "Pipe2 canvas 2")};
-    c22->DivideSquare(4);
+    c22->DivideSquare(6);
     c22->cd(1);
     hTheta->DrawClone();
     c22->cd(2);
@@ -158,6 +160,8 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     hRP->DrawClone("colz");
     c22->cd(4);
     hEBeam->DrawClone();
+    c22->cd(5);
+    hRPx->DrawClone();
 
     auto* c21 {new TCanvas("c21", "Pipe2 canvas 1")};
     c21->DivideSquare(6);
