@@ -18,7 +18,7 @@
 void PlotSP()
 {
     // Read the data using the data.conf file
-    ActRoot::DataManager dataman{"../configs/data.conf", ActRoot::ModeType::EMerge};
+    ActRoot::DataManager dataman{"../configs/data_all.conf", ActRoot::ModeType::EMerge};
     auto chain{dataman.GetChain()}; // Get all Merge files for Runs in a single TChain
     // Add friends if necessary
     auto friend1{dataman.GetChain(ActRoot::ModeType::EReadSilMod)};
@@ -30,7 +30,7 @@ void PlotSP()
 
     // Gate on events (L1 trigger has no good z relative point)
     auto gated{df.Filter([](ActRoot::ModularData &d)
-                         { return d.Get("GATCONF") == 4; }, {"ModularData"})
+                         { return (d.Get("GATCONF") == 1 || d.Get("GATCONF") == 2); }, {"ModularData"})
                    .Filter(
                        [](ActRoot::MergerData &m)
                        {
@@ -73,23 +73,36 @@ void PlotSP()
         },
         {"MergerData"});
 
+    // Save to file
+    for (auto &[layer, vec] : hs)
+    {
+        auto file{std::make_unique<TFile>(TString::Format("./Outputs/histos_sp_%s.root", layer.c_str()), "recreate")};
+        for (auto &[sil, h] : vec)
+        {
+            h.Merge();
+            auto proj{h.GetAtSlot(0)->ProjectionY(TString::Format("proj%s%d", layer.c_str(), sil))};
+            proj->Write();
+            delete proj;
+        }
+    }
+
     // Draw
     auto *c0{new TCanvas{"c0", "SP canvas"}};
     c0->DivideSquare(4);
     int p{1};
-    int canvasIdx {0};
+    int canvasIdx{0};
     for (auto &[layer, hsils] : hs)
     {
         // Crear un nuevo canvas para cada histograma
         auto cname = Form("c%d", canvasIdx++);
         auto c = new TCanvas{cname, Form("SP canvas %d", canvasIdx), 800, 600};
-        if(layer == "l0" || layer == "r0")
-            c->Divide(3,4);
-        if(layer == "f0")
-            c->Divide(4,3);
-        //c0->cd(p);
+        if (layer == "l0" || layer == "r0")
+            c->Divide(3, 4);
+        if (layer == "f0")
+            c->Divide(4, 3);
+        // c0->cd(p);
         int idx{};
-        std::cout<<hsils.size() << " histograms for layer " << layer << std::endl;
+        std::cout << hsils.size() << " histograms for layer " << layer << std::endl;
         for (auto &[s, h] : hsils)
         {
             c->cd(idx + 1);
@@ -98,7 +111,7 @@ void PlotSP()
                 color = 46;
             auto opts{(idx == 0) ? "scat" : "scat same"};
             // Merge histos from threads
-            h.Merge();
+            //h.Merge(); // alerady merged before
             // Set color
             h.GetAtSlot(0)->SetMarkerColor(color);
             // Set size

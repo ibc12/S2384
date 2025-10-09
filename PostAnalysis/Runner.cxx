@@ -8,9 +8,9 @@
 
 void Runner(TString what = "")
 {
-    std::string beam {"11Li"};
+    std::string beam {"7Li"};
     std::string target {"d"};
-    std::string light {"d"};
+    std::string light {"p"};
 
     std::cout << BOLDGREEN << "···· Runner ····" << '\n';
     std::cout << "-> Beam   : " << beam << '\n';
@@ -29,7 +29,7 @@ void Runner(TString what = "")
     {
         func = "Pipe0_Beam";
         gROOT->LoadMacro(path + func + ext);
-        gROOT->ProcessLine(func + "()");
+        gROOT->ProcessLine(func + TString::Format("(\"%s\")", beam.c_str()));
     }
     // PID
     if(what.Contains("1"))

@@ -43,9 +43,9 @@ void Ang(bool isLab = false)
         hKin = def.Histo2D({"hCM", "CM;#theta_{CM};E [MeV]", 300, 0, 120, 300, 0, 60}, "ThetaCM", "EVertex");
 
     // Init intervals
-    double thetaMin = isLab ? 55.0   : 30.0;
-    double thetaMax = isLab ? 70.0 : 80.0;
-    double thetaStep = isLab ? 2.5  : 10.0;
+    double thetaMin = isLab ? 55.0   : 34.0;
+    double thetaMax = isLab ? 70.0 : 65.0;
+    double thetaStep = isLab ? 2.5  : 2.50;
     Angular::Intervals ivs {thetaMin, thetaMax, S2384Fit::Exdd_7Li, thetaStep, 0};
     if(isLab)
         def.Foreach([&](float thetalab, double ex) { ivs.Fill(thetalab, ex); }, {"fThetaLight", "Ex"});
@@ -55,7 +55,7 @@ void Ang(bool isLab = false)
 
     // Init fitter
     Angular::Fitter fitter {&ivs};
-    fitter.SetAllowFreeMean(true);
+    // fitter.SetAllowFreeMean(true);
     // fitter.SetFreeMeanRange(0.1);
     fitter.Configure("./Outputs/fit.root");
     fitter.Run();
@@ -77,12 +77,14 @@ void Ang(bool isLab = false)
     eff.Draw();
 
     // Set experiment info
-    PhysUtils::Experiment exp {4.126e19, 2.08039e8, 1};
+    PhysUtils::Experiment exp {4.126e19*25.6, 648000, 300}; // 2.08039e8
     // And compute differential xs!
     Angular::DifferentialXS xs {&ivs, &fitter, &eff, &exp};
     xs.DoFor(peaks);
     if(!isLab)
         xs.Write("./Outputs/");
+
+    
 
     // Plot
     Angular::Comparator comp {"g.s", xs.Get("g0")};

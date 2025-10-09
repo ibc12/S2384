@@ -63,7 +63,7 @@ void Ang()
     eff.Draw();
 
     // Set experiment info
-    PhysUtils::Experiment exp {4.126e19, 9.87839e8, 1};
+    PhysUtils::Experiment exp {4.126e19 * 25.6, 9.87839e8, 1};
     // And compute differential xs!
     Angular::DifferentialXS xs {&ivs, &fitter, &eff, &exp};
     xs.DoFor(peaks);

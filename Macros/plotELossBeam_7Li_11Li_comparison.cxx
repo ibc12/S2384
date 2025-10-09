@@ -27,9 +27,6 @@ void plotELossBeam_7Li_11Li_comparison()
     auto friend2_11Li{dataman11Li.GetChain(ActRoot::ModeType::EFilter)};
     chain11Li->AddFriend(friend2_11Li.get());
     ROOT::RDataFrame df11Li{*chain11Li};
-    // select runs
-    int run7Li = 66;
-    int run11Li = 118;
 
     // Create columns for E_Loss and E_Beam
     auto df7Li_gated = df7Li.Filter([](ActRoot::MergerData &m)

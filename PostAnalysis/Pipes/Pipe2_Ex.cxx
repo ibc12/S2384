@@ -21,35 +21,36 @@
 
 #include "../HistConfig.h"
 
-void Pipe2_Ex(const std::string& beam, const std::string& target, const std::string& light)
+void Pipe2_Ex(const std::string &beam, const std::string &target, const std::string &light)
 {
     // Read data
-    auto filename {TString::Format("./Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
+    auto filename{TString::Format("./Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
     ROOT::EnableImplicitMT();
-    ROOT::RDataFrame df {"PID_Tree", filename};
+    ROOT::RDataFrame df{"PID_Tree", filename};
 
     // Init SRIM
-    auto* srim {new ActPhysics::SRIM};
+    auto *srim{new ActPhysics::SRIM};
     // Correct SRIM names
-    std::string srimName {};
-    if(light == "d")
+    std::string srimName{};
+    if (light == "d")
         srimName = "2H";
-    else if(light == "p")
+    else if (light == "p")
         srimName = "1H";
-    else if(light == "t")
+    else if (light == "t")
         srimName = "3H";
-    else if(light == "3He")
+    else if (light == "3He")
         srimName = "3He";
-    else if(light == "4He")
+    else if (light == "4He")
         srimName = "4He";
     srim->ReadTable(light, TString::Format("../Calibrations/SRIM/%s_900mb_CF4_95-5.txt", srimName.c_str()).Data());
     srim->ReadTable(beam, TString::Format("../Calibrations/SRIM/%s_900mb_CF4_95-5.txt", beam.c_str()).Data());
+    srim->ReadTable("mylar", TString::Format("../Calibrations/SRIM/%s_Mylar.txt", beam.c_str()).Data());
     // Build energy at vertex
     auto dfVertex = df.Define("EVertex",
-                              [&](const ActRoot::MergerData& d)
+                              [&](const ActRoot::MergerData &d)
                               {
-                                  double ret {};
-                                  if(d.fLight.IsFilled())
+                                  double ret{};
+                                  if (d.fLight.IsFilled())
                                       ret = srim->EvalInitialEnergy(light, d.fLight.fEs.front(), d.fLight.fTL);
                                   else // L1 trigger
                                       ret = srim->EvalEnergy(light, d.fLight.fTL);
@@ -58,12 +59,15 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
                               {"MergerData"});
 
     // Init particles
-    ActPhysics::Particle pb {beam};
-    ActPhysics::Particle pt {target};
-    ActPhysics::Particle pl {light};
+    ActPhysics::Particle pb{beam};
+    ActPhysics::Particle pt{target};
+    ActPhysics::Particle pl{light};
+
+    // Initial energy
+    double initialEnergy{7.558}; // meassured by operators
 
     // // Filter on heavy particle hit in the telescope
-    auto def {dfVertex};
+    auto def{dfVertex};
     // auto def = dfVertex.Filter([](const ActRoot::MergerData &m)
     //                            { if(!m.fHeavy.fLayers.empty() && m.fHeavy.fLayers.front() == "f2")
     //                            {
@@ -79,18 +83,23 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     //                                 return false; }, {"MergerData"});
     //
     // Build beam energy
-    def = def.Define("EBeam", [&](const ActRoot::MergerData& d)
-                     { return srim->Slow(beam, 7.5 * pb.GetAMU(), d.fRP.X()); }, {"MergerData"});
+    def = def.Define("EBeam", [&](const ActRoot::MergerData &d)
+                     { auto afterMylar {srim->Slow("mylar", initialEnergy * pb.GetAMU(), 0.0168)}; // Mylar width in mm 
+                     return srim->Slow(beam, initialEnergy * pb.GetAMU(), d.fRP.X()); }, {"MergerData"});
 
-    ActPhysics::Kinematics kin {pb, pt, pl, 7.5 * pb.GetAMU()};
+    ActPhysics::Kinematics kin{pb, pt, pl, initialEnergy * pb.GetAMU()}; // energy meassuredby operators
+    // Recontructed Beam Energy
+    def = def.Define("RecEBeam", [&](double EVertex, float ThetaLight)
+                     { return kin.ReconstructBeamEnergyFromLabKinematics(EVertex, ThetaLight * TMath::DegToRad()); },
+                     {"EVertex", "fThetaLight"});
     // Vector of kinematics as one object is needed per
     // processing slot (since we are changing EBeam in each entry)
-    std::vector<ActPhysics::Kinematics> vkins {def.GetNSlots()};
-    for(auto& k : vkins)
+    std::vector<ActPhysics::Kinematics> vkins{def.GetNSlots()};
+    for (auto &k : vkins)
         k = kin;
     def =
         def.DefineSlot("Ex",
-                       [&](unsigned int slot, const ActRoot::MergerData& d, double EVertex, double EBeam)
+                       [&](unsigned int slot, const ActRoot::MergerData &d, double EVertex, double EBeam)
                        {
                            vkins[slot].SetBeamEnergy(EBeam);
                            return vkins[slot].ReconstructExcitationEnergy(EVertex, (d.fThetaLight) * TMath::DegToRad());
@@ -98,7 +107,7 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
                        {"MergerData", "EVertex", "EBeam"});
     def =
         def.DefineSlot("ThetaCM",
-                       [&](unsigned int slot, const ActRoot::MergerData& d, double EVertex, double EBeam)
+                       [&](unsigned int slot, const ActRoot::MergerData &d, double EVertex, double EBeam)
                        {
                            vkins[slot].SetBeamEnergy(EBeam);
                            return vkins[slot].ReconstructTheta3CMFromLab(EVertex, (d.fThetaLight) * TMath::DegToRad()) *
@@ -106,51 +115,65 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
                        },
                        {"MergerData", "EVertex", "EBeam"});
 
-
     // Book new histograms
-    auto hKin {def.Histo2D(HistConfig::KinEl, "fThetaLight", "EVertex")};
+    auto hKin{def.Histo2D(HistConfig::KinEl, "fThetaLight", "EVertex")};
 
-    auto hKinCM {def.Histo2D(HistConfig::KinCM, "ThetaCM", "EVertex")};
+    auto hKinCM{def.Histo2D(HistConfig::KinCM, "ThetaCM", "EVertex")};
 
-    auto hEBeam {def.Histo1D("EBeam")};
+    auto hEBeam{def.Histo1D("EBeam")};
 
-    auto hExSil {def.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})
-                     .Histo1D(HistConfig::Ex, "Ex")};
-    hExSil->SetTitle("Ex with silicons");
-    auto hExL1 {def.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; }, {"MergerData"})
+    auto hExSil{def.Filter([](ActRoot::MergerData &m)
+                           { return m.fLight.IsFilled() == true; }, {"MergerData"})
                     .Histo1D(HistConfig::Ex, "Ex")};
+    hExSil->SetTitle("Ex with silicons");
+    auto hExL1{def.Filter([](ActRoot::MergerData &m)
+                          { return m.fLight.IsFilled() == false; }, {"MergerData"})
+                   .Histo1D(HistConfig::Ex, "Ex")};
     hExL1->SetTitle("Ex with L1");
 
-    auto hTheta {def.Histo1D("fThetaLight")};
+    auto hTheta{def.Histo1D("fThetaLight")};
 
-    auto hThetaBeam {def.Histo2D(HistConfig::ThetaBeam, "fRP.fCoordinates.fX", "fThetaBeam")};
+    auto hThetaBeam{def.Histo2D(HistConfig::ThetaBeam, "fRP.fCoordinates.fX", "fThetaBeam")};
 
-    auto hRP {def.Histo2D(HistConfig::RP, "fRP.fCoordinates.fX", "fRP.fCoordinates.fY")};
+    auto hRP{def.Histo2D(HistConfig::RP, "fRP.fCoordinates.fX", "fRP.fCoordinates.fY")};
 
-    auto hRPx {def.Histo1D(HistConfig::RPx, "fRP.fCoordinates.fX")};
+    auto hRPx{def.Histo1D(HistConfig::RPx, "fRP.fCoordinates.fX")};
 
-    auto hThetaCMLab {def.Histo2D(HistConfig::ThetaCMLab, "fThetaLight", "ThetaCM")};
+    auto hThetaCMLab{def.Histo2D(HistConfig::ThetaCMLab, "fThetaLight", "ThetaCM")};
 
     // Ex dependences
-    auto hExThetaCM {def.Histo2D(HistConfig::ExThetaCM, "ThetaCM", "Ex")};
-    auto hExThetaLab {def.Histo2D(HistConfig::ExThetaLab, "fThetaLight", "Ex")};
-    auto hExRP {def.Histo2D(HistConfig::ExRPx, "fRP.fCoordinates.fX", "Ex")};
-
+    auto hExThetaCM{def.Histo2D(HistConfig::ExThetaCM, "ThetaCM", "Ex")};
+    auto hExThetaLab{def.Filter([](ActRoot::MergerData &m)
+                                { return m.fLight.IsFilled() == true; }, {"MergerData"})
+                         .Histo2D(HistConfig::ExThetaLab, "fThetaLight", "Ex")};
+    auto hExRP{def.Histo2D(HistConfig::ExRPx, "fRP.fCoordinates.fX", "Ex")};
+    auto hExElight{def.Filter([](ActRoot::MergerData &m)
+                              { return m.fLight.IsFilled() == true; }, {"MergerData"})
+                       .Histo2D(HistConfig::ExElight, "EVertex", "Ex")};
+    auto hExSPZ{def.Histo2D(HistConfig::ExZ, "fSP.fCoordinates.fZ", "Ex")};
     // Heavy histograms
-    auto hThetaHLLab {def.Histo2D(HistConfig::ChangeTitle(HistConfig::ThetaHeavyLight, "Lab correlations"),
-                                  "fThetaLight", "fThetaHeavy")};
+    auto hThetaHLLab{def.Histo2D(HistConfig::ChangeTitle(HistConfig::ThetaHeavyLight, "Lab correlations"),
+                                 "fThetaLight", "fThetaHeavy")};
+    // Energy Beam vs RecEBeam
+    auto hEBeam1{def.Filter([](ActRoot::MergerData &m)
+                                   { return m.fLight.IsFilled() == true; }, {"MergerData"})
+                            .Histo1D({"hEBeamRecEBeam", "EBeam;EBeam [MeV]", 200, 0, initialEnergy * pb.GetAMU() + 15},
+                                     "EBeam")};
+    auto hRecEBeam{def.Filter([](ActRoot::MergerData &m)
+                                   { return m.fLight.IsFilled() == true; }, {"MergerData"})
+                            .Histo1D({"hEBeamRecEBeam", "EBeam;EBeam [MeV]", 200, 0, initialEnergy * pb.GetAMU() + 15},
+                                     "RecEBeam")};
     // Save!
-    auto outfile {TString::Format("./Outputs/tree_ex_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
+    auto outfile{TString::Format("./Outputs/tree_ex_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
     def.Snapshot("Final_Tree", outfile);
     std::cout << "Saving Final_Tree in " << outfile << '\n';
     // Save Ex histos on file
-    auto file {std::make_shared<TFile>(outfile.Data(), "update")};
+    auto file{std::make_shared<TFile>(outfile.Data(), "update")};
     hExSil->Write("hExSil");
     hExL1->Write("hExL1");
     file->Close();
 
-
-    auto* c22 {new TCanvas("c22", "Pipe2 canvas 2")};
+    auto *c22{new TCanvas("c22", "Pipe2 canvas 2")};
     c22->DivideSquare(6);
     c22->cd(1);
     hTheta->DrawClone();
@@ -163,11 +186,11 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     c22->cd(5);
     hRPx->DrawClone();
 
-    auto* c21 {new TCanvas("c21", "Pipe2 canvas 1")};
+    auto *c21{new TCanvas("c21", "Pipe2 canvas 1")};
     c21->DivideSquare(6);
     c21->cd(1);
     hKin->DrawClone("colz");
-    auto* theo {kin.GetKinematicLine3()};
+    auto *theo{kin.GetKinematicLine3()};
     theo->Draw("same");
     c21->cd(2);
     hExSil->DrawClone();
@@ -181,12 +204,22 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     c21->cd(6);
     hExRP->DrawClone("colz");
 
-    auto* c23 {new TCanvas {"c23", "Pipe2 canvas 3"}};
-    c23->DivideSquare(4);
+    auto *c23{new TCanvas{"c23", "Pipe2 canvas 3 DEBUG"}};
+    c23->DivideSquare(6);
     c23->cd(1);
     hThetaHLLab->DrawClone("colz");
     c23->cd(2);
     hThetaCMLab->DrawClone("colz");
     c23->cd(3);
+    hExThetaLab->DrawClone("colz");
+    c23->cd(4);
+    hExElight->DrawClone("colz");
+    c23->cd(5);
+    hEBeam1->SetLineColor(kRed);
+    hEBeam1->DrawClone();
+    hRecEBeam->SetLineColor(kGreen);
+    hRecEBeam->DrawClone("same");
+    c23->cd(6);
+    hExSPZ->DrawClone("colz");
 }
 #endif
