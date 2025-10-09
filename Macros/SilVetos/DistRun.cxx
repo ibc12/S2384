@@ -20,7 +20,7 @@ void DistRun()
 {
     ROOT::EnableImplicitMT();
 
-    ActRoot::DataManager data {"../../configs/data.conf"};
+    ActRoot::DataManager data {"../../configs/data.conf", ActRoot::ModeType::EMerge};
     auto chain {data.GetJoinedData()};
 
     ROOT::RDataFrame df {*chain};
@@ -74,7 +74,7 @@ void DistRun()
                                          zlims.first,
                                          zlims.second};
         std::map<int, ROOT::TThreadedObject<TH1D>> pxs, pzs;
-        std::vector<int> idxs {0, 1, 2, 3, 4, 5, 6, 7};
+        std::vector<int> idxs {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
         for(const auto& idx : idxs)
         {
             pxs.emplace(std::piecewise_construct, std::forward_as_tuple(idx),

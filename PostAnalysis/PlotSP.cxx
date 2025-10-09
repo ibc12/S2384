@@ -18,7 +18,7 @@
 void PlotSP()
 {
     // Read the data using the data.conf file
-    ActRoot::DataManager dataman{"../configs/data_all.conf", ActRoot::ModeType::EMerge};
+    ActRoot::DataManager dataman{"../configs/data.conf", ActRoot::ModeType::EMerge};
     auto chain{dataman.GetChain()}; // Get all Merge files for Runs in a single TChain
     // Add friends if necessary
     auto friend1{dataman.GetChain(ActRoot::ModeType::EReadSilMod)};
