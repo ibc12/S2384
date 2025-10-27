@@ -65,6 +65,9 @@ void Pipe2_Ex(const std::string &beam, const std::string &target, const std::str
 
     // Initial energy
     double initialEnergy{7.558}; // meassured by operators
+    initialEnergy = srim->Slow(beam, initialEnergy * pb.GetAMU(), 0.0168); // Mylar width in mm
+    initialEnergy = srim->Slow("beam", initialEnergy, 60); // 60 mm of gas before the pad plane
+    initialEnergy = initialEnergy / pb.GetAMU(); // back to amu units
 
     // // Filter on heavy particle hit in the telescope
     auto def{dfVertex};
@@ -85,9 +88,9 @@ void Pipe2_Ex(const std::string &beam, const std::string &target, const std::str
     // Build beam energy
     def = def.Define("EBeam", [&](const ActRoot::MergerData &d)
                      { auto afterMylar {srim->Slow("mylar", initialEnergy * pb.GetAMU(), 0.0168)}; // Mylar width in mm 
-                     return srim->Slow(beam, initialEnergy * pb.GetAMU(), d.fRP.X()); }, {"MergerData"});
+                     return srim->Slow(beam, afterMylar * pb.GetAMU(), d.fRP.X() + 60); }, {"MergerData"}); // 60 mm of gas before the pad plane
 
-    ActPhysics::Kinematics kin{pb, pt, pl, initialEnergy * pb.GetAMU()}; // energy meassuredby operators
+    ActPhysics::Kinematics kin{pb, pt, pl, initialEnergy * pb.GetAMU()}; // energy meassured by operators
     // Recontructed Beam Energy
     def = def.Define("RecEBeam", [&](double EVertex, float ThetaLight)
                      { return kin.ReconstructBeamEnergyFromLabKinematics(EVertex, ThetaLight * TMath::DegToRad()); },

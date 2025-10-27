@@ -6,7 +6,7 @@
 
 #include "./do_simu.cxx"
 
-void runner(TString what = "plot", bool inspect = true)
+void runner(TString what = "simu", bool inspect = true)
 {
     // Beam energy
     double Tbeam {7 * 7.5}; // MeV
@@ -62,6 +62,6 @@ void runner(TString what = "plot", bool inspect = true)
     }
     else
     {
-        std::cout << "No plot method implemented yet" << '\n';
+        std::cout << "That method was not implemented yet" << '\n';
     }
 }
