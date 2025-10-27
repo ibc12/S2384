@@ -21,33 +21,54 @@ void DistRun()
     ROOT::EnableImplicitMT();
 
     ActRoot::DataManager data {"../../configs/data.conf", ActRoot::ModeType::EMerge};
+    data.SetRuns(68, 122); // L0 trigger window changed for
     auto chain {data.GetJoinedData()};
 
     ROOT::RDataFrame df {*chain};
 
+    std::string layer {"r0"};
+
     // Filter side events
     auto gated {df.Filter(
-        [](ActRoot::MergerData& merger)
+        [&](ActRoot::MergerData& merger)
         {
             if(merger.fSilLayers.size() == 1)
-                if(merger.fSilLayers.front() == "l0")
+                if(merger.fSilLayers.front() == layer)
                     return true;
             return false;
         },
         {"MergerData"})};
 
-    // Define distances in mm
-    double base {256.};
+    //  Define distances in mm
+    double base {0.};
     std::vector<double> dists;
-    for(double d = 85; d < 115; d += 2)
+    for(double d = -80; d < -40; d += 5)
         dists.push_back(base + d);
 
     int xbins {200};
-    std::pair<double, double> xlims {-20, 300};
     int zbins {200};
-    std::pair<double, double> zlims {-20, 300};
+    std::pair<double, double> xlims {};
+    std::pair<double, double> zlims {};
+    if(layer == "l0")
+    {
+        xlims = {-20, 300};
+        zlims = {130, 450};
+    }
+    else if(layer == "f0")
+    {
+        xlims = {-20, 300};
+        zlims = {150, 400};
+    }
+    else if(layer == "r0")
+    {
+        xlims = {-20, 300};
+        zlims = {150, 400};
+    }
+
+
     // Save
-    auto f {std::make_unique<TFile>("./Outputs/Dists/histos.root", "recreate")};
+    TString outpath {TString::Format("./Outputs/Dists/histos_%s.root", layer.c_str())};
+    auto f {std::make_unique<TFile>(outpath, "recreate")};
     f->WriteObject(&dists, "dists");
     for(const auto& dist : dists)
     {
@@ -60,13 +81,16 @@ void DistRun()
                                     auto p {d.fBP};
                                     auto dir {(d.fSP - d.fBP)};
                                     ActRoot::Line line {p, dir, 0};
-                                    return line.MoveToY(dist);
+                                    if(layer == "f0")
+                                        return line.MoveToX(dist);
+                                    else
+                                        return line.MoveToY(dist);
                                 },
                                 {"MergerData"})};
         // Fill histograms!
         ROOT::TThreadedObject<TH2D> hSP {ROOT::TNumSlots {node.GetNSlots()},
                                          "hSP",
-                                         TString::Format("Side %.2f mm;X [mm];Z [mm]", dist),
+                                         TString::Format("Side %.2f mm;X or Y [mm];Z [mm]", dist),
                                          xbins,
                                          xlims.first,
                                          xlims.second,
@@ -79,21 +103,38 @@ void DistRun()
         {
             pxs.emplace(std::piecewise_construct, std::forward_as_tuple(idx),
                         std::forward_as_tuple(ROOT::TNumSlots {node.GetNSlots()}, TString::Format("px%d", idx),
-                                              TString::Format("%.2f mm X proj %d;X [mm]", dist, idx), xbins,
+                                              TString::Format("%.2f mm X or Y proj %d;X [mm]", dist, idx), xbins,
                                               xlims.first, xlims.second));
             pzs.emplace(std::piecewise_construct, std::forward_as_tuple(idx),
                         std::forward_as_tuple(ROOT::TNumSlots {node.GetNSlots()}, TString::Format("pz%d", idx),
                                               TString::Format("%.2f mm Z proj %d;Z [mm]", dist, idx), zbins,
                                               zlims.first, zlims.second));
         }
+        // Create all slots 0 (blame your computer Iván)
+        hSP.GetAtSlot(0)->GetEntries();
+        for(auto m : {&pxs, &pzs})
+            for(auto& [i, h] : *m)
+                h.GetAtSlot(0)->GetEntries();
+
         node.ForeachSlot(
             [&](unsigned int slot, ActRoot::MergerData& data, ROOT::Math::XYZPointF& sp)
             {
-                hSP.GetAtSlot(slot)->Fill(sp.X(), sp.Z());
+                slot = (node.GetNSlots() - 1) - slot;
+                if (layer == "f0")
+                {
+                    hSP.GetAtSlot(slot)->Fill(sp.Y(), sp.Z());
+                }
+                else
+                {
+                    hSP.GetAtSlot(slot)->Fill(sp.X(), sp.Z());
+                }
                 auto idx {data.fSilNs.front()};
                 if(pxs.count(idx))
                 {
-                    pxs[idx].GetAtSlot(slot)->Fill(sp.X());
+                    if(layer == "f0")
+                        pxs[idx].GetAtSlot(slot)->Fill(sp.Y());
+                    else
+                        pxs[idx].GetAtSlot(slot)->Fill(sp.X());
                     pzs[idx].GetAtSlot(slot)->Fill(sp.Z());
                 }
             },
@@ -105,9 +146,12 @@ void DistRun()
         auto* dir {f->mkdir(path)};
         dir->cd();
         hSP.Merge()->Write();
+        // std::cout << "Entries in hSP: " << hSP.GetAtSlot(0)->GetEntries() << '\n';
+
         for(auto m : {&pxs, &pzs})
-            for(auto& [_, h] : *m)
+            for(auto& [i, h] : *m)
                 h.Merge()->Write();
+
         f->cd();
     }
 }

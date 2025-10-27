@@ -31,7 +31,9 @@ std::pair<double, double> Do(TH1D*& p)
 
 void DistPlot()
 {
-    auto f {std::make_unique<TFile>("./Outputs/Dists/histos.root")};
+    std::string layer {"r0"};
+    TString outpath {TString::Format("./Outputs/Dists/histos_%s.root", layer.c_str())};
+    auto f {std::make_unique<TFile>(outpath)};
     auto dists {*f->Get<std::vector<double>>("dists")};
     // auto aux {dists[0]};
     // dists.clear();
@@ -40,6 +42,13 @@ void DistPlot()
     std::vector<TH2D*> hs2d;
     std::vector<std::map<int, TH1D*>> pxs, pzs;
     std::vector<ActPhysics::SilMatrix*> sms;
+    std::vector<int> indexes {};
+    if(layer == "l0")
+        indexes = {5, 8};
+    else if(layer == "f0")
+        indexes = {4, 7};
+    else if(layer == "r0")
+        indexes = {6, 0};
     for(const auto& dist : dists)
     {
         auto path {TString::Format("d_%.1f_mm", dist)};
@@ -52,8 +61,9 @@ void DistPlot()
         pzs.push_back({});
         sms.push_back(new ActPhysics::SilMatrix);
         sms.back()->SetName(h2d->GetTitle());
-        for(auto& idx : {0, 1, 2, 3, 4, 5, 6, 7})
+        for(auto& idx : indexes)
         {
+            std::cout << "Idx: "<< idx << " dist: " << dist << '\n';
             auto xkey {TString::Format("px%d", idx)};
             auto zkey {TString::Format("pz%d", idx)};
             pxs.back()[idx] = dir->Get<TH1D>(xkey);
@@ -97,7 +107,8 @@ void DistPlot()
     }
 
     // Save
-    auto out {std::make_unique<TFile>("./Outputs/Dists/sms.root", "recreate")};
+    TString outdir {TString::Format("./Outputs/Dists/sms_%s.root", layer.c_str())};
+    auto out {std::make_unique<TFile>(outdir, "recreate")};
     out->WriteObject(&dists, "dists");
     for(int i = 0; i < sms.size(); i++)
     {

@@ -19,6 +19,7 @@ void PlotSP()
 {
     // Read the data using the data.conf file
     ActRoot::DataManager dataman{"../configs/data.conf", ActRoot::ModeType::EMerge};
+    dataman.SetRuns(68, 122); // L0 trigger window changed for
     auto chain{dataman.GetChain()}; // Get all Merge files for Runs in a single TChain
     // Add friends if necessary
     auto friend1{dataman.GetChain(ActRoot::ModeType::EReadSilMod)};
@@ -30,7 +31,7 @@ void PlotSP()
 
     // Gate on events (L1 trigger has no good z relative point)
     auto gated{df.Filter([](ActRoot::ModularData &d)
-                         { return (d.Get("GATCONF") == 1 || d.Get("GATCONF") == 2); }, {"ModularData"})
+                         { return (d.Get("GATCONF") == 1 || d.Get("GATCONF") == 2 || d.Get("GATCONF") == 4); }, {"ModularData"})
                    .Filter(
                        [](ActRoot::MergerData &m)
                        {

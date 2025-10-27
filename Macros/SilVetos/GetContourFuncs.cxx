@@ -63,7 +63,7 @@ void SiliconCountourGetter(TH1* proj, double lamp, double lmin, double lmax, dou
     // Fit
     for(auto& f : {fleft, fright})
     {
-        f->SetParLimits(1, 0, 300);
+        f->SetParLimits(1, 0, 450);
         f->SetParLimits(2, 0, 4);
         proj->Fit(f, "0QR+");
         proj->GetFunction(f->GetName())->ResetBit(TF1::kNotDraw);

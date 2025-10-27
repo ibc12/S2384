@@ -27,9 +27,11 @@ void Fit()
 
     // Interface to fit
     Fitters::Interface inter;
-    double sigma {0.3}; // common init sigma for all
-    inter.AddState("g0", {100, 0, sigma});
+    double sigma {0.2}; // common init sigma for all
+    inter.AddState("g0", {400, 0, sigma});
+    inter.AddState("g1", {30, 0.435, sigma});
     inter.EndAddingStates();
+    inter.SetFixAll(2, true); // fix all sigmas
     // Save to be used later
     inter.Write("./Outputs/interface.root");
 
@@ -38,7 +40,7 @@ void Fit()
 
     // Fitting range
     double exmin {-2};
-    double exmax {8.5};
+    double exmax {4};
 
     // Run!
     Fitters::RunFit(hEx.GetPtr(), exmin, exmax, model, inter.GetInitial(), inter.GetBounds(), inter.GetFixed(),
