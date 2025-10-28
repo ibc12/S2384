@@ -34,6 +34,8 @@ const TH1DModel Ex {
 
 const TH1DModel ThetaCM {"hThetaCM", "ThetaCM;#theta_{CM} [#circ]", 600, 0, 180};
 
+const TH1DModel PhiCM {"hPhiCM", "PhiCM;#phi_{CM} [#circ]", 600, 0, 180};
+
 const TH2DModel ZThetaZ {"hZThetaZ", "Emittance along Z;Z [mm];#theta_{Z} [#circ]", 600, 0, 270, 600, -10, 10};
 
 const TH2DModel YPhiY {"hYPhiY", "Emittance along Y;Y [mm];#phi_{Y} [#circ]", 600, 0, 270, 600, -10, 10};

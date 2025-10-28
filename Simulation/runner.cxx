@@ -16,8 +16,8 @@ void runner(TString what = "simu", bool inspect = true)
     // Particles
     std::string beam {"7Li"};
     std::string target {"2H"};
-    std::string light {"2H"};
-    std::string heavy {"7Li"};
+    std::string light {"1H"};
+    std::string heavy {"8Li"};
     // Vector with Exs
     std::vector<double> Exs;
     if(neutronPS == 0 && protonPS == 0 && target == "2H" && light == "1H") // Transfer dp
@@ -33,7 +33,7 @@ void runner(TString what = "simu", bool inspect = true)
         if(beam == "11Li")
             Exs = {0, 1.266, 2.474};
         else if(beam == "7Li")
-            Exs = {0.5};
+            Exs = {0};
     }
     else if(target == "2H" && light == "3H") // dt (only g.s)
         Exs = {0};
