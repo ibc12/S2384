@@ -27,12 +27,11 @@ void Fit()
 
     // Interface to fit
     Fitters::Interface inter;
-    double sigma {0.2}; // common init sigma for all
+    double sigma {0.12}; // common init sigma for all
     inter.AddState("g0", {400, 0, sigma});
     inter.AddState("g1", {30, 0.435, sigma});
     inter.EndAddingStates();
-    inter.SetFix("g0", 0, true); // fix mean g.s.
-    // inter.SetFixAll(2, true); // fix all sigmas
+    inter.SetFixAll(2, true); // fix all sigmas
     // Save to be used later
     inter.Write("./Outputs/interface.root");
 

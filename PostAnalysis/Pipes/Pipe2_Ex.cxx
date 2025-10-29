@@ -65,11 +65,11 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
 
     // Initial energy
     double initialEnergy {7.558}; // meassured by operators
-    std::cout << "Initial energy before corrections: " << initialEnergy * pb.GetAMU() << std::endl;
+    // std::cout << "Initial energy before corrections: " << initialEnergy * pb.GetAMU() << std::endl;
     initialEnergy = srim->Slow("mylar", initialEnergy * pb.GetAMU(), 0.0168);
-    std::cout << "Initial energy after Mylar: " << initialEnergy << std::endl;
+    // std::cout << "Initial energy after Mylar: " << initialEnergy << std::endl;
     initialEnergy = srim->Slow(beam, initialEnergy, 60); // 60 mm of gas before the pad plane
-    std::cout << "Initial energy after beam: " << initialEnergy << std::endl;
+    // std::cout << "Initial energy after beam: " << initialEnergy << std::endl;
     initialEnergy = initialEnergy / pb.GetAMU(); // back to amu units
 
     // // Filter on heavy particle hit in the telescope

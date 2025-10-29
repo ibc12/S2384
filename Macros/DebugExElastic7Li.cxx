@@ -10,9 +10,9 @@
 
 void DebugExElastic7Li()
 {
-    std::string beam {"7Li"};
+    std::string beam {"11Li"};
     std::string target {"d"};
-    std::string light {"d"};
+    std::string light {"p"};
 
     // Get file output from pipe2
     TString filename {
@@ -30,7 +30,7 @@ void DebugExElastic7Li()
                            {"Ex"})
                          .Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})};
 
-    std::ofstream outFile("./Outputs/ExBellowNegative1_7Li_Elastic.dat");
+    std::ofstream outFile("./Outputs/ExBellowNegative1_11Li_dp.dat");
     dfFiltered.Foreach([&](ActRoot::MergerData& m) { m.Stream(outFile); }, {"MergerData"});
     outFile.close();
 }

@@ -8,7 +8,7 @@
 
 void Runner(TString what = "")
 {
-    std::string beam {"7Li"};
+    std::string beam {"11Li"};
     std::string target {"d"};
     std::string light {"p"};
 
