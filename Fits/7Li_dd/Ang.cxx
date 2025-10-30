@@ -31,7 +31,7 @@ void Ang(bool isLab = false)
 
     ROOT::EnableImplicitMT();
 
-    ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_7Li_d_d.root"};
+    ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_7Li_d_d_filtered.root"};
     auto def {df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})}; // only silicons
 
     // Book histograms
@@ -69,10 +69,12 @@ void Ang(bool isLab = false)
 
     // Efficiency
     Interpolators::Efficiency eff;
-    if(isLab)
-        eff.Add("g0", "Inputs/effs/eff_7Li_dd_latsil_lab.root", "effLab");
-    else
-        eff.Add("g0", "Inputs/effs/eff_7Li_dd_latsil.root", "effCM");
+    for(const auto& peak : peaks)
+    {
+        TString inputPath = isLab ? TString::Format("Inputs/effs/%s_7Li_dd_sil_lab.root", peak.c_str())
+                                        : TString::Format("Inputs/effs/%s_7Li_dd_sil.root", peak.c_str());
+        eff.Add(peak, inputPath.Data(), isLab ? "effLab" : "effCM");
+    }
     // Draw to check is fine
     eff.Draw();
 

@@ -8,9 +8,9 @@
 
 void Runner(TString what = "")
 {
-    std::string beam {"11Li"};
+    std::string beam {"7Li"};
     std::string target {"d"};
-    std::string light {"p"};
+    std::string light {"d"};
 
     std::cout << BOLDGREEN << "···· Runner ····" << '\n';
     std::cout << "-> Beam   : " << beam << '\n';
@@ -45,10 +45,17 @@ void Runner(TString what = "")
         gROOT->LoadMacro(path + func + ext);
         gROOT->ProcessLine(func + args);
     }
-    // Test different heavy cuts
+    // Filtering of events that pass actroot -f
     if(what.Contains("3"))
     {
-        func = "Pipe3_HeavyCuts";
+        func = "Pipe3_Filter";
+        gROOT->LoadMacro(path + func + ext);
+        gROOT->ProcessLine(func + args);
+    }
+    // Test different heavy cuts
+    if(what.Contains("4"))
+    {
+        func = "Pipe4_HeavyCuts";
         gROOT->LoadMacro(path + func + ext);
         gROOT->ProcessLine(func + args);
     }

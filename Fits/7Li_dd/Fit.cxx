@@ -17,7 +17,7 @@ void Fit()
     ROOT::EnableImplicitMT();
 
     // Analysis
-    ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_7Li_d_d.root"};
+    ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_7Li_d_d_filtered.root"};
     auto def {df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})}; // only silicons, == false is for L1 events
     // Ex
     auto hEx {def.Histo1D(S2384Fit::Exdd_7Li, "Ex")};
@@ -27,9 +27,9 @@ void Fit()
 
     // Interface to fit
     Fitters::Interface inter;
-    double sigma {0.12}; // common init sigma for all
+    double sigma {0.14}; // common init sigma for all
     inter.AddState("g0", {400, 0, sigma});
-    inter.AddState("g1", {30, 0.435, sigma});
+    inter.AddState("g1", {30, 0.477, sigma});
     inter.EndAddingStates();
     inter.SetFixAll(2, true); // fix all sigmas
     // Save to be used later
@@ -44,5 +44,5 @@ void Fit()
 
     // Run!
     Fitters::RunFit(hEx.GetPtr(), exmin, exmax, model, inter.GetInitial(), inter.GetBounds(), inter.GetFixed(),
-                    ("./Outputs/fit.root"), "7Li(d,d) fit", {{"g0", "g.s"}}, false);
+                    ("./Outputs/fit.root"), "7Li(d,d) fit", {{"g0", "g.s"}, {"g1", "1st"}}, false);
 }

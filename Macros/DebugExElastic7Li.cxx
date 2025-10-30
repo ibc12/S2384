@@ -16,7 +16,7 @@ void DebugExElastic7Li()
 
     // Get file output from pipe2
     TString filename {
-        TString::Format("../PostAnalysis/Outputs/tree_ex_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
+        TString::Format("../PostAnalysis/Outputs/tree_ex_%s_%s_%s_filtered.root", beam.c_str(), target.c_str(), light.c_str())};
     ROOT::RDataFrame df {"Final_Tree", filename};
 
     auto dfFiltered {df.Filter(

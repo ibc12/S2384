@@ -4,10 +4,10 @@
 ## Do all the steps of the analysis (in chain and only if the previous finished successfully)
 
 ## 1-> Read the TPC
-actroot -r tpc &&
+## actroot -r tpc &&
 
 ## 2-> Read the silicons
-actroot -r sil &&
+## actroot -r sil &&
 #
 # ## 3-> Do the filter
 actroot -f &&
