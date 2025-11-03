@@ -22,14 +22,14 @@ void getL1AndSilEvents()
     auto dfL1AndSil = df.Filter(
         [](ActRoot::ModularData& m)
         {
-            if(m.Get("GATCONF") == 8 || m.Get("GATCONF") == 1 || m.Get("GATCONF") == 2)
+            if(m.Get("GATCONF") == 1 || m.Get("GATCONF") == 2)
                 return true;
             return false;
         },
         {"ModularData"});
 
     // Get events into file .dat
-    std::ofstream streamer {"./Outputs/l1AndLatSilEvents_run64_to_67.dat"};
+    std::ofstream streamer {"./Outputs/LatSilEvents_run64_to_67.dat"};
     dfL1AndSil.Foreach(
         [&](ActRoot::MergerData& m)
         {

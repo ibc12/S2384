@@ -27,9 +27,10 @@ void Fit()
 
     // Interface to fit
     Fitters::Interface inter;
-    double sigma {0.14}; // common init sigma for all
-    inter.AddState("g0", {400, 0, sigma});
-    inter.AddState("g1", {30, 0.477, sigma});
+    double sigma_g0 {0.12}; // given by simu
+    double sigma_g1 {0.14};
+    inter.AddState("g0", {400, 0, sigma_g0});
+    inter.AddState("g1", {30, 0.477, sigma_g1});
     inter.EndAddingStates();
     inter.SetFixAll(2, true); // fix all sigmas
     // Save to be used later

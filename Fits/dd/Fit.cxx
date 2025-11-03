@@ -25,7 +25,7 @@ void Fit()
 
     // Interface to fit
     Fitters::Interface inter;
-    double sigma {0.3}; // common init sigma for all
+    double sigma {0.13}; // common init sigma for all
     inter.AddState("g0", {400, 0, sigma}, "0+1");
     inter.EndAddingStates();
     // Save to be used later

@@ -170,7 +170,7 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
                   const std::string& heavy, int neutronPS, int protonPS, double Tbeam, double Ex, bool inspect)
 {
     // Set number of iterations
-    auto niter {static_cast<int>(1e7)};
+    auto niter {static_cast<int>(1e6)};
     gRandom->SetSeed(0);
     // Initialize detectors
     // TPC

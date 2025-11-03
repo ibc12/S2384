@@ -30,7 +30,9 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     ActRoot::DataManager dataman {dataconf, ActRoot::ModeType::EMerge};
     auto chain {dataman.GetChain()};
     auto chain2 {dataman.GetChain(ActRoot::ModeType::EReadSilMod)};
+    auto chain3 {dataman.GetChain(ActRoot::ModeType::EFilter)};
     chain->AddFriend(chain2.get());
+    chain->AddFriend(chain3.get());
 
     // RDataFrame
     ROOT::EnableImplicitMT();

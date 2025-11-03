@@ -44,7 +44,7 @@ void Ang()
 
     // Init fitter
     Angular::Fitter fitter {&ivs};
-    fitter.SetAllowFreeMean(true);
+    fitter.SetAllowFreeMean(false);
     // fitter.SetFreeMeanRange(0.1);
     fitter.Configure("./Outputs/fit.root");
     fitter.Run();
