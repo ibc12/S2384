@@ -20,7 +20,7 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
 {
     std::string dataconf {};
     if(beam == "11Li")
-        dataconf = "./../configs/data.conf";
+        dataconf = "./../configs/data_11Li.conf";
     else if(beam == "7Li")
         dataconf = "./../configs/data_7Li.conf";
     else
@@ -31,8 +31,10 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     auto chain {dataman.GetChain()};
     auto chain2 {dataman.GetChain(ActRoot::ModeType::EReadSilMod)};
     auto chain3 {dataman.GetChain(ActRoot::ModeType::EFilter)};
+    auto chain4 {dataman.GetChain(ActRoot::ModeType::EReadTPC)};
     chain->AddFriend(chain2.get());
-    chain->AddFriend(chain3.get());
+    chain->AddFriend(chain3.get(), "TPCData");
+    chain->AddFriend(chain4.get(), "GETTree");
 
     // RDataFrame
     ROOT::EnableImplicitMT();

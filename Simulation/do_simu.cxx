@@ -170,7 +170,7 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
                   const std::string& heavy, int neutronPS, int protonPS, double Tbeam, double Ex, bool inspect)
 {
     // Set number of iterations
-    auto niter {static_cast<int>(1e6)};
+    auto niter {static_cast<int>(4e7)};
     gRandom->SetSeed(0);
     // Initialize detectors
     // TPC
@@ -306,6 +306,8 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
     outTree->Branch("theta3Lab", &theta3Lab_tree);
     double phi3CM_tree {};
     outTree->Branch("phi3CM", &phi3CM_tree);
+    double weight_tree {};
+    outTree->Branch("weight", &weight_tree);
     // Set Random Ex if needed (no xs available, so will be uniform distributed)
     if(neutronPS == 2)
     {
@@ -576,6 +578,7 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
             EVertex_tree = T3Rec;
             theta3Lab_tree = theta3Lab * TMath::RadToDeg();
             phi3CM_tree = phi3CM;
+            weight_tree = weight;
             outTree->Fill();
         }
     }

@@ -21,11 +21,11 @@
 
 #include "../HistConfig.h"
 
-void Pipe3_HeavyCuts(const std::string& beam, const std::string& target, const std::string& light)
+void Pipe4_HeavyCuts(const std::string& beam, const std::string& target, const std::string& light)
 {
     gStyle->SetPalette(kViridis);
 
-    auto infile {TString::Format("./Outputs/tree_ex_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
+    auto infile {TString::Format("./Outputs/tree_ex_%s_%s_%s_filtered.root", beam.c_str(), target.c_str(), light.c_str())};
     // ROOT::EnableImplicitMT();
     ROOT::RDataFrame df {"Final_Tree", infile.Data()};
 
