@@ -80,7 +80,7 @@ void WriteRejectedEvents(const std::string& infile)
 
 void Pipe3_Filter(const std::string& beam, const std::string& target, const std::string& light)
 {
-    bool onlySil {true};
+    bool onlySil {false};
 
     auto infile {TString::Format("./Outputs/tree_ex_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
 

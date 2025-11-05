@@ -4,7 +4,7 @@ NAMELIST
 	 jtmin=0.0 jtmax=50 absend=-1
 	 thmin=3.00 thmax=-180.00 thinc=1.00 
      chans=1 smats=2  xstabl=1 
-	 elab=14.57/ ! 7.5 AMeV for 7Li but here is for deuton
+	 elab=14.57/ ! 7.5 AMeV for 7Li but here is for deuteron
 
  &PARTITION namep='d' massp=2.0135532 zp=1 namet='Li7' masst=7.01437 zt=3 qval=-0.000 nex=1  /
  &STATES jp=1 bandp=1 ep=0.0000 cpot=1 jt=1.5 bandt=-1 et=0.0000  /
