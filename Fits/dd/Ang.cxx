@@ -27,7 +27,7 @@ void Ang()
 
     ROOT::EnableImplicitMT();
 
-    ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_11Li_d_d.root"};
+    ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_11Li_d_d_filtered.root"};
     auto def {df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})}; // only silicons, == false is for L1 events
 
     // Book histograms
@@ -58,7 +58,7 @@ void Ang()
 
     // Efficiency
     Interpolators::Efficiency eff;
-    eff.Add("g0", "./Inputs/effs/eff_11Li_dd_latsil.root", "effCM");
+    eff.Add("g0", "./Inputs/effs/g0_11Li_dd_sil.root", "effCM");
     // Draw to check is fine
     eff.Draw();
 

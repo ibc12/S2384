@@ -17,7 +17,7 @@ void Fit()
     ROOT::EnableImplicitMT();
 
     // Analysis
-    ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_11Li_d_d.root"};
+    ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_11Li_d_d_filtered.root"};
     auto def {df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})}; // only silicons, == false is for L1 events
     // Ex
     auto hEx {def.Histo1D(S2384Fit::Exdd, "Ex")};

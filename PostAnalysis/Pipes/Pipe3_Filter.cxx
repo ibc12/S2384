@@ -138,6 +138,17 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
         TString::Format("./Outputs/tree_ex_%s_%s_%s_filtered.root", beam.c_str(), target.c_str(), light.c_str())};
     dfFilter.Snapshot("Final_Tree", outfile);
     std::cout << "Saving Final_Tree in " << outfile << '\n';
+    // Create and save Ex histos on file
+    auto hExSil {dfFilter.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})
+                     .Histo1D(HistConfig::Ex, "Ex")};
+    hExSil->SetTitle("Ex with silicons");
+    auto hExL1 {dfFilter.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; }, {"MergerData"})
+                    .Histo1D(HistConfig::Ex, "Ex")};
+    hExL1->SetTitle("Ex with L1");
+    auto file {std::make_shared<TFile>(outfile.Data(), "update")};
+    hExSil->Write("hExSil");
+    hExL1->Write("hExL1");
+    file->Close();
 
     // Comparar histogramas
     auto hExBefore = df.Histo1D({"hExBefore", "Excitation Energy before filtering;Ex (MeV);Counts", 100, -5, 10}, "Ex");
@@ -159,8 +170,15 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
     c->cd(2);
     hExAfter->DrawClone();
 
+    auto c2 = new TCanvas("c2ExFilterLog", "c2ExFilterLog", 800, 600);
+    c2->Divide(2, 1);
+    c2->cd(1);
+    hExSil->DrawClone();
+    c2->cd(2);
+    hExL1->DrawClone();
+
     // Opcional: guardar eventos rechazados
-    WriteRejectedEvents(infile.Data());
+    // WriteRejectedEvents(infile.Data());
 }
 
 #endif

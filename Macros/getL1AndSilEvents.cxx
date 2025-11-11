@@ -13,7 +13,7 @@ void getL1AndSilEvents()
     // Get data 
     ActRoot::DataManager dataman {"../configs/data.conf", ActRoot::ModeType::EMerge};
     // Select just 4 runs, 2 of 11Li, and 2 of 7Li
-    dataman.SetRuns(64, 67);
+    dataman.SetRuns(62, 69);
     auto chain {dataman.GetChain()};
     auto chain1 {dataman.GetChain(ActRoot::ModeType::EReadSilMod)};
     chain->AddFriend(chain1.get());
@@ -22,14 +22,14 @@ void getL1AndSilEvents()
     auto dfL1AndSil = df.Filter(
         [](ActRoot::ModularData& m)
         {
-            if(m.Get("GATCONF") == 1 || m.Get("GATCONF") == 2)
+            if(m.Get("GATCONF") == 8)
                 return true;
             return false;
         },
         {"ModularData"});
 
     // Get events into file .dat
-    std::ofstream streamer {"./Outputs/LatSilEvents_run64_to_67.dat"};
+    std::ofstream streamer {"./Outputs/L1_run62_to_69.dat"};
     dfL1AndSil.Foreach(
         [&](ActRoot::MergerData& m)
         {

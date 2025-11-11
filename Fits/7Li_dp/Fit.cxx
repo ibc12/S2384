@@ -29,8 +29,8 @@ void Fit()
     Fitters::Interface inter;
     double sigma {0.14}; // common init sigma for all
     double gamma {0.05}; // common init gamma for all voigts
-    inter.AddState("g0", {100, 0, sigma});
-    // inter.AddState("g1", {30, 0.9, sigma});
+    inter.AddState("g0", {100, 0, 0.117});
+    //inter.AddState("g1", {30, 0.9, 0.113});
     // inter.AddState("g2", {60, 2.0, sigma});
     // inter.AddState("v0", {20, 3.2, sigma, gamma});
     // inter.AddState("v1", {15, 5.4, sigma, gamma});
@@ -38,7 +38,7 @@ void Fit()
     // inter.AddState("v3", {10, 7.1, sigma, gamma});
     // inter.AddState("ps0", {1.}, "ps0");
     inter.EndAddingStates();
-    inter.SetFixAll(2, true); // fix all sigmas
+    // inter.SetFixAll(2, true); // fix all sigmas
     //inter.SetFixAll(3, true); // fix all gammas
     // Save to be used later
     inter.Write("./Outputs/interface.root");

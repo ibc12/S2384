@@ -7,6 +7,7 @@
 #include "ActKinematics.h"
 #include "ActLine.h"
 #include "ActParticle.h"
+#include "ActRunner.h"
 #include "ActSRIM.h"
 #include "ActSilData.h"
 #include "ActSilSpecs.h"
@@ -21,6 +22,7 @@
 #include "TGraphErrors.h"
 #include "TH1.h"
 #include "TH2.h"
+#include "TH3.h"
 #include "TMath.h"
 #include "TRandom.h"
 #include "TString.h"
@@ -36,6 +38,31 @@
 
 using XYZPoint = ROOT::Math::XYZPoint;
 using XYZVector = ROOT::Math::XYZVector;
+
+std::pair<XYZPoint, XYZPoint> SampleVertex(double meanZ, double sigmaZ, TH3D* h, double lengthX)
+{
+
+    // X is always common for both manners
+    double Xstart {0};
+    double Xrp {gRandom->Uniform() * lengthX};
+    // Y depends completely on the method of calculation
+    double Ystart {-1};
+    double Yrp {-1};
+    // Z of beam at entrance
+    double Zstart {gRandom->Gaus(meanZ, sigmaZ)};
+    double Zrp {-1};
+    // Ystart in this case is sampled from the histogram itself!
+    double thetaXY {};
+    double thetaXZ {};
+    h->GetRandom3(Ystart, thetaXY, thetaXZ);
+    // Mind that Y is not centred in the histogram value!
+    // Rp values are computed as follows:
+    Yrp = Ystart - Xrp * TMath::Tan(thetaXY * TMath::DegToRad());
+    Zrp = Zstart - Xrp * TMath::Tan(thetaXZ * TMath::DegToRad());
+    XYZPoint start {Xstart, Ystart, Zstart};
+    XYZPoint vertex {Xrp, Yrp, Zrp};
+    return {std::move(start), std::move(vertex)};
+}
 
 XYZPoint SampleVertex(ActRoot::TPCParameters* tpc)
 {
@@ -170,12 +197,22 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
                   const std::string& heavy, int neutronPS, int protonPS, double Tbeam, double Ex, bool inspect)
 {
     // Set number of iterations
-    auto niter {static_cast<int>(4e7)};
+    auto niter {static_cast<int>(1e6)};
     gRandom->SetSeed(0);
+    // Runner: contains utility functions to execute multiple actions as rotate directions
+    ActSim::Runner runner(nullptr, nullptr, gRandom, 0);
     // Initialize detectors
     // TPC
     ActRoot::TPCParameters tpc {"Actar"};
     std::cout << "TPC: " << tpc.X() << " " << tpc.Y() << " " << tpc.Z() << '\n';
+    // Vertex sampling
+    std::string beamfilename {"../Macros/Emittance/Outputs/histos" + beam + ".root"};
+    auto beamfile {std::make_unique<TFile>(beamfilename)};
+    auto* hBeam {beamfile->Get<TH3D>("h3d")};
+    if(!hBeam)
+        throw std::runtime_error("Simulation_E796(): Could not load beam emittance histogram");
+    hBeam->SetDirectory(nullptr);
+    beamfile.reset();
     // Silicons
     auto* sils {new ActPhysics::SilSpecs};
     std::string silConfig("silspecs"); // no front silicons, only lateral ones
@@ -208,7 +245,9 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
     // sils->DrawGeo();
 
     // Sigmas
-    const double sigmaPercentBeam {0.008};
+    const double sigmaPercentBeam {0.017}; // 1.7% beam energy spread (meassured by operators)
+    const double zVertexSigma {0.81};      // From emitance study
+    const double zVertexMean {135.};       // From superimposing silMatrix and beam counts
     // Flags for resolution
     bool RestOfBeamLine {true}; // If true enables CFA and mylar of entrance
     bool exResolution {true};
@@ -265,7 +304,7 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
     }
     // Declare histograms
     // kinematics and angles
-    auto hKin {HistConfig::Kin.GetHistogram()};
+    auto hKin {HistConfig::KinEl.GetHistogram()};
     auto hTheta3CM {HistConfig::ThetaCM.GetHistogram()};
     auto hThetaCMAll {HistConfig::ThetaCM.GetHistogram()};
     hThetaCMAll->SetTitle("Theta3CM all;#theta_{CM} [#circ];Counts");
@@ -332,7 +371,8 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
             nextPrint += step;
         }
         // Sample vertex position
-        auto vertex {SampleVertex(&tpc)};
+        auto [start, vertex] {SampleVertex(zVertexMean, zVertexSigma, hBeam, tpc.X())};
+        auto distToVertex {(vertex - start).R()};
 
         // Randomize (if needed) Ex in a BW distribution
         double randEx = Ex;
@@ -364,10 +404,10 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
         if(RestOfBeamLine)
         {
             // TbeamRand = srim->SlowWithStraggling("beamCFA", TbeamRand, 19);       // Gas CFA
-            TbeamRand = srim->SlowWithStraggling("beamMylar", TbeamRand, 0.0168);  // All mylar
+            TbeamRand = srim->SlowWithStraggling("beamMylar", TbeamRand, 0.0168); // All mylar
             TbeamRand = srim->SlowWithStraggling("beam", TbeamRand, 60);          // Gas before pad plane
         }
-        auto TbeamCorr {srim->SlowWithStraggling("beam", TbeamRand, vertex.X())};
+        auto TbeamCorr {srim->SlowWithStraggling("beam", TbeamRand, distToVertex)};
         // Initialize variables for both methods, kinGen and kin
         double T3Lab {};
         double T4Lab {};
@@ -450,12 +490,26 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
         hThetaCMAll->Fill(theta3CMBefore);
         hThetaLabAll->Fill(theta3Lab * TMath::RadToDeg());
         hPhiAll->Fill(phi3Lab * TMath::RadToDeg());
+
+        // Propagate track from vertex to silicon wall using SilSpecs class
+        // And using the angle with the uncertainty already in
+        ROOT::Math::XYZVector dirBeamFrame {TMath::Cos(theta3Lab), TMath::Sin(theta3Lab) * TMath::Sin(phi3Lab),
+                                            TMath::Sin(theta3Lab) * TMath::Cos(phi3Lab)};
+        ROOT::Math::XYZVector heavyBeamFrame {TMath::Cos(theta4Lab), TMath::Sin(theta4Lab) * TMath::Sin(phi4Lab),
+                                              TMath::Sin(theta4Lab) * TMath::Cos(phi4Lab)};
+        // Declare beam direction
+        auto beamDir {(vertex - start).Unit()};
+        // Rotate to world = geometry frame
+        auto dirWorldFrame {runner.RotateToWorldFrame(dirBeamFrame, beamDir)};
+        auto heavyWorldFrame {runner.RotateToWorldFrame(heavyBeamFrame, beamDir)};
+
+
         // Extract direction
         XYZVector direction {TMath::Cos(theta3Lab), TMath::Sin(theta3Lab) * TMath::Sin(phi3Lab),
                              TMath::Sin(theta3Lab) * TMath::Cos(phi3Lab)};
         // Threshold L1, particles that stop in actar. Check before doing the continues
         double rangeInGas {srim->EvalRange("light", T3Lab)};
-        ROOT::Math::XYZPoint finalPointGas {vertex + rangeInGas * direction.Unit()};
+        ROOT::Math::XYZPoint finalPointGas {vertex + rangeInGas * dirWorldFrame.Unit()};
         if(0 <= finalPointGas.X() && finalPointGas.X() <= 256 && 0 <= finalPointGas.Y() && finalPointGas.Y() <= 256 &&
            0 <= finalPointGas.Z() && finalPointGas.Z() <= 256)
         {
@@ -466,7 +520,7 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
         std::string layer0;
         for(auto layer : silLayers)
         {
-            std::tie(silIndex0, silPoint0) = sils->FindSPInLayer(layer, vertex, direction);
+            std::tie(silIndex0, silPoint0) = sils->FindSPInLayer(layer, vertex, dirWorldFrame);
             if(silIndex0 != -1)
             {
                 layer0 = layer;
@@ -494,7 +548,7 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
         }
         // Slow down in silicon
         auto normal {sils->GetLayer(layer0).GetNormal()};
-        auto angleWithNormal {TMath::ACos(direction.Unit().Dot(normal.Unit()))};
+        auto angleWithNormal {TMath::ACos(dirWorldFrame.Unit().Dot(normal.Unit()))};
         auto T3AfterSil0 {srim->SlowWithStraggling("lightInSil", T3AtSil,
                                                    sils->GetLayer(layer0).GetUnit().GetThickness(), angleWithNormal)};
         auto eLoss0preSilRes {T3AtSil - T3AfterSil0};
@@ -514,7 +568,7 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
         double T3AfterSil1 {-1};
         if(T3AfterSil0 > 0. && layer0 == "f0")
         {
-            std::tie(silIndex1, silPoint1) = sils->FindSPInLayer("f1", vertex, direction);
+            std::tie(silIndex1, silPoint1) = sils->FindSPInLayer("f1", vertex, dirWorldFrame);
             if(silIndex1 == -1)
             {
             } // If a silicon is not reached, don't continue with punchthough calculation
@@ -556,7 +610,7 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
             auto ExRec {kin->ReconstructExcitationEnergy(T3Rec, theta3Lab)};
             // Fill
             hKinRec->Fill(theta3Lab * TMath::RadToDeg(), T3Rec); // after reconstruction
-            hEx->Fill(ExRec, weight); // To get real counts weigth * alpha
+            hEx->Fill(ExRec, weight);                            // To get real counts weigth * alpha
             hRP_X->Fill(vertex.X());
             if(layer0 == "f0")
             {
@@ -570,7 +624,7 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
             {
                 hSPr0->Fill(silPoint0.X(), silPoint0.Z());
             }
-            hTheta3CM->Fill(theta3CMBefore);        // only thetaCm that enter our cuts
+            hTheta3CM->Fill(theta3CMBefore); // only thetaCm that enter our cuts
             hTheta3Lab->Fill(theta3Lab * TMath::RadToDeg());
             // write to TTree
             Eex_tree = ExRec;
