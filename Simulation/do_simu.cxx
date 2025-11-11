@@ -207,10 +207,10 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
     std::cout << "TPC: " << tpc.X() << " " << tpc.Y() << " " << tpc.Z() << '\n';
     // Vertex sampling
     std::string beamfilename {"../Macros/Emittance/Outputs/histos" + beam + ".root"};
-    auto beamfile {std::make_unique<TFile>(beamfilename)};
+    auto beamfile {std::make_unique<TFile>(beamfilename.c_str())};
     auto* hBeam {beamfile->Get<TH3D>("h3d")};
     if(!hBeam)
-        throw std::runtime_error("Simulation_E796(): Could not load beam emittance histogram");
+        throw std::runtime_error("Could not load beam emittance histogram");
     hBeam->SetDirectory(nullptr);
     beamfile.reset();
     // Silicons
@@ -235,7 +235,7 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
             layer.MoveZTo(135, {7});
     }
     // Silicon malfunction txt
-    std::string silEfficienciesPath {"./Inputs/Efficiencies/silicon_efficiencies.txt"};
+    std::string silEfficienciesPath {"./Inputs/Efficiencies/silicon_efficiencies_" + beam + ".txt"};
     std::map<std::string, double> silEfficiencies {LoadEfficiencies(silEfficienciesPath)};
 
     std::cout << "Sils Z centred at : " << tpc.Z() / 2 << " mm" << '\n';

@@ -26,7 +26,7 @@ void DistRun()
 
     ROOT::RDataFrame df {*chain};
 
-    std::string layer {"r0"};
+    std::string layer {"l0"};
 
     // Filter side events
     auto gated {df.Filter(
@@ -42,7 +42,7 @@ void DistRun()
     //  Define distances in mm
     double base {0.};
     std::vector<double> dists;
-    for(double d = -80; d < -40; d += 5)
+    for(double d = 310; d < 320; d += 1)
         dists.push_back(base + d);
 
     int xbins {200};

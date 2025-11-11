@@ -13,25 +13,23 @@ void DoFits(TString mode)
     // Assign things depending on mode
     bool isSide {};
     std::vector<int> idxs;
-    if(mode == "side")
+    if(mode == "l0" || mode == "r0")
     {
         isSide = true;
         idxs = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
     }
-    else if(mode == "antiveto")
-        idxs = {0, 2, 3, 4, 5, 7, 8, 10};
-    else if(mode == "veto")
-        idxs = {0, 2, 3, 4, 5, 7, 8, 10};
+    else if(mode == "f0")
+        idxs = {0, 2, 3, 4, 5, 7, 8, 10, 11};
     else
         throw std::invalid_argument("DoHists: no known mode " + mode);
 
     // Read data
-    auto fin {std::make_unique<TFile>(TString::Format("./Inputs/%s_histograms.root", mode.Data()).Data())};
+    auto fin {std::make_unique<TFile>(TString::Format("./Outputs/histos_%s.root", mode.Data()).Data())};
     // Set histograms to process
     std::map<int, TH1D*> pxys, pzs;
     for(auto& idx : idxs)
     {
-        auto xykey {TString::Format("pxy%d", idx)};
+        auto xykey {TString::Format("d_311.0_mm/pxy%d", idx)};
         auto zkey {TString::Format("pz%d", idx)};
         pxys[idx] = fin->Get<TH1D>(xykey);
         pxys[idx]->SetDirectory(nullptr);
