@@ -44,7 +44,8 @@ void DistPlot()
     std::vector<ActPhysics::SilMatrix*> sms;
     std::vector<int> indexes {};
     if(layer == "l0")
-        indexes = {5, 8};
+        indexes = {0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11};
+    // indexes = {5, 8};
     else if(layer == "f0")
         indexes = {4, 7};
     else if(layer == "r0")
@@ -63,7 +64,7 @@ void DistPlot()
         sms.back()->SetName(h2d->GetTitle());
         for(auto& idx : indexes)
         {
-            std::cout << "Idx: "<< idx << " dist: " << dist << '\n';
+            std::cout << "Idx: " << idx << " dist: " << dist << '\n';
             auto xkey {TString::Format("px%d", idx)};
             auto zkey {TString::Format("pz%d", idx)};
             pxs.back()[idx] = dir->Get<TH1D>(xkey);

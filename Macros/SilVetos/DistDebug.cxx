@@ -15,7 +15,7 @@
 
 void DistDebug()
 {
-    std::string layer {"r0"};
+    std::string layer {"l0"};
     TString outpath {TString::Format("./Outputs/Dists/sms_%s.root", layer.c_str())};
     auto f {new TFile {outpath}};
     auto dists {*f->Get<std::vector<double>>("dists")};
