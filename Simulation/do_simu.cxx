@@ -64,17 +64,6 @@ std::pair<XYZPoint, XYZPoint> SampleVertex(double meanZ, double sigmaZ, TH3D* h,
     return {std::move(start), std::move(vertex)};
 }
 
-XYZPoint SampleVertex(ActRoot::TPCParameters* tpc)
-{
-    // Define sigmas along Y and Z
-    double sigmaY {4};
-    double sigmaZ {4};
-    auto y {gRandom->Gaus(tpc->Y() / 2, sigmaY)};
-    auto z {gRandom->Gaus(135., sigmaZ)}; // Actar has the beam entrance 135 mm from the bottom of the field cage.
-    auto x {gRandom->Uniform() * tpc->X()};
-    return {x, y, z};
-}
-
 std::pair<double, double> SampleCM()
 {
     auto theta {TMath::ACos(gRandom->Uniform(-1, 1))};
@@ -205,7 +194,7 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
     // TPC
     ActRoot::TPCParameters tpc {"Actar"};
     std::cout << "TPC: " << tpc.X() << " " << tpc.Y() << " " << tpc.Z() << '\n';
-    // Vertex sampling
+    // Vertex sampling and beam z variables
     std::string beamfilename {"../Macros/Emittance/Outputs/histos" + beam + ".root"};
     auto beamfile {std::make_unique<TFile>(beamfilename.c_str())};
     auto* hBeam {beamfile->Get<TH3D>("h3d")};
@@ -213,6 +202,9 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
         throw std::runtime_error("Could not load beam emittance histogram");
     hBeam->SetDirectory(nullptr);
     beamfile.reset();
+    const double zVertexSigma {0.81}; // From emitance study
+    const double zVertexMean {135.};  // 135 mm is the entrance of the beam in TPC
+    const double DeltaZ {2.7}; // Distance to move the second row of silicons (positive is move beam up or sils down)
     // Silicons
     auto* sils {new ActPhysics::SilSpecs};
     std::string silConfig("silspecs"); // no front silicons, only lateral ones
@@ -225,6 +217,7 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
     std::vector<std::string> AllsilLayers {"f0", "f1", "f2", "f3", "l0", "r0"};
     // We have to centre the silicons with the beam input
     // In real life beam window is not at Z / 2
+    // Move lat sils to real placement, I did not do it for f0 because I do not use it for now
     for(auto& [name, layer] : sils->GetLayers())
     {
         if(name == "f0" || name == "f1")
@@ -232,7 +225,7 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
         if(name == "f2" || name == "f3")
             layer.MoveZTo(125, {0});
         if(name == "l0" || name == "r0") // beam went at the height of the half of the second highest silicon
-            layer.MoveZTo(135, {7});
+            layer.MoveZTo(zVertexMean - DeltaZ, {6});
     }
     // Silicon malfunction txt
     std::string silEfficienciesPath {"./Inputs/Efficiencies/silicon_efficiencies_" + beam + ".txt"};
@@ -246,8 +239,6 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
 
     // Sigmas
     const double sigmaPercentBeam {0.017}; // 1.7% beam energy spread (meassured by operators)
-    const double zVertexSigma {0.81};      // From emitance study
-    const double zVertexMean {135.};       // From superimposing silMatrix and beam counts
     // Flags for resolution
     bool RestOfBeamLine {true}; // If true enables CFA and mylar of entrance
     bool exResolution {true};
@@ -405,7 +396,8 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
         {
             // TbeamRand = srim->SlowWithStraggling("beamCFA", TbeamRand, 19);       // Gas CFA
             TbeamRand = srim->SlowWithStraggling("beamMylar", TbeamRand, 0.0168); // All mylar
-            TbeamRand = srim->SlowWithStraggling("beam", TbeamRand, 60);          // Gas before pad plane
+            TbeamRand = srim->SlowWithStraggling(
+                "beam", TbeamRand, 60); // Gas before pad plane (approximation, not taking into account the angle)
         }
         auto TbeamCorr {srim->SlowWithStraggling("beam", TbeamRand, distToVertex)};
         // Initialize variables for both methods, kinGen and kin

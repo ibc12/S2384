@@ -31,7 +31,7 @@ std::pair<double, double> Do(TH1D*& p)
 
 void DistPlot()
 {
-    std::string layer {"l0"};
+    std::string layer {"r0"};
     TString outpath {TString::Format("./Outputs/Dists/histos_%s.root", layer.c_str())};
     auto f {std::make_unique<TFile>(outpath)};
     auto dists {*f->Get<std::vector<double>>("dists")};
@@ -49,7 +49,8 @@ void DistPlot()
     else if(layer == "f0")
         indexes = {4, 7};
     else if(layer == "r0")
-        indexes = {6, 0};
+        indexes = {0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11};
+    // indexes = {6, 0};
     for(const auto& dist : dists)
     {
         auto path {TString::Format("d_%.1f_mm", dist)};

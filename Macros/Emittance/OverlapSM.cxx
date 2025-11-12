@@ -26,15 +26,22 @@ void OverlapSM()
     auto meanSide {hxz->GetMean(2)};
     auto meanFront {hyz->GetMean(2)};
 
+    std::string label {"r0"};
+    std::string layer {"r0"};
+
     // Real silicon specs
     ActPhysics::SilSpecs specs;
-    specs.ReadFile("../../configs/detailedSilicons.conf");
+    specs.ReadFile("../../configs/silspecs.conf");
 
     // Read SM
-    std::string filename {"../SilVetos/Outputs/sms_l0.root"};
-    auto file {new TFile {filename.c_str()}};
-    std::string name {"sm5"};
-    ActPhysics::SilMatrix* sm = file->Get<ActPhysics::SilMatrix>(name.c_str());
+    std::string filenameSM {"../SilVetos/Outputs/Dists/sms_" + label + ".root"};
+    auto fileSM {new TFile {filenameSM.c_str()}};
+    std::string name {};
+    if(layer == "l0")
+        name = "sm5";
+    else if(layer == "r0")
+        name = "sm6";
+    ActPhysics::SilMatrix* sm = fileSM->Get<ActPhysics::SilMatrix>(name.c_str());
     if(!sm)
     {
         std::cerr << "Error: could not find object " << name << " in file.\n";
@@ -42,8 +49,6 @@ void OverlapSM()
     }
     // Map things
     std::vector<TH2D*> hs {hxz, hyz, hyz};
-    std::string label {"l0"};
-    std::string layer {"l0"};
     ActPhysics::SilMatrix* phys;
     // Format phys sm
     phys = sm->Clone();
@@ -53,12 +58,13 @@ void OverlapSM()
     double zmean;
     double diff;
     int idx {};
-    TString label {label};
-    label.ToLower();
     std::vector<double> temp;
     std::set<int> sils;
     double ref {};
-    sils = {4, 5};
+    if(layer == "l0")
+        sils = {4, 5};
+    else if(layer == "r0")
+        sils = {6, 7};
     ref = meanSide;
     for(auto sil : sils)
     {
@@ -82,18 +88,19 @@ void OverlapSM()
 
     // Draw
     auto* c0 {new TCanvas {"c0", "SM and Emittance canvas"}};
-    hs[i]->DrawCopy()->SetTitle(labels[i].c_str());
-    sms[i]->Draw();
-    texts[i]->Draw();
+    hxz->DrawCopy()->SetTitle(label.c_str());
+    gPad->Update();
+    gPad->GetUymax(); // fuerza actualización
+    gPad->Range(gPad->GetUymin(), 0, gPad->GetUymax(), 400); // muestra hasta 400
+
+    sm->Draw("same");
+    text->Draw();
+    c0->Modified();
+    c0->Update();
 
     auto* c1 {new TCanvas {"c1", "Physical silicons"}};
-    c1->DivideSquare(4);
-    for(int i = 0; i < phys.size(); i++)
-    {
-        c1->cd(i + 1);
-        phys[i]->Draw(false);
-        auto* cl {sms[i]->Clone()};
-        cl->SetSyle(false, 0, 0, 3001);
-        cl->Draw();
-    }
+    phys->Draw(false);
+    auto* cl {sm->Clone()};
+    cl->SetSyle(false, 0, 0, 3001);
+    cl->Draw();
 }
