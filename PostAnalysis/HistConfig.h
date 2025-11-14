@@ -13,7 +13,7 @@ const TH2DModel PID {"hPID", "PID;E_{Sil} [MeV];Q_{ave} [mm^{-1}]", 400, 0, 40, 
 
 const TH2DModel PIDTwo {"hPIDTwo", "PID with two silicons;E_{1} [MeV];E_{0} [MeV]", 800, 0, 40, 800, 0, 40};
 
-const TH2DModel SP {"hSP", "SP;X or Y [mm];Z [mm]", 200, -10, 300, 200, -10, 300};
+const TH2DModel SP {"hSP", "SP;X or Y [mm];Z [mm]", 200, -10, 300, 200, 150, 460};
 
 const TH2DModel RP {"hRP", "RP;X [mm];Y [mm]", 200, -10, 300, 200, -10, 300};
 
@@ -21,7 +21,7 @@ const TH1DModel RPx {"hRPx", "RPx;X [mm];Counts", 200, -10, 300};
 
 const TH1DModel TL {"hTL", "Track length; TL [mm]", 300, 0, 600};
 
-const TH2DModel Kin {"hKin", "Kinematics;#theta_{Lab} [#circ];E_{Vertex} [MeV]", 250, 0, 60, 250, 0, 20};
+const TH2DModel Kin {"hKin", "Kinematics;#theta_{Lab} [#circ];E_{Vertex} [MeV]", 350, 0, 180, 250, 0, 20};
 
 const TH2DModel KinEl {"hKinEl", "Kinematics;#theta_{Lab} [#circ];E_{Vertex} [MeV]", 600, 0, 180, 400, 0, 20};
 

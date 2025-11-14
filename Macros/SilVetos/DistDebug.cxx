@@ -16,7 +16,8 @@
 void DistDebug()
 {
     std::string layer {"l0"};
-    TString outpath {TString::Format("./Outputs/Dists/sms_%s.root", layer.c_str())};
+    TString outpath {TString::Format("./Outputs/Dists/sms_%s_preL0change.root", layer.c_str())};
+    // TString outpath {TString::Format("./Outputs/Dists/sms_%s.root", layer.c_str())};
     auto f {new TFile {outpath}};
     auto dists {*f->Get<std::vector<double>>("dists")};
     std::vector<ActPhysics::SilMatrix*> sms;

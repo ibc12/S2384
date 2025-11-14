@@ -1,0 +1,18 @@
+/* fix the spacing issues in the Elog */
+
+@import "/styles/Elog.css";
+
+/*  */
+/*  */
+
+body {
+	font-family: serif;
+	font-size: 11pt;
+	color: #000000;
+	background-color: #ededed;
+	background-repeat: repeat;
+	background-position: right top;
+	background-attachment: fixed;
+	margin: 0 3px 0 3px;
+	line-height: normal;
+	}

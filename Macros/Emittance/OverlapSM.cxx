@@ -16,9 +16,9 @@
 
 void OverlapSM()
 {
-    std::string beam {"7Li"};
+    std::string beam {"11Li"};
     // Read histograms
-    std::string filename {"./Outputs/histos" + beam + ".root"};
+    std::string filename {"./Outputs/histos" + beam + "_pre.root"};
     auto file {new TFile {filename.c_str()}};
     auto* hxz {file->Get<TH2D>("hTrajXZ")};
     auto* hyz {file->Get<TH2D>("hTrajYZ")};
@@ -26,15 +26,16 @@ void OverlapSM()
     auto meanSide {hxz->GetMean(2)};
     auto meanFront {hyz->GetMean(2)};
 
-    std::string label {"r0"};
-    std::string layer {"r0"};
+    std::string label {"l0"};
+    std::string layer {"l0"};
 
     // Real silicon specs
     ActPhysics::SilSpecs specs;
     specs.ReadFile("../../configs/silspecs.conf");
 
     // Read SM
-    std::string filenameSM {"../SilVetos/Outputs/Dists/sms_" + label + ".root"};
+    // std::string filenameSM {"../SilVetos/Outputs/Dists/sms_" + label + ".root"};
+    std::string filenameSM {"../SilVetos/Outputs/Dists/sms_" + label + "_preL0change.root"};
     auto fileSM {new TFile {filenameSM.c_str()}};
     std::string name {};
     if(layer == "l0")

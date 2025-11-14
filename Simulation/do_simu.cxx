@@ -24,6 +24,7 @@
 #include "TH2.h"
 #include "TH3.h"
 #include "TMath.h"
+#include "TPolyLine3D.h"
 #include "TRandom.h"
 #include "TString.h"
 #include "TTree.h"
@@ -79,7 +80,7 @@ void ApplyNaN(double& e, double t = 0, const std::string& comment = "stopped")
 
 void ApplyThetaRes(double& theta)
 {
-    double sigma {0.95 / 2.355}; // FWHM to sigma
+    double sigma {1.5 / 2.355}; // FWHM to sigma
     theta = gRandom->Gaus(theta, sigma * TMath::DegToRad());
 }
 
@@ -186,7 +187,7 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
                   const std::string& heavy, int neutronPS, int protonPS, double Tbeam, double Ex, bool inspect)
 {
     // Set number of iterations
-    auto niter {static_cast<int>(1e6)};
+    auto niter {static_cast<int>(1e5)};
     gRandom->SetSeed(0);
     // Runner: contains utility functions to execute multiple actions as rotate directions
     ActSim::Runner runner(nullptr, nullptr, gRandom, 0);
@@ -195,50 +196,71 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
     ActRoot::TPCParameters tpc {"Actar"};
     std::cout << "TPC: " << tpc.X() << " " << tpc.Y() << " " << tpc.Z() << '\n';
     // Vertex sampling and beam z variables
-    std::string beamfilename {"../Macros/Emittance/Outputs/histos" + beam + ".root"};
+    std::string beamfilename {};
+    if(beam == "7Li")
+        beamfilename = {"../Macros/Emittance/Outputs/histos" + beam + ".root"};
+    else if(beam == "11Li")
+        beamfilename = {"../Macros/Emittance/Outputs/histos" + beam + "_pre.root"};
     auto beamfile {std::make_unique<TFile>(beamfilename.c_str())};
     auto* hBeam {beamfile->Get<TH3D>("h3d")};
     if(!hBeam)
         throw std::runtime_error("Could not load beam emittance histogram");
     hBeam->SetDirectory(nullptr);
     beamfile.reset();
-    const double zVertexSigma {0.81}; // From emitance study
-    const double zVertexMean {135.};  // 135 mm is the entrance of the beam in TPC
-    const double DeltaZ {2.7}; // Distance to move the second row of silicons (positive is move beam up or sils down)
     // Silicons
     auto* sils {new ActPhysics::SilSpecs};
     std::string silConfig("silspecs"); // no front silicons, only lateral ones
     sils->ReadFile("../configs/" + silConfig + ".conf");
     sils->Print();
-    const double sigmaSil {0.100 / 2.355}; // Si resolution for laterals, around 100 keV FWHM
+    const double sigmaSil {0.085 / 2.355}; // Si resolution for laterals, around 100 keV FWHM
     auto silRes = std::make_unique<TF1>(
         "silRes", [=](double* x, double* p) { return sigmaSil * TMath::Sqrt(x[0] / 5.5); }, 0.0, 100.0, 1);
     std::vector<std::string> silLayers {"f0", "l0", "r0"};
     std::vector<std::string> AllsilLayers {"f0", "f1", "f2", "f3", "l0", "r0"};
+
+    std::string filenameSM {"../Macros/SilVetos/Outputs/Dists/sms_l0.root"};
+    auto fileSM {new TFile {filenameSM.c_str()}};
+    ActPhysics::SilMatrix* sm = fileSM->Get<ActPhysics::SilMatrix>("sm5"); // matrix for good distance of left wall
+    double silCentre = sm->GetMeanZ({4, 5});
+    std::cout << "Silicon centre at Z = " << silCentre << " mm" << std::endl;
+    double beamOffset {3.36}; // mm offset of beam with respect to sils 4 and 5 off left wall (need to lower beam that
+                              // amount respect of silicons)
+    
+    const double zVertexSigma {0.81}; // From emitance study
+    const double zVertexMean {silCentre - beamOffset};  // 135 mm is the entrance of the beam in TPC
+
     // We have to centre the silicons with the beam input
     // In real life beam window is not at Z / 2
     // Move lat sils to real placement, I did not do it for f0 because I do not use it for now
     for(auto& [name, layer] : sils->GetLayers())
     {
         if(name == "f0" || name == "f1")
-            layer.MoveZTo(75, {3});
+            layer.MoveZTo(zVertexMean -50, {3});
         if(name == "f2" || name == "f3")
-            layer.MoveZTo(125, {0});
+            layer.MoveZTo(zVertexMean, {0});
         if(name == "l0" || name == "r0") // beam went at the height of the half of the second highest silicon
-            layer.MoveZTo(zVertexMean - DeltaZ, {6});
+            layer.MoveZTo(zVertexMean, {4});
     }
+    sils->DrawGeo();
+    // Draw beam line for debugging
+    double x0 = 0.0;
+    double y0 = 128.0;
+    double z0 = silCentre;
+    TPolyLine3D* line = new TPolyLine3D(2);
+    line->SetPoint(0, -50, y0, z0);
+    line->SetPoint(1, 400, y0, z0);
+    line->SetLineColor(kRed);
+    line->SetLineWidth(3);
+    line->Draw("same");
     // Silicon malfunction txt
     std::string silEfficienciesPath {"./Inputs/Efficiencies/silicon_efficiencies_" + beam + ".txt"};
     std::map<std::string, double> silEfficiencies {LoadEfficiencies(silEfficienciesPath)};
-
-    std::cout << "Sils Z centred at : " << tpc.Z() / 2 << " mm" << '\n';
-    sils->DrawGeo();
     // This means: make the Z of silicons {5,6,...} be that zOfBeam.
     // shift the others accordingly
     // sils->DrawGeo();
 
     // Sigmas
-    const double sigmaPercentBeam {0.017}; // 1.7% beam energy spread (meassured by operators)
+    const double sigmaPercentBeam {0.0017}; // 1.7% beam energy spread (meassured by operators)
     // Flags for resolution
     bool RestOfBeamLine {true}; // If true enables CFA and mylar of entrance
     bool exResolution {true};
@@ -277,6 +299,8 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
     {
         isThereXS = GetXS(target, light, beam, Ex, xs);
     }
+    // isThereXS = true;
+    // xs->ReadFile("../Fits/7Li_dp/Inputs/gs_Daehnik_Delaroche_myself/21.g0");
     double alpha {1.};
     double NLi11 {9.87839e8};              // Counts in CFA trigger corrected by CFA/F2 ratio
     double NLi7 {2.08039e8};               // Counts in CFA trigger corrected by CFA/F2 ratio
@@ -317,9 +341,12 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
     // Reconstructed histos
     auto hEx {HistConfig::Ex.GetHistogram()};
     auto hKinRec {HistConfig::Kin.GetHistogram()};
-    hKinRec->SetTitle("Reconstructed Kinetic Energy;T_{3} [MeV];Counts");
+    hKinRec->SetTitle("Reconstructed Kinetic Energy;#theta_{Lab} [#circ];E_{Vertex} [MeV]");
     auto hRP_X {HistConfig::RPx.GetHistogram()};
     hRP_X->SetTitle("Reconstructed RP;X [mm];Counts");
+    // Debug
+    auto hKinDebug {HistConfig::Kin.GetHistogram()};
+    hKinDebug->SetTitle("Debug Kinematic Punshthrough;#theta_{Lab} [#circ];E_{Vertex} [MeV]");
 
     // File to save data
     TString fileName {TString::Format("./Outputs/%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d.root", beam.c_str(),
@@ -583,6 +610,10 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
             }
         }
         // Reconstruct!
+        if(T3AfterSil0 > 0)
+        {
+            hKinDebug->Fill(theta3Lab * TMath::RadToDeg(), T3Lab);
+        }
         bool isOk {(T3AfterSil0 == 0 || T3AfterSil1 == 0)}; // no punchthrouhg
         if(isOk)
         {
@@ -666,6 +697,8 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
         c0->cd(3);
         hRP_X->DrawClone();
         c0->cd(4);
+        // Fit hEx
+        hEx->Fit("gaus", "", "", Ex - 1, Ex + 1);
         hEx->DrawClone();
         c0->cd(5);
         hThetaCMAll->SetTitle("All #theta_{CM}");
@@ -680,6 +713,8 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
         hPhi3CM->DrawClone();
         c1->cd(2);
         hPhiAll->DrawClone();
+        c1->cd(3);
+        hKinDebug->DrawClone("colz");
 
         auto* cEff {new TCanvas {"cEff", "Eff plots"}};
         cEff->DivideSquare(7);

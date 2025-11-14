@@ -31,8 +31,9 @@ std::pair<double, double> Do(TH1D*& p)
 
 void DistPlot()
 {
-    std::string layer {"r0"};
+    std::string layer {"l0"};
     TString outpath {TString::Format("./Outputs/Dists/histos_%s.root", layer.c_str())};
+    // TString outpath {TString::Format("./Outputs/Dists/histos_%s_preL0change.root", layer.c_str())};
     auto f {std::make_unique<TFile>(outpath)};
     auto dists {*f->Get<std::vector<double>>("dists")};
     // auto aux {dists[0]};
@@ -110,6 +111,7 @@ void DistPlot()
 
     // Save
     TString outdir {TString::Format("./Outputs/Dists/sms_%s.root", layer.c_str())};
+    // TString outdir {TString::Format("./Outputs/Dists/sms_%s_preL0change.root", layer.c_str())};
     auto out {std::make_unique<TFile>(outdir, "recreate")};
     out->WriteObject(&dists, "dists");
     for(int i = 0; i < sms.size(); i++)

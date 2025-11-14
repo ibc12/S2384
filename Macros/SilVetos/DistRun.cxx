@@ -21,6 +21,7 @@ void DistRun()
     ROOT::EnableImplicitMT();
 
     ActRoot::DataManager data {"../../configs/data.conf", ActRoot::ModeType::EMerge};
+    // data.SetRuns(19, 66); // L0 trigger window changed for
     data.SetRuns(68, 122); // L0 trigger window changed for
     auto chain {data.GetJoinedData()};
 
@@ -67,6 +68,7 @@ void DistRun()
 
 
     // Save
+    // TString outpath {TString::Format("./Outputs/Dists/histos_%s_preL0change.root", layer.c_str())};
     TString outpath {TString::Format("./Outputs/Dists/histos_%s.root", layer.c_str())};
     auto f {std::make_unique<TFile>(outpath, "recreate")};
     f->WriteObject(&dists, "dists");

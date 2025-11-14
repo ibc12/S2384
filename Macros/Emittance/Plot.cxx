@@ -21,8 +21,9 @@
 void Plot()
 {
     ROOT::EnableImplicitMT();
-    std::string beam {"7Li"};
-    ROOT::RDataFrame df {"Emittance_Tree", "./Outputs/emittance" + beam + ".root"};
+    std::string beam {"11Li"};
+    std::string moment {"post"};
+    ROOT::RDataFrame df {"Emittance_Tree", "./Outputs/emittance" + beam + "_" + moment + ".root"};
     // Compute angles
     auto def {df.Define("thetaXY",
                         [](ActRoot::Line& l)
@@ -50,15 +51,19 @@ void Plot()
     auto hPointZ {def.Histo1D("Line.fPoint.fCoordinates.fZ")};
     auto hDirZ {def.Histo1D("Line.fDirection.fCoordinates.fZ")};
     auto hBeginZ {def.Histo1D({"hBeginZ", "Beginning Z", 60, 250, 280}, "AtBegin.fCoordinates.fZ")};
+    if(moment == "pre")
+    {
+        hBeginZ = def.Histo1D({"hBeginZ", "Beginning Z", 60, 200, 230}, "AtBegin.fCoordinates.fZ");
+    }
     auto hThetaXY {def.Histo1D("thetaXY")};
     auto hThetaXZ {def.Histo1D("thetaXZ")};
     auto hYthetaXY {def.Histo2D({"hYthetaXY", "Y vs #theta_{XY};Y [mm];#theta_{XY} [#circ]", 160, 80, 160, 150, -5, 5},
                                 "AtBegin.fCoordinates.fY", "thetaXY")};
     auto hYthetaXZ {def.Histo2D({"hYthetaXZ", "Y vs #theta_{XZ};Y [mm];#theta_{XZ} [#circ]", 160, 80, 160, 150, -5, 5},
                                 "AtBegin.fCoordinates.fY", "thetaXZ")};
-    auto hZthetaXY {def.Histo2D({"hZthetaXY", "Z vs #theta_{XY};Z [mm];#theta_{XY} [#circ]", 200, 120, 220, 150, -5, 5},
+    auto hZthetaXY {def.Histo2D({"hZthetaXY", "Z vs #theta_{XY};Z [mm];#theta_{XY} [#circ]", 200, 170, 270, 150, -5, 5},
                                 "AtBegin.fCoordinates.fZ", "thetaXY")};
-    auto hZthetaXZ {def.Histo2D({"hZthetaXZ", "Z vs #theta_{XZ};Z [mm];#theta_{XZ} [#circ]", 200, 120, 220, 150, -5, 5},
+    auto hZthetaXZ {def.Histo2D({"hZthetaXZ", "Z vs #theta_{XZ};Z [mm];#theta_{XZ} [#circ]", 200, 170, 270, 150, -5, 5},
                                 "AtBegin.fCoordinates.fZ", "thetaXZ")};
     auto h3d {def.Histo3D({"h3D", "Emittance histogram;Y [mm];#theta_{XY} [#circ];#theta_{XZ} [#circ]", 160, 80, 160,
                            150, -5, 5, 150, -5, 5},
@@ -142,7 +147,7 @@ void Plot()
     // f->Draw("same");
 
     // Save objects to file
-    std::string outputName {"./Outputs/histos" + beam + ".root"};
+    std::string outputName {"./Outputs/histos" + beam + "_" + moment + ".root"};
     auto file {std::make_unique<TFile>(outputName.c_str(), "recreate")};
     hBegin->Write("hBegin");
     hEnd->Write("hEnd");

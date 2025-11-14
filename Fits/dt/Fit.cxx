@@ -15,7 +15,7 @@ void Fit()
     ROOT::EnableImplicitMT();
 
     // Analysis
-    ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_d_t.root"};
+    ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_11Li_d_t_filtered.root"};
     // Ex
     auto hEx {df.Histo1D(S2384Fit::Exdt, "Ex")};
 

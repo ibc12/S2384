@@ -1,9 +1,9 @@
 #include "ActDataManager.h"
 #include "ActInputParser.h"
 #include "ActLine.h"
+#include "ActMergerData.h"
 #include "ActModularData.h"
 #include "ActTPCData.h"
-#include "ActMergerData.h"
 #include "ActTypes.h"
 
 #include "ROOT/RDF/InterfaceUtils.hxx"
@@ -20,16 +20,22 @@ void Get()
 {
     // Read data
     ROOT::EnableImplicitMT();
-    std::string beam {"7Li"};
+    std::string beam {"11Li"};
     ActRoot::DataManager datman {"../../configs/data_" + beam + ".conf", ActRoot::ModeType::EFilter};
+    std::string moment {"post"};
     if(beam == "7Li")
         datman.SetRuns(67, 82); // 7Li runs
     else if(beam == "11Li")
     {
-        datman.SetRuns(19, 65); // 11Li runs pre 7Li
+        if(moment == "pre")
+            datman.SetRuns(19, 65); // 11Li runs pre 7Li
+        else if(moment == "post")
+            // datman.SetRuns(95, 122); // 11Li runs post 7Li
+            datman.SetRuns(108, 122); // 11Li runs post 7Li
+        // datman.SetRuns(19, 65); // 11Li runs pre 7Li
         // datman.SetRuns(95, 122); // 11Li runs post 7Li
     }
-        
+
     auto chain {datman.GetChain()};
     auto chain2 {datman.GetChain(ActRoot::ModeType::EMerge)};
     auto chain3 {datman.GetChain(ActRoot::ModeType::EReadSilMod)};
@@ -71,7 +77,8 @@ void Get()
                   .Define("AtEnd", [](const ActRoot::Line& l) { return l.MoveToX(256); }, {"Line"})};
     auto count {def.Count()};
     ROOT::RDF::Experimental::AddProgressBar(def);
-    def.Snapshot("Emittance_Tree", "./Outputs/emittance" + beam + ".root", {"AtBegin", "AtEnd", "Line", "fRun", "fEntry"});
+    def.Snapshot("Emittance_Tree", "./Outputs/emittance" + beam + "_" + moment + ".root",
+                 {"AtBegin", "AtEnd", "Line", "fRun", "fEntry"});
     std::cout << "Processed events : " << *count << '\n';
 
     // ROOT::DisableImplicitMT();

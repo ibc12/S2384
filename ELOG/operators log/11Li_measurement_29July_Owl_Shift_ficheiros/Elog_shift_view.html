@@ -1,0 +1,238 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US"><head>
+<title>Elog Shift View</title>
+<!-- base href="https://web.accel.triumf.ca/isac_elog/Elog_shift_view.pl" -->
+<meta content="380" http-equiv="refresh">
+<link rel="stylesheet" type="text/css" href="Elog_shift_view_data/shifts.css">
+<script type="text/javascript">//<![CDATA[
+ 
+// Shift specific javascript
+
+function donothing()
+{
+	top.location.replace("shifts.pl");
+}
+
+
+function openSpellChecker() 
+{
+	var speller = new spellChecker();
+	speller.popUpProps = "menu=no,width=440,height=350,top=0,left=0,screenX=0,screenY=0,resizable=yes,status=yes";
+	speller.checkTextAreas();
+}
+
+// stuff for floating links
+function b2o(){
+	return document.documentElement.scrollTop;
+}
+
+function b2t(){
+	with(document.getElementById('bttl').style){left=((b2o()<1)?-500:1)+'px';top=((b2o()<1)?-500:document.documentElement.clientHeight+b2o()-25)+'px';}setTimeout('b2t()',99);
+}
+
+
+//]]></script>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+</head>
+<body bgcolor="" link="" vlink="" data-new-gr-c-s-check-loaded="8.934.0" data-gr-ext-installed="">
+<a name="totop"></a><center>
+<div id="jsdiv" style="display: none;">
+<hr><font color="#707070"><i>Note: you must have javascript enabled in order to use this logbook</i></font><br>
+</div>
+<script type="text/javascript">
+document.getElementById("jsdiv").style.display = "none"
+</script>
+<div id="cookiediv" style="display: none;">
+<hr><font color="#707070"><i>Note: you must allow cookies in order to use this logbook</i></font><br>
+</div>
+<script type="text/javascript">
+document.getElementById("cookiediv").style.display = "none"
+</script>
+<table width="100%"><tbody><tr><td align="left">
+<form method="post" action="Elog_login.pl" target="_self" style="display:inline;"><input type="submit" align="middle" name="gologin" value="Login"></form>
+&nbsp;&nbsp;<b>Not currently logged in</b>
+</td> <td align="right"><a href="https://web.accel.triumf.ca/isac_elog/frames.pl" target="_parent">To multi-frame version Elog</a>
+</td></tr></tbody></table><hr><a href="https://web.accel.triumf.ca/isac_elog/Elog_shift_view.pl?shiftid=21583"><b>Previous</b></a>&nbsp;&nbsp;<a href="https://web.accel.triumf.ca/isac_elog/Elog_shift_view.pl?shiftid=21585"><b>Next</b></a>&nbsp;&nbsp;
+<form method="post" action="Elog_start_shift.pl" target="_self" style="display:inline;"><input type="submit" align="middle" disabled="disabled" name="startshift" value="Start Shift"></form>
+
+<form method="post" action="Elog_add_entry.pl" target="_self" style="display:inline;"><input type="submit" align="middle" disabled="disabled" name="makeentry" value="Make Entry"></form>
+
+<form method="post" action="Elog_add_entry.pl?entrytype=end_of_shift" target="_self" style="display:inline;"><input type="submit" align="middle" disabled="disabled" name="endshift" value="End Shift"></form>
+
+<form method="post" action="Elog_shift_view.pl" target="_self" style="display:inline;"><input type="submit" align="middle" name="viewlogbook" value="Latest"></form>
+
+<form method="post" action="Elog_search.pl" target="_self" style="display:inline;"><input type="submit" align="middle" name="searchbutton" value="Search"></form>
+
+<form method="post" action="Elog_calendar_view.pl" target="_self" style="display:inline;"><input type="submit" align="middle" name="calendar" value="Calendar"></form>
+
+<form method="post" action="xxx" target="_self" style="display:inline;"><input type="submit" align="middle" disabled="disabled" name="btn_submit" value="New e-Fault"></form>
+<table border="0" width="100%"><tbody><tr><td bgcolor="#EDEDED" align="center"><table bgcolor="#FFFFE0" border="3" cellpadding="10" width="80%"><tbody><tr><th bgcolor="#05557b" colspan="7"><font color="#ff9900" size="+2">ISAC Operations Logbook -- Owl shift on Tue Jul 29, 2025</font></th></tr> <tr><td align="center"><b>Op</b></td> <td align="center"><b>Op</b></td> <td align="center"><b>Op</b></td> <td align="center"><b>Op</b></td> <td align="center"><b>Op</b></td> <td align="center"><b>Op</b></td> <td align="center"><b>Op</b></td></tr> <tr><td align="center" bgcolor="#05557b"><font color="#ffffff">Ed Parton</font></td> <td align="center" bgcolor="#05557b"><font color="#ffffff">&nbsp;</font></td> <td align="center" bgcolor="#05557b"><font color="#ffffff">&nbsp;</font></td> <td align="center" bgcolor="#05557b"><font color="#ffffff">&nbsp;</font></td> <td align="center" bgcolor="#05557b"><font color="#ffffff">&nbsp;</font></td> <td align="center" bgcolor="#05557b"><font color="#ffffff">&nbsp;</font></td> <td align="center" bgcolor="#05557b"><font color="#ffffff">&nbsp;</font></td></tr></tbody></table><p align="left"><font color="red"><b>Start of Shift Notes:</b></font> <br><br><b>ITE:</b> Ramped down and off. Under vacuum. 
+ 
+<br><br></p><table border="2" style="white-space:nowrap; float: left;"> 
+ <tbody><tr><td><b>BIAS</b></td><td> 0.0 kV</td>
+<td><b>TGHT</b></td><td> 0.7 A</td>
+<td><b>IG1S</b></td><td> 3.07e-07 Torr</td></tr>
+<tr><td><b>EE</b></td><td> 0.00 kV</td>
+<td><b>TBHT</b></td><td> 0.0 A</td>
+<td><b>PNG1</b></td><td> 0.00 Torr</td></tr>
+<tr><td><b>EL</b></td><td> 0.02 kV</td>
+<td><b>IG1</b></td><td> 8.59e-08 Torr</td>
+<td><b>PNG4</b></td><td> 2.44e-08 Torr</td></tr>
+</tbody></table><br style="clear: left;">
+
+<br><br><b>ITW:</b> TM2-Ta#69-HP-SIS installed. Receiving 59.9 uA p+ protons and set for 11Li for SEBT1-ACTAR.
+ 
+<br><br><table border="2" style="white-space:nowrap; float: left;"> 
+ <tbody><tr><td><b>IG1</b></td><td> 3.07e-07 Torr</td>
+<td><b>PNG1</b></td><td> 0.00 Torr</td></tr>
+<tr><td><b>IG1S</b></td><td> 4.69e-07 Torr</td>
+<td><b>PNG4</b></td><td> 4.75e-06 Torr</td></tr>
+</tbody></table><br style="clear: left;">
+
+<br><br><b>OLIS:</b> MWS is set for 16O+ sitting on IOS:FC6.
+ 
+<br><br><b>TCS:</b> TM3-SiC#47-HP-FEBIAD installed, HV and heater conditioning completed. 
+
+<br><br><table border="2" style="white-space:nowrap; float: left;"> 
+ <tbody><tr><td><b>BIAS</b></td><td> 0.0 v</td>
+<td><b>TGHT</b></td><td> 0.0 A</td>
+<td><b>ANODE:VOL</b></td><td> 0.000 V</td>
+<td><b>TK1</b></td><td> 30.87 in</td>
+<td><b>IG1</b></td><td> 6.36e-07 torr</td></tr>
+<tr><td><b>EE</b></td><td> 0.0 V</td>
+<td><b>TBHT</b></td><td> 0.0 A</td>
+<td><b>TS5</b></td><td> 21.87 C</td>
+<td><b>TK2</b></td><td> 21.76 in</td>
+<td><b>IG2</b></td><td> 2.33e-06 torr</td></tr>
+<tr><td><b>EL</b></td><td> 0.0 V</td>
+<td><b>ANODE:CUR</b></td><td> 0.0 A</td>
+<td><b>TS6</b></td><td> 19.23 C</td>
+<td><b>DIF1:RDFLOW</b></td><td> 11.04 GPM</td>
+<td><b>COIL</b></td><td> 0.147 A</td></tr>
+</tbody></table><br style="clear: left;">
+
+<br><br><b>ISAC-I RF:</b> 7Li(2+) set at 1.51MeV/u through DTL and 11Li(3+) going to ISAC-II.
+
+<br><br><b>SCRF/Cryogenics:</b> 
+ 
+SCRF is enabled. 
+ 
+30 SCRF cavities on (11 Phase-I, 19 Phase-II). 
+ 
+Phase-I is cooling the full Linac. 
+ 
+SCLinac cooled by Phase-I.  All cavities in SCB1 -&gt; SCC2 are on, except for SCB3:CAV2 and SCC2:CAV6. E=7.5MeV/u 
+ 
+Phase-I available power ~ 115.5 W, Phase-II available power ~ 0.0 W. 
+ 
+<p></p><p></p></td></tr><tr><td colspan="3"><hr></td></tr><tr><td bgcolor="#EDEDED" align="center">
+<table width="100%"><tbody><tr><td align="left" width="8%"><a name="401461"></a><font color="blue">2025-07-29 00:40:57</font></td> <td align="left">	<font color="black"><b>Summary: </b>2A wirescan: p+=60uA on ITW</font></td> <td align="right"><a href="https://web.accel.triumf.ca/isac_elog/Elog_add_entry.pl?inid=401461&amp;entrytype=comment"><font color="#D2691E"><b>Make Comment</b></font></a>
+</td></tr>
+ <tr><td> </td><td><b>Detail:</b> 7.1/7.0mm</td> <td align="right"><font color="blue"> - Ed Parton</font></td></tr>
+</tbody></table>
+<center><p><a href="https://web.accel.triumf.ca/Elog_Attachments/isac_elog/2025-07/2025-07-29-00:40:57.grab.C1AHPi.png" target="images"><img src="Elog_shift_view_data/2025-07-29-00_40_57.grab.C1AHPi.png" width="150" height="150" alt="image"></a><a href="https://web.accel.triumf.ca/Elog_Attachments/isac_elog/2025-07/2025-07-29-00:40:57.grab.BwAaNY.png" target="images"><img src="Elog_shift_view_data/2025-07-29-00_40_57.grab.BwAaNY.png" width="150" height="150" alt="image"></a><a href="https://web.accel.triumf.ca/Elog_Attachments/isac_elog/2025-07/2025-07-29-00:40:57.grab.JU21qe.png" target="images"><img src="Elog_shift_view_data/2025-07-29-00_40_57.grab.JU21qe.png" width="150" height="150" alt="image"></a></p></center><p></p><ul>
+
+<li><table bgcolor="#cccccc" border="0" width="100%"><tbody><tr><td align="left"><a name="401472"></a><i><font color="blue">2025-07-29 04:17:16</font>&nbsp;&nbsp;&nbsp;<b>Summary: </b>  2A wirescan: p+=60uA on ITW</i></td> <td align="right" width="12%"><a href="https://web.accel.triumf.ca/isac_elog/Elog_add_entry.pl?inid=401472&amp;entrytype=comment" target="upframe"><font color="#D2691E"><i><b>Make Comment</b></i></font></a></td></tr>
+ <tr><td align="left"><i><b>Detail:</b> 6.9/7.0mm </i></td> <td align="right"><font color="blue"><i>-- Ed Parton</i></font></td></tr>
+ <tr><td colspan="3"><center><p><a href="https://web.accel.triumf.ca/Elog_Attachments/isac_elog/2025-07/2025-07-29-04:17:16.grab.6DdlBD.png" target="images"><img src="Elog_shift_view_data/2025-07-29-04_17_16.grab.6DdlBD.png" width="150" height="150" alt="image"></a><a href="https://web.accel.triumf.ca/Elog_Attachments/isac_elog/2025-07/2025-07-29-04:17:16.grab.bMgRGc.png" target="images"><img src="Elog_shift_view_data/2025-07-29-04_17_16.grab.bMgRGc.png" width="150" height="150" alt="image"></a><a href="https://web.accel.triumf.ca/Elog_Attachments/isac_elog/2025-07/2025-07-29-04:17:16.grab.N1DMW9.png" target="images"><img src="Elog_shift_view_data/2025-07-29-04_17_16.grab.N1DMW9.png" width="150" height="150" alt="image"></a></p></center><p></p></td></tr>
+</tbody></table></li>
+</ul></td></tr><tr><td colspan="3"><hr></td></tr><tr><td bgcolor="#EDEDED" align="center">
+<table width="100%"><tbody><tr><td align="left" width="8%"><a name="401462"></a><font color="blue">2025-07-29 00:49:21</font></td> <td align="left">	<font color="black"><b>Summary: </b><a href="https://hla.triumf.ca/snapshot/display/measure_id=10358" target="_blank"> Snapshot #10358</a> | Beam: <font color="green">11Li (1+) (MEBT 2+) (HEBT 3+)</font> | Path: <font color="green">itw-tm2-sis-sebt1-tuda2</font> | Energy: <font color="green">7.5 MeV/u</font> | Tag: <font color="green">Beam Delivery</font></font></td> <td align="right"><a href="https://web.accel.triumf.ca/isac_elog/Elog_add_entry.pl?inid=401462&amp;entrytype=comment"><font color="#D2691E"><b>Make Comment</b></font></a>
+</td></tr>
+ <tr><td> </td><td><b>Detail:</b> <br>Automatic entry from host localhost (snapshot):<br><u>Operator Comments:</u><br><br><br><br><style>#snapcol1, #snapcol2, #snapcol3 {float: left;}        #menu_table, #short_table, #trans_table, #displayTable, #optional_PV_table, #trans_table_diff {width:100%;}        #menu_table tr td, #short_table tr td, #trans_table tr td, #displayTable tr td, #optional_PV_table tr td, #trans_table_diff tr td        {border: 1px solid black; border-collapse: collapse;        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);}        #menu_table, #menu_table th, #menu_table td,        #short_table, #short_table th, #short_table td,        #displayTable, #displayTable th, #displayTable td,        #optional_PV_table, #optional_PV_table th, #optional_PV_table td,        #trans_table_diff, #trans_table_diff th, #trans_table_diff td {padding: 7px; text-align: left;}        #trans_table, #trans_table th, #trans_table td {padding: 7px; text-align: left;}        #menu_table tr:nth-child(even),        #short_table tr:nth-child(even),        #displayTable tr:nth-child(even),        #optional_PV_table tr:nth-child(even),        #trans_table_diff tr:nth-child(even) {background-color: #eee;}        #trans_table tr:nth-child(even) {background-color: #eee;}        #menu_table tr:nth-child(odd),        #short_table tr:nth-child(odd),        #displayTable tr:nth-child(odd),        #optional_PV_table tr:nth-child(odd),        #trans_table_diff tr:nth-child(odd) {background-color: #fff;}        #trans_table tr:nth-child(odd) {background-color: #fff;}        #menu_table th, #menu_table thead tr td,        #short_table th, #menu_table thead tr td,        #displayTable th, #menu_table thead tr td,        #optional_PV_table th, #menu_table thead tr td,        #trans_table_diff th, #menu_table thead tr td {background-color: #3498DB;color: white;}        #trans_table th, #menu_table thead tr td {background-color: #3498DB;color: white;}        #displayTable tbody tr td center hr,        #short_table tbody tr td center hr,        #menu_table tbody tr td center hr {display: none;}        #menu_table tbody tr td,        #short_table tbody tr td,        #displayTable tbody tr td,        #optional_PV_table tbody tr td,        #trans_table_diff tbody tr td,        #trans_table tbody tr td {padding-top: 3px; padding-bottom: 3px}        </style><div class="row"><div class="column" id="snapcol1"><table id="menu_table" class="table table-hover" style="white-space:nowrap; float: left;">                <thead><tr><th colspan="2" class="table-primary"><h4>itw-tm2-sis-sebt1-tuda2</h4>                </th></tr></thead><tbody><tr class="table-secondary"><td>ITW Bias Voltage [V]</td><td>22440.00</td></tr><tr class="table-secondary"><td>ITW EE Voltage [V]</td><td>1428.57</td></tr><tr class="table-secondary"><td>ITW EL Voltage [V]</td><td>10962.69</td></tr><tr class="table-secondary"><td>Target Current [A]</td><td>500.00</td></tr><tr class="table-secondary"><td>p+ [uA]</td><td>59.9</td></tr><tr class="table-secondary"><td>Alpha [A]</td><td>1.22</td></tr><tr class="table-secondary"><td>Beta [A]</td><td>2.93</td></tr><tr class="table-secondary"><td>IMS:MB1 M/Q</td><td>11.043</td></tr><tr class="table-secondary"><td>IMS:MB2 M/Q</td><td>11.034</td></tr><tr class="table-secondary"><td>IMS:YSLIT22 width [mm]</td><td>8.00</td></tr><tr class="table-secondary"><td>IMS:XSLIT22 width [mm]</td><td>8.00</td></tr><tr class="table-secondary"><td>IMS:YSLIT24 width [mm]</td><td>8.00</td></tr><tr class="table-secondary"><td>IMS:XSLIT24 width [mm]</td><td>8.00</td></tr><tr class="table-secondary"><td>IMS:ATT18 (10x)</td><td>Out</td></tr><tr class="table-secondary"><td>IMS:ATT18 (100x)</td><td>Out</td></tr><tr class="table-secondary"><td colspan="100%">                                <center>                                <hr style="background-color:#3498DB">                                <span> <font color="red">R</font> ''- Reverse Bias'',                                 <font color="red">BF</font> ''- Bias Failed'' </span>                                </center></td></tr></tbody></table></div><div class="column" id="snapcol2"><table class="table table-hover" id="short_table">                        <thead>                      <tr class="table-primary">                        <th>Cup</th>                        <th>Current</th>                      </tr>                      </thead>                      <tbody><tr class="table-secondary"><td>ITW:FC5</td><td name="" itw:fc5''="" dataid="" 3786bb9b-f942-439f-8e22-71c01a14a5ac''="">1.16e-07</td></tr><tr class="table-secondary"><td>ILT:CEM48<sup style="color:red"> BF</sup></td><td name="" ilt:cem48''="" dataid="" 426730f5-e0b2-43e0-819a-3064dc5897c1''="">26011.8</td></tr><tr class="table-secondary"><td>HEBT:SCD5</td><td name="" hebt:scd5''="" dataid="" 8dfa1e1d-1b5e-4455-a6da-70089f5cf91a''="">5280.0</td></tr><tr class="table-secondary"><td>DSB:SCD12</td><td name="" dsb:scd12''="" dataid="" 2abbc937-3eec-4b2c-b6ca-dd990cb11ef1''="">3630.4</td></tr><tr class="table-secondary"><td>SEBT:SID20<sup style="color:red"> BF</sup></td><td name="" sebt:sid20''="" dataid="" 201158cf-4c4e-4bee-ab81-5b0ef390031a''="">6489.0</td></tr><tr class="table-secondary"><td>SEBT1:SCD0</td><td name="" sebt1:scd0''="" dataid="" 94a39ba1-3b79-4c26-9fc7-d9ade39c2ada''="">3526.5</td></tr><tr class="table-secondary"><td colspan="100%">                            <center>                            <hr style="background-color:#3498DB">                            <b>FC Units in (A)  -  LID Units in (pps)</b>                            </center></td></tr></tbody></table></div><div class="column" id="snapcol3"><table class="table table-hover" id="trans_table">                    <thead>                <tr class="table-primary">                    <th colspan="2">Cup Transmissions</th>                </tr>                                    </thead><tbody><tr class="table-secondary"><td>HEBT:SCD5 to DSB:SCD12</td><td>68.8%</td></tr><tr class="table-secondary"><td>DSB:SCD12 to SEBT:SID20</td><td>178.7%</td></tr><tr class="table-secondary"><td>SEBT:SID20 to SEBT1:SCD0</td><td>54.3%</td></tr></tbody></table></div></div></td> <td align="right"><font color="blue"> - Auto-entry</font></td></tr>
+</tbody></table>
+</td></tr><tr><td colspan="3"><hr></td></tr><tr><td bgcolor="#EDEDED" align="center">
+<table width="100%"><tbody><tr><td align="left" width="8%"><a name="401463"></a><font color="blue">2025-07-29 01:19:26</font></td> <td align="left">	<font color="black"><b>Summary: </b>Online energy measurement started</font></td> <td align="right"><a href="https://web.accel.triumf.ca/isac_elog/Elog_add_entry.pl?inid=401463&amp;entrytype=comment"><font color="#D2691E"><b>Make Comment</b></font></a>
+</td></tr>
+ <tr><td> </td><td><b>Detail:</b> FTM MCPs biased to 2kV locally</td> <td align="right"><font color="blue"> - Ed Parton</font></td></tr>
+</tbody></table>
+<ul>
+
+<li><table bgcolor="#cccccc" border="0" width="100%"><tbody><tr><td align="left"><a name="401464"></a><i><font color="blue">2025-07-29 01:20:03</font>&nbsp;&nbsp;&nbsp;<b>Summary: </b> FTM wires in.</i></td> <td align="right" width="12%"><a href="https://web.accel.triumf.ca/isac_elog/Elog_add_entry.pl?inid=401464&amp;entrytype=comment" target="upframe"><font color="#D2691E"><i><b>Make Comment</b></i></font></a></td></tr>
+ <tr><td align="left"><i><b>Detail:</b> <i>(No additional detail)</i>
+ </i></td> <td align="right"><font color="blue"><i>-- Ed Parton</i></font></td></tr>
+ <tr><td colspan="3"><center><p><a href="https://web.accel.triumf.ca/Elog_Attachments/isac_elog/2025-07/2025-07-29-01:20:03.grab.myxH0R.png" target="images"><img src="Elog_shift_view_data/2025-07-29-01_20_03.grab.myxH0R.png" width="150" height="150" alt="image"></a></p></center><p></p></td></tr>
+</tbody></table></li>
+
+<li><table bgcolor="#cccccc" border="0" width="100%"><tbody><tr><td align="left"><a name="401465"></a><i><font color="blue">2025-07-29 01:20:24</font>&nbsp;&nbsp;&nbsp;<b>Summary: </b> 11Li is going to ACTAR during this measurement.</i></td> <td align="right" width="12%"><a href="https://web.accel.triumf.ca/isac_elog/Elog_add_entry.pl?inid=401465&amp;entrytype=comment" target="upframe"><font color="#D2691E"><i><b>Make Comment</b></i></font></a></td></tr>
+ <tr><td align="left"><i><b>Detail:</b> <i>(No additional detail)</i>
+ </i></td> <td align="right"><font color="blue"><i>-- Ed Parton</i></font></td></tr>
+ <tr><td colspan="3"></td></tr>
+</tbody></table></li>
+
+<li><table bgcolor="#cccccc" border="0" width="100%"><tbody><tr><td align="left"><a name="401467"></a><i><font color="blue">2025-07-29 02:12:46</font>&nbsp;&nbsp;&nbsp;<b>Summary: </b> 11Li to ACTAR beam energy measured as 7.544MeV/u</i></td> <td align="right" width="12%"><a href="https://web.accel.triumf.ca/isac_elog/Elog_add_entry.pl?inid=401467&amp;entrytype=comment" target="upframe"><font color="#D2691E"><i><b>Make Comment</b></i></font></a></td></tr>
+ <tr><td align="left"><i><b>Detail:</b> <i>(No additional detail)</i>
+ </i></td> <td align="right"><font color="blue"><i>-- Ed Parton</i></font></td></tr>
+ <tr><td colspan="3"><center><p><a href="https://web.accel.triumf.ca/Elog_Attachments/isac_elog/2025-07/2025-07-29-02:12:46.grab.xllZE1.png" target="images"><img src="Elog_shift_view_data/2025-07-29-02_12_46.grab.xllZE1.png" width="150" height="150" alt="image"></a><a href="https://web.accel.triumf.ca/Elog_Attachments/isac_elog/2025-07/2025-07-29-02:12:46.grab.03suxV.png" target="images"><img src="Elog_shift_view_data/2025-07-29-02_12_46.grab.03suxV.png" width="150" height="150" alt="image"></a><a href="https://web.accel.triumf.ca/Elog_Attachments/isac_elog/2025-07/2025-07-29-02:12:46.grab.ejizCm.png" target="images"><img src="Elog_shift_view_data/2025-07-29-02_12_46.grab.ejizCm.png" width="150" height="150" alt="image"></a></p></center><p></p></td></tr>
+</tbody></table></li>
+
+<li><table bgcolor="#cccccc" border="0" width="100%"><tbody><tr><td align="left"><a name="401469"></a><i><font color="blue">2025-07-29 02:29:53</font>&nbsp;&nbsp;&nbsp;<b>Summary: </b> MCPs ramped down by hand, Wire HVs using the FTM page</i></td> <td align="right" width="12%"><a href="https://web.accel.triumf.ca/isac_elog/Elog_add_entry.pl?inid=401469&amp;entrytype=comment" target="upframe"><font color="#D2691E"><i><b>Make Comment</b></i></font></a></td></tr>
+ <tr><td align="left"><i><b>Detail:</b> <i>(No additional detail)</i>
+ </i></td> <td align="right"><font color="blue"><i>-- Ed Parton</i></font></td></tr>
+ <tr><td colspan="3"><center><p><a href="https://web.accel.triumf.ca/Elog_Attachments/isac_elog/2025-07/2025-07-29-02:29:53.grab.rlIeaJ.png" target="images"><img src="Elog_shift_view_data/2025-07-29-02_29_53.grab.rlIeaJ.png" width="150" height="150" alt="image"></a></p></center><p></p></td></tr>
+</tbody></table></li>
+</ul></td></tr><tr><td colspan="3"><hr></td></tr><tr><td bgcolor="#EDEDED" align="center">
+<table width="100%"><tbody><tr><td align="left" width="8%"><a name="401466"></a><font color="blue">2025-07-29 01:58:02</font></td> <td align="left">	<font color="black"><b>Summary: </b>Rates decreasing at ACTAR</font></td> <td align="right"><a href="https://web.accel.triumf.ca/isac_elog/Elog_add_entry.pl?inid=401466&amp;entrytype=comment"><font color="#D2691E"><b>Make Comment</b></font></a>
+</td></tr>
+ <tr><td> </td><td><b>Detail:</b> Will limit tuning during E measurement.</td> <td align="right"><font color="blue"> - Ed Parton</font></td></tr>
+</tbody></table>
+<center><p><a href="https://web.accel.triumf.ca/Elog_Attachments/isac_elog/2025-07/2025-07-29-01:58:02.grab.K4eHtX.png" target="images"><img src="Elog_shift_view_data/2025-07-29-01_58_02.grab.K4eHtX.png" width="150" height="150" alt="image"></a></p></center><p></p><ul>
+
+<li><table bgcolor="#cccccc" border="0" width="100%"><tbody><tr><td align="left"><a name="401471"></a><i><font color="blue">2025-07-29 03:14:16</font>&nbsp;&nbsp;&nbsp;<b>Summary: </b> 11Li rates at ACTAR over last 14 hours:</i></td> <td align="right" width="12%"><a href="https://web.accel.triumf.ca/isac_elog/Elog_add_entry.pl?inid=401471&amp;entrytype=comment" target="upframe"><font color="#D2691E"><i><b>Make Comment</b></i></font></a></td></tr>
+ <tr><td align="left"><i><b>Detail:</b> <i>(No additional detail)</i>
+ </i></td> <td align="right"><font color="blue"><i>-- Ed Parton</i></font></td></tr>
+ <tr><td colspan="3"><center><p><a href="https://web.accel.triumf.ca/Elog_Attachments/isac_elog/2025-07/2025-07-29-03:14:16.grab.Gtb9uc.png" target="images"><img src="Elog_shift_view_data/2025-07-29-03_14_16.grab.Gtb9uc.png" width="150" height="150" alt="image"></a></p></center><p></p></td></tr>
+</tbody></table></li>
+</ul></td></tr><tr><td colspan="3"><hr></td></tr><tr><td bgcolor="#EDEDED" align="center">
+<table width="100%"><tbody><tr><td align="left" width="8%"><a name="401468"></a><font color="blue">2025-07-29 02:18:22</font></td> <td align="left">	<font color="black"><b>Summary: </b><a href="https://hla.triumf.ca/snapshot/display/measure_id=10359" target="_blank"> Snapshot #10359</a> | Beam: <font color="green">11Li (1+) (MEBT 2+) (HEBT 3+)</font> | Path: <font color="green">itw-tm2-sis-sebt1-tuda2</font> | Energy: <font color="green">7.5 MeV/u</font> | Tag: <font color="green">Beam Delivery</font></font></td> <td align="right"><a href="https://web.accel.triumf.ca/isac_elog/Elog_add_entry.pl?inid=401468&amp;entrytype=comment"><font color="#D2691E"><b>Make Comment</b></font></a>
+</td></tr>
+ <tr><td> </td><td><b>Detail:</b> <br>Automatic entry from host localhost (snapshot):<br><u>Operator Comments:</u><br><br><br><br><style>#snapcol1, #snapcol2, #snapcol3 {float: left;}        #menu_table, #short_table, #trans_table, #displayTable, #optional_PV_table, #trans_table_diff {width:100%;}        #menu_table tr td, #short_table tr td, #trans_table tr td, #displayTable tr td, #optional_PV_table tr td, #trans_table_diff tr td        {border: 1px solid black; border-collapse: collapse;        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);}        #menu_table, #menu_table th, #menu_table td,        #short_table, #short_table th, #short_table td,        #displayTable, #displayTable th, #displayTable td,        #optional_PV_table, #optional_PV_table th, #optional_PV_table td,        #trans_table_diff, #trans_table_diff th, #trans_table_diff td {padding: 7px; text-align: left;}        #trans_table, #trans_table th, #trans_table td {padding: 7px; text-align: left;}        #menu_table tr:nth-child(even),        #short_table tr:nth-child(even),        #displayTable tr:nth-child(even),        #optional_PV_table tr:nth-child(even),        #trans_table_diff tr:nth-child(even) {background-color: #eee;}        #trans_table tr:nth-child(even) {background-color: #eee;}        #menu_table tr:nth-child(odd),        #short_table tr:nth-child(odd),        #displayTable tr:nth-child(odd),        #optional_PV_table tr:nth-child(odd),        #trans_table_diff tr:nth-child(odd) {background-color: #fff;}        #trans_table tr:nth-child(odd) {background-color: #fff;}        #menu_table th, #menu_table thead tr td,        #short_table th, #menu_table thead tr td,        #displayTable th, #menu_table thead tr td,        #optional_PV_table th, #menu_table thead tr td,        #trans_table_diff th, #menu_table thead tr td {background-color: #3498DB;color: white;}        #trans_table th, #menu_table thead tr td {background-color: #3498DB;color: white;}        #displayTable tbody tr td center hr,        #short_table tbody tr td center hr,        #menu_table tbody tr td center hr {display: none;}        #menu_table tbody tr td,        #short_table tbody tr td,        #displayTable tbody tr td,        #optional_PV_table tbody tr td,        #trans_table_diff tbody tr td,        #trans_table tbody tr td {padding-top: 3px; padding-bottom: 3px}        </style><div class="row"><div class="column" id="snapcol1"><table id="menu_table" class="table table-hover" style="white-space:nowrap; float: left;">                <thead><tr><th colspan="2" class="table-primary"><h4>itw-tm2-sis-sebt1-tuda2</h4>                </th></tr></thead><tbody><tr class="table-secondary"><td>ITW Bias Voltage [V]</td><td>22440.00</td></tr><tr class="table-secondary"><td>ITW EE Voltage [V]</td><td>1428.57</td></tr><tr class="table-secondary"><td>ITW EL Voltage [V]</td><td>10962.69</td></tr><tr class="table-secondary"><td>Target Current [A]</td><td>500.00</td></tr><tr class="table-secondary"><td>p+ [uA]</td><td>59.9</td></tr><tr class="table-secondary"><td>Alpha [A]</td><td>1.22</td></tr><tr class="table-secondary"><td>Beta [A]</td><td>2.93</td></tr><tr class="table-secondary"><td>IMS:MB1 M/Q</td><td>11.040</td></tr><tr class="table-secondary"><td>IMS:MB2 M/Q</td><td>11.035</td></tr><tr class="table-secondary"><td>IMS:YSLIT22 width [mm]</td><td>8.00</td></tr><tr class="table-secondary"><td>IMS:XSLIT22 width [mm]</td><td>8.00</td></tr><tr class="table-secondary"><td>IMS:YSLIT24 width [mm]</td><td>8.00</td></tr><tr class="table-secondary"><td>IMS:XSLIT24 width [mm]</td><td>8.00</td></tr><tr class="table-secondary"><td>IMS:ATT18 (10x)</td><td>Out</td></tr><tr class="table-secondary"><td>IMS:ATT18 (100x)</td><td>Out</td></tr><tr class="table-secondary"><td colspan="100%">                                <center>                                <hr style="background-color:#3498DB">                                <span> <font color="red">R</font> ''- Reverse Bias'',                                 <font color="red">BF</font> ''- Bias Failed'' </span>                                </center></td></tr></tbody></table></div><div class="column" id="snapcol2"><table class="table table-hover" id="short_table">                        <thead>                      <tr class="table-primary">                        <th>Cup</th>                        <th>Current</th>                      </tr>                      </thead>                      <tbody><tr class="table-secondary"><td>ITW:FC5</td><td name="" itw:fc5''="" dataid="" 53ed56cf-573a-4964-aae1-ddd0f6a1d253''="">1.18e-07</td></tr><tr class="table-secondary"><td>ILT:CEM48<sup style="color:red"> BF</sup></td><td name="" ilt:cem48''="" dataid="" d22bf84d-028d-4420-8b73-9c9a32e01a4b''="">25814.8</td></tr><tr class="table-secondary"><td>HEBT:SCD5</td><td name="" hebt:scd5''="" dataid="" 81124a15-b77c-4459-a290-73d492ddd648''="">5270.6</td></tr><tr class="table-secondary"><td>DSB:SCD12</td><td name="" dsb:scd12''="" dataid="" 49538207-17fe-45b2-a731-ae9d440861b9''="">3646.6</td></tr><tr class="table-secondary"><td>SEBT:SID20<sup style="color:red"> BF</sup></td><td name="" sebt:sid20''="" dataid="" 731c11ca-2133-4bb5-bcde-7ca07cda2e1c''="">6577.9</td></tr><tr class="table-secondary"><td>SEBT1:SCD0</td><td name="" sebt1:scd0''="" dataid="" 1343f495-4899-41e8-88db-eab43ee47aad''="">3530.3</td></tr><tr class="table-secondary"><td colspan="100%">                            <center>                            <hr style="background-color:#3498DB">                            <b>FC Units in (A)  -  LID Units in (pps)</b>                            </center></td></tr></tbody></table></div><div class="column" id="snapcol3"><table class="table table-hover" id="trans_table">                    <thead>                <tr class="table-primary">                    <th colspan="2">Cup Transmissions</th>                </tr>                                    </thead><tbody><tr class="table-secondary"><td>HEBT:SCD5 to DSB:SCD12</td><td>69.2%</td></tr><tr class="table-secondary"><td>DSB:SCD12 to SEBT:SID20</td><td>180.4%</td></tr><tr class="table-secondary"><td>SEBT:SID20 to SEBT1:SCD0</td><td>53.7%</td></tr></tbody></table></div></div></td> <td align="right"><font color="blue"> - Auto-entry</font></td></tr>
+</tbody></table>
+</td></tr><tr><td colspan="3"><hr></td></tr><tr><td bgcolor="#EDEDED" align="center">
+<table width="100%"><tbody><tr><td align="left" width="8%"><a name="401470"></a><font color="blue">2025-07-29 02:40:03</font></td> <td align="left">	<font color="black"><b>Summary: </b>SCB1:CAV2 lost cavity ok. Used auto-on to restore RF</font></td> <td align="right"><a href="https://web.accel.triumf.ca/isac_elog/Elog_add_entry.pl?inid=401470&amp;entrytype=comment"><font color="#D2691E"><b>Make Comment</b></font></a>
+</td></tr>
+ <tr><td> </td><td><b>Detail:</b> d.t. was 2 minutes.</td> <td align="right"><font color="blue"> - Ed Parton</font></td></tr>
+</tbody></table>
+</td></tr><tr><td colspan="3"><hr></td></tr><tr><td bgcolor="#EDEDED" align="center">
+<table width="100%"><tbody><tr><td align="left" width="8%"><a name="401473"></a><font color="blue">2025-07-29 04:40:21</font></td> <td align="left">	<font color="black"><b>Summary: </b>RFQ lost tuner lock</font></td> <td align="right"><a href="https://web.accel.triumf.ca/isac_elog/Elog_add_entry.pl?inid=401473&amp;entrytype=comment"><font color="#D2691E"><b>Make Comment</b></font></a>
+</td></tr>
+ <tr><td> </td><td><b>Detail:</b> Amplitude was ramped down to 550, pressed auto on and lock and cavity ok restored, then ramped back up to 634.<br>
+d.t. 2 minutes.</td> <td align="right"><font color="blue"> - Ed Parton</font></td></tr>
+</tbody></table>
+<center><p><a href="https://web.accel.triumf.ca/Elog_Attachments/isac_elog/2025-07/2025-07-29-04:40:21.grab.5VuOmo.png" target="images"><img src="Elog_shift_view_data/2025-07-29-04_40_21.grab.5VuOmo.png" width="150" height="150" alt="image"></a></p></center><p></p></td></tr><tr><td colspan="3"><hr></td></tr><tr><td bgcolor="#EDEDED" align="center">
+<table width="100%"><tbody><tr><td align="left" width="8%"><a name="401474"></a><font color="blue">2025-07-29 04:45:01</font></td> <td align="left">	<font color="black"><b>Summary: </b>PreBuncher all frequencies and ISAC-I global phase adjusted to improve 11Li rates at ACTAR</font></td> <td align="right"><a href="https://web.accel.triumf.ca/isac_elog/Elog_add_entry.pl?inid=401474&amp;entrytype=comment"><font color="#D2691E"><b>Make Comment</b></font></a>
+</td></tr>
+ <tr><td> </td><td><b>Detail:</b> <i>(No additional detail)</i>
+</td> <td align="right"><font color="blue"> - Ed Parton</font></td></tr>
+</tbody></table>
+<center><p><a href="https://web.accel.triumf.ca/Elog_Attachments/isac_elog/2025-07/2025-07-29-04:45:01.grab.v7ZaX2.png" target="images"><img src="Elog_shift_view_data/2025-07-29-04_45_01.grab.v7ZaX2.png" width="150" height="150" alt="image"></a></p></center><p></p></td></tr><tr><td colspan="3"><hr></td></tr><tr><td bgcolor="#EDEDED" align="center">
+<table width="100%"><tbody><tr><td align="left" width="8%"><a name="401475"></a><font color="blue">2025-07-29 06:34:41</font></td> <td align="left">	<font color="black"><b>Summary: </b>TCS vacuum and water package turned off by David</font></td> <td align="right"><a href="https://web.accel.triumf.ca/isac_elog/Elog_add_entry.pl?inid=401475&amp;entrytype=comment"><font color="#D2691E"><b>Make Comment</b></font></a>
+</td></tr>
+ <tr><td> </td><td><b>Detail:</b> In preparation for TM3 move into ITE.</td> <td align="right"><font color="blue"> - Ed Parton</font></td></tr>
+</tbody></table>
+</td></tr><tr><td colspan="3"><hr></td></tr><tr><td bgcolor="#EDEDED" align="center">
+<table width="100%"><tbody><tr><td align="left" width="8%"><a name="401476"></a><font color="blue">2025-07-29 06:40:18</font></td> <td align="left">	<font color="black"><b>Summary: </b>ITE vacuum system turned off</font></td> <td align="right"><a href="https://web.accel.triumf.ca/isac_elog/Elog_add_entry.pl?inid=401476&amp;entrytype=comment"><font color="#D2691E"><b>Make Comment</b></font></a>
+</td></tr>
+ <tr><td> </td><td><b>Detail:</b> In preparation for module move today.</td> <td align="right"><font color="blue"> - Ed Parton</font></td></tr>
+</tbody></table>
+</td></tr><tr><td colspan="3"><hr></td></tr><tr><td bgcolor="#EDEDED" align="center">
+<table width="100%"><tbody><tr><td align="left" width="8%"><a name="401477"></a><font color="blue">2025-07-29 06:56:58</font></td> <td align="left"><font color="green">	<b>Shift Summary: </b>11Li to ACTAR</font></td> <td align="right"><a href="https://web.accel.triumf.ca/isac_elog/Elog_add_entry.pl?inid=401477&amp;entrytype=comment"><font color="#D2691E"><b>Make Comment</b></font></a>
+</td></tr>
+ <tr><td> </td><td><b>Detail:</b> Cyclotron delivered p+=60uA to ITW. Trips caused 2 minutes downtime.<br>
+
+ITW producing 11Li+, 2+ MEBT, 3+ HEBT, to SEBT1-ACTAR @ 7.5MeV/u. Rates 
+drifting down, online tuning recovered only some of the losses. Low 
+current energy measurement made while beam was going to experiment.<br>
+ITE turbos off at 0630<br>
+OLIS MWS 16O parked at source.<br>
+TCS has TM3 w/ SiC#47-HP-FEBIAD. Conditioning completed. Water cooling and vacuum turned off by David at 0630</td> <td align="right"><font color="blue"> - Ed Parton</font></td></tr>
+</tbody></table>
+<center><p><a href="https://web.accel.triumf.ca/Elog_Attachments/isac_elog/2025-07/2025-07-29-06:56:58.grab.Dc6soy.png" target="images"><img src="Elog_shift_view_data/2025-07-29-06_56_58.grab.Dc6soy.png" width="150" height="150" alt="image"></a></p></center><p></p></td></tr><tr><td colspan="3"><hr></td></tr></tbody></table></center>
+
+
+		<br>
+<div id="bttl" class="bak2top" style="position: absolute; left: -500px; top: -500px;"><nobr>&nbsp;<a href="https://web.accel.triumf.ca/isac_elog/Elog_shift_view.pl?shiftid=21583"><b>Previous</b></a>&nbsp;&nbsp;<a href="https://web.accel.triumf.ca/isac_elog/Elog_shift_view.pl?shiftid=21585"><b>Next</b></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><a href="https://web.accel.triumf.ca/isac_elog/Elog_shift_view.pl?shiftid=21584#totop">ISAC Operations Logbook -- Owl shift on Tue Jul 29, 2025</a></b></nobr></div>
+<script language="JavaScript" type="text/javascript">
+	setTimeout('b2t()',99);
+</script>
+</body><grammarly-desktop-integration data-grammarly-shadow-root="true"></grammarly-desktop-integration></html>

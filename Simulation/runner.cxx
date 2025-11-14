@@ -8,8 +8,6 @@
 
 void runner(TString what = "simu", bool inspect = true)
 {
-    // Beam energy
-    double Tbeam {7 * 7.558}; // MeV
     // Neutron and Proton phase space
     int neutronPS {0}; // number of neutrons in final state
     int protonPS {0};  // number of protons in final state
@@ -18,6 +16,12 @@ void runner(TString what = "simu", bool inspect = true)
     std::string target {"2H"};
     std::string light {"1H"};
     std::string heavy {"8Li"};
+    // Beam energy
+    double Tbeam {}; 
+    if(beam == "7Li")
+        Tbeam = 7 * 7.558; // MeV
+    else if(beam == "11Li")
+        Tbeam = 11 * 7.558; // MeV
     // Vector with Exs
     std::vector<double> Exs;
     if(neutronPS == 0 && protonPS == 0 && target == "2H" && light == "1H") // Transfer dp
@@ -25,7 +29,7 @@ void runner(TString what = "simu", bool inspect = true)
         if(beam == "11Li")
             Exs = {0, 0.130, 0.435};
         else if(beam == "7Li")
-            Exs = {0, 0.981, 2.255};
+            Exs = {0,  0.981, 2.255};
     }
         
     else if(neutronPS == 0 && protonPS == 0 && target == "2H" && light == "2H") // Elastic and Inelastic scattering
@@ -33,7 +37,7 @@ void runner(TString what = "simu", bool inspect = true)
         if(beam == "11Li")
             Exs = {0, 1.266, 2.474};
         else if(beam == "7Li")
-            Exs = {0, 0.477};
+            Exs = { 0, 0.477};
     }
     else if(target == "2H" && light == "3H") // dt (only g.s)
         Exs = {0};
