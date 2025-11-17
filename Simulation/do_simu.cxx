@@ -2,6 +2,7 @@
 #define triumf_all_cxx
 #include "ActColors.h"
 #include "ActCrossSection.h"
+#include "ActCutsManager.h"
 #include "ActDecayGenerator.h"
 #include "ActKinematicGenerator.h"
 #include "ActKinematics.h"
@@ -225,9 +226,9 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
     std::cout << "Silicon centre at Z = " << silCentre << " mm" << std::endl;
     double beamOffset {3.36}; // mm offset of beam with respect to sils 4 and 5 off left wall (need to lower beam that
                               // amount respect of silicons)
-    
-    const double zVertexSigma {0.81}; // From emitance study
-    const double zVertexMean {silCentre - beamOffset};  // 135 mm is the entrance of the beam in TPC
+
+    const double zVertexSigma {0.81};                  // From emitance study
+    const double zVertexMean {silCentre - beamOffset}; // 135 mm is the entrance of the beam in TPC
 
     // We have to centre the silicons with the beam input
     // In real life beam window is not at Z / 2
@@ -235,29 +236,53 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
     for(auto& [name, layer] : sils->GetLayers())
     {
         if(name == "f0" || name == "f1")
-            layer.MoveZTo(zVertexMean -50, {3});
+            layer.MoveZTo(zVertexMean - 50, {3});
         if(name == "f2" || name == "f3")
             layer.MoveZTo(zVertexMean, {0});
         if(name == "l0" || name == "r0") // beam went at the height of the half of the second highest silicon
             layer.MoveZTo(zVertexMean, {4});
     }
     sils->DrawGeo();
-    // Draw beam line for debugging
-    double x0 = 0.0;
-    double y0 = 128.0;
-    double z0 = silCentre;
-    TPolyLine3D* line = new TPolyLine3D(2);
-    line->SetPoint(0, -50, y0, z0);
-    line->SetPoint(1, 400, y0, z0);
-    line->SetLineColor(kRed);
-    line->SetLineWidth(3);
-    line->Draw("same");
     // Silicon malfunction txt
     std::string silEfficienciesPath {"./Inputs/Efficiencies/silicon_efficiencies_" + beam + ".txt"};
     std::map<std::string, double> silEfficiencies {LoadEfficiencies(silEfficienciesPath)};
-    // This means: make the Z of silicons {5,6,...} be that zOfBeam.
-    // shift the others accordingly
-    // sils->DrawGeo();
+
+    // CUTS ON SILICON ENERGY, depending on particle
+    // from the graphical PID cut
+    std::string light_name {};
+    if(light == "1H")
+        light_name = "p";
+    else if(light == "2H")
+        light_name = "d";
+    else if(light == "3H")
+        light_name = "t";
+    ActRoot::CutsManager<std::string> cuts;
+    // read for l0 and r0 and get bigger cut
+    std::vector<std::string> silCutLayers {"l0", "r0"};
+    std::pair<double, double> eLoss0Cut;
+    for(const auto& silLayer : silCutLayers)
+    {
+        std::string light_name_layer = light_name + silLayer;
+        cuts.ReadCut(light_name_layer,
+                     TString::Format("../PostAnalysis/Cuts/pid_%s_%s_%s.root", light_name.c_str(), silLayer.c_str(), beam.c_str()).Data());
+
+        if(cuts.GetCut(light_name_layer))
+        {
+            auto eLoss0Cut_layer = cuts.GetXRange(light_name_layer);
+            std::cout << BOLDGREEN << "-> ESil range for " << light_name_layer << " in " << silLayer << ": ["
+                      << eLoss0Cut_layer.first << ", " << eLoss0Cut_layer.second << "] MeV" << RESET << '\n';
+            if(silLayer == "l0" || eLoss0Cut_layer.second > eLoss0Cut.second)
+            {
+                eLoss0Cut = eLoss0Cut_layer;
+            }
+        }
+        else
+        {
+            std::cout << BOLDRED << "Simulation_S2384(): could not read PID cut for " << light << " in " << silLayer
+                      << " -> using default eLoss0Cut" << RESET << '\n';
+            eLoss0Cut = {0, 1000};
+        }
+    }
 
     // Sigmas
     const double sigmaPercentBeam {0.0017}; // 1.7% beam energy spread (meassured by operators)
@@ -615,7 +640,8 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
             hKinDebug->Fill(theta3Lab * TMath::RadToDeg(), T3Lab);
         }
         bool isOk {(T3AfterSil0 == 0 || T3AfterSil1 == 0)}; // no punchthrouhg
-        if(isOk)
+        bool cutELoss0 {eLoss0Cut.first <= eLoss0 && eLoss0 <= eLoss0Cut.second}; // graphical cuts on experimental PID
+        if(isOk && cutELoss0)
         {
             // Assuming no punchthrough!
             double T3Rec {};
