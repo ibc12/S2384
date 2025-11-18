@@ -65,7 +65,7 @@ void Ang(bool isLab = false)
     // Interface
     Fitters::Interface inter;
     inter.Read("./Outputs/interface.root");
-    
+
     auto peaks {inter.GetKeys()};
 
     // Efficiency
@@ -80,7 +80,7 @@ void Ang(bool isLab = false)
     eff.Draw();
 
     // Set experiment info
-    PhysUtils::Experiment exp {4.126e19*25.6, 648000, 300}; // 2.08039e8
+    PhysUtils::Experiment exp {"../norm/7Li_norm.dat"};
     // And compute differential xs!
     Angular::DifferentialXS xs {&ivs, &fitter, &eff, &exp};
     xs.DoFor(peaks);

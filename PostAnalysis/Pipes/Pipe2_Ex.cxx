@@ -146,6 +146,10 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
 
     auto hRPx {def.Histo1D(HistConfig::RPx, "fRP.fCoordinates.fX")};
 
+    auto hRPx_sil {def.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})
+                        .Histo1D(HistConfig::RPx, "fRP.fCoordinates.fX")};
+    hRPx_sil->SetTitle("RPx with silicons");
+
     auto hThetaCMLab {def.Histo2D(HistConfig::ThetaCMLab, "fThetaLight", "ThetaCM")};
 
     // Ex dependences
@@ -188,6 +192,8 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     hEBeam->DrawClone();
     c22->cd(5);
     hRPx->DrawClone();
+    c22->cd(6);
+    hRPx_sil->DrawClone();
 
     auto* c21 {new TCanvas("c21", "Pipe2 canvas 1")};
     c21->DivideSquare(6);

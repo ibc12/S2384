@@ -131,7 +131,7 @@ void Plotter(const std::vector<double>& Exs, const std::string& beam, const std:
         cs[i]->DivideSquare(6);
         // Get theoretical kinematics
         ActPhysics::Particle p1 {beam};
-        double T1Total {T1 * p1.GetAMU()};
+        double T1Total {T1};
         ActPhysics::Kinematics kin(beam, target, light, T1Total, Exs[i]);
         auto* gtheo {kin.GetKinematicLine3()};
         // Kinematics
