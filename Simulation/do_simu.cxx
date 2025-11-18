@@ -188,7 +188,7 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
                   const std::string& heavy, int neutronPS, int protonPS, double Tbeam, double Ex, bool inspect)
 {
     // Set number of iterations
-    auto niter {static_cast<int>(1e5)};
+    auto niter {static_cast<int>(3e7)};
     gRandom->SetSeed(0);
     // Runner: contains utility functions to execute multiple actions as rotate directions
     ActSim::Runner runner(nullptr, nullptr, gRandom, 0);
@@ -263,8 +263,9 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
     for(const auto& silLayer : silCutLayers)
     {
         std::string light_name_layer = light_name + silLayer;
-        cuts.ReadCut(light_name_layer,
-                     TString::Format("../PostAnalysis/Cuts/pid_%s_%s_%s.root", light_name.c_str(), silLayer.c_str(), beam.c_str()).Data());
+        cuts.ReadCut(light_name_layer, TString::Format("../PostAnalysis/Cuts/pid_%s_%s_%s.root", light_name.c_str(),
+                                                       silLayer.c_str(), beam.c_str())
+                                           .Data());
 
         if(cuts.GetCut(light_name_layer))
         {
@@ -369,6 +370,8 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
     hKinRec->SetTitle("Reconstructed Kinetic Energy;#theta_{Lab} [#circ];E_{Vertex} [MeV]");
     auto hRP_X {HistConfig::RPx.GetHistogram()};
     hRP_X->SetTitle("Reconstructed RP;X [mm];Counts");
+    auto hRP {HistConfig::RP.GetHistogram()};
+    hRP->SetTitle("Reconstructed RP;RP [mm];Counts");
     // Debug
     auto hKinDebug {HistConfig::Kin.GetHistogram()};
     hKinDebug->SetTitle("Debug Kinematic Punshthrough;#theta_{Lab} [#circ];E_{Vertex} [MeV]");
@@ -639,7 +642,7 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
         {
             hKinDebug->Fill(theta3Lab * TMath::RadToDeg(), T3Lab);
         }
-        bool isOk {(T3AfterSil0 == 0 || T3AfterSil1 == 0)}; // no punchthrouhg
+        bool isOk {(T3AfterSil0 == 0 || T3AfterSil1 == 0)};                       // no punchthrouhg
         bool cutELoss0 {eLoss0Cut.first <= eLoss0 && eLoss0 <= eLoss0Cut.second}; // graphical cuts on experimental PID
         if(isOk && cutELoss0)
         {
@@ -661,6 +664,7 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
             hKinRec->Fill(theta3Lab * TMath::RadToDeg(), T3Rec); // after reconstruction
             hEx->Fill(ExRec, weight);                            // To get real counts weigth * alpha
             hRP_X->Fill(vertex.X());
+            hRP->Fill(vertex.X(), vertex.Y());
             if(layer0 == "f0")
             {
                 hSPf0->Fill(silPoint0.Y(), silPoint0.Z());
@@ -686,14 +690,25 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
         }
     }
 
-    outFile->Write();
-    outFile->Close();
 
     // Compute efficiency
     auto* effCM {new TEfficiency {*hTheta3CM, *hThetaCMAll}};
     effCM->SetNameTitle("effCM", " #epsilon_{TOT} (#theta_{CM});#epsilon;#theta_{CM} [#circ]");
     auto* effLab {new TEfficiency {*hTheta3Lab, *hThetaLabAll}};
     effLab->SetNameTitle("effLab", "#epsilon_{TOT} (#theta_{Lab});#epsilon;#theta_{Lab} [#circ]");
+
+    // SAVING
+    if(!inspect)
+    {
+        outFile->cd();
+        outTree->Write();
+        effCM->Write();
+        effLab->Write();
+        hRP->Write("hRP");
+        outFile->Close();
+        delete outFile;
+        outFile = nullptr;
+    }
     // Draw if not running for multiple Exs
     if(inspect)
     {

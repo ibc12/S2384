@@ -65,6 +65,7 @@ void Ang(bool isLab = false)
     // Interface
     Fitters::Interface inter;
     inter.Read("./Outputs/interface.root");
+    
     auto peaks {inter.GetKeys()};
 
     // Efficiency
@@ -72,7 +73,7 @@ void Ang(bool isLab = false)
     for(const auto& peak : peaks)
     {
         TString inputPath = isLab ? TString::Format("Inputs/effs/%s_7Li_dd_sil_lab.root", peak.c_str())
-                                        : TString::Format("Inputs/effs/g1_7Li_dd_sil.root", peak.c_str());
+                                        : TString::Format("Inputs/effs/%s_7Li_dd_sil.root", peak.c_str());
         eff.Add(peak, inputPath.Data(), isLab ? "effLab" : "effCM");
     }
     // Draw to check is fine

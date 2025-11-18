@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "./do_simu.cxx"
+#include "./plotter.cxx"
 
 void runner(TString what = "simu", bool inspect = true)
 {
@@ -14,8 +15,8 @@ void runner(TString what = "simu", bool inspect = true)
     // Particles
     std::string beam {"7Li"};
     std::string target {"2H"};
-    std::string light {"1H"};
-    std::string heavy {"8Li"};
+    std::string light {"2H"};
+    std::string heavy {"7Li"};
     // Beam energy
     double Tbeam {}; 
     if(beam == "7Li")
@@ -63,6 +64,10 @@ void runner(TString what = "simu", bool inspect = true)
             if(inspect)
                 break; // inspect: to debug simulation
         }
+    }
+    if(what.Contains("plot"))
+    {
+        Plotter(Exs, beam, target, light, Tbeam, neutronPS, protonPS);
     }
     else
     {
