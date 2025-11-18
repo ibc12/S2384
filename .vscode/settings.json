@@ -67,6 +67,7 @@
         "chrono": "cpp",
         "format": "cpp",
         "variant": "cpp",
-        "codecvt": "cpp"
+        "codecvt": "cpp",
+        "PrettyStyle.C": "cpp"
     }
 }

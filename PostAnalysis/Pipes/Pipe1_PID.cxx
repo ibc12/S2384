@@ -16,8 +16,11 @@
 #include <map>
 #include <string>
 
+#include "../../PrettyStyle.C"
+
 void Pipe1_PID(const std::string& beam, const std::string& target, const std::string& light)
 {
+    PrettyStyle();
     std::string dataconf {};
     if(beam == "11Li")
         dataconf = "./../configs/data_11Li.conf";
