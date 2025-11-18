@@ -71,9 +71,10 @@ void Ang()
 
     // Plot
     Angular::Comparator comp {"g.s", xs.Get("g0")};
-    // comp.Add("Delaroche", "./Inputs/gs_DA1p_Delaroche/21.g0");
-    comp.Add("Delaroche", "./Inputs/gs_Daehnik_Delaroche/21.g0");
-    comp.Add("DelarocheMe", "./Inputs/gs_Daehnik_Delaroche_myself/21.g0");
+    comp.Add("ADWA", "./Inputs/gs/21.gs");
+    comp.Add("DA1p-Delaroche", "./Inputs/gs_DA1p_Delaroche/21.g0");
+    comp.Add("Daehnik-Delaroche", "./Inputs/gs_Daehnik_Delaroche/21.g0");
+    // comp.Add("DelarocheMe", "./Inputs/gs_Daehnik_Delaroche_myself/21.g0");
     comp.Fit();
     comp.Draw("", true);
 

@@ -30,7 +30,7 @@ void Fit()
     double sigma {0.14}; // common init sigma for all
     double gamma {0.05}; // common init gamma for all voigts
     inter.AddState("g0", {100, 0, 0.117});
-    inter.AddState("g1", {40, 1, 0.117});
+    //inter.AddState("g1", {40, 1, 0.117});
     //inter.AddState("g1", {30, 0.9, 0.113});
     // inter.AddState("g2", {60, 2.0, sigma});
     // inter.AddState("v0", {20, 3.2, sigma, gamma});

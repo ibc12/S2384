@@ -285,7 +285,7 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
     }
 
     // Sigmas
-    const double sigmaPercentBeam {0.0017}; // 1.7% beam energy spread (meassured by operators)
+    const double sigmaPercentBeam {0.0019}; // 0,19% beam energy spread (meassured by operators)
     // Flags for resolution
     bool RestOfBeamLine {true}; // If true enables CFA and mylar of entrance
     bool exResolution {true};

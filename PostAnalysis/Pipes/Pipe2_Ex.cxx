@@ -64,13 +64,14 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     ActPhysics::Particle pl {light};
 
     // Initial energy
-    double initialEnergy {7.558}; // meassured by operators
+    double initialEnergy {7.558}; // meassured by operators; resolution of 0,19%
     // std::cout << "Initial energy before corrections: " << initialEnergy * pb.GetAMU() << std::endl;
     initialEnergy = srim->Slow("mylar", initialEnergy * pb.GetAMU(), 0.0168);
     // std::cout << "Initial energy after Mylar: " << initialEnergy << std::endl;
     initialEnergy = srim->Slow(beam, initialEnergy, 60); // 60 mm of gas before the pad plane
     // std::cout << "Initial energy after beam: " << initialEnergy << std::endl;
     initialEnergy = initialEnergy / pb.GetAMU(); // back to amu units
+    std::cout << "Using initial energy for Pipe2: " << initialEnergy << " AMeV" << std::endl;
 
     // // Filter on heavy particle hit in the telescope
     auto def {dfVertex};
