@@ -21,9 +21,12 @@
 
 #include "../HistConfig.h"
 
+#include "../../PrettyStyle.C"
+
 void Pipe4_HeavyCuts(const std::string& beam, const std::string& target, const std::string& light)
 {
-    gStyle->SetPalette(kViridis);
+    PrettyStyle();
+    //gStyle->SetPalette(kViridis);
 
     auto infile {TString::Format("./Outputs/tree_ex_%s_%s_%s_filtered.root", beam.c_str(), target.c_str(), light.c_str())};
     // ROOT::EnableImplicitMT();

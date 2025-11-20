@@ -18,6 +18,8 @@
 
 #include "../HistConfig.h"
 
+#include "../../PrettyStyle.C"
+
 // ======================================================
 // Función auxiliar opcional: guarda los eventos filtrados
 // ======================================================
@@ -80,11 +82,12 @@ void WriteRejectedEvents(const std::string& infile)
 
 void Pipe3_Filter(const std::string& beam, const std::string& target, const std::string& light)
 {
+    PrettyStyle();
     bool onlySil {false};
 
     auto infile {TString::Format("./Outputs/tree_ex_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
 
-    // ROOT::EnableImplicitMT();
+    ROOT::EnableImplicitMT();
     ROOT::RDataFrame df {"Final_Tree", infile.Data()};
 
     // Aplicar filtros

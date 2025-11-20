@@ -189,7 +189,7 @@ void Plotter(const std::vector<double>& Exs, const std::string& beam, const std:
         if(projX) projX->Draw("hist");
     }
 
-    auto* file {new TFile {TString::Format("/media/Data/E796v2/Simulation/Outputs/%s/sigmas_%s_%s_%s.root",
+    auto* file {new TFile {TString::Format("./Outputs/%s/sigmas_%s_%s_%s.root",
                                            beam.c_str(), beam.c_str(), target.c_str(), light.c_str()),
                            "recreate"}};
     file->cd();

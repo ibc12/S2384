@@ -44,7 +44,7 @@ void Ang(bool isLab = false)
 
     // Init intervals
     double thetaMin = isLab ? 55.0   : 34.0;
-    double thetaMax = isLab ? 70.0 : 62.5;
+    double thetaMax = isLab ? 70.0 : 75;
     double thetaStep = isLab ? 2.5  : 2.50;
     Angular::Intervals ivs {thetaMin, thetaMax, S2384Fit::Exdd_7Li, thetaStep, 0};
     if(isLab)
@@ -70,12 +70,14 @@ void Ang(bool isLab = false)
 
     // Efficiency
     Interpolators::Efficiency eff;
-    for(const auto& peak : peaks)
-    {
-        TString inputPath = isLab ? TString::Format("Inputs/effs/%s_7Li_dd_sil_lab.root", peak.c_str())
-                                        : TString::Format("Inputs/effs/%s_7Li_dd_sil.root", peak.c_str());
-        eff.Add(peak, inputPath.Data(), isLab ? "effLab" : "effCM");
-    }
+    //for(const auto& peak : peaks)
+    //{
+    //    TString inputPath = isLab ? TString::Format("Inputs/effs/%s_7Li_dd_sil_lab.root", peak.c_str())
+    //                                    : TString::Format("Inputs/effs/%s_7Li_dd_sil.root", peak.c_str());
+    //    eff.Add(peak, inputPath.Data(), isLab ? "effLab" : "effCM");
+    //}
+    eff.Add("g0", "../../Simulation/Outputs/7Li/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0.root", isLab ? "effLab" : "effCM");
+    eff.Add("g1", "../../Simulation/Outputs/7Li/2H_2H_TRIUMF_Eex_0.477_nPS_0_pPS_0.root", isLab ? "effLab" : "effCM");
     // Draw to check is fine
     eff.Draw();
 
@@ -94,6 +96,8 @@ void Ang(bool isLab = false)
     comp.Add("Haixia", "./Inputs/gsH/fort.201");
     comp.Add("Daehnick", "./Inputs/gsD/fort.201");
     comp.Add("DA1p", "./Inputs/gsDA1p/fort.201");
+    Angular::Comparator comp1 {"1st Ex", xs.Get("g1")};
+    comp1.Add("DA1p", "./Inputs/g1_DA1p/fort.202");
     if(isLab)
     {
         ActPhysics::Kinematics kin {"7Li(d,d)@51"};
@@ -111,6 +115,9 @@ void Ang(bool isLab = false)
     comp.Fit();
     comp.Draw("", true);
     comp.DrawTheo();
+    comp1.Fit();
+    comp1.Draw("", true);
+    comp1.DrawTheo();
 
     auto* c0 {new TCanvas {"c0", "(d,d) canvas"}};
     c0->DivideSquare(2);

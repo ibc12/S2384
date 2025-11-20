@@ -58,12 +58,12 @@ void Ang()
 
     // Efficiency
     Interpolators::Efficiency eff;
-    eff.Add("g0", "./Inputs/effs/g0_11Li_dd_sil.root", "effCM");
+    eff.Add("g0", "../../Simulation/Outputs/11Li/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0.root", "effCM");
     // Draw to check is fine
     eff.Draw();
 
     // Set experiment info
-    PhysUtils::Experiment exp {4.126e19 * 25.6, 9.87839e8, 1};
+    PhysUtils::Experiment exp {"../norm/11Li_norm.dat"};
     // And compute differential xs!
     Angular::DifferentialXS xs {&ivs, &fitter, &eff, &exp};
     xs.DoFor(peaks);

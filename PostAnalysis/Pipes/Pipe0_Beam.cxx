@@ -14,7 +14,7 @@ void Pipe0_Beam(const std::string& beam)
 {
     std::string dataconf {};
     if(beam == "11Li")
-        dataconf = "./../configs/data.conf";
+        dataconf = "./../configs/data_11Li.conf";
     else if(beam == "7Li")
         dataconf = "./../configs/data_7Li.conf";
     else

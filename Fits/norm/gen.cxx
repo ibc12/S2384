@@ -5,7 +5,7 @@ void gen()
 {
     // Number of incoming beams
     double Ntrigger_7Li {648000};
-    double Ntrigger_11Li {3724956};
+    double Ntrigger_11Li {3125130};
     double Ndiv {300};
     // Total ACTAR length used in the LISE calculation
     double totalLength {25.6}; // cm

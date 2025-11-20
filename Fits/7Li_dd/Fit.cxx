@@ -5,6 +5,7 @@
 #include "FitInterface.h"
 #include "FitModel.h"
 #include "FitUtils.h"
+#include "Interpolators.h"
 
 #include <string>
 #include <vector>
@@ -25,15 +26,21 @@ void Fit()
     // ROOT::RDataFrame phase {"SimulationTTree", "../../../Simulations/TRIUNF/11Li(d,p)/Outputs/7.5MeV/2H_1H_TRIUMF_Eex_0.000_nPS_1_pPS_0_silspecs_spacer_7Li.root"};
     // auto hPS {phase.Histo1D(S2384Fit::Exdp_7Li, "Eex", "weight")};
 
+    // Sigmas
+    Interpolators::Sigmas sigmas;
+    sigmas.Read("../../Simulation/Outputs/7Li/sigmas_7Li_2H_2H.root");
+
     // Interface to fit
     Fitters::Interface inter;
-    double sigma_g0 {0.15}; // given by simu
-    double sigma_g1 {0.16};
-    inter.AddState("g0", {400, -0.0607311, sigma_g0});
+    double sigma_g0 {0.14}; // given by simu
+    double sigma_g1 {0.186967};
+    inter.AddState("g0", {240, 0, sigma_g0});
     inter.AddState("g1", {30, 0.477, sigma_g1});
     inter.EndAddingStates();
-    // inter.SetFixAll(2, true); // fix all sigmas
-    inter.SetFix("g0", 1, true); // fix g.s. sigma
+
+    inter.EvalSigma(sigmas.GetGraph());
+    inter.SetFix("g1", 2, true); // fix all sigmas
+    //inter.SetFix("g0", 0, true); // fix g.s. sigma
     // Save to be used later
     inter.Write("./Outputs/interface.root");
 

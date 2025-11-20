@@ -174,6 +174,13 @@ bool GetXS(const std::string& target, const std::string& light, const std::strin
             xs->ReadFile(data_to_read.Data());
             std::cout << "Total xs: " << xs->GetTotalXSmbarn() << std::endl;
         }
+        else if(Ex == 0.477)
+        {
+            isThereXS = true;
+            TString data_to_read {TString::Format("./Inputs/xs/%s/dd/g1.dat", beam.c_str())};
+            xs->ReadFile(data_to_read.Data());
+            std::cout << "Total xs: " << xs->GetTotalXSmbarn() << std::endl;
+        }
     }
     return isThereXS;
 }
@@ -188,7 +195,7 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
                   const std::string& heavy, int neutronPS, int protonPS, double Tbeam, double Ex, bool inspect)
 {
     // Set number of iterations
-    auto niter {static_cast<int>(3e7)};
+    auto niter {static_cast<int>(1e8)};
     gRandom->SetSeed(0);
     // Runner: contains utility functions to execute multiple actions as rotate directions
     ActSim::Runner runner(nullptr, nullptr, gRandom, 0);
@@ -379,7 +386,7 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
     // File to save data
     TString fileName {TString::Format("./Outputs/%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d.root", beam.c_str(),
                                       target.c_str(), light.c_str(), Ex, neutronPS, protonPS)};
-    auto* outFile {new TFile(fileName, "recreate")};
+    auto outFile {new TFile(fileName, inspect ? "read" : "recreate")};
     auto* outTree {new TTree("SimulationTTree", "A TTree containing only our Eex obtained by simulation")};
     double theta3CM_tree {};
     outTree->Branch("theta3CM", &theta3CM_tree);
