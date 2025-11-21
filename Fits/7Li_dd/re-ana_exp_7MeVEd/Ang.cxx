@@ -30,11 +30,11 @@ void Ang(bool isLab = false)
         Angular::ToggleIsLab();
 
     // Experimental data
-    TGraphErrors* gExp_7MeV_Ed {new TGraphErrors("./Inputs/7MeVEd.dat", "%lg %lg")};
+    TGraphErrors* gExp_7MeV_Ed {new TGraphErrors("./Inputs/14-7MeVEd.dat", "%lg %lg")};
 
     // Plot
     Angular::Comparator comp {"g.s", gExp_7MeV_Ed};
-    comp.Add("DA1p", "./Inputs/da1p/fort.201");
+    comp.Add("DA1p", "./Inputs/gsDA1p_14-7Ed/fort.201");
     comp.Fit();
     comp.Draw("", true);
 }
