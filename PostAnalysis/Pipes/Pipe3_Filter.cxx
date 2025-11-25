@@ -82,8 +82,9 @@ void WriteRejectedEvents(const std::string& infile)
 
 void Pipe3_Filter(const std::string& beam, const std::string& target, const std::string& light)
 {
-    PrettyStyle();
-    bool onlySil {false};
+    //PrettyStyle(false);
+    bool savePlots {false};
+    bool onlySil {true};
 
     auto infile {TString::Format("./Outputs/tree_ex_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
 
@@ -161,9 +162,9 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
     {
         hExBefore =
             df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})
-                .Histo1D({"hExBefore", "Excitation Energy before filtering;Ex (MeV);Counts", 100, -5, 10}, "Ex");
+                .Histo1D({"hExBefore", TString::Format("Excitation Energy before filtering;Ex (MeV);Counts / %.f keV ", (10. - (-5.)) / 100 * 1000), 100, -5, 10}, "Ex");
         hExAfter = dfFilter.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})
-                       .Histo1D({"hExAfter", "Excitation Energy after filtering;Ex (MeV);Counts", 100, -5, 10}, "Ex");
+                       .Histo1D({"hExAfter", TString::Format("Excitation Energy after filtering;Ex (MeV);Counts / %.f keV ", (10. - (-5.)) / 200 * 1000), 200, -5, 10}, "Ex");
     }
 
     auto c = new TCanvas("cExFilter", "cExFilter", 800, 600);
@@ -182,6 +183,22 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
 
     // Opcional: guardar eventos rechazados
     // WriteRejectedEvents(infile.Data());
+
+    // Save canvases
+    if(savePlots)
+    {
+    // Clone to modify the copy
+    auto* hcloneEx = (TH2D*)hExAfter->Clone("hcloneEx");
+
+    // Crear canvas temporal solo para guardar
+    auto* ctmpEx = new TCanvas("ctmpEx", "", 1600, 1200);
+    ctmpEx->cd();
+    hcloneEx->DrawClone("hist");
+
+    // Guardar
+    TString outputEx = TString::Format("../Figures/ex_latSil_%s_%s_%s.png", beam.c_str(), target.c_str(), light.c_str());
+    ctmpEx->SaveAs(outputEx, "PNG");
+    }
 }
 
 #endif

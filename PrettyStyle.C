@@ -1,3 +1,7 @@
+#ifndef PRETTYSTYLE_H
+#define PRETTYSTYLE_H
+
+#include "TColor.h"
 #include "TROOT.h"
 #include "TStyle.h"
 
@@ -6,7 +10,7 @@ void PrettyStyle(bool showStats = true)
     TStyle* st = new TStyle("PrettyStyle", "Pretty ROOT plots");
 
     // --- Colores y fuentes ---
-    st->SetPalette(kViridis);
+    st->SetPalette(kCividis);
     st->SetTextFont(42);
     st->SetLabelFont(42, "XYZ");
     st->SetTitleFont(42, "XYZ");
@@ -26,6 +30,9 @@ void PrettyStyle(bool showStats = true)
     // --- Cuadrícula ---
     st->SetPadGridX(true);
     st->SetPadGridY(true);
+    st->SetGridColor(17); // gris muy suave
+    st->SetGridStyle(3);  // punteado fino
+    st->SetGridWidth(1);
 
     // --- Líneas y marcadores ---
     st->SetHistLineWidth(2);
@@ -61,7 +68,15 @@ void PrettyStyle(bool showStats = true)
     st->SetTitleW(0.30);   // width: 30% of canvas (no más!)
     st->SetTitleH(0.05);   // height
 
+    // --- Ticks y divisiones ---
+    st->SetPadTickX(1);
+    st->SetPadTickY(1);
+    st->SetNdivisions(510, "X");
+    st->SetNdivisions(510, "Y");
+
     // --- Aplicar estilo ---
     st->cd();
     gROOT->ForceStyle();
 }
+
+#endif

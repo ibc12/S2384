@@ -25,7 +25,7 @@
 
 void Pipe2_Ex(const std::string& beam, const std::string& target, const std::string& light)
 {
-    PrettyStyle(false);
+    //PrettyStyle(true);
     // Read data
     auto filename {TString::Format("./Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
     ROOT::EnableImplicitMT();
@@ -230,5 +230,8 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     hRecEBeam->DrawClone("same");
     c23->cd(6);
     hExSPZ->DrawClone("colz");
+
+    // Canvas to save
+    
 }
 #endif

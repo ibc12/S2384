@@ -6,11 +6,15 @@
 #include <iostream>
 #include <string>
 
+#include "../PrettyStyle.C"
+
 void Runner(TString what = "")
 {
+    PrettyStyle(false);
+
     std::string beam {"7Li"};
     std::string target {"d"};
-    std::string light {"d"};
+    std::string light {"p"};
 
     std::cout << BOLDGREEN << "···· Runner ····" << '\n';
     std::cout << "-> Beam   : " << beam << '\n';

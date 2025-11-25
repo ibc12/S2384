@@ -22,8 +22,10 @@
 
 #include "../Histos.h"
 
-void Ang()
+void Ang(bool isLab = false)
 {
+    if(isLab)
+        Angular::ToggleIsLab();
 
     ROOT::EnableImplicitMT();
 
@@ -37,7 +39,7 @@ void Ang()
     double thetaMin {32};
     double thetaMax {63};
     double thetaStep {5};
-    Angular::Intervals ivs {thetaMin, thetaMax, S2384Fit::Exdd, thetaStep, 0};
+    Angular::Intervals ivs {thetaMin, thetaMax, S2384Fit::Exdp_7Li, thetaStep, 1};
     def.Foreach([&](double thetacm, double ex) { ivs.Fill(thetacm, ex); }, {"ThetaCM", "Ex"});
     ivs.Draw();
 
@@ -50,6 +52,8 @@ void Ang()
     fitter.Draw();
     fitter.DrawCounts();
 
+        std::cout<<"xd"<<std::endl;
+
     // Interface
     Fitters::Interface inter;
     inter.Read("./Outputs/interface.root");
@@ -57,7 +61,15 @@ void Ang()
 
     // Efficiency
     Interpolators::Efficiency eff;
-    eff.Add("g0", "./Inputs/effs/g0_7Li_dp_sil.root", "effCM");
+    eff.Add("g0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0.root", isLab ? "effLab" : "effCM");
+    eff.Add("g1", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.981_nPS_0_pPS_0.root", isLab ? "effLab" : "effCM");
+    eff.Add("g2", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_2.255_nPS_0_pPS_0.root", isLab ? "effLab" : "effCM");
+    eff.Add("v0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_3.210_nPS_0_pPS_0.root", isLab ? "effLab" : "effCM");
+    eff.Add("v1", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_5.400_nPS_0_pPS_0.root", isLab ? "effLab" : "effCM");
+    eff.Add("v2", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_6.100_nPS_0_pPS_0.root", isLab ? "effLab" : "effCM");
+    eff.Add("v3", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_6.530_nPS_0_pPS_0.root", isLab ? "effLab" : "effCM");
+    eff.Add("v4", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_7.100_nPS_0_pPS_0.root", isLab ? "effLab" : "effCM");
+    eff.Add("ps0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.000_nPS_1_pPS_0.root", isLab ? "effLab" : "effCM");
     //eff.Add("g1", "./Inputs/effs/g1_7Li_dp_sil.root", "effCM");
     // Draw to check is fine
     eff.Draw();
@@ -74,7 +86,6 @@ void Ang()
     comp.Add("ADWA", "./Inputs/gs/21.gs");
     comp.Add("DA1p-Delaroche", "./Inputs/gs_DA1p_Delaroche/21.g0");
     comp.Add("Daehnik-Delaroche", "./Inputs/gs_Daehnik_Delaroche/21.g0");
-    // comp.Add("DelarocheMe", "./Inputs/gs_Daehnik_Delaroche_myself/21.g0");
     comp.Fit();
     comp.Draw("", true);
 

@@ -29,6 +29,8 @@
 #include "TRandom.h"
 #include "TString.h"
 #include "TTree.h"
+#include "TSystem.h"
+#include "TROOT.h"
 
 #include <cmath>
 #include <fstream>
@@ -191,11 +193,16 @@ void CheckL1Acceptance(XYZVector direction, XYZPoint vertex, XYZPoint finalPoint
     int a = 1;
 }
 
-void do_all_simus(const std::string& beam, const std::string& target, const std::string& light,
-                  const std::string& heavy, int neutronPS, int protonPS, double Tbeam, double Ex, bool inspect)
+void do_simu(const std::string& beam, const std::string& target, const std::string& light,
+                  const std::string& heavy, int neutronPS, int protonPS, double Tbeam, double Ex, bool inspect, int thread = -1)
 {
+    // set batch mode if inspect is false
+    if(!inspect)
+        gROOT->SetBatch(true);
+    // Set whether is PS or not
+    bool isPS {(neutronPS > 0) || (protonPS > 0)};
     // Set number of iterations
-    auto niter {static_cast<int>(1e8)};
+    const int niter {static_cast<int>(inspect ? 1e7 : (isPS ? 3e8 : 1e8))};
     gRandom->SetSeed(0);
     // Runner: contains utility functions to execute multiple actions as rotate directions
     ActSim::Runner runner(nullptr, nullptr, gRandom, 0);
@@ -219,7 +226,7 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
     auto* sils {new ActPhysics::SilSpecs};
     std::string silConfig("silspecs"); // no front silicons, only lateral ones
     sils->ReadFile("../configs/" + silConfig + ".conf");
-    sils->Print();
+    // sils->Print();
     const double sigmaSil {0.085 / 2.355}; // Si resolution for laterals, around 100 keV FWHM
     auto silRes = std::make_unique<TF1>(
         "silRes", [=](double* x, double* p) { return sigmaSil * TMath::Sqrt(x[0] / 5.5); }, 0.0, 100.0, 1);
@@ -383,11 +390,18 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
     auto hKinDebug {HistConfig::Kin.GetHistogram()};
     hKinDebug->SetTitle("Debug Kinematic Punshthrough;#theta_{Lab} [#circ];E_{Vertex} [MeV]");
 
+    // Allow multiple theads
+    std::string tag {""};
+    if(thread > 0)
+        tag = "_" + std::to_string(thread);
+
     // File to save data
-    TString fileName {TString::Format("./Outputs/%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d.root", beam.c_str(),
-                                      target.c_str(), light.c_str(), Ex, neutronPS, protonPS)};
+    TString fileName {TString::Format("./Outputs/%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s.root", beam.c_str(),
+                                      target.c_str(), light.c_str(), Ex, neutronPS, protonPS, tag.c_str())};
     auto outFile {new TFile(fileName, inspect ? "read" : "recreate")};
     auto* outTree {new TTree("SimulationTTree", "A TTree containing only our Eex obtained by simulation")};
+    if(inspect)
+        outTree->SetDirectory(nullptr);
     double theta3CM_tree {};
     outTree->Branch("theta3CM", &theta3CM_tree);
     double Eex_tree {};
@@ -400,11 +414,10 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
     outTree->Branch("phi3CM", &phi3CM_tree);
     double weight_tree {};
     outTree->Branch("weight", &weight_tree);
-    // Set Random Ex if needed (no xs available, so will be uniform distributed)
-    if(neutronPS == 2)
-    {
-        Ex = (1.26642 + 0.36928) / 2;
-    }
+    
+    // ---- SIMU STARTS HERE ----
+    ROOT::EnableImplicitMT();
+
     // RUN!
     // print fancy info (dont pay attention to this)
     std::cout << BOLDMAGENTA << "Running for Ex = " << Ex << " MeV" << RESET << '\n';
@@ -416,13 +429,14 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
     for(int it = 0; it < niter; it++)
     {
         // Print progress
-        if(it >= nextPrint)
-        {
-            percent = 100 * it / niter;
-            std::cout << "\r" << std::string(percent / percentPrint, '|') << percent << "%";
-            std::cout.flush();
-            nextPrint += step;
-        }
+        // if(it >= nextPrint)
+        // {
+        //     percent = 100 * (it + 1) / niter;
+        //     int nchar {percent / percentPrint};
+        //     std::cout << "\r" << std::string((int)(percent / percentPrint), '|') << percent << "%";
+        //     std::cout.flush();
+        //     nextPrint += step;
+        // }
         // Sample vertex position
         auto [start, vertex] {SampleVertex(zVertexMean, zVertexSigma, hBeam, tpc.X())};
         auto distToVertex {(vertex - start).R()};
@@ -779,5 +793,11 @@ void do_all_simus(const std::string& beam, const std::string& target, const std:
         cEff->cd(7);
         hTheta3Lab->DrawClone();
     }
+
+    // deleting news
+    delete srim;
+    if(isThereXS)
+        delete xs;
+    
 }
 #endif

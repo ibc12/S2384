@@ -10,8 +10,8 @@
 
 #include "TCanvas.h"
 #include "TH2.h"
-#include "TString.h"
 #include "TH2D.h"
+#include "TString.h"
 
 #include <map>
 #include <string>
@@ -20,7 +20,8 @@
 
 void Pipe1_PID(const std::string& beam, const std::string& target, const std::string& light)
 {
-    PrettyStyle();
+    //PrettyStyle(false);
+    bool savePlots = false;
     std::string dataconf {};
     if(beam == "11Li")
         dataconf = "./../configs/data_11Li.conf";
@@ -101,30 +102,30 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
             if(m.fRun > 35 && m.fRun < 45)
             {
                 if(!m.fLight.fLayers.empty() && m.fLight.fLayers.front() == "f0")
+                {
+                    if(!m.fLight.fNs.empty() && m.fLight.fNs.front() == 5)
                     {
-                        if(!m.fLight.fNs.empty() && m.fLight.fNs.front() == 5)
-                        {
-                            return false;
-                        }
-                        else
-                            return true;
+                        return false;
                     }
                     else
                         return true;
+                }
+                else
+                    return true;
             }
             if(m.fRun == 116 || m.fRun == 117)
             {
                 if(!m.fLight.fLayers.empty() && m.fLight.fLayers.front() == "r0")
+                {
+                    if(!m.fLight.fNs.empty() && m.fLight.fNs.front() == 2)
                     {
-                        if(!m.fLight.fNs.empty() && m.fLight.fNs.front() == 2)
-                        {
-                            return false;
-                        }
-                        else
-                            return true;
+                        return false;
                     }
                     else
                         return true;
+                }
+                else
+                    return true;
             }
             else
                 return true;
@@ -217,7 +218,7 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     cuts.ReadCut("r0", TString::Format("./Cuts/pid_%s_r0_%s.root", light.c_str(), beam.c_str()).Data());
     cuts.ReadCut("f0", TString::Format("./Cuts/pid_%s_f0_%s.root", light.c_str(), beam.c_str()).Data());
     cuts.ReadCut("l1", TString::Format("./Cuts/pid_%s_l1_%s.root", light.c_str(), beam.c_str()).Data());
-    
+
     // Read indivitual cuts for heavy particle --- NOW IN PIPE3
     // if(beam == "11Li" && light == "p")
     // {
@@ -388,4 +389,36 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     gtheo->Draw("l");
     c2->cd(4);
     hl1Gated.Merge()->DrawClone("colz");
+
+    // Save important canvases
+    if(savePlots)
+    {
+        // Get the histograms
+        auto hptrL0 = hsgas.at("l0").Merge();
+        auto hptrR0 = hsgas.at("r0").Merge();
+
+        // Clone to modify axis ranges
+        auto* hmodL0 = (TH2D*)hptrL0->Clone("hmodL0");
+        auto* hmodR0 = (TH2D*)hptrR0->Clone("hmodR0");
+
+        hmodL0->GetXaxis()->SetRangeUser(0, 16);
+        hmodL0->GetYaxis()->SetRangeUser(0, 700);
+
+        hmodR0->GetXaxis()->SetRangeUser(0, 16);
+        hmodR0->GetYaxis()->SetRangeUser(0, 700);
+
+        auto* ctmpL0 = new TCanvas("ctmpL0", "", 1600, 1200);
+        ctmpL0->cd();
+        hmodL0->Draw("colz");
+        ctmpL0->Update();
+        TString outputL0 = TString::Format("../Figures/pid_l0_%s.png", beam.c_str());
+        ctmpL0->SaveAs(outputL0);
+
+        auto* ctmpR0 = new TCanvas("ctmpR0", "", 1600, 1200);
+        ctmpR0->cd();
+        hmodR0->Draw("colz");
+        ctmpR0->Update();
+        TString outputR0 = TString::Format("../Figures/pid_r0_%s.png", beam.c_str());;
+        ctmpR0->SaveAs(outputR0);
+    }
 }
