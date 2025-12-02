@@ -21,7 +21,7 @@
 void Pipe1_PID(const std::string& beam, const std::string& target, const std::string& light)
 {
     //PrettyStyle(false);
-    bool savePlots = false;
+    bool savePlots = true;
     std::string dataconf {};
     if(beam == "11Li")
         dataconf = "./../configs/data_11Li.conf";
@@ -396,16 +396,21 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
         // Get the histograms
         auto hptrL0 = hsgas.at("l0").Merge();
         auto hptrR0 = hsgas.at("r0").Merge();
+        auto hptrF2F3 = hszero.at("0").Merge();
 
         // Clone to modify axis ranges
         auto* hmodL0 = (TH2D*)hptrL0->Clone("hmodL0");
         auto* hmodR0 = (TH2D*)hptrR0->Clone("hmodR0");
+        auto* hmodF2F3 = (TH2D*)hptrF2F3->Clone("hmodF2F3");
 
         hmodL0->GetXaxis()->SetRangeUser(0, 16);
         hmodL0->GetYaxis()->SetRangeUser(0, 700);
 
         hmodR0->GetXaxis()->SetRangeUser(0, 16);
         hmodR0->GetYaxis()->SetRangeUser(0, 700);
+
+        hmodF2F3->GetXaxis()->SetRangeUser(0, 80);
+        hmodF2F3->GetYaxis()->SetRangeUser(0, 20);
 
         auto* ctmpL0 = new TCanvas("ctmpL0", "", 1600, 1200);
         ctmpL0->cd();
@@ -420,5 +425,12 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
         ctmpR0->Update();
         TString outputR0 = TString::Format("../Figures/pid_r0_%s.png", beam.c_str());;
         ctmpR0->SaveAs(outputR0);
+
+        auto* ctmpF2F3 = new TCanvas("ctmpF2F3", "", 1600, 1200);
+        ctmpF2F3->cd();
+        hmodF2F3->Draw("colz");
+        ctmpF2F3->Update(); 
+        TString outputF2F3 = TString::Format("../Figures/pid_f2f3_%s.png", beam.c_str());
+        ctmpF2F3->SaveAs(outputF2F3);
     }
 }

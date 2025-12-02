@@ -13,8 +13,11 @@
 #include "ActMergerData.h"
 
 #include "../Histos.h"
+
+#include "../../PrettyStyle.C"
 void Fit()
 {
+    PrettyStyle(false);
     ROOT::EnableImplicitMT();
 
     // Analysis

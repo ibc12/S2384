@@ -83,7 +83,7 @@ void WriteRejectedEvents(const std::string& infile)
 void Pipe3_Filter(const std::string& beam, const std::string& target, const std::string& light)
 {
     //PrettyStyle(false);
-    bool savePlots {false};
+    bool savePlots {true};
     bool onlySil {true};
 
     auto infile {TString::Format("./Outputs/tree_ex_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
@@ -164,7 +164,7 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
             df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})
                 .Histo1D({"hExBefore", TString::Format("Excitation Energy before filtering;Ex (MeV);Counts / %.f keV ", (10. - (-5.)) / 100 * 1000), 100, -5, 10}, "Ex");
         hExAfter = dfFilter.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})
-                       .Histo1D({"hExAfter", TString::Format("Excitation Energy after filtering;Ex (MeV);Counts / %.f keV ", (10. - (-5.)) / 200 * 1000), 200, -5, 10}, "Ex");
+                       .Histo1D(HistConfig::ExZoom, "Ex");
     }
 
     auto c = new TCanvas("cExFilter", "cExFilter", 800, 600);

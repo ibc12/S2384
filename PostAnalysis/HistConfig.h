@@ -32,6 +32,9 @@ const TH2DModel KinCM {"hKinCM", "CM kinematics;#theta_{CM} [#circ];E_{Vertex} [
 const TH1DModel Ex {
     "hEx", TString::Format("Excitation energy;E_{x} [MeV];Counts / %.f keV", (35. - (-10.)) / 600 * 1e3), 600, -10, 35};
 
+const TH1DModel ExZoom {
+    "hEx", TString::Format("Excitation energy;E_{x} [MeV];Counts / %.f keV", (9.5 - (-1.75)) / 150 * 1e3), 150, -1.75, 9.5};
+
 const TH1DModel ThetaCM {"hThetaCM", "ThetaCM;#theta_{CM} [#circ]", 600, 0, 180};
 
 const TH1DModel PhiCM {"hPhiCM", "PhiCM;#phi_{CM} [#circ]", 600, 0, 180};
@@ -48,8 +51,7 @@ const TH2DModel ExZ {"hExZ", "E_{x} dependence on SP.Z();SP.Z() [mm];E_{x} [MeV]
 const TH2DModel ExThetaCM {
     "hExThetaCM", "E_{x} vs #theta_{CM};#theta_{CM} [#circ];E_{x} [MeV]", 400, 0, 60, 200, -10, 20};
 
-const TH2DModel ExElight {
-    "hExThetaCM", "E_{x} vs E_{light};#E_{light} [MeV];E_{x} [MeV]", 200, 0, 12, 200, -10, 20};
+const TH2DModel ExElight {"hExThetaCM", "E_{x} vs E_{light};#E_{light} [MeV];E_{x} [MeV]", 200, 0, 12, 200, -10, 20};
 
 const TH2DModel ExThetaLab {
     "hExThetaLab", "E_{x} vs #theta_{Lab};#theta_{Lab} [#circ];E_{x} [MeV]", 400, 0, 180, 200, -10, 20};

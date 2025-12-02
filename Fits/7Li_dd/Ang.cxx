@@ -23,9 +23,11 @@
 
 #include "../Histos.h"
 
+#include "../../PrettyStyle.C"
+
 void Ang(bool isLab = false)
 {
-
+    PrettyStyle(false);
     if(isLab)
         Angular::ToggleIsLab();
 
@@ -46,7 +48,7 @@ void Ang(bool isLab = false)
 
     // Init intervals
     double thetaMin = isLab ? 55.0 : 34.0;
-    double thetaMax = isLab ? 70.0 : 75;
+    double thetaMax = isLab ? 70.0 : 72.5;
     double thetaStep = isLab ? 2.5 : 2.50;
     Angular::Intervals ivs {thetaMin, thetaMax, S2384Fit::Exdd_7Li, thetaStep, 0};
     if(isLab)
@@ -97,8 +99,10 @@ void Ang(bool isLab = false)
     comp.Add("Haixia", "./Inputs/gsH/fort.201");
     comp.Add("Daehnick", "./Inputs/gsD/fort.201");
     comp.Add("DA1p", "./Inputs/gsDA1p/fort.201");
+    comp.Add("DA1p corr", "./Inputs/gsDA1p_corr/fort.201");
     Angular::Comparator comp1 {"1st Ex", xs.Get("g1")};
     comp1.Add("DA1p BE2 deformation", "./Inputs/g1_DA1p/fort.202");
+    comp1.Add("DA1p corr BE2 deformation", "./Inputs/g1_DA1p_corr/fort.202");
     // Plot
     if(isLab)
     {

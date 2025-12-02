@@ -22,8 +22,11 @@
 
 #include "../Histos.h"
 
+#include "../../PrettyStyle.C"
+
 void Ang(bool isLab = false)
 {
+    PrettyStyle(false);
     if(isLab)
         Angular::ToggleIsLab();
 
@@ -83,10 +86,11 @@ void Ang(bool isLab = false)
 
     // Plot
     Angular::Comparator comp {"g.s", xs.Get("g0")};
-    comp.Add("ADWA", "./Inputs/gs/21.gs");
-    comp.Add("DA1p-Delaroche", "./Inputs/gs_DA1p_Delaroche/21.g0");
-    comp.Add("Daehnik-Delaroche", "./Inputs/gs_Daehnik_Delaroche/21.g0");
-    comp.Fit();
+    //comp.Add("ADWA", "./Inputs/gs/21.gs");
+    //comp.Add("DA1p-Delaroche", "./Inputs/gs_DA1p_Delaroche/21.g0");
+    //comp.Add("Daehnik-Delaroche", "./Inputs/gs_Daehnik_Delaroche/21.g0");
+    //comp.Add("DA1pcorr-Delaroche", "./Inputs/gs_DA1pcorr_Delaroche/21.gs");
+    //comp.Fit();
     comp.Draw("", true);
 
     auto* c0 {new TCanvas {"c0", "(d,p) canvas"}};

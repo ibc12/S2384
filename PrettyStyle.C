@@ -2,12 +2,30 @@
 #define PRETTYSTYLE_H
 
 #include "TColor.h"
+#include "TLegend.h"
 #include "TROOT.h"
 #include "TStyle.h"
 
 void PrettyStyle(bool showStats = true)
 {
     TStyle* st = new TStyle("PrettyStyle", "Pretty ROOT plots");
+
+    // --- PALETA DE COLORES DISTINTIVA PARA LÍNEAS ---
+    // Tableau 10 - colores bien diferenciados
+    // const Int_t NColors = 10;
+    // Int_t palette[NColors] = {
+    //     TColor::GetColor("#1f77b4"), // Azul
+    //     TColor::GetColor("#ff7f0e"), // Naranja
+    //     TColor::GetColor("#2ca02c"), // Verde
+    //     TColor::GetColor("#d62728"), // Rojo
+    //     TColor::GetColor("#9467bd"), // Morado
+    //     TColor::GetColor("#8c564b"), // Marrón
+    //     TColor::GetColor("#e377c2"), // Rosa
+    //     TColor::GetColor("#7f7f7f"), // Gris
+    //     TColor::GetColor("#bcbd22"), // Oliva
+    //     TColor::GetColor("#17becf")  // Cian
+    // };
+    // st->SetPalette(NColors, palette);
 
     // --- Colores y fuentes ---
     st->SetPalette(kCividis);
@@ -48,6 +66,10 @@ void PrettyStyle(bool showStats = true)
     // --- Leyendas ---
     st->SetLegendBorderSize(0);
     st->SetLegendFillColor(0);
+    st->SetLegendBorderSize(0);
+    st->SetLegendFillColor(0);
+    st->SetLegendFont(42);
+    st->SetLegendTextSize(0.035);
 
     // --- Estadísticas (activables/desactivables) ---
     if(showStats)
@@ -61,12 +83,14 @@ void PrettyStyle(bool showStats = true)
         st->SetOptFit(0);
     }
 
-    // --- Título centrado (versión corregida) ---
-    st->SetTitleAlign(23); // centered
-    st->SetTitleX(0.5);    // center in X
-    st->SetTitleY(0.93);   // slightly below top
-    st->SetTitleW(0.30);   // width: 30% of canvas (no más!)
-    st->SetTitleH(0.05);   // height
+    // --- Título centrado ---
+    // st->SetTitleAlign(23);
+    // st->SetTitleX(0.5);
+    // st->SetTitleY(0.93);
+    // st->SetTitleW(0.30);
+    // st->SetTitleH(0.05);
+
+    st->SetOptTitle(0); // <--- apaga el título por completo
 
     // --- Ticks y divisiones ---
     st->SetPadTickX(1);
