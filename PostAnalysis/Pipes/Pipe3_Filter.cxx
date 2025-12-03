@@ -4,6 +4,9 @@
 #include "ActDataManager.h"
 #include "ActMergerData.h"
 #include "ActTPCData.h"
+#include "ActSRIM.h"
+#include "ActKinematics.h"
+#include "ActParticle.h"
 
 #include "ROOT/RDataFrame.hxx"
 
@@ -16,9 +19,8 @@
 #include <iostream>
 #include <string>
 
-#include "../HistConfig.h"
-
 #include "../../PrettyStyle.C"
+#include "../HistConfig.h"
 
 // ======================================================
 // Función auxiliar opcional: guarda los eventos filtrados
@@ -82,7 +84,7 @@ void WriteRejectedEvents(const std::string& infile)
 
 void Pipe3_Filter(const std::string& beam, const std::string& target, const std::string& light)
 {
-    //PrettyStyle(false);
+    // PrettyStyle(false);
     bool savePlots {true};
     bool onlySil {true};
 
@@ -147,25 +149,49 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
                      .Histo1D(HistConfig::Ex, "Ex")};
     hExSil->SetTitle("Ex with silicons");
     auto hExL1 {dfFilter.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; }, {"MergerData"})
-                    .Histo1D(HistConfig::Ex, "Ex")};
+                    .Histo1D(HistConfig::ExZoom, "Ex")};
     hExL1->SetTitle("Ex with L1");
     auto file {std::make_shared<TFile>(outfile.Data(), "update")};
     hExSil->Write("hExSil");
     hExL1->Write("hExL1");
     file->Close();
+    // Create kin histos for checking
+    auto hkinSil {dfFilter.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})
+                      .Histo2D(HistConfig::KinPlot, "MergerData.fThetaLight", "EVertex")};
+    auto hkinL1 {dfFilter.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; }, {"MergerData"})
+                     .Histo2D(HistConfig::KinPlot, "MergerData.fThetaLight", "EVertex")};
 
     // Comparar histogramas
-    auto hExBefore = df.Histo1D({"hExBefore", "Excitation Energy before filtering;Ex (MeV);Counts", 100, -5, 10}, "Ex");
+    auto hExBefore = df.Histo1D({"hExBefore", "Excitation Energy before filtering;E_{x} (MeV);Counts", 100, -5, 10}, "Ex");
     auto hExAfter =
-        dfFilter.Histo1D({"hExAfter", "Excitation Energy after filtering;Ex (MeV);Counts", 100, -5, 10}, "Ex");
+        dfFilter.Histo1D({"hExAfter", "Excitation Energy after filtering;E_{x} (MeV);Counts", 100, -5, 10}, "Ex");
     if(onlySil)
     {
-        hExBefore =
-            df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})
-                .Histo1D({"hExBefore", TString::Format("Excitation Energy before filtering;Ex (MeV);Counts / %.f keV ", (10. - (-5.)) / 100 * 1000), 100, -5, 10}, "Ex");
+        hExBefore = df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})
+                        .Histo1D({"hExBefore",
+                                  TString::Format("Excitation Energy before filtering;E_{x} (MeV);Counts / %.f keV ",
+                                                  (10. - (-5.)) / 100 * 1000),
+                                  100, -5, 10},
+                                 "Ex");
         hExAfter = dfFilter.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})
                        .Histo1D(HistConfig::ExZoom, "Ex");
     }
+
+    // Get theoretical kinematic line for the plots
+    ActPhysics::Particle pb {beam};
+    ActPhysics::Particle pt {target};
+    ActPhysics::Particle pl {light};
+    auto* srim {new ActPhysics::SRIM};
+    srim->ReadTable(beam, TString::Format("../Calibrations/SRIM/%s_900mb_CF4_95-5.txt", beam.c_str()).Data());
+    srim->ReadTable("mylar", TString::Format("../Calibrations/SRIM/%s_Mylar.txt", beam.c_str()).Data());
+    // Initial energy
+    double initialEnergy {7.558}; // meassured by operators; resolution of 0,19%
+    initialEnergy = srim->Slow("mylar", initialEnergy * pb.GetAMU(), 0.0168);
+    initialEnergy = srim->Slow(beam, initialEnergy, 60); // 60 mm of gas before the pad plane
+    initialEnergy = initialEnergy / pb.GetAMU();         // back to amu units
+    ActPhysics::Kinematics kin {pb, pt, pl, initialEnergy * pb.GetAMU()};
+    ActPhysics::Kinematics kin1st {pb, pt, pl, initialEnergy * pb.GetAMU(), 1};
+    ActPhysics::Kinematics kin2nd {pb, pt, pl, initialEnergy * pb.GetAMU(), 2.2};
 
     auto c = new TCanvas("cExFilter", "cExFilter", 800, 600);
     c->Divide(2, 1);
@@ -174,12 +200,19 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
     c->cd(2);
     hExAfter->DrawClone();
 
-    auto c2 = new TCanvas("c2ExFilterLog", "c2ExFilterLog", 800, 600);
+    auto c2 = new TCanvas("c2ExFilter", "c2ExFilter", 800, 600);
     c2->Divide(2, 1);
     c2->cd(1);
     hExSil->DrawClone();
     c2->cd(2);
     hExL1->DrawClone();
+
+    auto c3 = new TCanvas("c3ExFilter", "c3ExFilter", 800, 600);
+    c3->Divide(2, 1);
+    c3->cd(1);
+    hkinSil->DrawClone("colz");
+    c3->cd(2);
+    hkinL1->DrawClone("colz");
 
     // Opcional: guardar eventos rechazados
     // WriteRejectedEvents(infile.Data());
@@ -187,17 +220,51 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
     // Save canvases
     if(savePlots)
     {
-    // Clone to modify the copy
-    auto* hcloneEx = (TH2D*)hExAfter->Clone("hcloneEx");
+        // Clone to modify the copy
+        auto* hcloneEx = (TH2D*)hExAfter->Clone("hcloneEx");
+        auto* hcloneExL1 = (TH2D*)hExL1->Clone("hcloneExL1");
+        auto* hcloneKinSil = (TH2D*)hkinSil->Clone("hcloneKinSil");
+        auto* hcloneKinL1 = (TH2D*)hkinL1->Clone("hcloneKinL1");
 
-    // Crear canvas temporal solo para guardar
-    auto* ctmpEx = new TCanvas("ctmpEx", "", 1600, 1200);
-    ctmpEx->cd();
-    hcloneEx->DrawClone("hist");
+        // Crear canvas temporal solo para guardar
+        auto* ctmpEx = new TCanvas("ctmpEx", "", 1600, 1200);
+        ctmpEx->cd();
+        hcloneEx->DrawClone("hist");
+        TString outputEx =
+            TString::Format("../Figures/ex_latSil_%s_%s_%s.png", beam.c_str(), target.c_str(), light.c_str());
+        ctmpEx->SaveAs(outputEx, "PNG");
 
-    // Guardar
-    TString outputEx = TString::Format("../Figures/ex_latSil_%s_%s_%s.png", beam.c_str(), target.c_str(), light.c_str());
-    ctmpEx->SaveAs(outputEx, "PNG");
+        auto* ctmpExL1 = new TCanvas("ctmpExL1", "", 1600, 1200);
+        ctmpExL1->cd();
+        hcloneExL1->DrawClone("hist");
+        TString outputExL1 =
+            TString::Format("../Figures/ex_L1_%s_%s_%s.png", beam.c_str(), target.c_str(), light.c_str());
+        ctmpExL1->SaveAs(outputExL1, "PNG");
+
+        auto* ctmpKinSil = new TCanvas("ctmpKinSil", "", 1600, 1200);
+        ctmpKinSil->cd();
+        hcloneKinSil->DrawClone("colz");
+        auto* theo {kin.GetKinematicLine3()};
+        theo->Draw("same");
+        // auto* theo1st {kin1st.GetKinematicLine3()};
+        // theo1st->Draw("same");
+        // auto* theo2nd {kin2nd.GetKinematicLine3()};
+        // theo2nd->Draw("same");
+        TString outputKinSil =
+            TString::Format("../Figures/kin_latSil_%s_%s_%s.png", beam.c_str(), target.c_str(), light.c_str());
+        ctmpKinSil->SaveAs(outputKinSil, "PNG");
+
+        auto* ctmpKinL1 = new TCanvas("ctmpKinL1", "", 1600, 1200);
+        ctmpKinL1->cd();
+        hcloneKinL1->DrawClone("colz");
+        theo->Draw("same");
+        // theo1st->Draw("same");
+        // theo2nd->Draw("same");
+        TString outputKinL1 =
+            TString::Format("../Figures/kin_L1_%s_%s_%s.png", beam.c_str(), target.c_str(), light.c_str());
+        ctmpKinL1->SaveAs(outputKinL1, "PNG");
+
+        // Guardar
     }
 }
 

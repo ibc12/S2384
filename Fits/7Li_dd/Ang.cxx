@@ -96,13 +96,13 @@ void Ang(bool isLab = false)
 
     // Plot
     Angular::Comparator comp {"g.s", xs.Get("g0")};
-    comp.Add("Haixia", "./Inputs/gsH/fort.201");
-    comp.Add("Daehnick", "./Inputs/gsD/fort.201");
-    comp.Add("DA1p", "./Inputs/gsDA1p/fort.201");
-    comp.Add("DA1p corr", "./Inputs/gsDA1p_corr/fort.201");
+    //comp.Add("Haixia", "./Inputs/gsH/fort.201");
+    //comp.Add("Daehnick", "./Inputs/gsD/fort.201");
+    //comp.Add("DA1p", "./Inputs/gsDA1p/fort.201");
+    comp.Add("DA1p", "./Inputs/gsDA1p_corr/fort.201");
     Angular::Comparator comp1 {"1st Ex", xs.Get("g1")};
-    comp1.Add("DA1p BE2 deformation", "./Inputs/g1_DA1p/fort.202");
-    comp1.Add("DA1p corr BE2 deformation", "./Inputs/g1_DA1p_corr/fort.202");
+    //comp1.Add("DA1p BE2 deformation", "./Inputs/g1_DA1p/fort.202");
+    comp1.Add("DA1p BE2 deformation", "./Inputs/g1_DA1p_corr/fort.202");
     // Plot
     if(isLab)
     {

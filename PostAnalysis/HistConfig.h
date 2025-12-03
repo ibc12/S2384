@@ -25,6 +25,8 @@ const TH2DModel Kin {"hKin", "Kinematics;#theta_{Lab} [#circ];E_{Vertex} [MeV]",
 
 const TH2DModel KinEl {"hKinEl", "Kinematics;#theta_{Lab} [#circ];E_{Vertex} [MeV]", 600, 0, 180, 400, 0, 20};
 
+const TH2DModel KinPlot {"hKinEl", "Kinematics;#theta_{Lab} [#circ];E_{Vertex} [MeV]", 300, 0, 180, 200, 0, 20};
+
 const TH2DModel KinSimu {"hKin", "Simulation kinematics;#theta_{Lab} [#circ];E_{Vertex} [MeV]", 600, 0, 90, 600, 0, 40};
 
 const TH2DModel KinCM {"hKinCM", "CM kinematics;#theta_{CM} [#circ];E_{Vertex} [MeV]", 400, 0, 60, 400, 0, 20};
