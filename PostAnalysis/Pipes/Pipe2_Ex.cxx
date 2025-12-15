@@ -1,6 +1,7 @@
 #ifndef Pipe2_Ex_cxx
 #define Pipe2_Ex_cxx
 
+#include "ActCutsManager.h"
 #include "ActKinematics.h"
 #include "ActMergerData.h"
 #include "ActParticle.h"
@@ -19,15 +20,16 @@
 #include <string>
 #include <vector>
 
-#include "../HistConfig.h"
-
 #include "../../PrettyStyle.C"
+#include "../HistConfig.h"
 
 void Pipe2_Ex(const std::string& beam, const std::string& target, const std::string& light)
 {
-    //PrettyStyle(true);
-    // Read data
-    auto filename {TString::Format("./Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
+    // PrettyStyle(true);
+    //  Read data
+    auto filename {TString::Format("./Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(),
+    light.c_str())};
+    // auto filename {TString::Format("./Outputs/tree_pid_11Li_d_p.root")};
     ROOT::EnableImplicitMT();
     ROOT::RDataFrame df {"PID_Tree", filename};
 
@@ -124,6 +126,17 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
                        },
                        {"MergerData", "EVertex", "EBeam"});
 
+    // Apply cuts if wanted to analyse just a fraction of events
+    // ActRoot::CutsManager<std::string> cuts;
+    // cuts.ReadCut("events", TString::Format("../Macros/Cuts/eventsWithStructure_12Li.root").Data());
+    // auto dfCut = def.Filter([&](ActRoot::MergerData& m, double EVertex)
+    //                  {
+    //                      if(cuts.IsInside("events", m.fThetaLight, EVertex))
+    //                          return true;
+    //                      return false;
+    //                  },
+    //                  {"MergerData", "EVertex"});
+
     // Book new histograms
     auto hKin {def.Histo2D(HistConfig::KinEl, "fThetaLight", "EVertex")};
 
@@ -147,7 +160,7 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     auto hRPx {def.Histo1D(HistConfig::RPx, "fRP.fCoordinates.fX")};
 
     auto hRPx_sil {def.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})
-                        .Histo1D(HistConfig::RPx, "fRP.fCoordinates.fX")};
+                       .Histo1D(HistConfig::RPx, "fRP.fCoordinates.fX")};
     hRPx_sil->SetTitle("RPx with silicons");
 
     auto hThetaCMLab {def.Histo2D(HistConfig::ThetaCMLab, "fThetaLight", "ThetaCM")};
@@ -232,6 +245,5 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     hExSPZ->DrawClone("colz");
 
     // Canvas to save
-    
 }
 #endif

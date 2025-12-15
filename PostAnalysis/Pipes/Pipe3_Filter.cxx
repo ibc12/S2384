@@ -94,15 +94,15 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
     ROOT::RDataFrame df {"Final_Tree", infile.Data()};
 
     // Aply cuts to reconstruc just a fraction of events
-    //CutManager<std::string> cuts;
-    //cuts.ReadCut("events", TString::Format("../Macros/Cuts/eventsWithStructure_12Li.root").Data());
-    //df = df.Filter([](ActRoot::MergerData& m)
-    //               {
-    //                   if(m.fHeavy.IsFilled() == false)
-    //                       return false;
-    //                   return true;
-    //               },
-    //               {"MergerData"});
+    // ActRoot::CutsManager<std::string> cuts;
+    // cuts.ReadCut("events", TString::Format("../Macros/Cuts/eventsWithStructure_12Li.root").Data());
+    // auto def = df.Filter([&](ActRoot::MergerData& m, double EVertex)
+    //                {
+    //                    if(cuts.IsInside("events", m.fThetaLight, EVertex))
+    //                        return false;
+    //                    return true;
+    //                },
+    //                {"MergerData", "EVertex"});
 
     // Aplicar filtros
     auto dfFilter = df.Filter( // Check for heavier clusters than Li
@@ -193,6 +193,9 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
     ActPhysics::Particle pb {beam};
     ActPhysics::Particle pt {target};
     ActPhysics::Particle pl {light};
+    ActPhysics::Particle pProt {"1H"};
+    ActPhysics::Particle pDeut {"2H"};
+    ActPhysics::Particle pTri {"3H"};
     auto* srim {new ActPhysics::SRIM};
     srim->ReadTable(beam, TString::Format("../Calibrations/SRIM/%s_900mb_CF4_95-5.txt", beam.c_str()).Data());
     srim->ReadTable("mylar", TString::Format("../Calibrations/SRIM/%s_Mylar.txt", beam.c_str()).Data());
@@ -204,6 +207,12 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
     ActPhysics::Kinematics kin {pb, pt, pl, initialEnergy * pb.GetAMU()};
     ActPhysics::Kinematics kin1st {pb, pt, pl, initialEnergy * pb.GetAMU(), 1};
     ActPhysics::Kinematics kin2nd {pb, pt, pl, initialEnergy * pb.GetAMU(), 2.2};
+
+    // States to figure out posible reaction channels
+    ActPhysics::Kinematics kin_dt_gs {pb, pt, pTri, initialEnergy * pb.GetAMU()};
+    ActPhysics::Kinematics kin_dt {pb, pt, pTri, initialEnergy * pb.GetAMU(), 6};
+    ActPhysics::Kinematics kin_dd {pb, pt, pDeut, initialEnergy * pb.GetAMU(), 4.5};
+    ActPhysics::Kinematics kin_dp {pb, pt, pProt, initialEnergy * pb.GetAMU(), 4.5};
 
     auto c = new TCanvas("cExFilter", "cExFilter", 800, 600);
     c->Divide(2, 1);
@@ -223,21 +232,33 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
     c3->Divide(2, 1);
     c3->cd(1);
     hkinSil->DrawClone("colz");
+    auto* theo_dt_gs {kin_dt_gs.GetKinematicLine3()};
+    theo_dt_gs->SetLineColor(TColor::GetColor("#d62728"));
+    theo_dt_gs->Draw("same");
+    auto* theo_dt {kin_dt.GetKinematicLine3()};
+    theo_dt->SetLineColor(TColor::GetColor("#d62728"));
+    theo_dt->Draw("same");
+    auto* theo_dp {kin_dp.GetKinematicLine3()};
+    theo_dp->SetLineColor(TColor::GetColor("#9467bd"));
+    theo_dp->Draw("same");
+    auto* theo_dd {kin_dd.GetKinematicLine3()};
+    theo_dd->SetLineColor(TColor::GetColor("#8c564b"));
+    theo_dd->Draw("same");
     c3->cd(2);
     hkinL1->DrawClone("colz");
 
     // Opcional: guardar eventos rechazados
     //WriteRejectedEvents(infile.Data());
-    std::ofstream out("./Outputs/good_pipe3_4multiplicity_sil.dat");
-    dfFilter
-        .Filter(
-            [](double ex, ActRoot::MergerData& m)
-            {
-                return m.fLight.IsFilled() == true;
-            },
-            {"Ex", "MergerData"})
-        .Foreach([&](ActRoot::MergerData& m) { m.Stream(out); }, {"MergerData"});
-    out.close();
+    // std::ofstream out("./Outputs/good_pipe3_4multiplicity_sil.dat");
+    // dfFilter
+    //     .Filter(
+    //         [](double ex, ActRoot::MergerData& m)
+    //         {
+    //             return m.fLight.IsFilled() == true;
+    //         },
+    //         {"Ex", "MergerData"})
+    //     .Foreach([&](ActRoot::MergerData& m) { m.Stream(out); }, {"MergerData"});
+    // out.close();
 
     // Save canvases
     if(savePlots)

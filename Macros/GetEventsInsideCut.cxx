@@ -13,7 +13,7 @@ void GetEventsInsideCut()
     // Get cut in kinematics
     ActRoot::CutsManager<std::string> cuts;
     // kienmatic cut
-    cuts.ReadCut("events", TString::Format("./Cuts/eventsWithStructure_12Li.root").Data());
+    cuts.ReadCut("events", TString::Format("../PostAnalysis/eventsWithStructure_12Li.root").Data());
 
     // Filter dataframe with cut
     auto gated {df.Filter([&cuts](ActRoot::MergerData& mer, const double EVertex)
