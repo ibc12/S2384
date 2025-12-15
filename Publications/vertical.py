@@ -94,7 +94,7 @@ def extract_max_sf(data: TwoDict) -> OneDict:
 
 def shift_ex(data: TwoDict | OneDict) -> None:
     maxEx = max(
-        tup[1].Ex
+        tup[1].Ex #type: ignore
         for v in data.values()
         for tup in (v if isinstance(v, list) else sum(v.values(), []))
     )
@@ -120,22 +120,37 @@ l_colors = {
     4: "purple",  # g
 }
 
+# -------------------------
+# CONVERSIÓN j → FRACCIÓN
+# -------------------------
+def format_j_fraction(j: float) -> str:
+    """Convierte j=0.5→1/2, 1.0→1, 1.5→3/2, etc."""
+    twice = round(2 * j)
+    if twice % 2 == 0:
+        return f"{twice//2}"
+    else:
+        return f"{twice}/2"
 
 # -------------------------
 # PLOT COMPLETO
 # -------------------------
-def plot_bars(models: List[OneDict], ax, exp_ex: List[float] = None, **kwargs) -> None:
-    height = 0.1  # grosor vertical
+def plot_bars(models: List[OneDict], ax, exp_ex: List[float] = None, exclude_l: List[int] = None, **kwargs) -> None: #type: ignore 
+    if exclude_l is None:
+        exclude_l = []
+
+    height = 0.1
     left_padding = 0.05
     right_padding = 0.05
-
     annotated_positions = []
 
-    # Barras de teoría a la derecha
     for i, data in enumerate(models):
         for qstate, vals in data.items():
             for j, tup in enumerate(vals):
                 qnucleon, smdata = tup
+
+                if qnucleon.l in exclude_l:
+                    continue
+
                 ex = un.nominal_value(smdata.Ex)
                 sf = un.nominal_value(smdata.SF) * qnucleon.degeneracy()
                 max_sf = qnucleon.degeneracy()
@@ -143,67 +158,48 @@ def plot_bars(models: List[OneDict], ax, exp_ex: List[float] = None, **kwargs) -
                 # Barra teoría horizontal de 1.5 a 2.0
                 left = 1.5
                 width = (sf / max_sf) * 0.5
+
+                # Color base por ℓ
                 color = l_colors.get(qnucleon.l, "gray")
 
+                # Oscurecer p1/2
+                if qnucleon.l == 1 and abs(qnucleon.j - 0.5) < 1e-6:
+                    import matplotlib.colors as mcolors
+                    r, g, b = mcolors.to_rgb(color)
+                    factor = 0.6
+                    color = (r * factor, g * factor, b * factor)
+
                 # Background barra
-                ax.barh(
-                    ex,
-                    left=left,
-                    width=0.5,
-                    height=height,
-                    color=color,
-                    alpha=0.35,
-                    edgecolor="none",
-                )
+                ax.barh(ex, left=left, width=0.5, height=height, color=color, alpha=0.35, edgecolor="none")
                 # Foreground barra proporcional a SF
-                ax.barh(
-                    ex,
-                    left=left,
-                    width=width,
-                    height=height,
-                    color=color,
-                    alpha=0.75,
-                    edgecolor="none",
-                )
+                ax.barh(ex, left=left, width=width, height=height, color=color, alpha=0.75, edgecolor="none")
 
                 # Texto nlj, SF, Jπ
                 n = qnucleon.n
                 l = qnucleon.l
                 j_orb = qnucleon.j
                 l_chars = ["s", "p", "d", "f", "g"]
-                nlj = f"{n}{l_chars[l]}{j_orb:.1f}".replace(".0", "")
-                sf_txt = f"SF={sf / qnucleon.degeneracy():.2f}"
-                pi = "+" if qstate.pi > 0 else "-"
-                jpi_txt = rf"$J^\pi={qstate.J}^{ {pi} }$"
+                j_txt = format_j_fraction(j_orb)
+                nlj = f"{n}{l_chars[l]}{j_txt}"
+                sf_txt = f"C²S={sf / qnucleon.degeneracy():.2f}"
+                pi_char = "⁺" if qstate.pi > 0 else "⁻"
+                jpi_txt = f"{format_j_fraction(qstate.J)}{pi_char}"
+
                 text = f"{nlj}   {sf_txt}   {jpi_txt}"
 
                 fontsize_text = 12
-                step = 0.16  # separación mínima adaptada al tamaño de fuente
-
+                step = 0.16
                 offset = 0.0
                 while any(abs(ex + offset - pos) < step for pos in annotated_positions):
                     offset += step
                 annotated_positions.append(ex + offset)
 
-                ax.annotate(
-                    text,
-                    xy=(left - right_padding, ex + offset),
-                    ha="right",
-                    va="center",
-                    fontsize=fontsize_text
-                )
+                ax.annotate(text, xy=(left - right_padding, ex + offset), ha="right", va="center", fontsize=fontsize_text)
 
     # Barras experimentales a la izquierda
     if exp_ex is not None:
         for ex_val in exp_ex:
-            ax.barh(
-                ex_val,
-                left=0.1,
-                width=0.5,
-                height=0.1,
-                color="black",
-                edgecolor="black",
-            )
+            ax.barh(ex_val, left=0.1, width=0.5, height=0.1, color="black", edgecolor="black")
 
     # Quitar eje X
     ax.set_xticks([])
@@ -215,16 +211,16 @@ def plot_bars(models: List[OneDict], ax, exp_ex: List[float] = None, **kwargs) -
             for data in models
             for vals in data.values()
             for tup in vals
+            if tup[0].l not in exclude_l
         ]
         + (exp_ex if exp_ex else [0])
     )
     ax.set_xlim(0, 2.3)
     ax.set_ylim(-0.3, max_ex + 0.5)
 
-    # Etiquetas debajo de cada grupo (en coordenadas de datos)
+    # Etiquetas debajo de cada grupo
     ax.text(0.35, -0.5, "Experiment", ha="center", va="top", fontsize=14, fontweight="bold")
     ax.text(1.75, -0.5, "Theory", ha="center", va="top", fontsize=14, fontweight="bold")
-
 
 
 # -------------------------
@@ -245,8 +241,8 @@ extracted = extract_max_sf(ret)
 shift_ex(extracted)
 
 fig, ax = plt.subplots(1, 1, figsize=(9, 12))
-exp_ex = [0.0, 0.98, 2.1, 3.01654, 5.21178, 5.90033, 6.34973]  # posiciones experimentales
-plot_bars([extracted], ax, exp_ex=exp_ex)
+exp_ex = [0.0, 0.98, 2.1, 3.01654, 5.21178, 5.90033, 6.34973]
+plot_bars([extracted], ax, exp_ex=exp_ex, exclude_l=[0])  # Ejemplo excluyendo s
 
 ax.set_ylabel(r"$E_{x}$ [MeV]")
 ax.set_title("SF por estado, coloreado por ℓ")

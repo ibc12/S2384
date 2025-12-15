@@ -25,14 +25,14 @@
 
 void Pipe4_HeavyCuts(const std::string& beam, const std::string& target, const std::string& light)
 {
-    //PrettyStyle();
+    PrettyStyle(false);
     //gStyle->SetPalette(kViridis);
 
     auto infile {TString::Format("./Outputs/tree_ex_%s_%s_%s_filtered.root", beam.c_str(), target.c_str(), light.c_str())};
     // ROOT::EnableImplicitMT();
     ROOT::RDataFrame df {"Final_Tree", infile.Data()};
 
-    std::vector<std::string> listOfCuts {"11Li", "9Li"};
+    std::vector<std::string> listOfCuts {"9Li", "11Li"};
 
     // Apply cuts on
     // 1-> Impose light hits the silicon (otherwise L1 trigger doesnt have Heavy hit either)
@@ -123,6 +123,9 @@ void Pipe4_HeavyCuts(const std::string& beam, const std::string& target, const s
         stack->Add((TH1D*)h->Clone());
     }
 
+    // Get kinematic plot on gated in heavy detection
+    auto hKin {gated.Histo2D(HistConfig::KinEl, "fThetaLight", "EVertex")};
+
     // Draw
     auto* c1 {new TCanvas {"c31", "Pipe3 Heavy PID"}};
     c1->DivideSquare(hszero.size());
@@ -147,15 +150,74 @@ void Pipe4_HeavyCuts(const std::string& beam, const std::string& target, const s
         hsEx[i]->DrawClone("hist");
     }
 
-    auto* c0 {new TCanvas {"c30", "Pipe3 Ex gated"}};
+    auto* c0 {new TCanvas {"c40", "Pipe4 Ex gated"}};
     // c0->DivideSquare(4);
     // c0->cd(1);
     stack->Draw("nostack plc");
     stack->GetXaxis()->SetRangeUser(-5, 12);
 
     gPad->BuildLegend();
+    // ================
+    // Canvas extra 1: Solo espectro total
+    // ================
+    auto* cTot = new TCanvas("cTot", "Espectro total");
+    cTot->cd();
 
-    
+    auto* hTot = (TH1D*)hsEx[0].GetPtr()->Clone("hTot");
+    hTot->SetLineWidth(2);
+    hTot->SetLineColor(kBlack);
+    hTot->Draw("hist");
+
+    // ================
+    // Canvas extra 2: Total + 9Li
+    // ================
+    auto* cTot_9Li = new TCanvas("cTot_9Li", "Total vs 9Li");
+    cTot_9Li->cd();
+
+    auto* hTot2 = (TH1D*)hsEx[0].GetPtr()->Clone("hTot2");
+    hTot2->SetLineColor(kBlack);
+    hTot2->SetLineWidth(2);
+
+    auto* h9 = (TH1D*)hsEx[1].GetPtr()->Clone("h9_clone");
+    h9->SetLineColor(kRed+1);
+    h9->SetLineWidth(2);
+
+    hTot2->Draw("hist");
+    h9->Draw("hist same");
+
+    auto* legend9 = new TLegend(0.6,0.7,0.88,0.88);
+    legend9->AddEntry(hTot2, "Total", "l");
+    legend9->AddEntry(h9, "9Li", "l");
+    legend9->Draw();
+
+    // ================
+    // Canvas extra 3: Total + 11Li
+    // ================
+    auto* cTot_11Li = new TCanvas("cTot_11Li", "Total vs 11Li");
+    cTot_11Li->cd();
+
+    auto* hTot3 = (TH1D*)hsEx[0].GetPtr()->Clone("hTot3");
+    hTot3->SetLineColor(kBlack);
+    hTot3->SetLineWidth(2);
+
+    auto* h11 = (TH1D*)hsEx[2].GetPtr()->Clone("h11_clone");
+    h11->SetLineColor(kBlue+1);
+    h11->SetLineWidth(2);
+
+    hTot3->Draw("hist");
+    h11->Draw("hist same");
+
+    auto* legend11 = new TLegend(0.6,0.7,0.88,0.88);
+    legend11->AddEntry(hTot3, "Total", "l");
+    legend11->AddEntry(h11, "11Li", "l");
+    legend11->Draw();
+
+    // Kinematic plot
+    auto* cKin {new TCanvas {"c42", "Pipe4 Kinematics"}};
+    cKin->cd();
+    auto hKinClone = (TH2D*)hKin.GetPtr()->Clone("hKinClone");
+    hKinClone->Draw("colz");
+
 }
 
 #endif

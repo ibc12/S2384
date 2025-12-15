@@ -9,6 +9,8 @@
 #include "TMath.h"
 #include "TF1.h"
 
+#include "../PrettyStyle.C"
+
 void ScalePoint(ROOT::Math::XYZPointF &point, float xy, float z, bool addOffset = false) 	
 {
     if(addOffset) // when converting a bin point to physical units which wasnt already corrected
@@ -99,6 +101,7 @@ TH1D* SmoothHistogramPreserveIntegral(TH1D* h, int nBinsKernel = 5, double sigma
 
 void ProfilesByMyself()
 {
+    PrettyStyle(false);
     std::string dataconf{"./../configs/data.conf"};
     ActRoot::DataManager dataman{dataconf, ActRoot::ModeType::EFilter};
     auto chain{dataman.GetChain()};
@@ -113,7 +116,7 @@ void ProfilesByMyself()
         [](ActRoot::MergerData &m)
         {
             // Filter condition here
-            if (m.fRun == 19 && m.fEntry == 519)
+            if (m.fRun == 62 && m.fEntry == 406)
                 return true;
             else
                 return false;
@@ -192,5 +195,8 @@ void ProfilesByMyself()
     }, {"TPCData", "MergerData"});
 
     auto profiles = df2.Take<TH1D*>("ChargeProfile");
+    // create y and x labels
+    profiles->at(0)->GetXaxis()->SetTitle("Position [mm]");
+    profiles->at(0)->GetYaxis()->SetTitle("Charge [a.u.]");
     profiles->at(0)->DrawClone("hist");
 }

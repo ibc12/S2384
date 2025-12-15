@@ -2,11 +2,11 @@
 #define PIPE3_FILTER_H
 #include "ActCutsManager.h"
 #include "ActDataManager.h"
-#include "ActMergerData.h"
-#include "ActTPCData.h"
-#include "ActSRIM.h"
 #include "ActKinematics.h"
+#include "ActMergerData.h"
 #include "ActParticle.h"
+#include "ActSRIM.h"
+#include "ActTPCData.h"
 
 #include "ROOT/RDataFrame.hxx"
 
@@ -85,13 +85,24 @@ void WriteRejectedEvents(const std::string& infile)
 void Pipe3_Filter(const std::string& beam, const std::string& target, const std::string& light)
 {
     // PrettyStyle(false);
-    bool savePlots {true};
+    bool savePlots {false};
     bool onlySil {true};
 
     auto infile {TString::Format("./Outputs/tree_ex_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
 
-    ROOT::EnableImplicitMT();
+    ROOT::DisableImplicitMT();
     ROOT::RDataFrame df {"Final_Tree", infile.Data()};
+
+    // Aply cuts to reconstruc just a fraction of events
+    //CutManager<std::string> cuts;
+    //cuts.ReadCut("events", TString::Format("../Macros/Cuts/eventsWithStructure_12Li.root").Data());
+    //df = df.Filter([](ActRoot::MergerData& m)
+    //               {
+    //                   if(m.fHeavy.IsFilled() == false)
+    //                       return false;
+    //                   return true;
+    //               },
+    //               {"MergerData"});
 
     // Aplicar filtros
     auto dfFilter = df.Filter( // Check for heavier clusters than Li
@@ -146,7 +157,7 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
     std::cout << "Saving Final_Tree in " << outfile << '\n';
     // Create and save Ex histos on file
     auto hExSil {dfFilter.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})
-                     .Histo1D(HistConfig::Ex, "Ex")};
+                     .Histo1D(HistConfig::Ex200, "Ex")};
     hExSil->SetTitle("Ex with silicons");
     auto hExL1 {dfFilter.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; }, {"MergerData"})
                     .Histo1D(HistConfig::ExZoom, "Ex")};
@@ -162,7 +173,8 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
                      .Histo2D(HistConfig::KinPlot, "MergerData.fThetaLight", "EVertex")};
 
     // Comparar histogramas
-    auto hExBefore = df.Histo1D({"hExBefore", "Excitation Energy before filtering;E_{x} (MeV);Counts", 100, -5, 10}, "Ex");
+    auto hExBefore =
+        df.Histo1D({"hExBefore", "Excitation Energy before filtering;E_{x} (MeV);Counts", 100, -5, 10}, "Ex");
     auto hExAfter =
         dfFilter.Histo1D({"hExAfter", "Excitation Energy after filtering;E_{x} (MeV);Counts", 100, -5, 10}, "Ex");
     if(onlySil)
@@ -187,8 +199,8 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
     // Initial energy
     double initialEnergy {7.558}; // meassured by operators; resolution of 0,19%
     initialEnergy = srim->Slow("mylar", initialEnergy * pb.GetAMU(), 0.0168);
-    initialEnergy = srim->Slow(beam, initialEnergy, 60); // 60 mm of gas before the pad plane
-    initialEnergy = initialEnergy / pb.GetAMU();         // back to amu units
+    initialEnergy = srim->Slow(beam, initialEnergy, 60 + 100); // 60 mm of gas before the pad plane
+    initialEnergy = initialEnergy / pb.GetAMU();               // back to amu units
     ActPhysics::Kinematics kin {pb, pt, pl, initialEnergy * pb.GetAMU()};
     ActPhysics::Kinematics kin1st {pb, pt, pl, initialEnergy * pb.GetAMU(), 1};
     ActPhysics::Kinematics kin2nd {pb, pt, pl, initialEnergy * pb.GetAMU(), 2.2};
@@ -215,7 +227,17 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
     hkinL1->DrawClone("colz");
 
     // Opcional: guardar eventos rechazados
-    // WriteRejectedEvents(infile.Data());
+    //WriteRejectedEvents(infile.Data());
+    std::ofstream out("./Outputs/good_pipe3_4multiplicity_sil.dat");
+    dfFilter
+        .Filter(
+            [](double ex, ActRoot::MergerData& m)
+            {
+                return m.fLight.IsFilled() == true;
+            },
+            {"Ex", "MergerData"})
+        .Foreach([&](ActRoot::MergerData& m) { m.Stream(out); }, {"MergerData"});
+    out.close();
 
     // Save canvases
     if(savePlots)
@@ -245,10 +267,13 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
         ctmpKinSil->cd();
         hcloneKinSil->DrawClone("colz");
         auto* theo {kin.GetKinematicLine3()};
+        theo->SetLineColor(TColor::GetColor("#2ca02c"));
         theo->Draw("same");
         // auto* theo1st {kin1st.GetKinematicLine3()};
+        // theo1st->SetLineColor(TColor::GetColor("#1f77b4"));
         // theo1st->Draw("same");
         // auto* theo2nd {kin2nd.GetKinematicLine3()};
+        // theo2nd->SetLineColor(TColor::GetColor("#ff7f0e"));
         // theo2nd->Draw("same");
         TString outputKinSil =
             TString::Format("../Figures/kin_latSil_%s_%s_%s.png", beam.c_str(), target.c_str(), light.c_str());

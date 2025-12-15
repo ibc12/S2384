@@ -42,9 +42,10 @@ void Fit()
     inter.EndAddingStates();
 
     inter.EvalSigma(sigmas.GetGraph());
-    inter.SetFix("g1", 2, true); // fix all sigmas
+    //inter.SetFix("g1", 2, true); // fix all sigmas
     //inter.SetFix("g0", 0, true); // fix g.s. sigma
     // Save to be used later
+    // inter.SetFix("g1", 1, true);
     inter.Write("./Outputs/interface.root");
 
     // Model

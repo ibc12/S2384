@@ -34,6 +34,9 @@ const TH2DModel KinCM {"hKinCM", "CM kinematics;#theta_{CM} [#circ];E_{Vertex} [
 const TH1DModel Ex {
     "hEx", TString::Format("Excitation energy;E_{x} [MeV];Counts / %.f keV", (35. - (-10.)) / 600 * 1e3), 600, -10, 35};
 
+const TH1DModel Ex200 {
+    "hEx", TString::Format("Excitation energy;E_{x} [MeV];Counts / %.f keV", (12. - (-2.)) / 70 * 1e3), 70, -2, 12};
+
 const TH1DModel ExZoom {
     "hEx", TString::Format("Excitation energy;E_{x} [MeV];Counts / %.f keV", (9.5 - (-1.75)) / 150 * 1e3), 150, -1.75, 9.5};
 
