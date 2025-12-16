@@ -249,16 +249,18 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
 
     // Opcional: guardar eventos rechazados
     //WriteRejectedEvents(infile.Data());
-    // std::ofstream out("./Outputs/good_pipe3_4multiplicity_sil.dat");
-    // dfFilter
-    //     .Filter(
-    //         [](double ex, ActRoot::MergerData& m)
-    //         {
-    //             return m.fLight.IsFilled() == true;
-    //         },
-    //         {"Ex", "MergerData"})
-    //     .Foreach([&](ActRoot::MergerData& m) { m.Stream(out); }, {"MergerData"});
-    // out.close();
+    std::ofstream out("./Outputs/4HeEvents_11Li_below0.dat");
+    df
+        .Filter(
+            [](double ex, ActRoot::MergerData& m)
+            {
+                if(ex < 0. && m.fLight.IsFilled() == true)
+                    return true;
+                return false;
+            },
+            {"Ex", "MergerData"})
+        .Foreach([&](ActRoot::MergerData& m) { m.Stream(out); }, {"MergerData"});
+    out.close();
 
     // Save canvases
     if(savePlots)

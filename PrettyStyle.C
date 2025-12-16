@@ -84,13 +84,13 @@ void PrettyStyle(bool showStats = true)
     }
 
     // --- Título centrado ---
-    // st->SetTitleAlign(23);
-    // st->SetTitleX(0.5);
-    // st->SetTitleY(0.93);
-    // st->SetTitleW(0.30);
-    // st->SetTitleH(0.05);
+    st->SetTitleAlign(23);
+    st->SetTitleX(0.5);
+    st->SetTitleY(0.93);
+    st->SetTitleW(0.30);
+    st->SetTitleH(0.05);
 
-    st->SetOptTitle(0); // <--- apaga el título por completo
+    //st->SetOptTitle(0); // <--- apaga el título por completo
 
     // --- Ticks y divisiones ---
     st->SetPadTickX(1);

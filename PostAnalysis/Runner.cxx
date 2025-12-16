@@ -14,7 +14,7 @@ void Runner(TString what = "")
 
     std::string beam {"11Li"};
     std::string target {"d"};
-    std::string light {"3He"};
+    std::string light {"4He"};
 
     std::cout << BOLDGREEN << "···· Runner ····" << '\n';
     std::cout << "-> Beam   : " << beam << '\n';
