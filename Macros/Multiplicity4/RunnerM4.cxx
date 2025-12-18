@@ -6,15 +6,15 @@
 #include <iostream>
 #include <string>
 
-#include "../PrettyStyle.C"
+#include "../../PrettyStyle.C"
 
-void Runner(TString what = "")
+void RunnerM4(TString what = "")
 {
-    PrettyStyle(false);
+    PrettyStyle(true);
 
     std::string beam {"7Li"};
     std::string target {"d"};
-    std::string light {"p"};
+    std::string light {"d"};
 
     std::cout << BOLDGREEN << "···· Runner ····" << '\n';
     std::cout << "-> Beam   : " << beam << '\n';
@@ -31,21 +31,21 @@ void Runner(TString what = "")
     // CFA counter
     if(what.Contains("0"))
     {
-        func = "Pipe0_Beam";
+        func = "Pipe0_SelectorM4";
         gROOT->LoadMacro(path + func + ext);
-        gROOT->ProcessLine(func + TString::Format("(\"%s\")", beam.c_str()));
+        gROOT->ProcessLine(func + args);
     }
     // PID
     if(what.Contains("1"))
     {
-        func = "Pipe1_PID";
+        func = "Pipe1_PIDM4";
         gROOT->LoadMacro(path + func + ext);
         gROOT->ProcessLine(func + args);
     }
     // Kin + Ex
     if(what.Contains("2"))
     {
-        func = "Pipe2_Ex";
+        func = "Pipe2_ExM4";
         gROOT->LoadMacro(path + func + ext);
         gROOT->ProcessLine(func + args);
     }

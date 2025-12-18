@@ -31,252 +31,396 @@ void CheckChargeDepositionM4()
     ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_7Li_d_p_filtered.root"};
 
     // Start with only silicon events and ensure M=4
-    auto dfFilter = df.Filter([](ActRoot::MergerData& m, ActRoot::TPCData& tpc) { return (m.fLight.IsFilled() == true && tpc.fClusters.size() == 4); }, {"MergerData", "TPCData"});
+    auto dfFilter =
+        df.Filter([](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+                  { return (m.fLight.IsFilled() == true && tpc.fClusters.size() == 4); }, {"MergerData", "TPCData"});
 
     //  Define the charge / dist for each particle except light particle detected in silicon
 
     auto dfIndex = dfFilter
-    .Define("MaxThetaIdx", [](ActRoot::MergerData& m, ActRoot::TPCData& tpc) {
-        int lightIdx = m.fLightIdx;
-        int beamIdx = m.fBeamIdx;
-        auto clusters = tpc.fClusters;
-        int idx = -1;
-        double maxAngle = -1.0;
-        for(int i = 0; i < clusters.size(); ++i)
-        {
-            if(i == lightIdx || i == beamIdx) continue;
-            auto beamDir = clusters[beamIdx].GetLine().GetDirection().Unit();
-            auto currentDir = clusters[i].GetLine().GetDirection().Unit();
-            double angle = TMath::ACos(beamDir.Dot(currentDir)) * TMath::RadToDeg();
-            if(angle > maxAngle) { maxAngle = angle; idx = i; }
-        }
-        return idx;
-    }, {"MergerData","TPCData"})
-    .Define("MinThetaIdx", [](ActRoot::MergerData& m, ActRoot::TPCData& tpc) {
-        int lightIdx = m.fLightIdx;
-        int beamIdx = m.fBeamIdx;
-        auto clusters = tpc.fClusters;
-        int idx = -1;
-        double minAngle = 1e9;
-        for(int i = 0; i < clusters.size(); ++i)
-        {
-            if(i == lightIdx || i == beamIdx) continue;
-            auto beamDir = clusters[beamIdx].GetLine().GetDirection().Unit();
-            auto currentDir = clusters[i].GetLine().GetDirection().Unit();
-            double angle = TMath::ACos(beamDir.Dot(currentDir)) * TMath::RadToDeg();
-            if(angle < minAngle) { minAngle = angle; idx = i; }
-        }
-        return idx;
-    }, {"MergerData","TPCData"})
-    .Define("MaxQLengthIdx", [](ActRoot::MergerData& m, ActRoot::TPCData& tpc) {
-        int lightIdx = m.fLightIdx;
-        int beamIdx = m.fBeamIdx;
-        auto clusters = tpc.fClusters;
-        int idx = -1;
-        double qlMax = -1.0;
-        for(int i = 0; i < clusters.size(); ++i)
-        {
-            if(i == lightIdx || i == beamIdx) continue;
-            auto& cl = clusters[i];
-            cl.SortAlongDir(cl.GetLine().GetDirection());
-            auto voxels = cl.GetRefToVoxels();
-            if(voxels.size() < 2) continue;
-            float totalCharge = 0;
-            for(const auto& v : voxels) totalCharge += v.GetCharge();
-            ROOT::Math::XYZPointF firstPos = voxels.front().GetPosition();
-            ROOT::Math::XYZPointF lastPos = voxels.back().GetPosition();
-            ScalePoint(firstPos,2,2.84032);
-            ScalePoint(lastPos,2,2.84032);
-            double length = (lastPos-firstPos).R();
-            if(length <= 0.0) continue;
-            double ql = totalCharge/length;
-            if(ql > qlMax) { qlMax = ql; idx = i; }
-        }
-        return idx;
-    }, {"MergerData","TPCData"})
-    .Define("MinQLengthIdx", [](ActRoot::MergerData& m, ActRoot::TPCData& tpc) {
-        int lightIdx = m.fLightIdx;
-        int beamIdx = m.fBeamIdx;
-        auto clusters = tpc.fClusters;
-        int idx = -1;
-        double qlMin = 1e9;
-        for(int i = 0; i < clusters.size(); ++i)
-        {
-            if(i == lightIdx || i == beamIdx) continue;
-            auto& cl = clusters[i];
-            cl.SortAlongDir(cl.GetLine().GetDirection());
-            auto voxels = cl.GetRefToVoxels();
-            if(voxels.size() < 2) continue;
-            float totalCharge = 0;
-            for(const auto& v : voxels) totalCharge += v.GetCharge();
-            ROOT::Math::XYZPointF firstPos = voxels.front().GetPosition();
-            ROOT::Math::XYZPointF lastPos = voxels.back().GetPosition();
-            ScalePoint(firstPos,2,2.84032);
-            ScalePoint(lastPos,2,2.84032);
-            double length = (lastPos-firstPos).R();
-            if(length <= 0.0) continue;
-            double ql = totalCharge/length;
-            if(ql < qlMin) { qlMin = ql; idx = i; }
-        }
-        return idx;
-    }, {"MergerData","TPCData"});
+                       .Define("MaxThetaIdx",
+                               [](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+                               {
+                                   int lightIdx = m.fLightIdx;
+                                   int beamIdx = m.fBeamIdx;
+                                   auto clusters = tpc.fClusters;
+                                   int idx = -1;
+                                   double maxAngle = -1.0;
+                                   for(int i = 0; i < clusters.size(); ++i)
+                                   {
+                                       if(i == lightIdx || i == beamIdx)
+                                           continue;
+                                       auto beamDir = clusters[beamIdx].GetLine().GetDirection().Unit();
+                                       auto currentDir = clusters[i].GetLine().GetDirection().Unit();
+                                       double angle = TMath::ACos(beamDir.Dot(currentDir)) * TMath::RadToDeg();
+                                       if(angle > maxAngle)
+                                       {
+                                           maxAngle = angle;
+                                           idx = i;
+                                       }
+                                   }
+                                   return idx;
+                               },
+                               {"MergerData", "TPCData"})
+                       .Define("MinThetaIdx",
+                               [](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+                               {
+                                   int lightIdx = m.fLightIdx;
+                                   int beamIdx = m.fBeamIdx;
+                                   auto clusters = tpc.fClusters;
+                                   int idx = -1;
+                                   double minAngle = 1e9;
+                                   for(int i = 0; i < clusters.size(); ++i)
+                                   {
+                                       if(i == lightIdx || i == beamIdx)
+                                           continue;
+                                       auto beamDir = clusters[beamIdx].GetLine().GetDirection().Unit();
+                                       auto currentDir = clusters[i].GetLine().GetDirection().Unit();
+                                       double angle = TMath::ACos(beamDir.Dot(currentDir)) * TMath::RadToDeg();
+                                       if(angle < minAngle)
+                                       {
+                                           minAngle = angle;
+                                           idx = i;
+                                       }
+                                   }
+                                   return idx;
+                               },
+                               {"MergerData", "TPCData"})
+                       .Define("MaxQLengthIdx",
+                               [](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+                               {
+                                   int lightIdx = m.fLightIdx;
+                                   int beamIdx = m.fBeamIdx;
+                                   auto clusters = tpc.fClusters;
+                                   int idx = -1;
+                                   double qlMax = -1.0;
+                                   for(int i = 0; i < clusters.size(); ++i)
+                                   {
+                                       if(i == lightIdx || i == beamIdx)
+                                           continue;
+                                       auto& cl = clusters[i];
+                                       cl.SortAlongDir(cl.GetLine().GetDirection());
+                                       auto voxels = cl.GetRefToVoxels();
+                                       if(voxels.size() < 2)
+                                           continue;
+                                       float totalCharge = 0;
+                                       for(const auto& v : voxels)
+                                           totalCharge += v.GetCharge();
+                                       ROOT::Math::XYZPointF firstPos = voxels.front().GetPosition();
+                                       ROOT::Math::XYZPointF lastPos = voxels.back().GetPosition();
+                                       ScalePoint(firstPos, 2, 2.84032);
+                                       ScalePoint(lastPos, 2, 2.84032);
+                                       double length = (lastPos - firstPos).R();
+                                       if(length <= 0.0)
+                                           continue;
+                                       double ql = totalCharge / length;
+                                       if(ql > qlMax)
+                                       {
+                                           qlMax = ql;
+                                           idx = i;
+                                       }
+                                   }
+                                   return idx;
+                               },
+                               {"MergerData", "TPCData"})
+                       .Define("MinQLengthIdx",
+                               [](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+                               {
+                                   int lightIdx = m.fLightIdx;
+                                   int beamIdx = m.fBeamIdx;
+                                   auto clusters = tpc.fClusters;
+                                   int idx = -1;
+                                   double qlMin = 1e9;
+                                   for(int i = 0; i < clusters.size(); ++i)
+                                   {
+                                       if(i == lightIdx || i == beamIdx)
+                                           continue;
+                                       auto& cl = clusters[i];
+                                       cl.SortAlongDir(cl.GetLine().GetDirection());
+                                       auto voxels = cl.GetRefToVoxels();
+                                       if(voxels.size() < 2)
+                                           continue;
+                                       float totalCharge = 0;
+                                       for(const auto& v : voxels)
+                                           totalCharge += v.GetCharge();
+                                       ROOT::Math::XYZPointF firstPos = voxels.front().GetPosition();
+                                       ROOT::Math::XYZPointF lastPos = voxels.back().GetPosition();
+                                       ScalePoint(firstPos, 2, 2.84032);
+                                       ScalePoint(lastPos, 2, 2.84032);
+                                       double length = (lastPos - firstPos).R();
+                                       if(length <= 0.0)
+                                           continue;
+                                       double ql = totalCharge / length;
+                                       if(ql < qlMin)
+                                       {
+                                           qlMin = ql;
+                                           idx = i;
+                                       }
+                                   }
+                                   return idx;
+                               },
+                               {"MergerData", "TPCData"});
 
     auto dfCharge = dfIndex
-    .Define("ChargeBeam", [](ActRoot::MergerData& m, ActRoot::TPCData& tpc) {
-        int beamIdx = m.fBeamIdx;
-        auto& cluster = tpc.fClusters[beamIdx];
-        cluster.SortAlongDir(cluster.GetLine().GetDirection());
-        auto voxels = cluster.GetRefToVoxels();
-        float totalCharge = 0.f;
-        for(const auto& v : voxels) totalCharge += v.GetCharge();
-        ROOT::Math::XYZPointF firstPos = voxels.front().GetPosition();
-        ROOT::Math::XYZPointF lastPos = voxels.back().GetPosition();
-        ScalePoint(firstPos,2,2.84032);
-        ScalePoint(lastPos,2,2.84032);
-        float length = (lastPos-firstPos).R();
-        if(length <= 0.0) return 0.0f;
-        return totalCharge / length;
-    }, {"MergerData","TPCData"})
-    .Define("ChargeLight1", [](ActRoot::MergerData& m, ActRoot::TPCData& tpc, int idx) {
-        if(idx < 0) return -1.f;
-        auto& cluster = tpc.fClusters[idx];
-        cluster.SortAlongDir(cluster.GetLine().GetDirection());
-        auto voxels = cluster.GetRefToVoxels();
-        float totalCharge = 0.f;
-        for(const auto& v : voxels) totalCharge += v.GetCharge();
-        ROOT::Math::XYZPointF firstPos = voxels.front().GetPosition();
-        ROOT::Math::XYZPointF lastPos = voxels.back().GetPosition();
-        ScalePoint(firstPos,2,2.84032);
-        ScalePoint(lastPos,2,2.84032);
-        float length = (lastPos-firstPos).R();
-        if(length <= 0.0) return -1.f;
-        return totalCharge / length;
-    }, {"MergerData","TPCData","MaxThetaIdx"})
-    .Define("ChargeLight2", [](ActRoot::MergerData& m, ActRoot::TPCData& tpc, int idx) {
-        if(idx < 0) return -1.f;
-        auto& cluster = tpc.fClusters[idx];
-        cluster.SortAlongDir(cluster.GetLine().GetDirection());
-        auto voxels = cluster.GetRefToVoxels();
-        float totalCharge = 0.f;
-        for(const auto& v : voxels) totalCharge += v.GetCharge();
-        ROOT::Math::XYZPointF firstPos = voxels.front().GetPosition();
-        ROOT::Math::XYZPointF lastPos = voxels.back().GetPosition();
-        ScalePoint(firstPos,2,2.84032);
-        ScalePoint(lastPos,2,2.84032);
-        float length = (lastPos-firstPos).R();
-        if(length <= 0.0) return -1.f;
-        return totalCharge / length;
-    }, {"MergerData","TPCData","MinThetaIdx"}).Define("ThetaLight1", [](ActRoot::MergerData& m, ActRoot::TPCData& tpc, int idx) {
-        if(idx < 0) return -1.0;
-        auto& cluster = tpc.fClusters[idx];
-        auto beamDir = tpc.fClusters[m.fBeamIdx].GetLine().GetDirection().Unit();
-        double cosang = beamDir.Dot(cluster.GetLine().GetDirection().Unit());
-        return TMath::ACos(cosang) * TMath::RadToDeg();
-    }, {"MergerData","TPCData","MaxThetaIdx"})
-    .Define("ThetaLight2", [](ActRoot::MergerData& m, ActRoot::TPCData& tpc, int idx) {
-        if(idx < 0) return -1.0;
-        auto& cluster = tpc.fClusters[idx];
-        auto beamDir = tpc.fClusters[m.fBeamIdx].GetLine().GetDirection().Unit();
-        double cosang = beamDir.Dot(cluster.GetLine().GetDirection().Unit());
-        return TMath::ACos(cosang) * TMath::RadToDeg();
-    }, {"MergerData","TPCData","MinThetaIdx"})
-    .Define("QLengthMax", [](ActRoot::MergerData& m, ActRoot::TPCData& tpc, int idx) {
-        if(idx < 0) return -1.f;
-        auto& cluster = tpc.fClusters[idx];
-        cluster.SortAlongDir(cluster.GetLine().GetDirection());
-        auto voxels = cluster.GetRefToVoxels();
-        float totalCharge = 0.f;
-        for(const auto& v : voxels) totalCharge += v.GetCharge();
-        ROOT::Math::XYZPointF firstPos = voxels.front().GetPosition();
-        ROOT::Math::XYZPointF lastPos = voxels.back().GetPosition();
-        ScalePoint(firstPos,2,2.84032);
-        ScalePoint(lastPos,2,2.84032);
-        float length = (lastPos-firstPos).R();
-        if(length <= 0.0) return -1.f;
-        return totalCharge / length;
-    }, {"MergerData","TPCData","MaxQLengthIdx"})
-    .Define("QLengthMin", [](ActRoot::MergerData& m, ActRoot::TPCData& tpc, int idx) {
-        if(idx < 0) return -1.f;
-        auto& cluster = tpc.fClusters[idx];
-        cluster.SortAlongDir(cluster.GetLine().GetDirection());
-        auto voxels = cluster.GetRefToVoxels();
-        float totalCharge = 0.f;
-        for(const auto& v : voxels) totalCharge += v.GetCharge();
-        ROOT::Math::XYZPointF firstPos = voxels.front().GetPosition();
-        ROOT::Math::XYZPointF lastPos = voxels.back().GetPosition();
-        ScalePoint(firstPos,2,2.84032);
-        ScalePoint(lastPos,2,2.84032);
-        float length = (lastPos-firstPos).R();
-        if(length <= 0.0) return -1.f;
-        return totalCharge / length;
-    }, {"MergerData","TPCData","MinQLengthIdx"})
-    .Define("ThetaQLengthMax", [](ActRoot::MergerData& m, ActRoot::TPCData& tpc, int idx) {
-        if(idx < 0) return -1.0;
-        auto& cluster = tpc.fClusters[idx];
-        auto beamDir = tpc.fClusters[m.fBeamIdx].GetLine().GetDirection().Unit();
-        double cosang = beamDir.Dot(cluster.GetLine().GetDirection().Unit());
-        return TMath::ACos(cosang) * TMath::RadToDeg();
-    }, {"MergerData","TPCData","MaxQLengthIdx"})
-    .Define("ThetaQLengthMin", [](ActRoot::MergerData& m, ActRoot::TPCData& tpc, int idx) {
-        if(idx < 0) return -1.0;
-        auto& cluster = tpc.fClusters[idx];
-        auto beamDir = tpc.fClusters[m.fBeamIdx].GetLine().GetDirection().Unit();
-        double cosang = beamDir.Dot(cluster.GetLine().GetDirection().Unit());
-        return TMath::ACos(cosang) * TMath::RadToDeg();
-    }, {"MergerData","TPCData","MinQLengthIdx"}).Define("ChargeBeamAveQfrac", [](ActRoot::MergerData& m, ActRoot::TPCData& tpc) {
-        int beamIdx = m.fBeamIdx;
-        auto& cluster = tpc.fClusters[beamIdx];
-        auto voxels = cluster.GetRefToVoxels();
-        if(voxels.size()<5) return -100.f;
-        auto dir = cluster.GetLine().GetDirection().Unit();
-        ROOT::Math::XYZPointF r0 = voxels.front().GetPosition();
-        std::vector<std::pair<float,float>> s_q;
-        s_q.reserve(voxels.size());
-        for(const auto& v : voxels) s_q.emplace_back((v.GetPosition()-r0).Dot(dir), v.GetCharge());
-        float sMin=1e9f, sMax=-1e9f;
-        for(auto [s,q] : s_q) { sMin = std::min(sMin,s); sMax = std::max(sMax,s); }
-        float L = sMax-sMin; if(L<=0.f) return -100.f;
-        float Qtotal=0.f, Qtail=0.f; float sCut = sMin+0.7f*L;
-        for(auto [s,q] : s_q) { Qtotal+=q; if(s>=sCut) Qtail+=q; }
-        if(Qtotal<=0.f) return -100.f;
-        return Qtotal/Qtail;
-    }, {"MergerData","TPCData"})
-    .Define("ChargeLight1AveQfrac", [](ActRoot::MergerData& m, ActRoot::TPCData& tpc, int idx) {
-        if(idx<0) return -1.f;
-        auto& cluster = tpc.fClusters[idx];
-        auto voxels = cluster.GetRefToVoxels();
-        if(voxels.size()<5) return -1.f;
-        auto dir = cluster.GetLine().GetDirection().Unit();
-        ROOT::Math::XYZPointF r0 = voxels.front().GetPosition();
-        std::vector<std::pair<float,float>> s_q;
-        s_q.reserve(voxels.size());
-        for(const auto& v : voxels) s_q.emplace_back((v.GetPosition()-r0).Dot(dir), v.GetCharge());
-        float sMin=1e9f, sMax=-1e9f;
-        for(auto [s,q] : s_q) { sMin = std::min(sMin,s); sMax = std::max(sMax,s); }
-        float L=sMax-sMin; if(L<=0.f) return -1.f;
-        float Qtotal=0.f, Qtail=0.f; float sCut = sMin+0.8f*L;
-        for(auto [s,q] : s_q) { Qtotal+=q; if(s>=sCut) Qtail+=q; }
-        if(Qtotal<=0.f) return -1.f;
-        return Qtotal/Qtail;
-    }, {"MergerData","TPCData","MaxThetaIdx"})
-    .Define("ChargeLight2AveQfrac", [](ActRoot::MergerData& m, ActRoot::TPCData& tpc, int idx) {
-        if(idx<0) return -1.f;
-        auto& cluster = tpc.fClusters[idx];
-        auto voxels = cluster.GetRefToVoxels();
-        if(voxels.size()<5) return -1.f;
-        auto dir = cluster.GetLine().GetDirection().Unit();
-        ROOT::Math::XYZPointF r0 = voxels.front().GetPosition();
-        std::vector<std::pair<float,float>> s_q;
-        s_q.reserve(voxels.size());
-        for(const auto& v : voxels) s_q.emplace_back((v.GetPosition()-r0).Dot(dir), v.GetCharge());
-        float sMin=1e9f, sMax=-1e9f;
-        for(auto [s,q] : s_q) { sMin = std::min(sMin,s); sMax = std::max(sMax,s); }
-        float L=sMax-sMin; if(L<=0.f) return -1.f;
-        float Qtotal=0.f, Qtail=0.f; float sCut = sMin+0.8f*L;
-        for(auto [s,q] : s_q) { Qtotal+=q; if(s>=sCut) Qtail+=q; }
-        if(Qtotal<=0.f) return -1.f;
-        return Qtotal/Qtail;
-    }, {"MergerData","TPCData","MinThetaIdx"});;
+                        .Define("ChargeBeam",
+                                [](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+                                {
+                                    int beamIdx = m.fBeamIdx;
+                                    auto& cluster = tpc.fClusters[beamIdx];
+                                    cluster.SortAlongDir(cluster.GetLine().GetDirection());
+                                    auto voxels = cluster.GetRefToVoxels();
+                                    float totalCharge = 0.f;
+                                    for(const auto& v : voxels)
+                                        totalCharge += v.GetCharge();
+                                    ROOT::Math::XYZPointF firstPos = voxels.front().GetPosition();
+                                    ROOT::Math::XYZPointF lastPos = voxels.back().GetPosition();
+                                    ScalePoint(firstPos, 2, 2.84032);
+                                    ScalePoint(lastPos, 2, 2.84032);
+                                    float length = (lastPos - firstPos).R();
+                                    if(length <= 0.0)
+                                        return 0.0f;
+                                    return totalCharge / length;
+                                },
+                                {"MergerData", "TPCData"})
+                        .Define("ChargeLight1",
+                                [](ActRoot::MergerData& m, ActRoot::TPCData& tpc, int idx)
+                                {
+                                    if(idx < 0)
+                                        return -1.f;
+                                    auto& cluster = tpc.fClusters[idx];
+                                    cluster.SortAlongDir(cluster.GetLine().GetDirection());
+                                    auto voxels = cluster.GetRefToVoxels();
+                                    float totalCharge = 0.f;
+                                    for(const auto& v : voxels)
+                                        totalCharge += v.GetCharge();
+                                    ROOT::Math::XYZPointF firstPos = voxels.front().GetPosition();
+                                    ROOT::Math::XYZPointF lastPos = voxels.back().GetPosition();
+                                    ScalePoint(firstPos, 2, 2.84032);
+                                    ScalePoint(lastPos, 2, 2.84032);
+                                    float length = (lastPos - firstPos).R();
+                                    if(length <= 0.0)
+                                        return -1.f;
+                                    return totalCharge / length;
+                                },
+                                {"MergerData", "TPCData", "MaxThetaIdx"})
+                        .Define("ChargeLight2",
+                                [](ActRoot::MergerData& m, ActRoot::TPCData& tpc, int idx)
+                                {
+                                    if(idx < 0)
+                                        return -1.f;
+                                    auto& cluster = tpc.fClusters[idx];
+                                    cluster.SortAlongDir(cluster.GetLine().GetDirection());
+                                    auto voxels = cluster.GetRefToVoxels();
+                                    float totalCharge = 0.f;
+                                    for(const auto& v : voxels)
+                                        totalCharge += v.GetCharge();
+                                    ROOT::Math::XYZPointF firstPos = voxels.front().GetPosition();
+                                    ROOT::Math::XYZPointF lastPos = voxels.back().GetPosition();
+                                    ScalePoint(firstPos, 2, 2.84032);
+                                    ScalePoint(lastPos, 2, 2.84032);
+                                    float length = (lastPos - firstPos).R();
+                                    if(length <= 0.0)
+                                        return -1.f;
+                                    return totalCharge / length;
+                                },
+                                {"MergerData", "TPCData", "MinThetaIdx"})
+                        .Define("ThetaLight1",
+                                [](ActRoot::MergerData& m, ActRoot::TPCData& tpc, int idx)
+                                {
+                                    if(idx < 0)
+                                        return -1.0;
+                                    auto& cluster = tpc.fClusters[idx];
+                                    auto beamDir = tpc.fClusters[m.fBeamIdx].GetLine().GetDirection().Unit();
+                                    double cosang = beamDir.Dot(cluster.GetLine().GetDirection().Unit());
+                                    return TMath::ACos(cosang) * TMath::RadToDeg();
+                                },
+                                {"MergerData", "TPCData", "MaxThetaIdx"})
+                        .Define("ThetaLight2",
+                                [](ActRoot::MergerData& m, ActRoot::TPCData& tpc, int idx)
+                                {
+                                    if(idx < 0)
+                                        return -1.0;
+                                    auto& cluster = tpc.fClusters[idx];
+                                    auto beamDir = tpc.fClusters[m.fBeamIdx].GetLine().GetDirection().Unit();
+                                    double cosang = beamDir.Dot(cluster.GetLine().GetDirection().Unit());
+                                    return TMath::ACos(cosang) * TMath::RadToDeg();
+                                },
+                                {"MergerData", "TPCData", "MinThetaIdx"})
+                        .Define("QLengthMax",
+                                [](ActRoot::MergerData& m, ActRoot::TPCData& tpc, int idx)
+                                {
+                                    if(idx < 0)
+                                        return -1.f;
+                                    auto& cluster = tpc.fClusters[idx];
+                                    cluster.SortAlongDir(cluster.GetLine().GetDirection());
+                                    auto voxels = cluster.GetRefToVoxels();
+                                    float totalCharge = 0.f;
+                                    for(const auto& v : voxels)
+                                        totalCharge += v.GetCharge();
+                                    ROOT::Math::XYZPointF firstPos = voxels.front().GetPosition();
+                                    ROOT::Math::XYZPointF lastPos = voxels.back().GetPosition();
+                                    ScalePoint(firstPos, 2, 2.84032);
+                                    ScalePoint(lastPos, 2, 2.84032);
+                                    float length = (lastPos - firstPos).R();
+                                    if(length <= 0.0)
+                                        return -1.f;
+                                    return totalCharge / length;
+                                },
+                                {"MergerData", "TPCData", "MaxQLengthIdx"})
+                        .Define("QLengthMin",
+                                [](ActRoot::MergerData& m, ActRoot::TPCData& tpc, int idx)
+                                {
+                                    if(idx < 0)
+                                        return -1.f;
+                                    auto& cluster = tpc.fClusters[idx];
+                                    cluster.SortAlongDir(cluster.GetLine().GetDirection());
+                                    auto voxels = cluster.GetRefToVoxels();
+                                    float totalCharge = 0.f;
+                                    for(const auto& v : voxels)
+                                        totalCharge += v.GetCharge();
+                                    ROOT::Math::XYZPointF firstPos = voxels.front().GetPosition();
+                                    ROOT::Math::XYZPointF lastPos = voxels.back().GetPosition();
+                                    ScalePoint(firstPos, 2, 2.84032);
+                                    ScalePoint(lastPos, 2, 2.84032);
+                                    float length = (lastPos - firstPos).R();
+                                    if(length <= 0.0)
+                                        return -1.f;
+                                    return totalCharge / length;
+                                },
+                                {"MergerData", "TPCData", "MinQLengthIdx"})
+                        .Define("ThetaQLengthMax",
+                                [](ActRoot::MergerData& m, ActRoot::TPCData& tpc, int idx)
+                                {
+                                    if(idx < 0)
+                                        return -1.0;
+                                    auto& cluster = tpc.fClusters[idx];
+                                    auto beamDir = tpc.fClusters[m.fBeamIdx].GetLine().GetDirection().Unit();
+                                    double cosang = beamDir.Dot(cluster.GetLine().GetDirection().Unit());
+                                    return TMath::ACos(cosang) * TMath::RadToDeg();
+                                },
+                                {"MergerData", "TPCData", "MaxQLengthIdx"})
+                        .Define("ThetaQLengthMin",
+                                [](ActRoot::MergerData& m, ActRoot::TPCData& tpc, int idx)
+                                {
+                                    if(idx < 0)
+                                        return -1.0;
+                                    auto& cluster = tpc.fClusters[idx];
+                                    auto beamDir = tpc.fClusters[m.fBeamIdx].GetLine().GetDirection().Unit();
+                                    double cosang = beamDir.Dot(cluster.GetLine().GetDirection().Unit());
+                                    return TMath::ACos(cosang) * TMath::RadToDeg();
+                                },
+                                {"MergerData", "TPCData", "MinQLengthIdx"})
+                        .Define("ChargeBeamAveQfrac",
+                                [](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+                                {
+                                    int beamIdx = m.fBeamIdx;
+                                    auto& cluster = tpc.fClusters[beamIdx];
+                                    auto voxels = cluster.GetRefToVoxels();
+                                    if(voxels.size() < 5)
+                                        return -100.f;
+                                    auto dir = cluster.GetLine().GetDirection().Unit();
+                                    ROOT::Math::XYZPointF r0 = voxels.front().GetPosition();
+                                    std::vector<std::pair<float, float>> s_q;
+                                    s_q.reserve(voxels.size());
+                                    for(const auto& v : voxels)
+                                        s_q.emplace_back((v.GetPosition() - r0).Dot(dir), v.GetCharge());
+                                    float sMin = 1e9f, sMax = -1e9f;
+                                    for(auto [s, q] : s_q)
+                                    {
+                                        sMin = std::min(sMin, s);
+                                        sMax = std::max(sMax, s);
+                                    }
+                                    float L = sMax - sMin;
+                                    if(L <= 0.f)
+                                        return -100.f;
+                                    float Qtotal = 0.f, Qtail = 0.f;
+                                    float sCut = sMin + 0.7f * L;
+                                    for(auto [s, q] : s_q)
+                                    {
+                                        Qtotal += q;
+                                        if(s >= sCut)
+                                            Qtail += q;
+                                    }
+                                    if(Qtotal <= 0.f)
+                                        return -100.f;
+                                    return Qtotal / Qtail;
+                                },
+                                {"MergerData", "TPCData"})
+                        .Define("ChargeLight1AveQfrac",
+                                [](ActRoot::MergerData& m, ActRoot::TPCData& tpc, int idx)
+                                {
+                                    if(idx < 0)
+                                        return -1.f;
+                                    auto& cluster = tpc.fClusters[idx];
+                                    auto voxels = cluster.GetRefToVoxels();
+                                    if(voxels.size() < 5)
+                                        return -1.f;
+                                    auto dir = cluster.GetLine().GetDirection().Unit();
+                                    ROOT::Math::XYZPointF r0 = voxels.front().GetPosition();
+                                    std::vector<std::pair<float, float>> s_q;
+                                    s_q.reserve(voxels.size());
+                                    for(const auto& v : voxels)
+                                        s_q.emplace_back((v.GetPosition() - r0).Dot(dir), v.GetCharge());
+                                    float sMin = 1e9f, sMax = -1e9f;
+                                    for(auto [s, q] : s_q)
+                                    {
+                                        sMin = std::min(sMin, s);
+                                        sMax = std::max(sMax, s);
+                                    }
+                                    float L = sMax - sMin;
+                                    if(L <= 0.f)
+                                        return -1.f;
+                                    float Qtotal = 0.f, Qtail = 0.f;
+                                    float sCut = sMin + 0.8f * L;
+                                    for(auto [s, q] : s_q)
+                                    {
+                                        Qtotal += q;
+                                        if(s >= sCut)
+                                            Qtail += q;
+                                    }
+                                    if(Qtotal <= 0.f)
+                                        return -1.f;
+                                    return Qtotal / Qtail;
+                                },
+                                {"MergerData", "TPCData", "MaxThetaIdx"})
+                        .Define("ChargeLight2AveQfrac",
+                                [](ActRoot::MergerData& m, ActRoot::TPCData& tpc, int idx)
+                                {
+                                    if(idx < 0)
+                                        return -1.f;
+                                    auto& cluster = tpc.fClusters[idx];
+                                    auto voxels = cluster.GetRefToVoxels();
+                                    if(voxels.size() < 5)
+                                        return -1.f;
+                                    auto dir = cluster.GetLine().GetDirection().Unit();
+                                    ROOT::Math::XYZPointF r0 = voxels.front().GetPosition();
+                                    std::vector<std::pair<float, float>> s_q;
+                                    s_q.reserve(voxels.size());
+                                    for(const auto& v : voxels)
+                                        s_q.emplace_back((v.GetPosition() - r0).Dot(dir), v.GetCharge());
+                                    float sMin = 1e9f, sMax = -1e9f;
+                                    for(auto [s, q] : s_q)
+                                    {
+                                        sMin = std::min(sMin, s);
+                                        sMax = std::max(sMax, s);
+                                    }
+                                    float L = sMax - sMin;
+                                    if(L <= 0.f)
+                                        return -1.f;
+                                    float Qtotal = 0.f, Qtail = 0.f;
+                                    float sCut = sMin + 0.8f * L;
+                                    for(auto [s, q] : s_q)
+                                    {
+                                        Qtotal += q;
+                                        if(s >= sCut)
+                                            Qtail += q;
+                                    }
+                                    if(Qtotal <= 0.f)
+                                        return -1.f;
+                                    return Qtotal / Qtail;
+                                },
+                                {"MergerData", "TPCData", "MinThetaIdx"});
+    ;
 
     // cout for debuging
     // dfCharge.Foreach([](double th1, double th2)
@@ -336,7 +480,19 @@ void CheckChargeDepositionM4()
                     {"MergerData", "TPCData"})
             .Define("RPX", [](ActRoot::MergerData& m) { return m.fRP.X(); }, {"MergerData"});
 
-    // Let's try to use the silicon information to try to identify some events
+    // Let's try to use the silicon information to try to identify events of the lower Q/L particle
+    dfChargeDiff.Foreach(
+        [](ActRoot::MergerData& m)
+        {
+            std::cout << "------------ Event Debug Info -----------" << std::endl;
+            std::cout << "Event Silicon Layers hit: " << m.fSilLayers.size() << std::endl;
+            for(auto layer : m.fSilLayers)
+            {
+                std::cout << "Layer: " << layer << std::endl;
+            }
+            std::cout<<"----------------------------------------" << std::endl;
+        },
+        {"MergerData"});
 
 
     // Check some events if needed
@@ -489,7 +645,7 @@ void CheckChargeDepositionM4()
     hQLengthMin->DrawClone();
     hQLengthMax->SetLineColor(kRed);
     hQLengthMax->DrawClone("SAME");
-    hChargeBeam->SetLineColor(kGreen +1);
+    hChargeBeam->SetLineColor(kGreen + 1);
     hChargeBeam->DrawClone("SAME");
     c9->cd(2);
     hQLengthMinVsMax->DrawClone();

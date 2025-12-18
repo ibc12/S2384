@@ -105,6 +105,7 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
     //                {"MergerData", "EVertex"});
 
     // Aplicar filtros
+    std::cout << "Counts before filtering: " << df.Count().GetValue() << std::endl;
     auto dfFilter = df.Filter( // Check for heavier clusters than Li
                           [](ActRoot::MergerData& m)
                           {
@@ -149,7 +150,7 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
                                 return true;
                             },
                             {"MergerData", "GETTree_TPCData"});
-
+    std::cout << "Counts after filtering: " << dfFilter.Count().GetValue() << std::endl;
     // Guardar resultado final
     auto outfile {
         TString::Format("./Outputs/tree_ex_%s_%s_%s_filtered.root", beam.c_str(), target.c_str(), light.c_str())};
@@ -249,17 +250,8 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
 
     // Opcional: guardar eventos rechazados
     //WriteRejectedEvents(infile.Data());
-    std::ofstream out("./Outputs/4HeEvents_11Li_below0.dat");
-    df
-        .Filter(
-            [](double ex, ActRoot::MergerData& m)
-            {
-                if(ex < 0. && m.fLight.IsFilled() == true)
-                    return true;
-                return false;
-            },
-            {"Ex", "MergerData"})
-        .Foreach([&](ActRoot::MergerData& m) { m.Stream(out); }, {"MergerData"});
+    std::ofstream out("./Outputs/good_pipe3_4multiplicity_sil.dat");
+    df.Foreach([&](ActRoot::MergerData& m) { m.Stream(out); }, {"MergerData"});
     out.close();
 
     // Save canvases
