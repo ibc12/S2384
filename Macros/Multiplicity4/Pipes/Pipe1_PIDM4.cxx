@@ -88,7 +88,7 @@ void Pipe1_PIDM4(const std::string& beam, const std::string& target, const std::
         }
         return pseudoSP;
     }, {"TPCData", "SilData", "ModularData", "Layer"})
-    .Define("ParticleIndex", [&](ActRoot::TPCData& tpc, ActRoot::SilData& sil, ActRoot::ModularData& mod, std::string layer, ROOT::Math::XYZPointF pseudoSP)
+    .Define("LightIdx", [&](ActRoot::TPCData& tpc, ActRoot::SilData& sil, ActRoot::ModularData& mod, std::string layer, ROOT::Math::XYZPointF pseudoSP)
                                        { // Get index wall that triggered
         if(layer == "")
             return -1;
@@ -127,7 +127,7 @@ void Pipe1_PIDM4(const std::string& beam, const std::string& target, const std::
         auto sp = line.MoveToY(pseudoSP.Y());
         auto distance = (sp - pseudoSP).R();
         return distance;
-        }, {"TPCData", "ParticleIndex", "pseudoSP"}).Define("BeamIdx", [&](ActRoot::TPCData& tpc)
+        }, {"TPCData", "LightIdx", "pseudoSP"}).Define("BeamIdx", [&](ActRoot::TPCData& tpc)
                                        { // Get index of beam-like particle
         int beamIdx = -1;
         for(int i = 0; i < tpc.fClusters.size(); ++i)
@@ -142,8 +142,8 @@ void Pipe1_PIDM4(const std::string& beam, const std::string& target, const std::
         return beamIdx;
         }, {"TPCData"});
 
-    auto hIdx = dfWithIndex.Histo1D({"hIdx", "Index of particle hitting lateral silicon;Index;Counts", 7, -2, 5},
-                                    "ParticleIndex");
+    auto hIdx = dfWithIndex.Histo1D({"hIdx", "Idx of particle hitting lateral silicon;Index;Counts", 7, -2, 5},
+                                    "LightIdx");
 
     // Now define Qave for that index to do PID plot
     auto dfWithQave = dfWithIndex
@@ -165,7 +165,7 @@ void Pipe1_PIDM4(const std::string& beam, const std::string& target, const std::
                                           return -1.f;
                                       return Q / length;
                                   },
-                                  {"TPCData", "ParticleIndex"})
+                                  {"TPCData", "LightIdx"})
                           .Define("SilESelectedParticle",
                                   [&](ActRoot::SilData& sil, ActRoot::ModularData& mod, std::string layer)
                                   {
@@ -186,7 +186,7 @@ void Pipe1_PIDM4(const std::string& beam, const std::string& target, const std::
                                           Utils::GetTheta3D(beam.GetLine().GetDirection(), cluster.GetLine().GetDirection());
                                       return theta; // in degrees
                                   },
-                                  {"TPCData", "ParticleIndex", "BeamIdx"});
+                                  {"TPCData", "LightIdx", "BeamIdx"});
 
     // Plot PID to check everything is ok, first divide in sil layers
     auto dfL0 = dfWithQave.Filter([](ActRoot::ModularData& mod) { return mod.Get("GATCONF") == 1; }, {"ModularData"});

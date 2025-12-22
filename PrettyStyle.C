@@ -12,23 +12,23 @@ void PrettyStyle(bool showStats = true)
 
     // --- PALETA DE COLORES DISTINTIVA PARA LÍNEAS ---
     // Tableau 10 - colores bien diferenciados
-    // const Int_t NColors = 10;
-    // Int_t palette[NColors] = {
-    //     TColor::GetColor("#1f77b4"), // Azul
-    //     TColor::GetColor("#ff7f0e"), // Naranja
-    //     TColor::GetColor("#2ca02c"), // Verde
-    //     TColor::GetColor("#d62728"), // Rojo
-    //     TColor::GetColor("#9467bd"), // Morado
-    //     TColor::GetColor("#8c564b"), // Marrón
-    //     TColor::GetColor("#e377c2"), // Rosa
-    //     TColor::GetColor("#7f7f7f"), // Gris
-    //     TColor::GetColor("#bcbd22"), // Oliva
-    //     TColor::GetColor("#17becf")  // Cian
-    // };
-    // st->SetPalette(NColors, palette);
+    const Int_t NColors = 10;
+    Int_t palette[NColors] = {
+        TColor::GetColor("#1f77b4"), // Azul
+        TColor::GetColor("#ff7f0e"), // Naranja
+        TColor::GetColor("#2ca02c"), // Verde
+        TColor::GetColor("#d62728"), // Rojo
+        TColor::GetColor("#9467bd"), // Morado
+        TColor::GetColor("#8c564b"), // Marrón
+        TColor::GetColor("#e377c2"), // Rosa
+        TColor::GetColor("#7f7f7f"), // Gris
+        TColor::GetColor("#bcbd22"), // Oliva
+        TColor::GetColor("#17becf")  // Cian
+    };
+    st->SetPalette(NColors, palette);
 
     // --- Colores y fuentes ---
-    st->SetPalette(kCividis);
+    // st->SetPalette(kCividis);
     st->SetTextFont(42);
     st->SetLabelFont(42, "XYZ");
     st->SetTitleFont(42, "XYZ");

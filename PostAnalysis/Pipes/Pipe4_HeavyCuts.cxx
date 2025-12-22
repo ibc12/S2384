@@ -19,20 +19,20 @@
 #include <string>
 #include <vector>
 
-#include "../HistConfig.h"
-
 #include "../../PrettyStyle.C"
+#include "../HistConfig.h"
 
 void Pipe4_HeavyCuts(const std::string& beam, const std::string& target, const std::string& light)
 {
     PrettyStyle(false);
-    //gStyle->SetPalette(kViridis);
+    // gStyle->SetPalette(kViridis);
 
-    auto infile {TString::Format("./Outputs/tree_ex_%s_%s_%s_filtered.root", beam.c_str(), target.c_str(), light.c_str())};
+    auto infile {
+        TString::Format("./Outputs/tree_ex_%s_%s_%s_filtered.root", beam.c_str(), target.c_str(), light.c_str())};
     // ROOT::EnableImplicitMT();
     ROOT::RDataFrame df {"Final_Tree", infile.Data()};
 
-    std::vector<std::string> listOfCuts {"9Li", "11Li"};
+    std::vector<std::string> listOfCuts {"7Li"};
 
     // Apply cuts on
     // 1-> Impose light hits the silicon (otherwise L1 trigger doesnt have Heavy hit either)
@@ -143,10 +143,10 @@ void Pipe4_HeavyCuts(const std::string& beam, const std::string& target, const s
     }
 
     // Canvas for each Ex spectrum
-    for(int i = 1; i < hsEx.size(); ++i)  // empezamos en 1 para saltar "All"
+    for(int i = 1; i < hsEx.size(); ++i) // empezamos en 1 para saltar "All"
     {
         auto* c = new TCanvas(TString::Format("c3_%s", labels[i].c_str()),
-                            TString::Format("Excitation energy %s", labels[i].c_str()));
+                              TString::Format("Excitation energy %s", labels[i].c_str()));
         hsEx[i]->DrawClone("hist");
     }
 
@@ -168,56 +168,44 @@ void Pipe4_HeavyCuts(const std::string& beam, const std::string& target, const s
     hTot->SetLineColor(kBlack);
     hTot->Draw("hist");
 
-    // ================
-    // Canvas extra 2: Total + 9Li
-    // ================
-    auto* cTot_9Li = new TCanvas("cTot_9Li", "Total vs 9Li");
-    cTot_9Li->cd();
+    // Plots Ex tot vs Ex gated for each cut
 
-    auto* hTot2 = (TH1D*)hsEx[0].GetPtr()->Clone("hTot2");
-    hTot2->SetLineColor(kBlack);
-    hTot2->SetLineWidth(2);
+    std::vector<int> cutColors = {kRed + 1, kBlue + 1, kGreen + 2, kMagenta + 1, kOrange + 7, kCyan + 1};
 
-    auto* h9 = (TH1D*)hsEx[1].GetPtr()->Clone("h9_clone");
-    h9->SetLineColor(kRed+1);
-    h9->SetLineWidth(2);
+    for(size_t i = 1; i < hsEx.size(); ++i) // empezamos en 1 (saltamos "All")
+    {
+        const auto& cutName = labels[i];
 
-    hTot2->Draw("hist");
-    h9->Draw("hist same");
+        auto* c =
+            new TCanvas(TString::Format("cTot_%s", cutName.c_str()), TString::Format("Total vs %s", cutName.c_str()));
+        c->cd();
 
-    auto* legend9 = new TLegend(0.6,0.7,0.88,0.88);
-    legend9->AddEntry(hTot2, "Total", "l");
-    legend9->AddEntry(h9, "9Li", "l");
-    legend9->Draw();
+        // Histograma total
+        auto* hTot = (TH1D*)hsEx[0].GetPtr()->Clone(TString::Format("hTot_%s", cutName.c_str()));
+        hTot->SetLineColor(kBlack);
+        hTot->SetLineWidth(2);
 
-    // ================
-    // Canvas extra 3: Total + 11Li
-    // ================
-    auto* cTot_11Li = new TCanvas("cTot_11Li", "Total vs 11Li");
-    cTot_11Li->cd();
+        // Histograma del corte
+        auto* hCut = (TH1D*)hsEx[i].GetPtr()->Clone(TString::Format("h_%s", cutName.c_str()));
+        hCut->SetLineColor(cutColors[(i - 1) % cutColors.size()]);
+        hCut->SetLineWidth(2);
 
-    auto* hTot3 = (TH1D*)hsEx[0].GetPtr()->Clone("hTot3");
-    hTot3->SetLineColor(kBlack);
-    hTot3->SetLineWidth(2);
+        // Dibujar
+        hTot->Draw("hist");
+        hCut->Draw("hist same");
 
-    auto* h11 = (TH1D*)hsEx[2].GetPtr()->Clone("h11_clone");
-    h11->SetLineColor(kBlue+1);
-    h11->SetLineWidth(2);
-
-    hTot3->Draw("hist");
-    h11->Draw("hist same");
-
-    auto* legend11 = new TLegend(0.6,0.7,0.88,0.88);
-    legend11->AddEntry(hTot3, "Total", "l");
-    legend11->AddEntry(h11, "11Li", "l");
-    legend11->Draw();
+        // Leyenda
+        auto* leg = new TLegend(0.6, 0.7, 0.88, 0.88);
+        leg->AddEntry(hTot, "Total", "l");
+        leg->AddEntry(hCut, cutName.c_str(), "l");
+        leg->Draw();
+    }
 
     // Kinematic plot
     auto* cKin {new TCanvas {"c42", "Pipe4 Kinematics"}};
     cKin->cd();
     auto hKinClone = (TH2D*)hKin.GetPtr()->Clone("hKinClone");
     hKinClone->Draw("colz");
-
 }
 
 #endif

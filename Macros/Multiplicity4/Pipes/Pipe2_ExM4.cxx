@@ -102,5 +102,18 @@ void Pipe2_ExM4(const std::string& beam, const std::string& target, const std::s
     auto c2 = new TCanvas("cExM4_1", "Kinematics Multiplicity 4", 800, 600);
     c2->cd();
     hkin->DrawClone("colz");
+    // theo kin
+    auto* theo {kin.GetKinematicLine3()};
+    theo->Draw("same");
+    ActPhysics::Kinematics kin1st {pb, pt, pl, initialEnergy * pb.GetAMU(), 7.1};
+    auto* theo1st {kin1st.GetKinematicLine3()};
+    theo1st->Draw("same");
+    //ActPhysics::Kinematics kin2nd {pb, pt, pl, initialEnergy * pb.GetAMU(), 6.7};
+    //auto* theo2nd {kin2nd.GetKinematicLine3()};
+    //theo2nd->Draw("same");
+    //ActPhysics::Kinematics kin3rd {pb, pt, pl, initialEnergy * pb.GetAMU(), 7.5};
+    //auto* theo3rd {kin3rd.GetKinematicLine3()};
+    //theo3rd->Draw("same");
+    
 }
 #endif

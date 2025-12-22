@@ -14,7 +14,7 @@ void RunnerM4(TString what = "")
 
     std::string beam {"7Li"};
     std::string target {"d"};
-    std::string light {"d"};
+    std::string light {"p"};
 
     std::cout << BOLDGREEN << "···· Runner ····" << '\n';
     std::cout << "-> Beam   : " << beam << '\n';
@@ -52,7 +52,7 @@ void RunnerM4(TString what = "")
     // Filtering of events that pass actroot -f
     if(what.Contains("3"))
     {
-        func = "Pipe3_Filter";
+        func = "Pipe3_DecayM4";
         gROOT->LoadMacro(path + func + ext);
         gROOT->ProcessLine(func + args);
     }
