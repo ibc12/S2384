@@ -16,6 +16,8 @@
 #include <utility>
 #include <vector>
 
+// 1st macro to execute
+
 void DistRun()
 {
     ROOT::EnableImplicitMT();
@@ -27,7 +29,7 @@ void DistRun()
 
     ROOT::RDataFrame df {*chain};
 
-    std::string layer {"l0"};
+    std::string layer {"f0"};
 
     // Filter side events
     auto gated {df.Filter(
@@ -43,11 +45,17 @@ void DistRun()
     //  Define distances in mm
     double base {0.};
     std::vector<double> dists;
-    for(double d = 310; d < 320; d += 1)
+    // l0 from 310 to 320
+    // f0 from 315 to 330
+    for(double d = 305; d < 315; d += 1)
         dists.push_back(base + d);
 
     int xbins {200};
-    int zbins {200};
+    int zbins {};
+    if(layer == "f0")
+        zbins = 250;
+    else
+        zbins = 200;
     std::pair<double, double> xlims {};
     std::pair<double, double> zlims {};
     if(layer == "l0")
@@ -57,8 +65,8 @@ void DistRun()
     }
     else if(layer == "f0")
     {
-        xlims = {-20, 300};
-        zlims = {150, 400};
+        xlims = {-40, 290};
+        zlims = {80, 500};
     }
     else if(layer == "r0")
     {

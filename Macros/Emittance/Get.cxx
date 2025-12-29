@@ -22,18 +22,22 @@ void Get()
     ROOT::EnableImplicitMT();
     std::string beam {"11Li"};
     ActRoot::DataManager datman {"../../configs/data_" + beam + ".conf", ActRoot::ModeType::EFilter};
-    std::string moment {"post"};
+    std::string moment {"post_preMeasure"};
     if(beam == "7Li")
-        datman.SetRuns(67, 82); // 7Li runs
+        datman.SetRuns(66, 69); // 7Li runs after change in L0 trigger in run 67
     else if(beam == "11Li")
     {
         if(moment == "pre")
             datman.SetRuns(19, 65); // 11Li runs pre 7Li
-        else if(moment == "post")
-            // datman.SetRuns(95, 122); // 11Li runs post 7Li
-            datman.SetRuns(108, 122); // 11Li runs post 7Li
+        else if(moment == "post_preMeasure")
+            datman.SetRuns(95, 107); // 11Li runs post 7Li
+        else if(moment == "post_postMeasure")
+            datman.SetRuns(108, 117); // 11Li runs post 7Li
+        // else if(moment == "test")
+        //     datman.SetRuns(107, 108); // 11Li runs post 7Li
         // datman.SetRuns(19, 65); // 11Li runs pre 7Li
         // datman.SetRuns(95, 122); // 11Li runs post 7Li
+        // else if(moment == "all") // in this case do not set any run
     }
 
     auto chain {datman.GetChain()};
@@ -64,15 +68,23 @@ void Get()
                       },
                       {"fClusters.fXRange.first", "fClusters.fXRange.second"})
                   .Define("Line",
-                          [&](ActRoot::TPCData& data)
+                          [&](ActRoot::TPCData& data, ActRoot::MergerData& m)
                           {
                               auto& voxels {data.fClusters.front().GetVoxels()};
                               ActRoot::Line line;
                               line.FitVoxels(voxels, true, true, true);
+                              // correction for change in L0 trigger window
+                              if(m.fRun < 67)
+                              {
+                                  auto p = line.GetPoint();
+                                  p.SetZ(p.Z() + 62.5 / 4.); // Offset of 5 microsecons == 62.5 tb
+                                  line.SetPoint(p);
+                              }
+                              // conversion to physical units
                               line.Scale(padSide, driftFactor);
                               return line;
                           },
-                          {"TPCData"})
+                          {"TPCData", "MergerData"})
                   .Define("AtBegin", [](const ActRoot::Line& l) { return l.MoveToX(0); }, {"Line"})
                   .Define("AtEnd", [](const ActRoot::Line& l) { return l.MoveToX(256); }, {"Line"})};
     auto count {def.Count()};
@@ -86,6 +98,23 @@ void Get()
     // Get events into file .dat to debug two blobs on 7Li
     // std::ofstream streamer {"./Outputs/events.dat"};
     // def.Foreach(
+    //     [&](ActRoot::MergerData& m)
+    //     {
+    //         m.Stream(streamer);
+    //     },
+    //     {"MergerData"});
+    // streamer.close();
+
+    // Get events with shift in z
+    // auto bad = def.Filter(
+    // [](const ActRoot::Line& l)
+    // {
+    //     return l.GetPoint().Z() < 200;
+    // },
+    // {"Line"});
+    //
+    // std::ofstream streamer {"./Outputs/eventsVerticalShift.dat"};
+    // bad.Foreach(
     //     [&](ActRoot::MergerData& m)
     //     {
     //         m.Stream(streamer);

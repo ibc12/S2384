@@ -444,100 +444,101 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     //  - 1 silicio (gas–E0 PID)
     //  - layer = f0, l0 o r0
     //  - con detección de heavy (lambdaHeavy ya existente)
-    auto df_f0l0r0_heavy = df.Filter(
-        [&](ActRoot::MergerData& m)
-        {
-            // Heavy detectado
-            if(!lambdaHeavy(m))
-                return false;
-
-            // Un solo silicio
-            if(m.fLight.GetNLayers() != 1)
-                return false;
-
-            // Solo f0, l0 o r0
-            auto layer = m.fLight.GetLayer(0);
-            return (layer == "f0" || layer == "l0" || layer == "r0");
-        },
-        {"MergerData"});
-
-    // Histogramas debug (gas–sil) SOLO con heavy
-    std::map<std::string, ROOT::TThreadedObject<TH2D>> hsgasHeavy;
-
-    for(const auto& layer : {"f0", "l0", "r0"})
-    {
-        hsgasHeavy.emplace(layer, TH2D(TString::Format("hGasSil_%s_heavy", layer),
-                                       TString::Format("%s + heavy;E_{Sil} [MeV];#Delta E_{gas} [au]", layer), 450, 0,
-                                       70, 600, 0, 3000));
-    }
-
-    // Llenado
-    cuts.ReadCut("alfas", TString::Format("./Cuts/pid_all_alfas_7Li.root").Data());
-    df_f0l0r0_heavy.Foreach(
-        [&](ActRoot::MergerData& m)
-        {
-            if(cuts.IsInside("alfas", m.fHeavy.fEs[1], m.fHeavy.fEs[0]))
-            {
-                auto layer = m.fLight.GetLayer(0);
-                hsgasHeavy[layer]->Fill(m.fLight.fEs.front(), m.fLight.fQave);
-            }
-        },
-        {"MergerData"});
-
-    // Canvas debug: superposición
-    auto* cDebug = new TCanvas("cDebug_f0l0r0_heavy", "DEBUG f0/l0/r0 with heavy", 1800, 600);
-    cDebug->Divide(3, 1);
-
-    // f0
-    cDebug->cd(1);
-    auto h_f0_all = hsgas["f0"].Merge();
-    auto h_f0_heavy = hsgasHeavy["f0"].Merge();
-
-    h_f0_all->SetTitle("f0 PID (all) + heavy overlay");
-    h_f0_all->DrawClone("colz");
-
-    h_f0_heavy->SetLineColor(kRed);
-    h_f0_heavy->SetLineWidth(3);
-    h_f0_heavy->DrawClone("cont3 SAME");
-
-    cuts.DrawCut("f0");
-
-    // l0
-    cDebug->cd(2);
-    auto h_l0_all = hsgas["l0"].Merge();
-    auto h_l0_heavy = hsgasHeavy["l0"].Merge();
-
-    h_l0_all->SetTitle("l0 PID (all) + heavy overlay");
-    h_l0_all->DrawClone("colz");
-
-    h_l0_heavy->SetLineColor(kRed);
-    h_l0_heavy->SetLineWidth(3);
-    h_l0_heavy->DrawClone("cont3 SAME");
-
-    cuts.DrawCut("l0");
-
-    // r0
-    cDebug->cd(3);
-    auto h_r0_all = hsgas["r0"].Merge();
-    auto h_r0_heavy = hsgasHeavy["r0"].Merge();
-
-    h_r0_all->SetTitle("r0 PID (all) + heavy overlay");
-    h_r0_all->DrawClone("colz");
-
-    h_r0_heavy->SetLineColor(kRed);
-    h_r0_heavy->SetLineWidth(3);
-    h_r0_heavy->DrawClone("cont3 SAME");
-
-    cuts.DrawCut("r0");
-
-    // Save some events if needed
-    auto dfOut = df_f0l0r0_heavy.Filter(
-        [&](ActRoot::MergerData& m)
-        {
-            return ((cuts.IsInside("l0", m.fLight.fEs[0], m.fLight.fQave) || cuts.IsInside("r0", m.fLight.fEs[0], m.fLight.fQave)) && cuts.IsInside("alfas", m.fHeavy.fEs[1], m.fHeavy.fEs[0]));
-        },
-        {"MergerData"});
-    std::ofstream out("./Outputs/pid_events_p_alfa_7Li.dat");
-    dfOut.Foreach([&](ActRoot::MergerData& m) { m.Stream(out); }, {"MergerData"});
-    out.close();
+    // auto df_f0l0r0_heavy = df.Filter(
+    //    [&](ActRoot::MergerData& m)
+    //    {
+    //        // Heavy detectado
+    //        if(!lambdaHeavy(m))
+    //            return false;
+    //
+    //        // Un solo silicio
+    //        if(m.fLight.GetNLayers() != 1)
+    //            return false;
+    //
+    //        // Solo f0, l0 o r0
+    //        auto layer = m.fLight.GetLayer(0);
+    //        return (layer == "f0" || layer == "l0" || layer == "r0");
+    //    },
+    //    {"MergerData"});
+    //
+    //// Histogramas debug (gas–sil) SOLO con heavy
+    // std::map<std::string, ROOT::TThreadedObject<TH2D>> hsgasHeavy;
+    //
+    // for(const auto& layer : {"f0", "l0", "r0"})
+    //{
+    //    hsgasHeavy.emplace(layer, TH2D(TString::Format("hGasSil_%s_heavy", layer),
+    //                                   TString::Format("%s + heavy;E_{Sil} [MeV];#Delta E_{gas} [au]", layer), 450, 0,
+    //                                   70, 600, 0, 3000));
+    //}
+    //
+    //// Llenado
+    // cuts.ReadCut("alfas", TString::Format("./Cuts/pid_all_alfas_7Li.root").Data());
+    // df_f0l0r0_heavy.Foreach(
+    //     [&](ActRoot::MergerData& m)
+    //     {
+    //         if(cuts.IsInside("alfas", m.fHeavy.fEs[1], m.fHeavy.fEs[0]))
+    //         {
+    //             auto layer = m.fLight.GetLayer(0);
+    //             hsgasHeavy[layer]->Fill(m.fLight.fEs.front(), m.fLight.fQave);
+    //         }
+    //     },
+    //     {"MergerData"});
+    //
+    //// Canvas debug: superposición
+    // auto* cDebug = new TCanvas("cDebug_f0l0r0_heavy", "DEBUG f0/l0/r0 with heavy", 1800, 600);
+    // cDebug->Divide(3, 1);
+    //
+    //// f0
+    // cDebug->cd(1);
+    // auto h_f0_all = hsgas["f0"].Merge();
+    // auto h_f0_heavy = hsgasHeavy["f0"].Merge();
+    //
+    // h_f0_all->SetTitle("f0 PID (all) + heavy overlay");
+    // h_f0_all->DrawClone("colz");
+    //
+    // h_f0_heavy->SetLineColor(kRed);
+    // h_f0_heavy->SetLineWidth(3);
+    // h_f0_heavy->DrawClone("cont3 SAME");
+    //
+    // cuts.DrawCut("f0");
+    //
+    //// l0
+    // cDebug->cd(2);
+    // auto h_l0_all = hsgas["l0"].Merge();
+    // auto h_l0_heavy = hsgasHeavy["l0"].Merge();
+    //
+    // h_l0_all->SetTitle("l0 PID (all) + heavy overlay");
+    // h_l0_all->DrawClone("colz");
+    //
+    // h_l0_heavy->SetLineColor(kRed);
+    // h_l0_heavy->SetLineWidth(3);
+    // h_l0_heavy->DrawClone("cont3 SAME");
+    //
+    // cuts.DrawCut("l0");
+    //
+    //// r0
+    // cDebug->cd(3);
+    // auto h_r0_all = hsgas["r0"].Merge();
+    // auto h_r0_heavy = hsgasHeavy["r0"].Merge();
+    //
+    // h_r0_all->SetTitle("r0 PID (all) + heavy overlay");
+    // h_r0_all->DrawClone("colz");
+    //
+    // h_r0_heavy->SetLineColor(kRed);
+    // h_r0_heavy->SetLineWidth(3);
+    // h_r0_heavy->DrawClone("cont3 SAME");
+    //
+    // cuts.DrawCut("r0");
+    //
+    //// Save some events if needed
+    // auto dfOut = df_f0l0r0_heavy.Filter(
+    //     [&](ActRoot::MergerData& m)
+    //     {
+    //         return ((cuts.IsInside("l0", m.fLight.fEs[0], m.fLight.fQave) || cuts.IsInside("r0", m.fLight.fEs[0],
+    //         m.fLight.fQave)) && cuts.IsInside("alfas", m.fHeavy.fEs[1], m.fHeavy.fEs[0]));
+    //     },
+    //     {"MergerData"});
+    // std::ofstream out("./Outputs/pid_events_p_alfa_7Li.dat");
+    // dfOut.Foreach([&](ActRoot::MergerData& m) { m.Stream(out); }, {"MergerData"});
+    // out.close();
 }

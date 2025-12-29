@@ -26,11 +26,11 @@
 #include "TH3.h"
 #include "TMath.h"
 #include "TPolyLine3D.h"
+#include "TROOT.h"
 #include "TRandom.h"
 #include "TString.h"
-#include "TTree.h"
 #include "TSystem.h"
-#include "TROOT.h"
+#include "TTree.h"
 
 #include <cmath>
 #include <fstream>
@@ -42,6 +42,14 @@
 
 using XYZPoint = ROOT::Math::XYZPoint;
 using XYZVector = ROOT::Math::XYZVector;
+
+struct BeamOffset
+{
+    double offset;   // mm
+    double fraction; // must sum to 1
+};
+
+using BeamOffsetMap = std::map<std::string, std::vector<BeamOffset>>;
 
 std::pair<XYZPoint, XYZPoint> SampleVertex(double meanZ, double sigmaZ, TH3D* h, double lengthX)
 {
@@ -187,14 +195,32 @@ bool GetXS(const std::string& target, const std::string& light, const std::strin
     return isThereXS;
 }
 
+double PickBeamOffset(const std::string& beam, const BeamOffsetMap& offsets)
+{
+    const auto& vec = offsets.at(beam);
+
+    double r = gRandom->Uniform(); // [0,1)
+    double acc = 0.0;
+
+    for(const auto& entry : vec)
+    {
+        acc += entry.fraction;
+        if(r < acc)
+            return entry.offset;
+    }
+
+    // fallback por precisión numérica
+    return vec.back().offset;
+}
+
 void CheckL1Acceptance(XYZVector direction, XYZPoint vertex, XYZPoint finalPointgas, double minPads,
                        double halfWidthExclusionZone)
 {
     int a = 1;
 }
 
-void do_simu(const std::string& beam, const std::string& target, const std::string& light,
-                  const std::string& heavy, int neutronPS, int protonPS, double Tbeam, double Ex, bool inspect, int thread = -1)
+void do_simu(const std::string& beam, const std::string& target, const std::string& light, const std::string& heavy,
+             int neutronPS, int protonPS, double Tbeam, double Ex, bool inspect, int thread = -1)
 {
     // set batch mode if inspect is false
     if(!inspect)
@@ -211,38 +237,61 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     ActRoot::TPCParameters tpc {"Actar"};
     std::cout << "TPC: " << tpc.X() << " " << tpc.Y() << " " << tpc.Z() << '\n';
     // Vertex sampling and beam z variables
-    std::string beamfilename {};
+    std::string emittancefilename {};
+    std::string beamPositionTimefilename {};
     if(beam == "7Li")
-        beamfilename = {"../Macros/Emittance/Outputs/histos" + beam + ".root"};
+    {
+        emittancefilename = {"../Macros/Emittance/Outputs/histos" + beam + ".root"};
+        beamPositionTimefilename = ""; // 7Li did not change position during experiment
+    }
+
     else if(beam == "11Li")
-        beamfilename = {"../Macros/Emittance/Outputs/histos" + beam + "_pre.root"};
-    auto beamfile {std::make_unique<TFile>(beamfilename.c_str())};
+    {
+        emittancefilename = {"../Macros/Emittance/Outputs/histos" + beam + "_pre.root"};
+        beamPositionTimefilename =
+            "./Inputs/Efficiencies/beamEmittancePeriods_11Li.dat"; // File with proportion of time that beam was in
+                                                                   // each position
+    }
+    auto beamfile {std::make_unique<TFile>(emittancefilename.c_str())};
     auto* hBeam {beamfile->Get<TH3D>("h3d")};
     if(!hBeam)
         throw std::runtime_error("Could not load beam emittance histogram");
     hBeam->SetDirectory(nullptr);
     beamfile.reset();
+    // Give the offsets respect to the front silicon (more stats)
+    // Offset defined as Mean silicon point - beam position
+    BeamOffsetMap beamOffsets {{"7Li",
+                                {
+                                    {4.68, 1.0} // fixed beam
+                                }},
+                               {"11Li", {{5.09, 0.636659}, {-0.09, 0.173063}, {-2.56, 0.190278}}}};
     // Silicons
     auto* sils {new ActPhysics::SilSpecs};
     std::string silConfig("silspecs"); // no front silicons, only lateral ones
     sils->ReadFile("../configs/" + silConfig + ".conf");
     // sils->Print();
-    const double sigmaSil {0.085 / 2.355}; // Si resolution for laterals, around 100 keV FWHM
+    const double sigmaSilLat {0.085 / 2.355};   // Si resolution for laterals, around 85 keV FWHM
+    const double sigmaSilFront {0.050 / 2.355}; // Si resolution for front, around 50 keV FWHM
     auto silRes = std::make_unique<TF1>(
-        "silRes", [=](double* x, double* p) { return sigmaSil * TMath::Sqrt(x[0] / 5.5); }, 0.0, 100.0, 1);
+        "silRes", [=](double* x, double* p) { return p[0] * TMath::Sqrt(x[0] / 5.5); }, 0.0, 100.0, 1);
     std::vector<std::string> silLayers {"f0", "l0", "r0"};
     std::vector<std::string> AllsilLayers {"f0", "f1", "f2", "f3", "l0", "r0"};
 
-    std::string filenameSM {"../Macros/SilVetos/Outputs/Dists/sms_l0.root"};
-    auto fileSM {new TFile {filenameSM.c_str()}};
-    ActPhysics::SilMatrix* sm = fileSM->Get<ActPhysics::SilMatrix>("sm5"); // matrix for good distance of left wall
-    double silCentre = sm->GetMeanZ({4, 5});
-    std::cout << "Silicon centre at Z = " << silCentre << " mm" << std::endl;
-    double beamOffset {3.36}; // mm offset of beam with respect to sils 4 and 5 off left wall (need to lower beam that
-                              // amount respect of silicons)
+    std::string filenameSMlat {"../Macros/SilVetos/Outputs/Dists/sms_f0.root"};
+    auto fileSMlat {new TFile {filenameSMlat.c_str()}};
+    ActPhysics::SilMatrix* smlat =
+        fileSMlat->Get<ActPhysics::SilMatrix>("sm5"); // matrix for good distance of left wall
+    double silCentreLat = smlat->GetMeanZ({4, 5});
+    std::cout << "Silicon left centre at Z = " << silCentreLat << " mm" << std::endl;
 
-    const double zVertexSigma {0.81};                  // From emitance study
-    const double zVertexMean {silCentre - beamOffset}; // 135 mm is the entrance of the beam in TPC
+    std::string filenameSMfront {"../Macros/SilVetos/Outputs/Dists/sms_f0.root"};
+    auto fileSMfront {new TFile {filenameSMfront.c_str()}};
+    ActPhysics::SilMatrix* smfront =
+        fileSMfront->Get<ActPhysics::SilMatrix>("sm3"); // matrix for good distance of left wall
+    double silCentreFront = smfront->GetMeanZ({6, 7, 4});
+    std::cout << "Silicon front centre at Z = " << silCentreFront << " mm" << std::endl;
+
+    const double zVertexSigma {0.81}; // From emitance study /always  around the same)
 
     // We have to centre the silicons with the beam input
     // In real life beam window is not at Z / 2
@@ -250,11 +299,11 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     for(auto& [name, layer] : sils->GetLayers())
     {
         if(name == "f0" || name == "f1")
-            layer.MoveZTo(zVertexMean - 50, {3});
+            layer.MoveZTo(silCentreFront, {5});
         if(name == "f2" || name == "f3")
-            layer.MoveZTo(zVertexMean, {0});
+            layer.MoveZTo(silCentreFront, {0});
         if(name == "l0" || name == "r0") // beam went at the height of the half of the second highest silicon
-            layer.MoveZTo(zVertexMean, {4});
+            layer.MoveZTo(silCentreLat, {4});
     }
     sils->DrawGeo();
     // Silicon malfunction txt
@@ -361,12 +410,18 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     // kinematics and angles
     auto hKin {HistConfig::KinEl.GetHistogram()};
     auto hTheta3CM {HistConfig::ThetaCM.GetHistogram()};
+    auto hTheta3CMside {HistConfig::ThetaCM.GetHistogram()};
+    auto hTheta3CMfront {HistConfig::ThetaCM.GetHistogram()};
     auto hThetaCMAll {HistConfig::ThetaCM.GetHistogram()};
     hThetaCMAll->SetTitle("Theta3CM all;#theta_{CM} [#circ];Counts");
     auto hThetaLabAll {HistConfig::ThetaCM.GetHistogram()};
     hThetaLabAll->SetTitle("Theta3Lab all;#theta_{Lab} [#circ];Counts");
     auto hTheta3Lab {HistConfig::ThetaCM.GetHistogram()};
     hTheta3Lab->SetTitle("Theta3Lab;#theta_{Lab} [#circ];Counts");
+    auto hTheta3Labside {HistConfig::ThetaCM.GetHistogram()};
+    hTheta3Labside->SetTitle("Theta3Lab;#theta_{Lab} [#circ];Counts");
+    auto hTheta3Labfront {HistConfig::ThetaCM.GetHistogram()};
+    hTheta3Labfront->SetTitle("Theta3Lab;#theta_{Lab} [#circ];Counts");
     auto hPhiAll {HistConfig::PhiCM.GetHistogram()};
     hPhiAll->SetTitle("Phi3CM all;#phi_{CM} [#circ];Counts");
     auto hPhi3CM {HistConfig::PhiCM.GetHistogram()};
@@ -414,7 +469,7 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     outTree->Branch("phi3CM", &phi3CM_tree);
     double weight_tree {};
     outTree->Branch("weight", &weight_tree);
-    
+
     // ---- SIMU STARTS HERE ----
     ROOT::EnableImplicitMT();
 
@@ -438,7 +493,9 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         //     nextPrint += step;
         // }
         // Sample vertex position
-        auto [start, vertex] {SampleVertex(zVertexMean, zVertexSigma, hBeam, tpc.X())};
+        double beamOffset = PickBeamOffset(beam, beamOffsets);
+        double zVertexMeanEvt = silCentreFront - beamOffset;
+        auto [start, vertex] {SampleVertex(zVertexMeanEvt, zVertexSigma, hBeam, tpc.X())};
         auto distToVertex {(vertex - start).R()};
 
         // Randomize (if needed) Ex in a BW distribution
@@ -595,8 +652,8 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
                 break;
             }
         }
-        if(layer0 == "f0")
-            continue; // for this simulation we don't consider front silicons
+        // Fix silion resolution depending on hte layer hit
+        silRes->SetParameter(0, layer0 == "f0" ? sigmaSilFront : sigmaSilLat);
         // Check if corresponds to a hit when the detector was off or on
         if(!AcceptHit(silEfficiencies, layer0, silIndex0))
         {
@@ -663,9 +720,12 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         {
             hKinDebug->Fill(theta3Lab * TMath::RadToDeg(), T3Lab);
         }
-        bool isOk {(T3AfterSil0 == 0 || T3AfterSil1 == 0)};                       // no punchthrouhg
-        bool cutELoss0 {eLoss0Cut.first <= eLoss0 && eLoss0 <= eLoss0Cut.second}; // graphical cuts on experimental PID
-        if(isOk && cutELoss0)
+        bool isOnlyFirstWall {(T3AfterSil0 == 0)}; // Only analyse the first wall, no punchthrough, as in the experiment
+        bool isOk {(T3AfterSil0 == 0 || T3AfterSil1 == 0)}; // no punchthrouhg
+        bool cutELoss0 {true};                              // for f0 not yet implemented the graphical cuts
+        if(layer0 == "r0" || layer0 == "l0")
+            cutELoss0 = (eLoss0Cut.first <= eLoss0 && eLoss0 <= eLoss0Cut.second); // graphical cuts on experimental PID
+        if(isOnlyFirstWall && cutELoss0)
         {
             // Assuming no punchthrough!
             double T3Rec {};
@@ -689,14 +749,20 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
             if(layer0 == "f0")
             {
                 hSPf0->Fill(silPoint0.Y(), silPoint0.Z());
+                hTheta3CMfront->Fill(theta3CMBefore);
+                hTheta3Labfront->Fill(theta3Lab * TMath::RadToDeg());
             }
             if(layer0 == "l0")
             {
                 hSPl0->Fill(silPoint0.X(), silPoint0.Z());
+                hTheta3CMside->Fill(theta3CMBefore);
+                hTheta3Labside->Fill(theta3Lab * TMath::RadToDeg());
             }
             if(layer0 == "r0")
             {
                 hSPr0->Fill(silPoint0.X(), silPoint0.Z());
+                hTheta3CMside->Fill(theta3CMBefore);
+                hTheta3Labside->Fill(theta3Lab * TMath::RadToDeg());
             }
             hTheta3CM->Fill(theta3CMBefore); // only thetaCm that enter our cuts
             hTheta3Lab->Fill(theta3Lab * TMath::RadToDeg());
@@ -712,11 +778,21 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     }
 
 
-    // Compute efficiency
+    // Compute efficiency side, front and total
     auto* effCM {new TEfficiency {*hTheta3CM, *hThetaCMAll}};
     effCM->SetNameTitle("effCM", " #epsilon_{TOT} (#theta_{CM});#epsilon;#theta_{CM} [#circ]");
     auto* effLab {new TEfficiency {*hTheta3Lab, *hThetaLabAll}};
     effLab->SetNameTitle("effLab", "#epsilon_{TOT} (#theta_{Lab});#epsilon;#theta_{Lab} [#circ]");
+
+    auto* effCMside {new TEfficiency {*hTheta3CMside, *hThetaCMAll}};
+    effCMside->SetNameTitle("effCMside", " #epsilon_{side} (#theta_{CM});#epsilon;#theta_{CM} [#circ]");
+    auto* effLabside {new TEfficiency {*hTheta3Labside, *hThetaLabAll}};
+    effLabside->SetNameTitle("effLabside", "#epsilon_{side} (#theta_{Lab});#epsilon;#theta_{Lab} [#circ]");
+
+    auto* effCMfront {new TEfficiency {*hTheta3CMfront, *hThetaCMAll}};
+    effCMfront->SetNameTitle("effCMfront", " #epsilon_{front} (#theta_{CM});#epsilon;#theta_{CM} [#circ]");
+    auto* effLabfront {new TEfficiency {*hTheta3Labfront, *hThetaLabAll}};
+    effLabfront->SetNameTitle("effLabfront", "#epsilon_{front} (#theta_{Lab});#epsilon;#theta_{Lab} [#circ]");
 
     // SAVING
     if(!inspect)
@@ -725,6 +801,10 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         outTree->Write();
         effCM->Write();
         effLab->Write();
+        effCMside->Write();
+        effLabside->Write();
+        effCMfront->Write();
+        effLabfront->Write();
         hRP->Write("hRP");
         outFile->Close();
         delete outFile;
@@ -798,6 +878,5 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     delete srim;
     if(isThereXS)
         delete xs;
-    
 }
 #endif

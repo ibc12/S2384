@@ -152,6 +152,9 @@ void Pipe3_DecayM4(const std::string& beam, const std::string& target, const std
                              },
                              {"LightIdx", "BeamIdx", "TPCData"});
 
+    // Try to get silicon information for the decay particles
+    
+
     auto dfPlot = dfDecay.Define("beamQLength", "Decay.beamQLength")
                       .Define("lightQLength", "Decay.lightQLength")
                       .Define("maxQLength", "Decay.maxQLength")

@@ -15,6 +15,8 @@
 
 #include "./GetContourFuncs.cxx"
 
+// 2nd macro to execute
+
 std::pair<double, double> Do(TH1D*& p)
 {
     // Normalize
@@ -31,7 +33,7 @@ std::pair<double, double> Do(TH1D*& p)
 
 void DistPlot()
 {
-    std::string layer {"l0"};
+    std::string layer {"f0"};
     TString outpath {TString::Format("./Outputs/Dists/histos_%s.root", layer.c_str())};
     // TString outpath {TString::Format("./Outputs/Dists/histos_%s_preL0change.root", layer.c_str())};
     auto f {std::make_unique<TFile>(outpath)};
@@ -48,7 +50,7 @@ void DistPlot()
         indexes = {0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11};
     // indexes = {5, 8};
     else if(layer == "f0")
-        indexes = {4, 7};
+        indexes = {0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11};
     else if(layer == "r0")
         indexes = {0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11};
     // indexes = {6, 0};
@@ -99,14 +101,18 @@ void DistPlot()
     }
 
     // Plot Projections
-    auto* c2 {new TCanvas {"c2", "Projection canvas"}};
-    c2->DivideSquare(pzs.front().size());
-    int pad {1};
-    for(const auto& [_, h] : pzs.front())
+    for(size_t idist = 0; idist < pzs.size(); ++idist)
     {
-        c2->cd(pad);
-        pad++;
-        h->Draw();
+        auto* c2 = new TCanvas(Form("c2_%zu", idist), Form("Projection canvas dist %zu", idist));
+
+        c2->DivideSquare(pzs[idist].size());
+
+        int pad = 1;
+        for(const auto& [idx, h] : pzs[idist])
+        {
+            c2->cd(pad++);
+            h->Draw();
+        }
     }
 
     // Save

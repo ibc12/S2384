@@ -13,10 +13,12 @@
 #include <iostream>
 #include <vector>
 
+// 3rd macro to execute
+
 void DistDebug()
 {
-    std::string layer {"l0"};
-    TString outpath {TString::Format("./Outputs/Dists/sms_%s_preL0change.root", layer.c_str())};
+    std::string layer {"f0"};
+    TString outpath {TString::Format("./Outputs/Dists/sms_%s.root", layer.c_str())};
     // TString outpath {TString::Format("./Outputs/Dists/sms_%s.root", layer.c_str())};
     auto f {new TFile {outpath}};
     auto dists {*f->Get<std::vector<double>>("dists")};
@@ -32,7 +34,7 @@ void DistDebug()
     if(layer == "l0")
         indexes = {5, 8};
     else if(layer == "f0")
-        indexes = {4, 7};
+        indexes = {6, 7};
     else if(layer == "r0")
         indexes = {6, 0};
 
@@ -40,7 +42,7 @@ void DistDebug()
     if(layer == "l0")
         indexesString = "{5, 8}";
     else if(layer == "f0")
-        indexesString = "{4, 7}";
+        indexesString = "{6, 7}";
     else if(layer == "r0")
         indexesString = "{6, 0}";
 

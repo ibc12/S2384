@@ -22,8 +22,8 @@ void Plot()
 {
     ROOT::EnableImplicitMT();
     std::string beam {"11Li"};
-    std::string moment {"post"};
-    ROOT::RDataFrame df {"Emittance_Tree", "./Outputs/emittance" + beam + "_" + moment + ".root"};
+    std::string moment {"_post_preMeasure"};
+    ROOT::RDataFrame df {"Emittance_Tree", "./Outputs/emittance" + beam + moment + ".root"};
     // Compute angles
     auto def {df.Define("thetaXY",
                         [](ActRoot::Line& l)
@@ -50,7 +50,7 @@ void Plot()
     auto hEnd {def.Histo2D(mEmittance, "AtEnd.fCoordinates.fY", "AtEnd.fCoordinates.fZ")};
     auto hPointZ {def.Histo1D("Line.fPoint.fCoordinates.fZ")};
     auto hDirZ {def.Histo1D("Line.fDirection.fCoordinates.fZ")};
-    auto hBeginZ {def.Histo1D({"hBeginZ", "Beginning Z", 60, 250, 280}, "AtBegin.fCoordinates.fZ")};
+    auto hBeginZ {def.Histo1D({"hBeginZ", "Beginning Z", 3000, 200, 340}, "AtBegin.fCoordinates.fZ")};
     if(moment == "pre")
     {
         hBeginZ = def.Histo1D({"hBeginZ", "Beginning Z", 60, 200, 230}, "AtBegin.fCoordinates.fZ");
@@ -75,7 +75,7 @@ void Plot()
                               "Line.fPoint.fCoordinates.fY", "AtBegin.fCoordinates.fY")};
     // Trajectories plot
     double maxxy {257};
-    double maxz {356};
+    double maxz {456};
     int nbinsxy {200};
     int nbinsz {250};
     ROOT::TThreadedObject<TH2D> hxz {"hxz", "XZ trajectories;X [mm];Z [mm]", nbinsxy, 0, maxxy, nbinsz, 0, maxz};
@@ -102,7 +102,7 @@ void Plot()
     std::cout << "   FWHM Z : " << hEnd->GetStdDev(2) * 2.35 << '\n';
 
     // Fit to get width in Z
-    hBeginZ->Fit("gaus", "0QM+");
+    hBeginZ->Fit("gaus", "0QML");
     auto* fit {hBeginZ->GetFunction("gaus")};
     if(fit)
     {
@@ -147,7 +147,7 @@ void Plot()
     // f->Draw("same");
 
     // Save objects to file
-    std::string outputName {"./Outputs/histos" + beam + "_" + moment + ".root"};
+    std::string outputName {"./Outputs/histos" + beam + moment + ".root"};
     auto file {std::make_unique<TFile>(outputName.c_str(), "recreate")};
     hBegin->Write("hBegin");
     hEnd->Write("hEnd");
