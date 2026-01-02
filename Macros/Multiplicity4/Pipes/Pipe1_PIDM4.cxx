@@ -116,7 +116,7 @@ void Pipe1_PIDM4(const std::string& beam, const std::string& target, const std::
                 }
             }
             return bestIdx;
-        }, {"TPCData", "SilData", "ModularData", "Layer", "pseudoSP"}).Define("DistanceInGas", [&](ActRoot::TPCData& tpc, int idx, ROOT::Math::XYZPointF pseudoSP)
+        }, {"TPCData", "SilData", "ModularData", "Layer", "pseudoSP"}).Define("TrackLength", [&](ActRoot::TPCData& tpc, int idx, ROOT::Math::XYZPointF pseudoSP)
                                        { // Get distance in gas to that wall
         if(pseudoSP == ROOT::Math::XYZPointF{}) // Check if pseudoSP is default constructed
             return -1.f;
@@ -125,7 +125,7 @@ void Pipe1_PIDM4(const std::string& beam, const std::string& target, const std::
         line.Scale(Utils::scaleXY, Utils::scaleZ);
         auto rp = tpc.fRPs.front();
         auto sp = line.MoveToY(pseudoSP.Y());
-        auto distance = (sp - pseudoSP).R();
+        auto distance = (sp - rp).R();
         return distance;
         }, {"TPCData", "LightIdx", "pseudoSP"}).Define("BeamIdx", [&](ActRoot::TPCData& tpc)
                                        { // Get index of beam-like particle

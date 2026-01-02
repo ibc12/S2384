@@ -156,7 +156,7 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     std::map<std::string, ROOT::TThreadedObject<TH2D>> hsgas, hstwo, hszero;
     // Histogram models
     auto hGasSil {new TH2D {"hGasSil", ";E_{Sil} [MeV];#Delta E_{gas} [arb. units]", 450, 0, 70, 600, 0, 3000}};
-    auto hTwoSils {new TH2D {"hTwoSils", ";#DeltaE_{0} [MeV];#DeltaE_{1} [MeV]", 500, 0, 80, 400, 0, 30}};
+    auto hTwoSils {new TH2D {"hTwoSils", ";#DeltaE_{0} [MeV];#DeltaE_{1} [MeV]", 500, 0, 80, 400, 0, 35}};
     for(const auto& layer : {"f0", "l0", "r0"})
     {
         hsgas.emplace(layer, *hGasSil);
@@ -531,14 +531,30 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     // cuts.DrawCut("r0");
     //
     //// Save some events if needed
-    // auto dfOut = df_f0l0r0_heavy.Filter(
+    // cuts.ReadCut("f0_z1", TString::Format("./Cuts/cut_z1Particles_11Li.root").Data());
+    // auto dfOut = df.Filter(
     //     [&](ActRoot::MergerData& m)
     //     {
-    //         return ((cuts.IsInside("l0", m.fLight.fEs[0], m.fLight.fQave) || cuts.IsInside("r0", m.fLight.fEs[0],
-    //         m.fLight.fQave)) && cuts.IsInside("alfas", m.fHeavy.fEs[1], m.fHeavy.fEs[0]));
+    //         if(m.fLight.GetLayer(0) == "f0" && m.fLight.GetNLayers() == 1)
+    //             return (cuts.IsInside("f0_z1", m.fLight.fEs[0], m.fLight.fQave));
+    //         else
+    //             return false;
     //     },
     //     {"MergerData"});
-    // std::ofstream out("./Outputs/pid_events_p_alfa_7Li.dat");
+    // std::ofstream out("./Outputs/pid_events_z1Front_11Li.dat");
     // dfOut.Foreach([&](ActRoot::MergerData& m) { m.Stream(out); }, {"MergerData"});
     // out.close();
+    cuts.ReadCut("f0f1", TString::Format("./cut_f0f1_events.root").Data());
+    auto dfOut = df.Filter(
+        [&](ActRoot::MergerData& m)
+        {
+            if(m.fLight.GetLayer(0) == "f0" && m.fLight.GetLayer(1) == "f1" && m.fLight.GetNLayers() == 2)
+                return (cuts.IsInside("f0f1", m.fLight.fEs[0], m.fLight.fEs[1]));
+            else
+                return false;
+        },
+        {"MergerData"});
+    std::ofstream out("./Outputs/pid_events_f0f1_11Li.dat");
+    dfOut.Foreach([&](ActRoot::MergerData& m) { m.Stream(out); }, {"MergerData"});
+    out.close();
 }

@@ -19,8 +19,8 @@ void runner(TString what = "simu", bool inspect = true)
     // Particles
     std::string beam {"11Li"};
     std::string target {"2H"};
-    std::string light {"2H"};
-    std::string heavy {"11Li"};
+    std::string light {"1H"};
+    std::string heavy {"12Li"};
     // Beam energy
     double Tbeam {};
     if(beam == "7Li")

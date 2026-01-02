@@ -21,7 +21,7 @@ void rawStats()
 
     std::map<std::string, std::vector<TH1D*>> hs;
     int nsil {12};
-    for(const auto& layer : {"l0", "r0", "f0", "f2"})
+    for(const auto& layer : {"f0", "l0", "r0"})
     {
         hs[layer] = {};
         for(int s = 0; s < nsil; s++)

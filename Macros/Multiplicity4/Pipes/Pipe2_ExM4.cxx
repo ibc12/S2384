@@ -35,34 +35,45 @@ void Pipe2_ExM4(const std::string& beam, const std::string& target, const std::s
     ROOT::EnableImplicitMT();
     ROOT::RDataFrame df("Final_Tree", infile.Data());
 
+    std::string srimName {};
+    if(light == "d")
+        srimName = "2H";
+    else if(light == "p")
+        srimName = "1H";
+    else if(light == "t")
+        srimName = "3H";
+    else if(light == "3He")
+        srimName = "3He";
+    else if(light == "4He")
+        srimName = "4He";
+
     // Reconstruct ex with energy of protons or deuterons at vertex
     // For that we need the srim files n the gas for the light particles
     auto* srim {new ActPhysics::SRIM};
-    srim->ReadTable("p", TString::Format("../../Calibrations/SRIM/1H_900mb_CF4_95-5.txt").Data());
-    srim->ReadTable("d", TString::Format("../../Calibrations/SRIM/2H_900mb_CF4_95-5.txt").Data());
-    srim->ReadTable("7Li", TString::Format("../../Calibrations/SRIM/7Li_900mb_CF4_95-5.txt").Data());
-    srim->ReadTable("mylar", TString::Format("../../Calibrations/SRIM/7Li_Mylar.txt").Data());
+    srim->ReadTable(light, TString::Format("../../Calibrations/SRIM/%s_900mb_CF4_95-5.txt", srimName.c_str()).Data());
+    srim->ReadTable(beam, TString::Format("../../Calibrations/SRIM/%s_900mb_CF4_95-5.txt", beam.c_str()).Data());
+    srim->ReadTable("mylar", TString::Format("../../Calibrations/SRIM/%s_Mylar.txt", beam.c_str()).Data());
 
-    ActPhysics::Particle pb {"7Li"};
-    ActPhysics::Particle pt {"d"};
-    ActPhysics::Particle pl {"p"};
+    ActPhysics::Particle pb {beam};
+    ActPhysics::Particle pt {target};
+    ActPhysics::Particle pl {light};
 
     // Initial energy
     double initialEnergy {7.558}; // meassured by operators; resolution of 0,19%
     initialEnergy = srim->Slow("mylar", initialEnergy * pb.GetAMU(), 0.0168);
-    initialEnergy = srim->Slow("7Li", initialEnergy, 60); // 60 mm of gas before the pad plane
+    initialEnergy = srim->Slow(beam, initialEnergy, 60); // 60 mm of gas before the pad plane
     initialEnergy = initialEnergy / pb.GetAMU();          // back to amu units
 
     auto dfVertex =
         df.Define("EVertex",
-                  [&](float distGas, float eSil)
+                  [&](float TL, float eSil)
                   {
-                      double ret = srim->EvalInitialEnergy("p", eSil, distGas);
+                      double ret = srim->EvalInitialEnergy(light, eSil, TL);
                       // else // L1 trigger
                       //     ret = srim->EvalEnergy("p", d.fLight.fTL);
                       return ret;
                   },
-                  {"DistanceInGas", "SilESelectedParticle"})
+                  {"TrackLength", "SilESelectedParticle"})
             .Define("EBeam", [&](const ActRoot::TPCData& tpc)
                     { return srim->Slow(beam, initialEnergy * pb.GetAMU(), tpc.fRPs.front().X()); }, {"TPCData"});
 
@@ -105,7 +116,7 @@ void Pipe2_ExM4(const std::string& beam, const std::string& target, const std::s
     // theo kin
     auto* theo {kin.GetKinematicLine3()};
     theo->Draw("same");
-    ActPhysics::Kinematics kin1st {pb, pt, pl, initialEnergy * pb.GetAMU(), 7.1};
+    ActPhysics::Kinematics kin1st {pb, pt, pl, initialEnergy * pb.GetAMU(), 4.5};
     auto* theo1st {kin1st.GetKinematicLine3()};
     theo1st->Draw("same");
     //ActPhysics::Kinematics kin2nd {pb, pt, pl, initialEnergy * pb.GetAMU(), 6.7};

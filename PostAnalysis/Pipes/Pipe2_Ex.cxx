@@ -126,7 +126,7 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
                        },
                        {"MergerData", "EVertex", "EBeam"});
 
-    // Apply cuts if wanted to analyse just a fraction of events
+    // Apply cuts if want to analyse just a fraction of events
     // ActRoot::CutsManager<std::string> cuts;
     // cuts.ReadCut("events", TString::Format("../Macros/Cuts/eventsWithStructure_12Li.root").Data());
     // auto dfCut = def.Filter([&](ActRoot::MergerData& m, double EVertex)

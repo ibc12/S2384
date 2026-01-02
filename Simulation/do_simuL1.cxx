@@ -100,32 +100,6 @@ double RandomizeBeamEnergy(double Tini, double sigma)
     return gRandom->Gaus(Tini, sigma);
 }
 
-std::map<std::string, double> LoadEfficiencies(const std::string& filename)
-{
-    std::map<std::string, double> efficiencies;
-    std::ifstream fin(filename);
-    std::string key;
-    double value;
-    while(fin >> key >> value)
-    {
-        efficiencies[key] = value;
-    }
-    fin.close();
-    return efficiencies;
-}
-
-// Some silicons malfunctioned in some of the experimental runs, this takes into account the ammount of time they were
-// not working
-bool AcceptHit(std::map<std::string, double> efficiencies, const std::string& layer, int detID)
-{
-    TString key = Form("%s_%d", layer.c_str(), detID);
-    auto it = efficiencies.find(key.Data());
-    if(it == efficiencies.end())
-        return true; // si no está definido → aceptar
-    double eff = it->second;
-    return (gRandom->Rndm() < eff);
-}
-
 // Get XS files depending on the reaction in place
 bool GetXS(const std::string& target, const std::string& light, const std::string& beam, double Ex,
            ActSim::CrossSection* xs)
@@ -195,24 +169,6 @@ bool GetXS(const std::string& target, const std::string& light, const std::strin
     return isThereXS;
 }
 
-double PickBeamOffset(const std::string& beam, const BeamOffsetMap& offsets)
-{
-    const auto& vec = offsets.at(beam);
-
-    double r = gRandom->Uniform(); // [0,1)
-    double acc = 0.0;
-
-    for(const auto& entry : vec)
-    {
-        acc += entry.fraction;
-        if(r < acc)
-            return entry.offset;
-    }
-
-    // fallback por precisión numérica
-    return vec.back().offset;
-}
-
 void CheckL1Acceptance(XYZVector direction, XYZPoint vertex, XYZPoint finalPointgas, double minPads,
                        double halfWidthExclusionZone)
 {
@@ -258,95 +214,13 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         throw std::runtime_error("Could not load beam emittance histogram");
     hBeam->SetDirectory(nullptr);
     beamfile.reset();
-    // Give the offsets respect to the front silicon (more stats)
-    // Offset defined as Mean silicon point - beam position
-    BeamOffsetMap beamOffsets {{"7Li",
-                                {
-                                    {4.68, 1.0} // fixed beam
-                                }},
-                               {"11Li", {{5.09, 0.636659}, {-0.09, 0.173063}, {-2.56, 0.190278}}}};
-    // Silicons
-    auto* sils {new ActPhysics::SilSpecs};
-    std::string silConfig("silspecs"); // no front silicons, only lateral ones
-    sils->ReadFile("../configs/" + silConfig + ".conf");
-    // sils->Print();
-    const double sigmaSilLat {0.085 / 2.355};   // Si resolution for laterals, around 85 keV FWHM
-    const double sigmaSilFront {0.050 / 2.355}; // Si resolution for front, around 50 keV FWHM
-    auto silRes = std::make_unique<TF1>(
-        "silRes", [=](double* x, double* p) { return p[0] * TMath::Sqrt(x[0] / 5.5); }, 0.0, 100.0, 1);
-    std::vector<std::string> silLayers {"f0", "l0", "r0"};
-    std::vector<std::string> AllsilLayers {"f0", "f1", "f2", "f3", "l0", "r0"};
+    // No silicons for L1
 
-    std::string filenameSMlat {"../Macros/SilVetos/Outputs/Dists/sms_f0.root"};
-    auto fileSMlat {new TFile {filenameSMlat.c_str()}};
-    ActPhysics::SilMatrix* smlat =
-        fileSMlat->Get<ActPhysics::SilMatrix>("sm5"); // matrix for good distance of left wall
-    double silCentreLat = smlat->GetMeanZ({4, 5});
-    std::cout << "Silicon left centre at Z = " << silCentreLat << " mm" << std::endl;
+    const double zMeanEntrance {
+        135}; // Mean position of ACTAR entrance (exp values z position are not refered to a certain point)
+    const double zVertexSigma {0.81}; // From emitance study / always  around the same)
 
-    std::string filenameSMfront {"../Macros/SilVetos/Outputs/Dists/sms_f0.root"};
-    auto fileSMfront {new TFile {filenameSMfront.c_str()}};
-    ActPhysics::SilMatrix* smfront =
-        fileSMfront->Get<ActPhysics::SilMatrix>("sm3"); // matrix for good distance of left wall
-    double silCentreFront = smfront->GetMeanZ({6, 7, 4});
-    std::cout << "Silicon front centre at Z = " << silCentreFront << " mm" << std::endl;
-
-    const double zVertexSigma {0.81}; // From emitance study /always  around the same)
-
-    // We have to centre the silicons with the beam input
-    // In real life beam window is not at Z / 2
-    // Move lat sils to real placement, I did not do it for f0 because I do not use it for now
-    for(auto& [name, layer] : sils->GetLayers())
-    {
-        if(name == "f0" || name == "f1")
-            layer.MoveZTo(silCentreFront, {5});
-        if(name == "f2" || name == "f3")
-            layer.MoveZTo(silCentreFront, {0});
-        if(name == "l0" || name == "r0") // beam went at the height of the half of the second highest silicon
-            layer.MoveZTo(silCentreLat, {4});
-    }
-    sils->DrawGeo();
-    // Silicon malfunction txt
-    std::string silEfficienciesPath {"./Inputs/Efficiencies/silicon_efficiencies_" + beam + ".txt"};
-    std::map<std::string, double> silEfficiencies {LoadEfficiencies(silEfficienciesPath)};
-
-    // CUTS ON SILICON ENERGY, depending on particle
-    // from the graphical PID cut
-    std::string light_name {};
-    if(light == "1H")
-        light_name = "p";
-    else if(light == "2H")
-        light_name = "d";
-    else if(light == "3H")
-        light_name = "t";
-    ActRoot::CutsManager<std::string> cuts;
-    // read for l0 and r0 and get bigger cut
-    std::vector<std::string> silCutLayers {"l0", "r0"};
-    std::pair<double, double> eLoss0Cut;
-    for(const auto& silLayer : silCutLayers)
-    {
-        std::string light_name_layer = light_name + silLayer;
-        cuts.ReadCut(light_name_layer, TString::Format("../PostAnalysis/Cuts/pid_%s_%s_%s.root", light_name.c_str(),
-                                                       silLayer.c_str(), beam.c_str())
-                                           .Data());
-
-        if(cuts.GetCut(light_name_layer))
-        {
-            auto eLoss0Cut_layer = cuts.GetXRange(light_name_layer);
-            std::cout << BOLDGREEN << "-> ESil range for " << light_name_layer << " in " << silLayer << ": ["
-                      << eLoss0Cut_layer.first << ", " << eLoss0Cut_layer.second << "] MeV" << RESET << '\n';
-            if(silLayer == "l0" || eLoss0Cut_layer.second > eLoss0Cut.second)
-            {
-                eLoss0Cut = eLoss0Cut_layer;
-            }
-        }
-        else
-        {
-            std::cout << BOLDRED << "Simulation_S2384(): could not read PID cut for " << light << " in " << silLayer
-                      << " -> using default eLoss0Cut" << RESET << '\n';
-            eLoss0Cut = {0, 1000};
-        }
-    }
+    // No experimental cuts for L1 yet
 
     // Sigmas
     const double sigmaPercentBeam {0.0019}; // 0,19% beam energy spread (meassured by operators)
@@ -426,13 +300,6 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     hPhiAll->SetTitle("Phi3CM all;#phi_{CM} [#circ];Counts");
     auto hPhi3CM {HistConfig::PhiCM.GetHistogram()};
     hPhi3CM->SetTitle("Phi3CM;#phi_{CM} [#circ];Counts");
-    // Silicon hits
-    auto hSPf0 {HistConfig::SP.GetHistogram()};
-    hSPf0->SetTitle("SP for f0");
-    auto hSPl0 {HistConfig::SP.GetHistogram()};
-    hSPl0->SetTitle("SP for l0");
-    auto hSPr0 {HistConfig::SP.GetHistogram()};
-    hSPr0->SetTitle("SP for r0");
     // Reconstructed histos
     auto hEx {HistConfig::Ex.GetHistogram()};
     auto hKinRec {HistConfig::Kin.GetHistogram()};
@@ -493,9 +360,7 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         //     nextPrint += step;
         // }
         // Sample vertex position
-        double beamOffset = PickBeamOffset(beam, beamOffsets);
-        double zVertexMeanEvt = silCentreFront - beamOffset;
-        auto [start, vertex] {SampleVertex(zVertexMeanEvt, zVertexSigma, hBeam, tpc.X())};
+        auto [start, vertex] {SampleVertex(zMeanEntrance, zVertexSigma, hBeam, tpc.X())};
         auto distToVertex {(vertex - start).R()};
 
         // Randomize (if needed) Ex in a BW distribution
@@ -632,138 +497,29 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         // Extract direction
         XYZVector direction {TMath::Cos(theta3Lab), TMath::Sin(theta3Lab) * TMath::Sin(phi3Lab),
                              TMath::Sin(theta3Lab) * TMath::Cos(phi3Lab)};
-        // Threshold L1, particles that stop in actar. Check before doing the continues
+        // Threshold L1, particles that stop in actar. Check if track stays inside
         double rangeInGas {srim->EvalRange("light", T3Lab)};
         ROOT::Math::XYZPoint finalPointGas {vertex + rangeInGas * dirWorldFrame.Unit()};
-        if(0 <= finalPointGas.X() && finalPointGas.X() <= 256 && 0 <= finalPointGas.Y() && finalPointGas.Y() <= 256 &&
-           0 <= finalPointGas.Z() && finalPointGas.Z() <= 256)
-        {
-        }
-        // How to check whether tracks would read the silicons with new class:
-        int silIndex0 = -1;
-        ROOT::Math::XYZPoint silPoint0;
-        std::string layer0;
-        for(auto layer : silLayers)
-        {
-            std::tie(silIndex0, silPoint0) = sils->FindSPInLayer(layer, vertex, dirWorldFrame);
-            if(silIndex0 != -1)
-            {
-                layer0 = layer;
-                break;
-            }
-        }
-        // Fix silion resolution depending on hte layer hit
-        silRes->SetParameter(0, layer0 == "f0" ? sigmaSilFront : sigmaSilLat);
-        // Check if corresponds to a hit when the detector was off or on
-        if(!AcceptHit(silEfficiencies, layer0, silIndex0))
-        {
-            continue; // if not accepted, go to next iteration
-        }
-        if(silIndex0 == -1)
-        {
+        bool isL1 {0 <= finalPointGas.X() && finalPointGas.X() <= 256 && 0 <= finalPointGas.Y() &&
+                   finalPointGas.Y() <= 256 && 0 <= finalPointGas.Z() && finalPointGas.Z() <= 234};
+        if(!isL1)
             continue;
-        }
-        // Slow down light in gas
-        auto T3AtSil {srim->SlowWithStraggling("light", T3Lab, (silPoint0 - vertex).R())};
-        // Check if stopped
-        ApplyNaN(T3AtSil);
-        if(std::isnan(T3AtSil))
-        {
-            continue;
-        }
-        // Slow down in silicon
-        auto normal {sils->GetLayer(layer0).GetNormal()};
-        auto angleWithNormal {TMath::ACos(dirWorldFrame.Unit().Dot(normal.Unit()))};
-        auto T3AfterSil0 {srim->SlowWithStraggling("lightInSil", T3AtSil,
-                                                   sils->GetLayer(layer0).GetUnit().GetThickness(), angleWithNormal)};
-        auto eLoss0preSilRes {T3AtSil - T3AfterSil0};
-        auto eLoss0 {gRandom->Gaus(eLoss0preSilRes, silRes->Eval(eLoss0preSilRes))}; // after silicon resolution
-        ApplyNaN(eLoss0, sils->GetLayer(layer0).GetThresholds().at(silIndex0));
-        int count = 0;
-        if(std::isnan(eLoss0))
-        {
-            continue;
-        }
 
-        // Apply 2nd layer of silicons
-        double T3AfterInterGas {};
-        int silIndex1 {};
-        ROOT::Math::XYZPoint silPoint1 {};
-        double eLoss1 {};
-        double T3AfterSil1 {-1};
-        if(T3AfterSil0 > 0. && layer0 == "f0")
+        // Reconstruct track and charge drift, diffusion and deposition
+
+
+        // Reconstruct Ex!
+        bool isOk {};          // no punchthrouhg
+        bool cutELoss0 {true}; // for f0 not yet implemented the graphical cuts
+        if(isOk && cutELoss0)
         {
-            std::tie(silIndex1, silPoint1) = sils->FindSPInLayer("f1", vertex, dirWorldFrame);
-            if(silIndex1 == -1)
-            {
-            } // If a silicon is not reached, don't continue with punchthough calculation
-            else
-            {
-                T3AfterInterGas = {srim->SlowWithStraggling("light", T3AfterSil0, (silPoint0 - silPoint1).R())};
-                if(T3AfterInterGas == 0)
-                {
-                } // If slow in gas don't continue with calculation
-                else
-                {
-                    T3AfterSil1 = srim->SlowWithStraggling(
-                        "lightInSil", T3AfterInterGas, sils->GetLayer("f1").GetUnit().GetThickness(), angleWithNormal);
-                    auto eLoss1preSilRes {T3AfterInterGas - T3AfterSil1};
-                    eLoss1 = gRandom->Gaus(eLoss1preSilRes, silRes->Eval(eLoss1preSilRes)); // after silicon resolution
-                    ApplyNaN(eLoss1, sils->GetLayer("f1").GetThresholds().at(silIndex1));
-                    if(std::isnan(eLoss1))
-                        eLoss1 = 0;
-                }
-            }
-        }
-        // Reconstruct!
-        if(T3AfterSil0 > 0)
-        {
-            hKinDebug->Fill(theta3Lab * TMath::RadToDeg(), T3Lab);
-        }
-        bool isOnlyFirstWall {(T3AfterSil0 == 0)}; // Only analyse the first wall, no punchthrough, as in the experiment
-        bool isOk {(T3AfterSil0 == 0 || T3AfterSil1 == 0)}; // no punchthrouhg
-        bool cutELoss0 {true};                              // for f0 not yet implemented the graphical cuts
-        if(layer0 == "r0" || layer0 == "l0")
-            cutELoss0 = (eLoss0Cut.first <= eLoss0 && eLoss0 <= eLoss0Cut.second); // graphical cuts on experimental PID
-        if(isOnlyFirstWall && cutELoss0)
-        {
-            // Assuming no punchthrough!
-            double T3Rec {};
-            if(eLoss1 == 0)
-            {
-                T3Rec = srim->EvalInitialEnergy("light", eLoss0, (silPoint0 - vertex).R());
-            }
-            else
-            {
-                auto T3Rec0 {srim->EvalInitialEnergy("light", eLoss0, (silPoint0 - vertex).R())};
-                // Reconstruction ob T3 with 2 silicon layers
-                auto T3Rec1 {srim->EvalInitialEnergy("light", eLoss1, (silPoint1 - silPoint0).R())};
-                T3Rec = srim->EvalInitialEnergy("light", eLoss0 + T3Rec1, (silPoint0 - vertex).R());
-            }
-            auto ExRec {kin->ReconstructExcitationEnergy(T3Rec, theta3Lab)};
+            double T3Rec {0};
+            double ExRec {0};
             // Fill
             hKinRec->Fill(theta3Lab * TMath::RadToDeg(), T3Rec); // after reconstruction
             hEx->Fill(ExRec, weight);                            // To get real counts weigth * alpha
             hRP_X->Fill(vertex.X());
             hRP->Fill(vertex.X(), vertex.Y());
-            if(layer0 == "f0")
-            {
-                hSPf0->Fill(silPoint0.Y(), silPoint0.Z());
-                hTheta3CMfront->Fill(theta3CMBefore);
-                hTheta3Labfront->Fill(theta3Lab * TMath::RadToDeg());
-            }
-            if(layer0 == "l0")
-            {
-                hSPl0->Fill(silPoint0.X(), silPoint0.Z());
-                hTheta3CMside->Fill(theta3CMBefore);
-                hTheta3Labside->Fill(theta3Lab * TMath::RadToDeg());
-            }
-            if(layer0 == "r0")
-            {
-                hSPr0->Fill(silPoint0.X(), silPoint0.Z());
-                hTheta3CMside->Fill(theta3CMBefore);
-                hTheta3Labside->Fill(theta3Lab * TMath::RadToDeg());
-            }
             hTheta3CM->Fill(theta3CMBefore); // only thetaCm that enter our cuts
             hTheta3Lab->Fill(theta3Lab * TMath::RadToDeg());
             // write to TTree
@@ -813,18 +569,6 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     // Draw if not running for multiple Exs
     if(inspect)
     {
-        auto* cSP {new TCanvas {"cSP", "Sil Points"}};
-        cSP->DivideSquare(3);
-        cSP->cd(1);
-        hSPf0->DrawClone("colz");
-        sils->GetLayer("f0").GetSilMatrix()->Draw();
-        cSP->cd(2);
-        hSPl0->DrawClone("colz");
-        sils->GetLayer("l0").GetSilMatrix()->Draw();
-        cSP->cd(3);
-        hSPr0->DrawClone("colz");
-        sils->GetLayer("r0").GetSilMatrix()->Draw();
-
         auto* c0 {new TCanvas {"c0", "Sim inspect 0"}};
         c0->DivideSquare(6);
         c0->cd(1);
