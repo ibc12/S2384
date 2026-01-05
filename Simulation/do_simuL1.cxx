@@ -49,6 +49,8 @@ struct BeamOffset
     double fraction; // must sum to 1
 };
 
+using padPlane = std::map<std::pair<int,int>, double>;
+
 using BeamOffsetMap = std::map<std::string, std::vector<BeamOffset>>;
 
 std::pair<XYZPoint, XYZPoint> SampleVertex(double meanZ, double sigmaZ, TH3D* h, double lengthX)
@@ -169,10 +171,35 @@ bool GetXS(const std::string& target, const std::string& light, const std::strin
     return isThereXS;
 }
 
-void CheckL1Acceptance(XYZVector direction, XYZPoint vertex, XYZPoint finalPointgas, double minPads,
-                       double halfWidthExclusionZone)
+void DivideTrackInSegments(ActPhysics::SRIM* srim, double range, double step)
 {
-    int a = 1;
+    // Divide track in segments of length = step
+
+    // Compute energy loss in that path
+
+    // Divide that eLoss in the segment in a number of portions
+}
+
+void DivideSegmentInPortions(double eLoss, int portions)
+{
+    // Each segment divide it in many portions
+
+    // Each portion has the same amount of energy
+
+    // Transform energy in electrons
+
+    // Randomize the electron numbers with Poisson distribution
+
+    // Drift Electrons into pad plane with gausian distribution with width the difusion taking into acount the heigth of the charge
+
+    // Fill map of <pad,pad> , charge that represents the pad plane
+}
+
+bool CheckExclusionZone(padPlane padPlane, int nPadThreshold, int yMin, int yMax, int chargeThreshold = 0)
+{
+    // Check the number of pads outside the exclusion zone defined by yMin and yMax have charge above threshold
+
+    // I have to check, because maybe the consition is not only pads with charge, Thomas explained this in July
 }
 
 void do_simu(const std::string& beam, const std::string& target, const std::string& light, const std::string& heavy,
@@ -284,18 +311,12 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     // kinematics and angles
     auto hKin {HistConfig::KinEl.GetHistogram()};
     auto hTheta3CM {HistConfig::ThetaCM.GetHistogram()};
-    auto hTheta3CMside {HistConfig::ThetaCM.GetHistogram()};
-    auto hTheta3CMfront {HistConfig::ThetaCM.GetHistogram()};
     auto hThetaCMAll {HistConfig::ThetaCM.GetHistogram()};
     hThetaCMAll->SetTitle("Theta3CM all;#theta_{CM} [#circ];Counts");
     auto hThetaLabAll {HistConfig::ThetaCM.GetHistogram()};
     hThetaLabAll->SetTitle("Theta3Lab all;#theta_{Lab} [#circ];Counts");
     auto hTheta3Lab {HistConfig::ThetaCM.GetHistogram()};
     hTheta3Lab->SetTitle("Theta3Lab;#theta_{Lab} [#circ];Counts");
-    auto hTheta3Labside {HistConfig::ThetaCM.GetHistogram()};
-    hTheta3Labside->SetTitle("Theta3Lab;#theta_{Lab} [#circ];Counts");
-    auto hTheta3Labfront {HistConfig::ThetaCM.GetHistogram()};
-    hTheta3Labfront->SetTitle("Theta3Lab;#theta_{Lab} [#circ];Counts");
     auto hPhiAll {HistConfig::PhiCM.GetHistogram()};
     hPhiAll->SetTitle("Phi3CM all;#phi_{CM} [#circ];Counts");
     auto hPhi3CM {HistConfig::PhiCM.GetHistogram()};
@@ -308,9 +329,6 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     hRP_X->SetTitle("Reconstructed RP;X [mm];Counts");
     auto hRP {HistConfig::RP.GetHistogram()};
     hRP->SetTitle("Reconstructed RP;RP [mm];Counts");
-    // Debug
-    auto hKinDebug {HistConfig::Kin.GetHistogram()};
-    hKinDebug->SetTitle("Debug Kinematic Punshthrough;#theta_{Lab} [#circ];E_{Vertex} [MeV]");
 
     // Allow multiple theads
     std::string tag {""};
@@ -318,7 +336,7 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         tag = "_" + std::to_string(thread);
 
     // File to save data
-    TString fileName {TString::Format("./Outputs/%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s.root", beam.c_str(),
+    TString fileName {TString::Format("./Outputs/%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s_L1.root", beam.c_str(),
                                       target.c_str(), light.c_str(), Ex, neutronPS, protonPS, tag.c_str())};
     auto outFile {new TFile(fileName, inspect ? "read" : "recreate")};
     auto* outTree {new TTree("SimulationTTree", "A TTree containing only our Eex obtained by simulation")};
@@ -497,13 +515,15 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         // Extract direction
         XYZVector direction {TMath::Cos(theta3Lab), TMath::Sin(theta3Lab) * TMath::Sin(phi3Lab),
                              TMath::Sin(theta3Lab) * TMath::Cos(phi3Lab)};
-        // Threshold L1, particles that stop in actar. Check if track stays inside
+        // L1 condition, particles that stop in actar. Check if track stays inside
         double rangeInGas {srim->EvalRange("light", T3Lab)};
         ROOT::Math::XYZPoint finalPointGas {vertex + rangeInGas * dirWorldFrame.Unit()};
-        bool isL1 {0 <= finalPointGas.X() && finalPointGas.X() <= 256 && 0 <= finalPointGas.Y() &&
-                   finalPointGas.Y() <= 256 && 0 <= finalPointGas.Z() && finalPointGas.Z() <= 234};
+        bool isL1 {0 <= finalPointGas.X() && finalPointGas.X() <= tpc.X() && 0 <= finalPointGas.Y() &&
+                   finalPointGas.Y() <= tpc.Y() && 0 <= finalPointGas.Z() && finalPointGas.Z() <= tpc.Z()};
         if(!isL1)
             continue;
+
+        // Exclusion zone from pad 55 to 70 (pads start at 0, so from 108 to 142 mm in Y)
 
         // Reconstruct track and charge drift, diffusion and deposition
 
@@ -540,16 +560,6 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     auto* effLab {new TEfficiency {*hTheta3Lab, *hThetaLabAll}};
     effLab->SetNameTitle("effLab", "#epsilon_{TOT} (#theta_{Lab});#epsilon;#theta_{Lab} [#circ]");
 
-    auto* effCMside {new TEfficiency {*hTheta3CMside, *hThetaCMAll}};
-    effCMside->SetNameTitle("effCMside", " #epsilon_{side} (#theta_{CM});#epsilon;#theta_{CM} [#circ]");
-    auto* effLabside {new TEfficiency {*hTheta3Labside, *hThetaLabAll}};
-    effLabside->SetNameTitle("effLabside", "#epsilon_{side} (#theta_{Lab});#epsilon;#theta_{Lab} [#circ]");
-
-    auto* effCMfront {new TEfficiency {*hTheta3CMfront, *hThetaCMAll}};
-    effCMfront->SetNameTitle("effCMfront", " #epsilon_{front} (#theta_{CM});#epsilon;#theta_{CM} [#circ]");
-    auto* effLabfront {new TEfficiency {*hTheta3Labfront, *hThetaLabAll}};
-    effLabfront->SetNameTitle("effLabfront", "#epsilon_{front} (#theta_{Lab});#epsilon;#theta_{Lab} [#circ]");
-
     // SAVING
     if(!inspect)
     {
@@ -557,10 +567,6 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         outTree->Write();
         effCM->Write();
         effLab->Write();
-        effCMside->Write();
-        effLabside->Write();
-        effCMfront->Write();
-        effLabfront->Write();
         hRP->Write("hRP");
         outFile->Close();
         delete outFile;
@@ -599,8 +605,6 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         hPhi3CM->DrawClone();
         c1->cd(2);
         hPhiAll->DrawClone();
-        c1->cd(3);
-        hKinDebug->DrawClone("colz");
 
         auto* cEff {new TCanvas {"cEff", "Eff plots"}};
         cEff->DivideSquare(7);
