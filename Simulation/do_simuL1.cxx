@@ -49,7 +49,7 @@ struct BeamOffset
     double fraction; // must sum to 1
 };
 
-using padPlane = std::map<std::pair<int,int>, double>;
+using padPlane = std::map<std::pair<int, int>, double>;
 
 using BeamOffsetMap = std::map<std::string, std::vector<BeamOffset>>;
 
@@ -171,16 +171,42 @@ bool GetXS(const std::string& target, const std::string& light, const std::strin
     return isThereXS;
 }
 
-void DivideTrackInSegments(ActPhysics::SRIM* srim, double range, double step)
+padPlane
+DivideTrackInSegments(ActPhysics::SRIM* srim, double range, XYZVector dir, XYZPoint rp, double step, int nSubSegments)
 {
     // Divide track in segments of length = step
-
-    // Compute energy loss in that path
-
+    // Compute energy loss in that step
     // Divide that eLoss in the segment in a number of portions
+
+    padPlane padMap {};
+
+    // Normalize the drection
+    dir = dir.Unit();
+    // Initial energy
+    double Eiter {srim->EvalInverse("light", range)};
+
+    for(double r = 0; r < range; r += step)
+    {
+        double EpostSlow {srim->Slow("light", Eiter, step)};
+        double eLoss {Eiter - EpostSlow};
+
+        if(eLoss <= 0)
+            continue;
+
+        // Mean height of the segment for the drift
+        XYZPoint posSegment = rp + dir * (r + 0.5 * step);
+        double hSegment = posSegment.Z();
+
+        // Divide in subsegments to drift
+        DivideSegmentInPortions(eLoss, nSubSegments, hSegment, padMap);
+
+        Eiter = EpostSlow;
+    }
+
+    return padMap;
 }
 
-void DivideSegmentInPortions(double eLoss, int portions)
+void DivideSegmentInPortions(double eLoss, int nPortions, double hSegment, padPlane& padMap)
 {
     // Each segment divide it in many portions
 
@@ -190,9 +216,49 @@ void DivideSegmentInPortions(double eLoss, int portions)
 
     // Randomize the electron numbers with Poisson distribution
 
-    // Drift Electrons into pad plane with gausian distribution with width the difusion taking into acount the heigth of the charge
+    // Drift Electrons into pad plane with gausian distribution with width the difusion taking into acount the heigth of
+    // the charge
 
     // Fill map of <pad,pad> , charge that represents the pad plane
+
+    if(eLoss <= 0 || nPortions <= 0)
+        return;
+
+    // Constantes
+    const double W = 30.0;          // eV/electron
+    const double driftDiffT = 0.1;  // mm/sqrt(mm), transversal diffusion
+    const double driftDiffL = 0.05; // mm/sqrt(mm), longitudinal diffusion
+    const double padSize = 2.0;     // mm
+
+    double portionEnergy = eLoss / nPortions;
+    double meanElectrons = portionEnergy * 1e6 / W; // eLoss en MeV a eV a electrones
+
+    for(int i = 0; i < nPortions; i++)
+    {
+        // Randomize electrons in each portion
+        int nElectrons = gRandom->Poisson(meanElectrons);
+        if(nElectrons <= 0)
+            continue;
+
+        // Difusión
+        double sigmaT = driftDiffT * std::sqrt(hSegment); // mm
+        double sigmaL = driftDiffL * std::sqrt(hSegment); // mm
+
+        for(int e = 0; e < nElectrons; e++)
+        {
+            // posición de cada electrón en plano de pads (x,z) con difusión gaussiana
+            double xPad = gRandom->Gaus(0.0, sigmaT);
+            double zPad = gRandom->Gaus(0.0, sigmaL);
+
+            // Convertir posición a número de pad (0–2 → 0, 2–4 → 1, ...)
+            int col = int(xPad / padSize);
+            int row = int(zPad / padSize);
+
+            padMap[std::make_pair(row, col)] += 1.0; // acumular carga
+        }
+    }
+    // Check ActSim, to see if the drift is done electron by electron
+    // Check If the drift sigma is well computed with the height
 }
 
 bool CheckExclusionZone(padPlane padPlane, int nPadThreshold, int yMin, int yMax, int chargeThreshold = 0)
