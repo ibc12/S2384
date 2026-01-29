@@ -9,7 +9,7 @@
 #include <TH2D.h>
 #include <TMath.h>
 #include <TProfile.h>
-#include <TRandom.h>
+#include <TRandom3.h>
 #include <TStyle.h>
 
 #include <Math/Point3D.h>
@@ -18,6 +18,7 @@
 #include <map>
 #include <tuple>
 #include <vector>
+#include <random>
 
 using XYZPoint = ROOT::Math::XYZPoint;
 using XYZVector = ROOT::Math::XYZVector;
@@ -25,8 +26,22 @@ using XYZVector = ROOT::Math::XYZVector;
 // ============================================================
 // Geometry
 // ============================================================
-constexpr double voxelSize = 2.0;           // mm
+constexpr double voxelSize = 1.0;           // mm
+constexpr double Gmean = 3000.0;           // Mean gain
+constexpr double theta = 0.7;              // Polya parameter
 using voxelKey = std::tuple<int, int, int>; // ix,iy,iz
+
+
+// ============================================================
+// Polya function for gain distribution in Micromegas
+// ============================================================
+double Polya(double Gmean, double theta)
+{
+    static std::mt19937 gen(std::random_device{}());
+    std::gamma_distribution<double> gamma(theta + 1.0, Gmean / (theta + 1.0));
+    return gamma(gen);
+}
+
 
 // ============================================================
 // Add charge to voxel map
@@ -63,9 +78,9 @@ void DivideSegmentInPortions(double eLoss, int nPortions, const XYZPoint& center
     if(eLoss <= 0 || nPortions <= 0)
         return;
 
-    const double W = 30.0;     // eV / electron
-    const double diffT = 0.10; // mm / sqrt(mm)
-    const double diffL = 0.05; // mm / sqrt(mm)
+    const double W = 36.4 * 0.95 + 34.3 * 0.05; // eV / electron in 95% D2 + 5% CF4
+    const double diffT = 0.10;                  // mm / sqrt(mm)
+    const double diffL = 0;                     // mm / sqrt(mm) No diffusion in z direction
 
     double h = center.Y();
     if(h <= 0)
@@ -86,10 +101,11 @@ void DivideSegmentInPortions(double eLoss, int nPortions, const XYZPoint& center
         for(int e = 0; e < nElectrons; e++)
         {
             double x = gRandom->Gaus(center.X(), sigmaT);
-            double y = gRandom->Gaus(center.Y(), sigmaL);
-            double z = gRandom->Gaus(center.Z(), sigmaT);
+            double y = gRandom->Gaus(center.Y(), sigmaT);
+            double z = gRandom->Gaus(center.Z(), sigmaL);
 
-            AddChargeToVoxel(x, y, z, 1.0, voxelMap);
+            double gain = Polya(Gmean, theta);
+            AddChargeToVoxel(x, y, z, gain, voxelMap);
             electrons.emplace_back(x, y, z);
         }
     }
@@ -125,9 +141,10 @@ void DivideTrackInSegments(ActPhysics::SRIM* srim, double range, const XYZVector
 // ============================================================
 // Build profile + histogram
 // ============================================================
-std::pair<TProfile*, TH1D*> GetChargeProfile(const std::map<voxelKey, ActRoot::Voxel>& voxelMap)
+std::pair<TProfile*, TH1D*> GetChargeProfile(const std::map<voxelKey, ActRoot::Voxel>& voxelMap, bool subdivideVoxels)
 {
     std::vector<ActRoot::Voxel> voxels;
+    voxels.reserve(voxelMap.size());
     for(const auto& [k, v] : voxelMap)
         voxels.push_back(v);
 
@@ -139,6 +156,9 @@ std::pair<TProfile*, TH1D*> GetChargeProfile(const std::map<voxelKey, ActRoot::V
     auto p0 = line.GetPoint();
     auto u = line.GetDirection().Unit();
 
+    // --------------------------------------------------
+    // Compute s-range
+    // --------------------------------------------------
     double sMin = 1e9;
     double sMax = -1e9;
 
@@ -150,20 +170,70 @@ std::pair<TProfile*, TH1D*> GetChargeProfile(const std::map<voxelKey, ActRoot::V
         sMax = std::max(sMax, s);
     }
 
-    int nBins = 100;
+    double length = sMax - sMin;
+    if(length <= 0)
+        length = voxelSize;
 
+    // --------------------------------------------------
+    // Adaptive bin size (voxel-limited resolution)
+    // --------------------------------------------------
+    double ds = voxelSize * std::max({std::abs(u.X()), std::abs(u.Y()), std::abs(u.Z())});
+    std::cout << "Adaptive bin size: " << ds << " mm" << std::endl;
+
+    ds = std::max(ds, 0.5 * voxelSize);
+    int nBins = std::max(1, int(std::ceil(length / ds)));
+
+    // --------------------------------------------------
+    // Histograms
+    // --------------------------------------------------
     auto* prof =
         new TProfile("chargeProfileP", "Charge profile (mean);Track length [mm];Mean charge", nBins, sMin, sMax);
 
     auto* hist = new TH1D("chargeProfileH", "Charge profile (sum);Track length [mm];Charge", nBins, sMin, sMax);
 
+    // --------------------------------------------------
+    // Fill
+    // --------------------------------------------------
+    int nDiv = 3; // Divisions per axis
+    double div = 1.0 / nDiv;
+
     for(const auto& v : voxels)
     {
-        XYZVector d = XYZVector(v.GetPosition()) - XYZVector(p0);
-        double s = d.Dot(u);
+        const auto& pos = v.GetPosition();
+        double q = v.GetCharge();
 
-        prof->Fill(s, v.GetCharge());
-        hist->Fill(s, v.GetCharge());
+        if(!subdivideVoxels)
+        {
+            // Standard: one point per voxel
+            XYZVector d = XYZVector(pos) - XYZVector(p0);
+            double s = d.Dot(u);
+
+            prof->Fill(s, q);
+            hist->Fill(s, q);
+        }
+        else
+        {
+            // Subdivide voxel into 3x3x3 mini-voxels
+            double qSub = q / (nDiv * nDiv * nDiv);
+
+            for(int ix = -1; ix <= 1; ix++)
+            {
+                for(int iy = -1; iy <= 1; iy++)
+                {
+                    for(int iz = -1; iz <= 1; iz++)
+                    {
+                        XYZPoint miniPos(pos.X() + ix * div * voxelSize, pos.Y() + iy * div * voxelSize,
+                                         pos.Z() + iz * div * voxelSize);
+
+                        XYZVector d = XYZVector(miniPos) - XYZVector(p0);
+                        double s = d.Dot(u);
+
+                        prof->Fill(s, qSub);
+                        hist->Fill(s, qSub);
+                    }
+                }
+            }
+        }
     }
 
     for(int i = 1; i <= hist->GetNbinsX(); i++)
@@ -176,10 +246,11 @@ std::pair<TProfile*, TH1D*> GetChargeProfile(const std::map<voxelKey, ActRoot::V
     return {prof, hist};
 }
 
+
 // ============================================================
 // MAIN
 // ============================================================
-void plotTPCevent(double range = 120, double thetaDeg = 45, double phiDeg = 45)
+void plotTPCevent(double range = 120, double thetaDeg = 10, double phiDeg = -45)
 {
     gStyle->SetOptStat(0);
     gRandom->SetSeed(0);
@@ -215,7 +286,7 @@ void plotTPCevent(double range = 120, double thetaDeg = 45, double phiDeg = 45)
     }
 
     // ================= Profiles =================
-    auto [profile, hist] = GetChargeProfile(voxelMap);
+    auto [profile, hist] = GetChargeProfile(voxelMap, true);
 
     // ================= Canvas =================
     TCanvas* c = new TCanvas("c", "TPC event + charge profile", 1800, 800);
