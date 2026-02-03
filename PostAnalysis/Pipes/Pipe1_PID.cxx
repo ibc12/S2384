@@ -554,7 +554,7 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
                 return false;
         },
         {"MergerData"});
-    std::ofstream out("./Outputs/pid_events_f0f1_11Li.dat");
-    dfOut.Foreach([&](ActRoot::MergerData& m) { m.Stream(out); }, {"MergerData"});
-    out.close();
+    //std::ofstream out("./Outputs/pid_events_f0f1_11Li.dat");
+    //dfOut.Foreach([&](ActRoot::MergerData& m) { m.Stream(out); }, {"MergerData"});
+    //out.close();
 }
