@@ -1,4 +1,3 @@
-
 #include "ActCutsManager.h"
 #include "ActDataManager.h"
 #include "ActKinematics.h"
@@ -19,25 +18,26 @@
 #include "TH2D.h"
 #include "TString.h"
 
-#include <map>
-#include <string>
 #include <fstream>
 #include <iostream>
+#include <map>
+#include <string>
 
 #include "./../../PrettyStyle.C"
 
 void GetChargeThreshold()
 {
     // Get some runs of data and analyze the charge threshold
+    // It has to be done without pad align
     // PrettyStyle(false);
     std::string dataconf {"../../configs/data.conf"};
 
     // Read data
     ActRoot::DataManager dataman {dataconf, ActRoot::ModeType::EReadTPC};
-    dataman.SetRuns(64,67);
+    dataman.SetRuns(64, 67);
     auto chain {dataman.GetChain()};
-    auto chain2 {dataman.GetChain(ActRoot::ModeType::EMerge)};
-    chain->AddFriend(chain2.get());
+    // auto chain2 {dataman.GetChain(ActRoot::ModeType::EMerge)};
+    // chain->AddFriend(chain2.get());
 
     // RDataFrame
     ROOT::EnableImplicitMT();
@@ -53,54 +53,62 @@ void GetChargeThreshold()
         },
         {"TPCData"});
 
-    auto dfThresh = dfFilter.Define("chargeThreshold", [](ActRoot::TPCData& tpc)
-    {
-        float minCharge = 1e6;
-        for(auto cluster : tpc.fClusters)
-        {
-            for(auto voxel : cluster.GetVoxels())
-            {
-                float charge = voxel.GetCharge();
-                if(charge < minCharge)
-                    minCharge = charge;
-            }
-        }
-            
-        for(auto voxel : tpc.fRaw)
-        {
-            float charge = voxel.GetCharge();
-            if(charge < minCharge)
-                minCharge = charge;
-        }
+    auto dfThresh = dfFilter.Define("chargeThreshold",
+                                    [](ActRoot::TPCData& tpc)
+                                    {
+                                        float minCharge = 1e6;
+                                        for(auto cluster : tpc.fClusters)
+                                        {
+                                            for(auto voxel : cluster.GetVoxels())
+                                            {
+                                                float charge = voxel.GetCharge();
+                                                if(charge < minCharge)
+                                                    minCharge = charge;
+                                            }
+                                        }
 
-        return minCharge;
-    }, {"TPCData"});
+                                        for(auto voxel : tpc.fRaw)
+                                        {
+                                            float charge = voxel.GetCharge();
+                                            if(charge < minCharge)
+                                                minCharge = charge;
+                                        }
 
-    auto dfMax = dfFilter.Define("maxCharge", [](ActRoot::TPCData& tpc)
-    {
-        float maxCharge = -10;
-        for(auto cluster : tpc.fClusters)
-        {
-            for(auto voxel : cluster.GetVoxels())
-            {
-                float charge = voxel.GetCharge();
-                if(charge > maxCharge && voxel.GetIsSaturated() == true)
-                    maxCharge = charge;
-            }
-        }
-            
-        for(auto voxel : tpc.fRaw)
-        {
-            float charge = voxel.GetCharge();
-            if(charge > maxCharge && voxel.GetIsSaturated() == true)
-                maxCharge = charge;
-        }
+                                        return minCharge;
+                                    },
+                                    {"TPCData"});
 
-        return maxCharge;
-    }, {"TPCData"});
+    auto dfMax = dfFilter.Define("maxCharge",
+                                 [](ActRoot::TPCData& tpc)
+                                 {
+                                     float maxCharge = -10;
+                                     for(auto cluster : tpc.fClusters)
+                                     {
+                                         for(auto voxel : cluster.GetVoxels())
+                                         {
+                                             float charge = voxel.GetCharge();
+                                             if(charge > maxCharge && voxel.GetIsSaturated() == true)
+                                                 maxCharge = charge;
+                                         }
+                                     }
+
+                                     for(auto voxel : tpc.fRaw)
+                                     {
+                                         float charge = voxel.GetCharge();
+                                         if(charge > maxCharge && voxel.GetIsSaturated() == true)
+                                             maxCharge = charge;
+                                     }
+
+                                     return maxCharge;
+                                 },
+                                 {"TPCData"});
 
     auto hThresh = dfThresh.Histo1D({"chargeThreshold", "Charge Threshold", 1000, 0, 1000}, "chargeThreshold");
+    hThresh->GetXaxis()->SetTitle("Charge Threshold [channels]");
+    hThresh->GetYaxis()->SetTitle("Entries");
     auto hMax = dfMax.Histo1D({"maxCharge", "Max Charge", 10000, 0, 10000}, "maxCharge");
+    hMax->GetXaxis()->SetTitle("Max Charge [channels]");
+    hMax->GetYaxis()->SetTitle("Entries");
 
     // Save events if needed
     // std::ofstream out(TString::Format("./Outputs/eventsNegativeMinCharge.dat").Data());
@@ -123,10 +131,9 @@ void GetChargeThreshold()
     // out1.close();
 
     auto* c1 = new TCanvas();
-    c1->Divide(2,1);
+    c1->Divide(2, 1);
     c1->cd(1);
     hThresh->DrawClone();
     c1->cd(2);
     hMax->DrawClone();
-
 }

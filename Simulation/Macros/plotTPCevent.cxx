@@ -4,6 +4,8 @@
 #include "ActTPCParameters.h"
 #include "ActVoxel.h"
 
+#include <random>
+
 #include <TCanvas.h>
 #include <TH1D.h>
 #include <TH2D.h>
@@ -18,7 +20,6 @@
 #include <map>
 #include <tuple>
 #include <vector>
-#include <random>
 
 using XYZPoint = ROOT::Math::XYZPoint;
 using XYZVector = ROOT::Math::XYZVector;
@@ -27,8 +28,8 @@ using XYZVector = ROOT::Math::XYZVector;
 // Geometry
 // ============================================================
 constexpr double voxelSize = 1.0;           // mm
-constexpr double Gmean = 3000.0;           // Mean gain
-constexpr double theta = 0.7;              // Polya parameter
+constexpr double Gmean = 3000.0;            // Mean gain
+constexpr double theta = 0.7;                 // Polya parameter
 using voxelKey = std::tuple<int, int, int>; // ix,iy,iz
 
 
@@ -37,7 +38,7 @@ using voxelKey = std::tuple<int, int, int>; // ix,iy,iz
 // ============================================================
 double Polya(double Gmean, double theta)
 {
-    static std::mt19937 gen(std::random_device{}());
+    static std::mt19937 gen(std::random_device {}());
     std::gamma_distribution<double> gamma(theta + 1.0, Gmean / (theta + 1.0));
     return gamma(gen);
 }
@@ -271,34 +272,64 @@ void plotTPCevent(double range = 120, double thetaDeg = 10, double phiDeg = -45)
 
     DivideTrackInSegments(srim, range, dir, rp, 2.0, 5, voxelMap, electrons);
 
-    // ================= Event plots =================
+    // ================= Primary electrons plots =================
     TH2D* hXY = new TH2D("hXY", "XY;X [mm];Y [mm]", tpc.X(), 0, tpc.X(), tpc.Y(), 0, tpc.Y());
 
     TH2D* hXZ = new TH2D("hXZ", "XZ;X [mm];Z [mm]", tpc.X(), 0, tpc.X(), tpc.Z(), 0, tpc.Z());
 
     TH2D* hYZ = new TH2D("hYZ", "YZ;Z [mm];Y [mm]", tpc.Z(), 0, tpc.Z(), tpc.Y(), 0, tpc.Y());
 
+    // ================= Charge plots =================
+    TH2D* hXYq = new TH2D("hXYq", "Charge XY;X [mm];Y [mm]", tpc.X(), 0, tpc.X(), tpc.Y(), 0, tpc.Y());
+
+    TH2D* hXZq = new TH2D("hXZq", "Charge XZ;X [mm];Z [mm]", tpc.X(), 0, tpc.X(), tpc.Z(), 0, tpc.Z());
+
+    TH2D* hYZq = new TH2D("hYZq", "Charge YZ;Z [mm];Y [mm]", tpc.Z(), 0, tpc.Z(), tpc.Y(), 0, tpc.Y());
+
+    // Fill the primary electrons plots
     for(const auto& e : electrons)
     {
         hXY->Fill(e.X(), e.Y());
         hXZ->Fill(e.X(), e.Z());
         hYZ->Fill(e.Z(), e.Y());
     }
+    // Fill the charge plots
+    for(const auto& [key, v] : voxelMap)
+    {
+        const auto& pos = v.GetPosition();
+        double q = v.GetCharge();
+
+        hXYq->Fill(pos.X(), pos.Y(), q);
+        hXZq->Fill(pos.X(), pos.Z(), q);
+        hYZq->Fill(pos.Z(), pos.Y(), q);
+    }
 
     // ================= Profiles =================
     auto [profile, hist] = GetChargeProfile(voxelMap, true);
 
-    // ================= Canvas =================
+    // ================= Electrons canvas =================
+    TCanvas* cEle = new TCanvas("cEle", "Primary electrons", 1400, 450);
+    cEle->Divide(3, 1);
+
+    cEle->cd(1);
+    hXY->Draw("COLZ");
+
+    cEle->cd(2);
+    hXZ->Draw("COLZ");
+
+    cEle->cd(3);
+    hYZ->Draw("COLZ");
+
+    // ================= Main canvas =================
     TCanvas* c = new TCanvas("c", "TPC event + charge profile", 1800, 800);
     c->Divide(3, 2);
 
     c->cd(1);
-    hXY->Draw("COLZ");
+    hXYq->Draw("COLZ");
     c->cd(2);
-    hXZ->Draw("COLZ");
+    hXZq->Draw("COLZ");
     c->cd(3);
-    hYZ->Draw("COLZ");
-
+    hYZq->Draw("COLZ");
     c->cd(4);
     profile->Draw();
     c->cd(5);
