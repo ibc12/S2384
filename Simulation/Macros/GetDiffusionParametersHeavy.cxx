@@ -150,7 +150,7 @@ void GetDiffusionParametersHeavy()
                              {
                                  int idx = mer.fHeavyIdx;
                                  auto cluster = tpc.fClusters.at(idx); // copia segura
-                                 cluster.ScaleVoxels(2, driftFactor);
+                                 // cluster.ScaleVoxels(2, driftFactor);
 
                                  // --- total charge ---
                                  double sumQ = 0.;
@@ -164,20 +164,26 @@ void GetDiffusionParametersHeavy()
                                      return -1.0;
 
                                  // --- direction ---
-                                 auto u = cluster.GetLine().GetDirection().Unit();
-                                 auto point =
-                                     cluster.GetLine().GetPoint(); // Charge wieghted centroid, always part of line
+                                 auto line = cluster.GetLine();
+                                 line.Scale(2, driftFactor); // Scale manually, because we can't use function ScalVoxels
+                                 auto u = line.GetDirection().Unit();
+                                 auto point = line.GetPoint(); // Charge wieghted centroid, always part of line
 
                                  // --- <r_trans^2> ---
                                  double sumR2 = 0.;
 
-                                 for(const auto& vox : cluster.GetVoxels())
+                                 for(auto& vox : cluster.GetVoxels())
                                  {
-                                     double q = vox.GetCharge();
-                                     auto d = vox.GetPosition() - point;
-                                     double par = d.Dot(u);
-                                     double r2 = d.Mag2() - par * par;
-                                     sumR2 += q * r2;
+                                     for(auto& vext : vox.GetExtended())
+                                     {
+                                         vext.SetPosition({vext.GetPosition().X() * 2, vext.GetPosition().Y() * 2,
+                                                           vext.GetPosition().Z() * driftFactor});
+                                         double q = vext.GetCharge();
+                                         auto d = vext.GetPosition() - point;
+                                         double par = d.Dot(u);
+                                         double r2 = d.Mag2() - par * par;
+                                         sumR2 += q * r2;
+                                     }
                                  }
 
                                  return std::sqrt(sumR2 / sumQ);
