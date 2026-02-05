@@ -28,7 +28,7 @@
 
 #include "./../../PrettyStyle.C"
 
-void GetDiffusionParameters()
+void GetDiffusionParametersHeavy()
 {
     // Get diffusion parameters from simulation
     // PrettyStyle(false);
@@ -58,13 +58,8 @@ void GetDiffusionParameters()
 
     // df.Describe().Print();
 
-    // Get the L1 events
-    auto lambdaIsL1 {[](ActRoot::MergerData& mer, ActRoot::ModularData& mod)
-                     { return (mod.Get("GATCONF") == 8) && (mer.fLightIdx != -1); }};
-    auto dfL1 = df.Filter(lambdaIsL1, {"MergerData", "ModularData"});
-
-    // Filter events to avoid bad events for heavy or L1 analysis
-    auto dfFilter = dfL1.Filter( // Check for heavier clusters than Li
+    // Filter events to avoid bad events for heavy analysis
+    auto dfFilter = df.Filter( // Check for heavier clusters than Li
                           [](ActRoot::MergerData& m)
                           {
                               if(m.fHeavy.fQave > 2000.)
@@ -109,19 +104,48 @@ void GetDiffusionParameters()
                             },
                             {"MergerData", "GETTree.TPCData"});
 
+    // Get the L1 events
+    auto lambdaIsL1 {[](ActRoot::MergerData& mer, ActRoot::ModularData& mod)
+                     { return (mod.Get("GATCONF") == 8) && (mer.fLightIdx != -1); }};
+    auto dfL1 = dfFilter.Filter(lambdaIsL1, {"MergerData", "ModularData"});
+
+    // Go for events with z almost continuous
     // Filter low charge deposition (high energy light particles, RANSAC needed)
-    auto dfFilterL1 = dfFilter.Filter(
+    auto dfFilterL1 = dfL1.Filter(
+                              [](ActRoot::MergerData& mer, ActRoot::TPCData& tpc)
+                              {
+                                  auto thetaLight = mer.fThetaLight;
+                                  auto phiLight = std::abs(mer.fPhiLight); // aboid -90 deg ambiguity
+                                  if(phiLight < 100.0 && phiLight > 80.0 && mer.fLightIdx != -1)
+                                      return true;
+                                  else if(phiLight > 260.0 && phiLight < 280.0 && mer.fLightIdx != -1)
+                                      return true;
+                                  else
+                                      return false;
+                              },
+                              {"MergerData", "TPCData"})
+                          .Filter(
+                              [](ActRoot::MergerData& mer)
+                              {
+                                  if(mer.fLight.fQave > 300.0)
+                                      return true;
+                                  else
+                                      return false;
+                              },
+                              {"MergerData"});
+
+    // Debug with heavy particle
+    auto dfHeavyFilter = dfFilter.Filter(
         [](ActRoot::MergerData& mer)
         {
-            if(mer.fLight.fQave > 300.0)
+            if(mer.fHeavyIdx != -1)
                 return true;
             else
                 return false;
         },
         {"MergerData"});
-
-    auto dfSigma =
-        dfFilterL1.Define("sigmaTrans",
+    auto dfHeavy =
+        dfHeavyFilter.Define("sigmaTrans",
                              [&](ActRoot::TPCData& tpc, ActRoot::MergerData& mer)
                              {
                                  int idx = mer.fHeavyIdx;
@@ -149,14 +173,11 @@ void GetDiffusionParameters()
 
                                  for(const auto& vox : cluster.GetVoxels())
                                  {
-                                    for(const auto& vext : vox.GetExtended())
-                                    {
-                                     double q = vext.GetCharge();
-                                     auto d = vext.GetPosition() - point;
+                                     double q = vox.GetCharge();
+                                     auto d = vox.GetPosition() - point;
                                      double par = d.Dot(u);
                                      double r2 = d.Mag2() - par * par;
                                      sumR2 += q * r2;
-                                    }
                                  }
 
                                  return std::sqrt(sumR2 / sumQ);
@@ -164,11 +185,28 @@ void GetDiffusionParameters()
                              {"TPCData", "MergerData"});
 
 
-    auto hSigmaTheta = dfSigma.Histo2D(
+    // Check if GetPosition gives center of voxel or corner
+    auto dfVoxel = dfHeavy.Define("voxelPos",
+                                  [](ActRoot::TPCData& tpc, ActRoot::MergerData& mer)
+                                  {
+                                      int idx = mer.fHeavyIdx;
+                                      auto cluster = tpc.fClusters.at(idx); // copia segura
+                                      auto voxels = cluster.GetVoxels();
+                                      if(voxels.size() > 0)
+                                          return voxels[0].GetPosition().Y();
+                                      else
+                                          return -9999.0f;
+                                  },
+                                  {"TPCData", "MergerData"});
+
+    auto hVoxelPos = dfVoxel.Histo1D({"hVoxelPos", "Voxel position Y;Y [mm];Counts", 800, 0, 200}, "voxelPos");
+    auto* hVoxelPosPtr = hVoxelPos.GetPtr();
+
+    auto hSigmaTheta = dfHeavy.Histo2D(
         {"hTheta", "Sigma vs ThetaHeavy;#sigma_{trans} [mm];#theta_{Heavy} [deg]", 500, 0, 5, 100, 0, 50}, "sigmaTrans",
         "fThetaHeavy");
     auto hSigmaPhi =
-        dfSigma.Histo2D({"hPhi", "Sigma vs PhiHeavy;#sigma_{trans} [mm];#phi_{Heavy} [deg]", 50, 0, 4, 360, -180, 180},
+        dfHeavy.Histo2D({"hPhi", "Sigma vs PhiHeavy;#sigma_{trans} [mm];#phi_{Heavy} [deg]", 50, 0, 4, 360, -180, 180},
                         "sigmaTrans", "fPhiHeavy");
 
     // Get the histograms to avooid RDataFrame smart pointer issues
@@ -176,7 +214,7 @@ void GetDiffusionParameters()
     auto* hPhi = hSigmaPhi.GetPtr();
 
     // Plot sigmaTrans
-    auto hSigmaTrans = dfSigma.Histo1D(
+    auto hSigmaTrans = dfHeavy.Histo1D(
         {"hSigmaTrans", "Transverse sigma of heavy particle;#sigma_{trans} [mm];Counts", 100, 0, 3}, "sigmaTrans");
     auto* hSigmaTransPtr = hSigmaTrans.GetPtr();
     // Fit to gausian in the range 0-7 mm
@@ -185,6 +223,11 @@ void GetDiffusionParameters()
     auto fit = hSigmaTransPtr->GetFunction("gaus");
     double mean = fit->GetParameter(1);
     double sigma = fit->GetParameter(2);
+
+    // Plot voxel position histogram
+    TCanvas* cVoxel = new TCanvas("cVoxel", "Voxel Position Y", 800, 600);
+    cVoxel->cd();
+    hVoxelPosPtr->DrawClone();
 
 
     ///////////
@@ -218,4 +261,14 @@ void GetDiffusionParameters()
     //     },
     //     {"MergerData", "sigmaTrans"});
     // outFile.close();
+    //
+    // std::ofstream outFile1 {"./Outputs/Events_Low_SigmaT.dat"};
+    // dfHeavy.Foreach(
+    //     [&outFile1](const ActRoot::MergerData& mer, double sigmaT)
+    //     {
+    //         if(sigmaT <= 1.2)
+    //             mer.Stream(outFile1);
+    //     },
+    //     {"MergerData", "sigmaTrans"});
+    // outFile1.close();
 }
