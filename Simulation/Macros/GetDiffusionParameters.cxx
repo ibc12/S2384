@@ -122,95 +122,95 @@ void GetDiffusionParameters()
 
 
     // Dummy parameters. Need tuning
-    int nBinsS = 100;
+    int nBinsS = 50;
     double sMin = 0;
     double sMax = 400;
-    int minVoxelsPerSlice = 5;
+    int minVoxelsPerSlice = 12;
     double ds = (sMax - sMin) / nBinsS;
 
-    auto dfSigmaLight =
-        dfFilterL1.Define("sigmaTransZ",
-                          [&](ActRoot::TPCData& tpc, ActRoot::MergerData& mer)
-                          {
-                              std::vector<std::pair<double, double>> out;
+    auto dfSigmaLight = dfFilterL1.Define("sigmaTransZ",
+                                          [&](ActRoot::TPCData& tpc, ActRoot::MergerData& mer)
+                                          {
+                                              std::vector<std::pair<double, double>> out;
 
-                              int idx = mer.fLightIdx;
-                              if(idx < 0)
-                                  return out;
+                                              int idx = mer.fLightIdx;
+                                              if(idx < 0)
+                                                  return out;
 
-                              constexpr double zRPtoPad = 110.0; // mm (distance from RP to pad plane)
+                                              constexpr double zRPtoPad = 110.0; // mm (distance from RP to pad plane)
 
-                              auto cluster = tpc.fClusters.at(idx);
-                              auto line = cluster.GetLine();
-                              line.Scale(2,
-                                         driftFactor); // scale line only (do NOT scale voxels here)
+                                              auto cluster = tpc.fClusters.at(idx);
+                                              auto line = cluster.GetLine();
+                                              line.Scale(2, driftFactor); // scale line only (do NOT scale voxels)
 
-                              auto u = line.GetDirection().Unit();
-                              auto p0 = line.GetPoint(); // charge weighted center of the cluster
+                                              auto u = line.GetDirection().Unit();
+                                              auto p0 = line.GetPoint(); // charge weighted center of the cluster
 
-                              for(int ib = 0; ib < nBinsS; ++ib)
-                              {
-                                  double sLow = sMin + ib * ds;
-                                  double sHigh = sLow + ds;
+                                              for(int ib = 0; ib < nBinsS; ++ib)
+                                              {
+                                                  double sLow = sMin + ib * ds;
+                                                  double sHigh = sLow + ds;
 
-                                  double sumQ = 0.0;
-                                  double sumR2 = 0.0;
-                                  double sumZ_Q = 0.0;
-                                  int nVox = 0;
+                                                  double sumQ = 0.0;
+                                                  double sumR2 = 0.0;
+                                                  double sumZ_Q = 0.0;
+                                                  int nVox = 0;
 
-                                  for(auto& vox : cluster.GetVoxels())
-                                  {
-                                      for(auto& vext : vox.GetExtended())
-                                      {
-                                          auto pos = vext.GetPosition();
-                                          vext.SetPosition({pos.X() * 2, pos.Y() * 2, pos.Z() * driftFactor});
+                                                  for(const auto& vox : cluster.GetVoxels())
+                                                  {
+                                                      for(const auto& vext : vox.GetExtended())
+                                                      {
+                                                          // scaled position
+                                                          const auto& pos = vext.GetPosition();
+                                                          ROOT::Math::XYZPointF posScaled {pos.X() * 2.f, pos.Y() * 2.f,
+                                                                                           pos.Z() * driftFactor};
 
-                                          auto dr = vext.GetPosition() - mer.fRP;
-                                          double s = dr.Dot(u);
+                                                          auto dr = posScaled - mer.fRP;
+                                                          double s = dr.Dot(u);
 
-                                          if(s < sLow || s >= sHigh)
-                                              continue;
+                                                          if(s < sLow || s >= sHigh)
+                                                              continue;
 
-                                          double q = vext.GetCharge();
+                                                          double q = vext.GetCharge();
 
-                                          auto d = vext.GetPosition() - p0;
-                                          double par = d.Dot(u);
-                                          double r2 = d.Mag2() - par * par;
+                                                          auto d = posScaled - p0;
+                                                          double par = d.Dot(u);
+                                                          double r2 = d.Mag2() - par * par;
 
-                                          sumQ += q;
-                                          sumR2 += q * r2;
-                                          sumZ_Q += q * vext.GetPosition().Z();
-                                          nVox++;
-                                      }
-                                  }
+                                                          sumQ += q;
+                                                          sumR2 += q * r2;
+                                                          sumZ_Q += q * posScaled.Z();
+                                                          nVox++;
+                                                      }
+                                                  }
 
-                                  // minimum amount of voxels and charge to consider the slice
-                                  if(nVox < minVoxelsPerSlice || sumQ <= 0.)
-                                      continue;
+                                                  // minimum amount of voxels and charge to consider the slice
+                                                  if(nVox < minVoxelsPerSlice || sumQ <= 0.)
+                                                      continue;
 
-                                  double sigma = std::sqrt(sumR2 / sumQ);
+                                                  double sigma = std::sqrt(sumR2 / sumQ);
 
-                                  // physical Z position of the slice center (charge weighted)
-                                  double zSlice = sumZ_Q / sumQ;
+                                                  // physical Z position of the slice (charge weighted)
+                                                  double zSlice = sumZ_Q / sumQ;
 
-                                  // Z difference relative to the RP
-                                  //  deltaZ > 0  -> track goes to larger Z (away from pad plane)
-                                  //  deltaZ < 0  -> track goes to smaller Z (closer to pad plane)
-                                  double deltaZ = zSlice - mer.fRP.Z();
+                                                  // Z difference relative to the RP
+                                                  //  deltaZ > 0  -> track goes to larger Z (away from pad plane)
+                                                  //  deltaZ < 0  -> track goes to smaller Z (closer to pad plane)
+                                                  double deltaZ = zSlice - mer.fRP.Z();
 
-                                  // real drift distance to the pad plane
-                                  double zDrift = zRPtoPad + deltaZ;
+                                                  // real drift distance to the pad plane
+                                                  double zDrift = zRPtoPad + deltaZ;
 
-                                  // physical protection
-                                  // if(zDrift <= 0 || zDrift > zRPtoPad + 20)
-                                  //     continue;
+                                                  // optional physical protection
+                                                  // if(zDrift <= 0 || zDrift > zRPtoPad + 20)
+                                                  //     continue;
 
-                                  out.emplace_back(zDrift, sigma);
-                              }
+                                                  out.emplace_back(zDrift, sigma);
+                                              }
 
-                              return out;
-                          },
-                          {"TPCData", "MergerData"});
+                                              return out;
+                                          },
+                                          {"TPCData", "MergerData"});
 
 
     auto hSigmaZ = new TH2D("hSigmaZ", "#sigma_{trans} vs z (light);z from pad plane [mm];#sigma_{trans} [mm]", nBinsS,
@@ -339,6 +339,28 @@ void GetDiffusionParameters()
         },
         {"zBeginEnd_raw", "zMinMax_scaled", "zDistance"});
 
+    // Debug strange behaviour at distZ < than 110 mm
+    int causalBreaks {0};
+    dfSigmaLight.Foreach(
+        [&](const std::vector<std::pair<double, double>>& slices, ActRoot::MergerData& mer)
+        {
+            constexpr double zRPtoPad = 110.0; // same as in Define
+
+            for(const auto& [zDrift, sigma] : slices)
+            {
+                // deltaZ = zSlice - RP.Z() = zDrift - zRPtoPad
+                double deltaZ = zDrift - zRPtoPad;
+
+                // check if deltaZ positive but slice too close to pad plane
+                if(deltaZ > 0 && zDrift < 110.0)
+                    causalBreaks++;
+            }
+        },
+        {"sigmaTransZ", "MergerData"});
+
+    std::cout << "Number of slices breaking causality (deltaZ > 0 but zDrift < 110 mm): " << causalBreaks << std::endl;
+
+
     // auto hSigmaTheta = dfSigma.Histo2D(
     //     {"hTheta", "Sigma vs ThetaHeavy;#sigma_{trans} [mm];#theta_{Heavy} [deg]", 500, 0, 5, 100, 0, 50},
     //     "sigmaTrans", "fThetaHeavy");
@@ -435,4 +457,19 @@ void GetDiffusionParameters()
     //     },
     //     {"MergerData", "sigmaTransZ"});
     // outFile1.close();
+    std::ofstream outFile2 {"./Outputs/Events_LowDistZ.dat"};
+    dfDebug.Foreach(
+        [&outFile2](const ActRoot::MergerData& mer, const std::vector<std::pair<double, double>>& v)
+        {
+            for(const auto& [zDistance, sigma] : v)
+            {
+                if(zDistance < 80)
+                {
+                    mer.Stream(outFile2);
+                    break; // Only need to save the event once, even if it has multiple slices with s < 0
+                }
+            }
+        },
+        {"MergerData", "sigmaTransZ"});
+    outFile2.close();
 }
