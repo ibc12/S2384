@@ -56,13 +56,15 @@ void GetChargeThreshold()
     auto dfThresh = dfFilter.Define("chargeThreshold",
                                     [](ActRoot::TPCData& tpc)
                                     {
-                                        float minCharge = 1e6;
+                                        // Gate on y < 75 and y > 65 (beam pads)
+
+                                        float minCharge = 5000;
                                         for(auto cluster : tpc.fClusters)
                                         {
                                             for(auto voxel : cluster.GetVoxels())
                                             {
                                                 float charge = voxel.GetCharge();
-                                                if(charge < minCharge)
+                                                if(charge < minCharge && (voxel.GetPosition().Y() < 65 || voxel.GetPosition().Y() > 75))
                                                     minCharge = charge;
                                             }
                                         }
@@ -70,10 +72,9 @@ void GetChargeThreshold()
                                         for(auto voxel : tpc.fRaw)
                                         {
                                             float charge = voxel.GetCharge();
-                                            if(charge < minCharge)
+                                            if(charge < minCharge && (voxel.GetPosition().Y() < 55 || voxel.GetPosition().Y() > 75))
                                                 minCharge = charge;
                                         }
-
                                         return minCharge;
                                     },
                                     {"TPCData"});
@@ -103,12 +104,80 @@ void GetChargeThreshold()
                                  },
                                  {"TPCData"});
 
-    auto hThresh = dfThresh.Histo1D({"chargeThreshold", "Charge Threshold", 1000, 0, 1000}, "chargeThreshold");
+    // Get position of min charge
+    auto dfPosMin = dfFilter
+                        .Define("posMinChargeY",
+                                [](ActRoot::TPCData& tpc)
+                                {
+                                    float minCharge = 1e6;
+                                    float posMin;
+                                    for(auto cluster : tpc.fClusters)
+                                    {
+                                        for(auto voxel : cluster.GetVoxels())
+                                        {
+                                            float charge = voxel.GetCharge();
+                                            if(charge < minCharge)
+                                            {
+                                                minCharge = charge;
+                                                posMin = voxel.GetPosition().Y();
+                                            }
+                                        }
+                                    }
+
+                                    for(auto voxel : tpc.fRaw)
+                                    {
+                                        float charge = voxel.GetCharge();
+                                        if(charge < minCharge)
+                                        {
+                                            minCharge = charge;
+                                            posMin = voxel.GetPosition().Y();
+                                        }
+                                    }
+
+                                    return posMin;
+                                },
+                                {"TPCData"})
+                        .Define("posMinChargeX",
+                                [](ActRoot::TPCData& tpc)
+                                {
+                                    float minCharge = 1e6;
+                                    float posMin;
+                                    for(auto cluster : tpc.fClusters)
+                                    {
+                                        for(auto voxel : cluster.GetVoxels())
+                                        {
+                                            float charge = voxel.GetCharge();
+                                            if(charge < minCharge)
+                                            {
+                                                minCharge = charge;
+                                                posMin = voxel.GetPosition().X();
+                                            }
+                                        }
+                                    }
+
+                                    for(auto voxel : tpc.fRaw)
+                                    {
+                                        float charge = voxel.GetCharge();
+                                        if(charge < minCharge)
+                                        {
+                                            minCharge = charge;
+                                            posMin = voxel.GetPosition().X();
+                                        }
+                                    }
+
+                                    return posMin;
+                                },
+                                {"TPCData"});
+
+    auto hThresh = dfThresh.Histo1D({"chargeThreshold", "Charge Threshold", 6000, 0, 6000}, "chargeThreshold");
     hThresh->GetXaxis()->SetTitle("Charge Threshold [channels]");
     hThresh->GetYaxis()->SetTitle("Entries");
     auto hMax = dfMax.Histo1D({"maxCharge", "Max Charge", 10000, 0, 10000}, "maxCharge");
     hMax->GetXaxis()->SetTitle("Max Charge [channels]");
     hMax->GetYaxis()->SetTitle("Entries");
+    auto hPosMin =
+        dfPosMin.Histo2D({"posMinCharge", "Position of Min Charge;X [mm];Y [mm]", 100, -150, 150, 100, -150, 150},
+                         "posMinChargeX", "posMinChargeY");
 
     // Save events if needed
     // std::ofstream out(TString::Format("./Outputs/eventsNegativeMinCharge.dat").Data());
@@ -131,9 +200,11 @@ void GetChargeThreshold()
     // out1.close();
 
     auto* c1 = new TCanvas();
-    c1->Divide(2, 1);
+    c1->Divide(3, 1);
     c1->cd(1);
     hThresh->DrawClone();
     c1->cd(2);
     hMax->DrawClone();
+    c1->cd(3);
+    hPosMin->DrawClone("COLZ");
 }

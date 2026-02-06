@@ -120,87 +120,224 @@ void GetDiffusionParameters()
         },
         {"MergerData"});
 
-    int nBinsS = 20;
-    double sMin = -10;
-    double sMax = 10;
+
+    // Dummy parameters. Need tuning
+    int nBinsS = 100;
+    double sMin = 0;
+    double sMax = 400;
     int minVoxelsPerSlice = 5;
     double ds = (sMax - sMin) / nBinsS;
 
-    auto dfSigmaLight = dfFilterL1.Define("sigmaTransS",
-                                          [&](ActRoot::TPCData& tpc, ActRoot::MergerData& mer)
-                                          {
-                                              std::vector<std::pair<double, double>> out;
+    auto dfSigmaLight =
+        dfFilterL1.Define("sigmaTransZ",
+                          [&](ActRoot::TPCData& tpc, ActRoot::MergerData& mer)
+                          {
+                              std::vector<std::pair<double, double>> out;
 
-                                              int idx = mer.fLightIdx;
-                                              if(idx < 0)
-                                                  return out;
+                              int idx = mer.fLightIdx;
+                              if(idx < 0)
+                                  return out;
 
-                                              auto cluster = tpc.fClusters.at(idx);
-                                              auto line = cluster.GetLine();
-                                              line.Scale(2, driftFactor); // Scale manually, because we can't use function ScalVoxels
+                              constexpr double zRPtoPad = 110.0; // mm (distance from RP to pad plane)
 
-                                              auto u = line.GetDirection().Unit();
-                                              auto p0 = line.GetPoint(); // centroide de carga
+                              auto cluster = tpc.fClusters.at(idx);
+                              auto line = cluster.GetLine();
+                              line.Scale(2,
+                                         driftFactor); // scale line only (do NOT scale voxels here)
 
-                                              for(int ib = 0; ib < nBinsS; ++ib)
-                                              {
-                                                  double sLow = sMin + ib * ds;
-                                                  double sHigh = sLow + ds;
-                                                  double sCenter = sLow + ds / 2.0;
+                              auto u = line.GetDirection().Unit();
+                              auto p0 = line.GetPoint(); // charge weighted center of the cluster
 
-                                                  double sumQ = 0.0;
-                                                  double sumR2 = 0.0;
-                                                  int nVox = 0;
+                              for(int ib = 0; ib < nBinsS; ++ib)
+                              {
+                                  double sLow = sMin + ib * ds;
+                                  double sHigh = sLow + ds;
 
-                                                  for(auto& vox : cluster.GetVoxels())
-                                                  {
-                                                      for(auto& vext : vox.GetExtended())
-                                                      {
-                                                          vext.SetPosition({vext.GetPosition().X() * 2, vext.GetPosition().Y() * 2, vext.GetPosition().Z() * driftFactor});
-                                                          auto dr = vext.GetPosition() - mer.fRP;
-                                                          double s = dr.Dot(u);
+                                  double sumQ = 0.0;
+                                  double sumR2 = 0.0;
+                                  double sumZ_Q = 0.0;
+                                  int nVox = 0;
 
-                                                          if(s < sLow || s >= sHigh)
-                                                              continue;
+                                  for(auto& vox : cluster.GetVoxels())
+                                  {
+                                      for(auto& vext : vox.GetExtended())
+                                      {
+                                          auto pos = vext.GetPosition();
+                                          vext.SetPosition({pos.X() * 2, pos.Y() * 2, pos.Z() * driftFactor});
 
-                                                          double q = vext.GetCharge();
+                                          auto dr = vext.GetPosition() - mer.fRP;
+                                          double s = dr.Dot(u);
 
-                                                          auto d = vext.GetPosition() - p0;
-                                                          double par = d.Dot(u);
-                                                          double r2 = d.Mag2() - par * par;
+                                          if(s < sLow || s >= sHigh)
+                                              continue;
 
-                                                          sumQ += q;
-                                                          sumR2 += q * r2;
-                                                          nVox++;
-                                                      }
-                                                  }
+                                          double q = vext.GetCharge();
 
-                                                  // min ammount of voxels and charge to consider the slice
-                                                  if(nVox < minVoxelsPerSlice || sumQ <= 0.)
-                                                      continue;
+                                          auto d = vext.GetPosition() - p0;
+                                          double par = d.Dot(u);
+                                          double r2 = d.Mag2() - par * par;
 
-                                                  double sigma = std::sqrt(sumR2 / sumQ);
-                                                  out.emplace_back(sCenter, sigma);
-                                              }
+                                          sumQ += q;
+                                          sumR2 += q * r2;
+                                          sumZ_Q += q * vext.GetPosition().Z();
+                                          nVox++;
+                                      }
+                                  }
 
-                                              return out;
-                                          },
-                                          {"TPCData", "MergerData"});
+                                  // minimum amount of voxels and charge to consider the slice
+                                  if(nVox < minVoxelsPerSlice || sumQ <= 0.)
+                                      continue;
+
+                                  double sigma = std::sqrt(sumR2 / sumQ);
+
+                                  // physical Z position of the slice center (charge weighted)
+                                  double zSlice = sumZ_Q / sumQ;
+
+                                  // Z difference relative to the RP
+                                  //  deltaZ > 0  -> track goes to larger Z (away from pad plane)
+                                  //  deltaZ < 0  -> track goes to smaller Z (closer to pad plane)
+                                  double deltaZ = zSlice - mer.fRP.Z();
+
+                                  // real drift distance to the pad plane
+                                  double zDrift = zRPtoPad + deltaZ;
+
+                                  // physical protection
+                                  // if(zDrift <= 0 || zDrift > zRPtoPad + 20)
+                                  //     continue;
+
+                                  out.emplace_back(zDrift, sigma);
+                              }
+
+                              return out;
+                          },
+                          {"TPCData", "MergerData"});
 
 
-    auto hSigmaS = new TH2D("hSigmaS", "#sigma_{trans} vs s (light);s from RP [mm];#sigma_{trans} [mm]", nBinsS, sMin,
-                            sMax, 100, 0, 5);
+    auto hSigmaZ = new TH2D("hSigmaZ", "#sigma_{trans} vs z (light);z from pad plane [mm];#sigma_{trans} [mm]", nBinsS,
+                            sMin, sMax, 500, 0, 5);
 
     dfSigmaLight.Foreach(
         [&](const std::vector<std::pair<double, double>>& v)
         {
-            for(const auto& [s, sigma] : v)
-                hSigmaS->Fill(s, sigma);
+            for(const auto& [z, sigma] : v)
+                hSigmaZ->Fill(z, sigma);
         },
-        {"sigmaTransS"});
+        {"sigmaTransZ"});
 
-    auto prof = hSigmaS->ProfileX();
+    auto prof = hSigmaZ->ProfileX();
 
+    // Do also the profile of sigma vs sqrt z and sigma² against z
+    auto hSigmaSqrtZ = new TH2D(
+        "hSigmaSqrtZ", "#sigma_{trans} vs sqrt(z) (light);sqrt(z) from pad plane [mm^{1/2}];#sigma_{trans} [mm]",
+        std::sqrt(nBinsS), std::sqrt(sMin), std::sqrt(sMax), 500, 0, 5);
+    auto hSigmaZ2 = new TH2D("hSigmaZ2", "#sigma^2_{trans} vs z (light);z from pad plane [mm];#sigma_{trans}^2 [mm^2]",
+                             nBinsS, sMin, sMax, 500, 0, 25);
+    dfSigmaLight.Foreach(
+        [&](const std::vector<std::pair<double, double>>& v)
+        {
+            for(const auto& [z, sigma] : v)
+            {
+                hSigmaSqrtZ->Fill(std::sqrt(z), sigma);
+                hSigmaZ2->Fill(z, sigma * sigma);
+            }
+        },
+        {"sigmaTransZ"});
+
+    // Get profiles and fit them lineary, then show results in canvas y = a + bx
+    auto profSqrtZ = hSigmaSqrtZ->ProfileX();
+    int sMinFitSqrtZ = 5;
+    int sMaxFitSqrtZ = 13;
+    profSqrtZ->Fit("pol1", "", "", sMinFitSqrtZ, sMaxFitSqrtZ);
+    auto a_SqrtZ = profSqrtZ->GetFunction("pol1")->GetParameter(0);
+    auto b_SqrtZ = profSqrtZ->GetFunction("pol1")->GetParameter(1);
+
+    auto profZ2 = hSigmaZ2->ProfileX();
+    int sMinFitZ2 = 100;
+    int sMaxFitZ2 = 250;
+    profZ2->Fit("pol1", "", "", sMinFitZ2, sMaxFitZ2);
+    auto a_Z2 = profZ2->GetFunction("pol1")->GetParameter(0);
+    auto b_Z2 = profZ2->GetFunction("pol1")->GetParameter(1);
+
+    // Debug z distances (I think they are too big)
+    auto dfDebug = dfSigmaLight
+                       .Define("zBeginEnd_raw",
+                               [](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+                               {
+                                   int idx = m.fLightIdx;
+                                   if(idx < 0)
+                                       return std::make_pair(0.f, 0.f);
+
+                                   auto cluster = tpc.fClusters.at(idx);
+                                   auto line = cluster.GetLine();
+                                   auto u = line.GetDirection().Unit();
+                                   cluster.SortAlongDir(u);
+                                   float zMin = 1e6;
+                                   float zMax = -1e6;
+                                   for(auto& vox : cluster.GetVoxels())
+                                   {
+                                       for(auto& vext : vox.GetExtended())
+                                       {
+                                           auto pos = vext.GetPosition();
+                                           if(pos.Z() < zMin)
+                                               zMin = pos.Z();
+                                           if(pos.Z() > zMax)
+                                               zMax = pos.Z();
+                                       }
+                                   }
+                                   return std::make_pair(zMin * 4, zMax * 4); // Scale from btb to tb
+                               },
+                               {"MergerData", "TPCData"})
+                       .Define("zMinMax_scaled",
+                               [&](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+                               {
+                                   int idx = m.fLightIdx;
+                                   if(idx < 0)
+                                       return std::make_pair(0.f, 0.f);
+
+                                   auto cluster = tpc.fClusters.at(idx);
+                                   auto line = cluster.GetLine();
+                                   line.Scale(2, driftFactor); // scale line and not whole cluster to avoid moving
+                                                               // voxels twice with GetExtended
+                                   auto u = line.GetDirection().Unit();
+                                   cluster.SortAlongDir(u);
+                                   float zMin = 1e6;
+                                   float zMax = -1e6;
+                                   for(auto& vox : cluster.GetVoxels())
+                                   {
+                                       for(auto& vext : vox.GetExtended())
+                                       {
+                                           auto pos = vext.GetPosition();
+                                           if(pos.Z() < zMin)
+                                               zMin = pos.Z();
+                                           if(pos.Z() > zMax)
+                                               zMax = pos.Z();
+                                       }
+                                   }
+                                   return std::make_pair(zMin, zMax);
+                               },
+                               {"MergerData", "TPCData"})
+                       .Define("zDistance", [&](const std::pair<float, float>& zBeginEnd)
+                               { return zBeginEnd.second - zBeginEnd.first; }, {"zMinMax_scaled"});
+
+    auto hzBeginRaw = new TH1D("hzBeginRaw", "z begin (raw);z [mm]", 100, 0, 512);
+    auto hzEndRaw = new TH1D("hzEndRaw", "z end (raw);z [mm]", 100, 0, 512);
+    auto hzBeginScaled = new TH1D("hzBeginScaled", "z begin (scaled);z [mm]", 100, 0, 512);
+    auto hzEndScaled = new TH1D("hzEndScaled", "z end (scaled);z [mm]", 100, 0, 512);
+    auto hzDistance = new TH1D("hzDistance", "z distance (scaled);z [mm]", 100, 0, 300);
+
+    dfDebug.Foreach(
+        [&](const std::pair<float, float>& zBeginEnd, const std::pair<float, float>& zMinMaxScaled,
+            const float zDistance)
+        {
+            hzBeginScaled->Fill(zMinMaxScaled.first);
+            hzEndScaled->Fill(zMinMaxScaled.second);
+
+            hzBeginRaw->Fill(zBeginEnd.first);
+            hzEndRaw->Fill(zBeginEnd.second);
+
+            hzDistance->Fill(zDistance);
+        },
+        {"zBeginEnd_raw", "zMinMax_scaled", "zDistance"});
 
     // auto hSigmaTheta = dfSigma.Histo2D(
     //     {"hTheta", "Sigma vs ThetaHeavy;#sigma_{trans} [mm];#theta_{Heavy} [deg]", 500, 0, 5, 100, 0, 50},
@@ -225,18 +362,52 @@ void GetDiffusionParameters()
     // cSigmaDebug->cd(2);
     // hTheta->DrawClone("COLZ");
 
+    gStyle->SetOptFit(1111);
     auto* c1 = new TCanvas("c1", "Transverse sigma of heavy particle", 800, 600);
     c1->Divide(2, 1);
     c1->cd(1);
-    hSigmaS->DrawClone();
+    hSigmaZ->DrawClone();
     c1->cd(2);
     prof->DrawClone();
-    // Write mean and sigma in canvas
-    // TLatex latex;
-    // latex.SetNDC();
-    // latex.SetTextSize(0.03);
-    // latex.DrawLatex(0.6, 0.8, TString::Format("Mean = %.2f mm", mean));
-    // latex.DrawLatex(0.6, 0.75, TString::Format("#sigma = %.2f mm", sigma));
+
+    auto* c2 = new TCanvas("c2", "Transverse sigma of heavy particle FIT", 800, 600);
+    c2->Divide(2, 2);
+    c2->cd(1);
+    hSigmaSqrtZ->DrawClone();
+    c2->cd(2);
+    profSqrtZ->DrawClone();
+    c2->cd(3);
+    hSigmaZ2->DrawClone();
+    c2->cd(4);
+    profZ2->DrawClone();
+    // Write fit result in the canvas
+    c2->cd(2);
+    TLatex latex;
+    latex.SetNDC();
+    latex.SetTextSize(0.04);
+    latex.DrawLatex(0.15, 0.85,
+                    TString::Format("a = %.3f #pm %.3f", a_SqrtZ, profSqrtZ->GetFunction("pol1")->GetParError(0)));
+    latex.DrawLatex(0.15, 0.80,
+                    TString::Format("b = %.3f #pm %.3f", b_SqrtZ, profSqrtZ->GetFunction("pol1")->GetParError(1)));
+    c2->cd(4);
+    latex.DrawLatex(0.15, 0.85,
+                    TString::Format("a = %.3f #pm %.3f", a_Z2, profZ2->GetFunction("pol1")->GetParError(0)));
+    latex.DrawLatex(0.15, 0.80,
+                    TString::Format("b = %.3f #pm %.3f  ", b_Z2, profZ2->GetFunction("pol1")->GetParError(1)));
+
+    auto* c3 = new TCanvas("c3", "Z distances", 800, 600);
+    c3->Divide(2, 2);
+    c3->cd(1);
+    hzBeginRaw->DrawClone();
+    c3->cd(2);
+    hzEndRaw->DrawClone();
+    c3->cd(3);
+    hzBeginScaled->DrawClone();
+    c3->cd(4);
+    hzEndScaled->DrawClone();
+
+    auto* c4 = new TCanvas("c4", "Z distance between begin and end", 800, 600);
+    hzDistance->DrawClone();
 
     // Look at the events to ensure they are good candidates
     // std::ofstream outFile {"./Outputs/Events_High_SigmaT.dat"};
@@ -248,4 +419,20 @@ void GetDiffusionParameters()
     //     },
     //     {"MergerData", "sigmaTrans"});
     // outFile.close();
+    // Save events with too much distance in z
+    // std::ofstream outFile1 {"./Outputs/Events_HighZ.dat"};
+    // dfSigmaLight.Foreach(
+    //     [&outFile1](const ActRoot::MergerData& mer, const std::vector<std::pair<double, double>>& v)
+    //     {
+    //     for(const auto& [z, sigma] : v)
+    //     {
+    //         if(z > 300)
+    //         {
+    //             mer.Stream(outFile1);
+    //             break; // Only need to save the event once, even if it has multiple slices with s < 0
+    //         }
+    //     }
+    //     },
+    //     {"MergerData", "sigmaTransZ"});
+    // outFile1.close();
 }
