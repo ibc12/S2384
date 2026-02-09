@@ -43,7 +43,8 @@ void GetDiffusionParameters()
 
     // Read data
     ActRoot::DataManager dataman {dataconf, ActRoot::ModeType::EMerge};
-    dataman.SetRuns(64, 67);
+    // dataman.SetRuns(64, 67);
+    // dataman.SetRuns(105, 122);
     auto chain {dataman.GetChain()};
     auto chain2 {dataman.GetChain(ActRoot::ModeType::EReadSilMod)};
     auto chain3 {dataman.GetChain(ActRoot::ModeType::EFilter)};
@@ -61,156 +62,176 @@ void GetDiffusionParameters()
     // Get the L1 events
     auto lambdaIsL1 {[](ActRoot::MergerData& mer, ActRoot::ModularData& mod)
                      { return (mod.Get("GATCONF") == 8) && (mer.fLightIdx != -1); }};
-    auto dfL1 = df.Filter(lambdaIsL1, {"MergerData", "ModularData"});
+    auto dfIni = df.Filter(lambdaIsL1, {"MergerData", "ModularData"});
+
+    auto lambdaIsSilLat {[](ActRoot::MergerData& mer, ActRoot::ModularData& mod)
+                         { return (mod.Get("GATCONF") == 1 || mod.Get("GATCONF") == 2) && (mer.fLightIdx != -1); }};
+    // auto dfIni = df.Filter(lambdaIsSilLat, {"MergerData", "ModularData"});
 
     // Filter events to avoid bad events for heavy or L1 analysis
-    auto dfFilter = dfL1.Filter( // Check for heavier clusters than Li
-                            [](ActRoot::MergerData& m)
-                            {
-                                if(m.fHeavy.fQave > 2000.)
-                                    return false;
-                                return true;
-                            },
-                            {"MergerData"})
-                        .Filter( // Check if heavy reaches end of ACTAR (other way to mask heavier clusters,
-                                 // but can delete good events with heavy particle bad reconstructed)
-                            [](ActRoot::MergerData& m)
-                            {
-                                auto TL {m.fHeavy.fTL};
-                                auto theta {m.fThetaHeavy * TMath::DegToRad()};
-                                auto z_end {m.fRP.X() + TL * TMath::Cos(theta)};
-                                if(z_end < 240)
-                                    return false;
-                                return true;
-                            },
-                            {"MergerData"})
-                        .Filter( // Most of the times high charge deposit
-                                 // is masked by rp or is in beam cluster
-                            [&](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
-                            {
-                                auto rp {m.fRP};
-                                auto rp_y {rp.Y() / 2};
-                                // Run for all clusters
-                                int counter {};
-                                for(auto& cluster : tpc.fClusters)
-                                {
-                                    auto voxels {cluster.GetRefToVoxels()};
-                                    for(auto& v : voxels)
-                                    {
-                                        if(v.GetPosition().Y() > rp_y - 3 &&
-                                           v.GetPosition().Y() < rp_y + 3) // aprox L1 exclusion zone
-                                            if(v.GetCharge() > 3000.)
-                                                counter++;
-                                    }
-                                }
-                                if(counter > 4)
-                                    return false;
-                                return true;
-                            },
-                            {"MergerData", "GETTree.TPCData"});
+    // Split filters into steps so we can count how many events survive each stage
+    auto dfFilter1 = dfIni.Filter( // Check for heavier clusters than Li
+        [](ActRoot::MergerData& m)
+        {
+            if(m.fHeavy.fQave > 1600.)
+                return false;
+            return true;
+        },
+        {"MergerData"});
+
+    auto dfFilter2 = dfFilter1.Filter( // Check if heavy reaches end of ACTAR
+        [](ActRoot::MergerData& m)
+        {
+            auto TL {m.fHeavy.fTL};
+            auto theta {m.fThetaHeavy * TMath::DegToRad()};
+            auto z_end {m.fRP.X() + TL * TMath::Cos(theta)};
+            if(z_end < 240)
+                return false;
+            return true;
+        },
+        {"MergerData"});
+
+    auto dfFilter3 = dfFilter2.Filter( // Mask events with large local charge near RP / beam cluster
+        [&](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+        {
+            auto rp {m.fRP};
+            auto rp_y {rp.Y() / 2};
+            // Run for all clusters
+            int counter {};
+            for(auto& cluster : tpc.fClusters)
+            {
+                auto voxels {cluster.GetRefToVoxels()};
+                for(auto& v : voxels)
+                {
+                    if(v.GetPosition().Y() > rp_y - 3 && v.GetPosition().Y() < rp_y + 3) // aprox L1 exclusion zone
+                        if(v.GetCharge() > 3000.)
+                            counter++;
+                }
+            }
+            if(counter > 4)
+                return false;
+            return true;
+        },
+        {"MergerData", "GETTree.TPCData"});
 
     // Filter low charge deposition (high energy light particles, RANSAC needed)
-    auto dfFilterL1 = dfFilter.Filter(
+    auto dfFilterFinal = dfFilter3.Filter(
         [](ActRoot::MergerData& mer)
         {
-            if(mer.fLight.fQave > 300.0)
+            if(mer.fLight.fQave > 100.0 && mer.fLight.fQave < 1600.)
                 return true;
             else
                 return false;
         },
         {"MergerData"});
 
+    // Print counts at each step to diagnose where events are lost
+    auto nTotal = df.Count();
+    auto nIni = dfIni.Count();
+    auto nF1 = dfFilter1.Count();
+    auto nF2 = dfFilter2.Count();
+    auto nF3 = dfFilter3.Count();
+    auto nFinal = dfFilterFinal.Count();
+
+    std::cout << "Event counts:\n";
+    std::cout << "  Total chain: " << *nTotal << "\n";
+    std::cout << "  After GATCONF (1|2) & lightIdx!=-1: " << *nIni << "\n";
+    std::cout << "  After fHeavy.fQave <= 1600: " << *nF1 << "\n";
+    std::cout << "  After z_end >= 240: " << *nF2 << "\n";
+    std::cout << "  After local high-charge mask near RP: " << *nF3 << "\n";
+    std::cout << "  After fLight.fQave > 300: " << *nFinal << "\n";
+
 
     // Dummy parameters. Need tuning
-    int nBinsS = 50;
+    int nBinsS = 15;
     double sMin = 0;
-    double sMax = 400;
-    int minVoxelsPerSlice = 12;
+    double sMax = 300;
+    int minVoxelsPerSlice = 8;
     double ds = (sMax - sMin) / nBinsS;
 
-    auto dfSigmaLight = dfFilterL1.Define("sigmaTransZ",
-                                          [&](ActRoot::TPCData& tpc, ActRoot::MergerData& mer)
-                                          {
-                                              std::vector<std::pair<double, double>> out;
+    auto dfSigmaLight = dfFilterFinal.Define(
+        "sigmaTransZ",
+        [&](ActRoot::TPCData& tpc, ActRoot::MergerData& mer)
+        {
+            std::vector<std::pair<double, double>> out;
 
-                                              int idx = mer.fLightIdx;
-                                              if(idx < 0)
-                                                  return out;
+            int idx = mer.fLightIdx;
+            if(idx < 0)
+                return out;
 
-                                              constexpr double zRPtoPad = 110.0; // mm (distance from RP to pad plane)
+            constexpr double zRPtoPad = 110.0; // mm (distance from RP to pad plane)
 
-                                              auto cluster = tpc.fClusters.at(idx);
-                                              auto line = cluster.GetLine();
-                                              line.Scale(2, driftFactor); // scale line only (do NOT scale voxels)
+            auto cluster = tpc.fClusters.at(idx);
+            auto line = cluster.GetLine();
+            line.Scale(2, driftFactor); // scale line only (do NOT scale voxels)
 
-                                              auto u = line.GetDirection().Unit();
-                                              auto p0 = line.GetPoint(); // charge weighted center of the cluster
+            auto u = line.GetDirection().Unit();
+            auto p0 = line.GetPoint(); // charge weighted center of the cluster
 
-                                              for(int ib = 0; ib < nBinsS; ++ib)
-                                              {
-                                                  double sLow = sMin + ib * ds;
-                                                  double sHigh = sLow + ds;
+            for(int ib = 0; ib < nBinsS; ++ib)
+            {
+                double sLow = sMin + ib * ds;
+                double sHigh = sLow + ds;
 
-                                                  double sumQ = 0.0;
-                                                  double sumR2 = 0.0;
-                                                  double sumZ_Q = 0.0;
-                                                  int nVox = 0;
+                double sumQ = 0.0;
+                double sumR2 = 0.0;
+                double sumZ_Q = 0.0;
+                int nVox = 0;
 
-                                                  for(const auto& vox : cluster.GetVoxels())
-                                                  {
-                                                      for(const auto& vext : vox.GetExtended())
-                                                      {
-                                                          // scaled position
-                                                          const auto& pos = vext.GetPosition();
-                                                          ROOT::Math::XYZPointF posScaled {pos.X() * 2.f, pos.Y() * 2.f,
-                                                                                           pos.Z() * driftFactor};
+                for(const auto& vox : cluster.GetVoxels())
+                {
+                    for(const auto& vext : vox.GetExtended())
+                    {
+                        // scaled position
+                        const auto& pos = vext.GetPosition();
+                        ROOT::Math::XYZPointF posScaled {pos.X() * 2.f, pos.Y() * 2.f, pos.Z() * driftFactor};
 
-                                                          auto dr = posScaled - mer.fRP;
-                                                          double s = dr.Dot(u);
+                        auto dr = posScaled - mer.fRP;
+                        double s = dr.Dot(u);
 
-                                                          if(s < sLow || s >= sHigh)
-                                                              continue;
+                        if(s < sLow || s >= sHigh)
+                            continue;
 
-                                                          double q = vext.GetCharge();
+                        double q = vext.GetCharge();
 
-                                                          auto d = posScaled - p0;
-                                                          double par = d.Dot(u);
-                                                          double r2 = d.Mag2() - par * par;
+                        auto d = posScaled - p0;
+                        double par = d.Dot(u);
+                        double r2 = d.Mag2() - par * par;
 
-                                                          sumQ += q;
-                                                          sumR2 += q * r2;
-                                                          sumZ_Q += q * posScaled.Z();
-                                                          nVox++;
-                                                      }
-                                                  }
+                        sumQ += q;
+                        sumR2 += q * r2;
+                        sumZ_Q += q * posScaled.Z();
+                        nVox++;
+                    }
+                }
 
-                                                  // minimum amount of voxels and charge to consider the slice
-                                                  if(nVox < minVoxelsPerSlice || sumQ <= 0.)
-                                                      continue;
+                // minimum amount of voxels and charge to consider the slice
+                if(nVox < minVoxelsPerSlice || sumQ <= 0.)
+                    continue;
 
-                                                  double sigma = std::sqrt(sumR2 / sumQ);
+                double sigma = std::sqrt(sumR2 / sumQ);
 
-                                                  // physical Z position of the slice (charge weighted)
-                                                  double zSlice = sumZ_Q / sumQ;
+                // physical Z position of the slice (charge weighted)
+                double zSlice = sumZ_Q / sumQ;
 
-                                                  // Z difference relative to the RP
-                                                  //  deltaZ > 0  -> track goes to larger Z (away from pad plane)
-                                                  //  deltaZ < 0  -> track goes to smaller Z (closer to pad plane)
-                                                  double deltaZ = zSlice - mer.fRP.Z();
+                // Z difference relative to the RP
+                //  deltaZ > 0  -> track goes to larger Z (away from pad plane)
+                //  deltaZ < 0  -> track goes to smaller Z (closer to pad plane)
+                double deltaZ = zSlice - mer.fRP.Z();
 
-                                                  // real drift distance to the pad plane
-                                                  double zDrift = zRPtoPad + deltaZ;
+                // real drift distance to the pad plane
+                double zDrift = zRPtoPad + deltaZ;
 
-                                                  // optional physical protection
-                                                  // if(zDrift <= 0 || zDrift > zRPtoPad + 20)
-                                                  //     continue;
+                // optional physical protection
+                // if(zDrift <= 0 || zDrift > zRPtoPad + 20)
+                //     continue;
 
-                                                  out.emplace_back(zDrift, sigma);
-                                              }
+                out.emplace_back(zDrift, sigma);
+            }
 
-                                              return out;
-                                          },
-                                          {"TPCData", "MergerData"});
+            return out;
+        },
+        {"TPCData", "MergerData"});
 
 
     auto hSigmaZ = new TH2D("hSigmaZ", "#sigma_{trans} vs z (light);z from pad plane [mm];#sigma_{trans} [mm]", nBinsS,
@@ -231,7 +252,7 @@ void GetDiffusionParameters()
         "hSigmaSqrtZ", "#sigma_{trans} vs sqrt(z) (light);sqrt(z) from pad plane [mm^{1/2}];#sigma_{trans} [mm]",
         std::sqrt(nBinsS), std::sqrt(sMin), std::sqrt(sMax), 500, 0, 5);
     auto hSigmaZ2 = new TH2D("hSigmaZ2", "#sigma^2_{trans} vs z (light);z from pad plane [mm];#sigma_{trans}^2 [mm^2]",
-                             nBinsS, sMin, sMax, 500, 0, 25);
+                             25, 0, 300, 500, 0, 25);
     dfSigmaLight.Foreach(
         [&](const std::vector<std::pair<double, double>>& v)
         {
@@ -248,15 +269,13 @@ void GetDiffusionParameters()
     int sMinFitSqrtZ = 5;
     int sMaxFitSqrtZ = 13;
     profSqrtZ->Fit("pol1", "", "", sMinFitSqrtZ, sMaxFitSqrtZ);
-    auto a_SqrtZ = profSqrtZ->GetFunction("pol1")->GetParameter(0);
-    auto b_SqrtZ = profSqrtZ->GetFunction("pol1")->GetParameter(1);
 
     auto profZ2 = hSigmaZ2->ProfileX();
-    int sMinFitZ2 = 100;
+    // int sMinFitZ2 = 60;
+    // int sMaxFitZ2 = 200;
+    int sMinFitZ2 = 0;
     int sMaxFitZ2 = 250;
     profZ2->Fit("pol1", "", "", sMinFitZ2, sMaxFitZ2);
-    auto a_Z2 = profZ2->GetFunction("pol1")->GetParameter(0);
-    auto b_Z2 = profZ2->GetFunction("pol1")->GetParameter(1);
 
     // Debug z distances (I think they are too big)
     auto dfDebug = dfSigmaLight
@@ -319,46 +338,95 @@ void GetDiffusionParameters()
                        .Define("zDistance", [&](const std::pair<float, float>& zBeginEnd)
                                { return zBeginEnd.second - zBeginEnd.first; }, {"zMinMax_scaled"});
 
-    auto hzBeginRaw = new TH1D("hzBeginRaw", "z begin (raw);z [mm]", 100, 0, 512);
-    auto hzEndRaw = new TH1D("hzEndRaw", "z end (raw);z [mm]", 100, 0, 512);
-    auto hzBeginScaled = new TH1D("hzBeginScaled", "z begin (scaled);z [mm]", 100, 0, 512);
-    auto hzEndScaled = new TH1D("hzEndScaled", "z end (scaled);z [mm]", 100, 0, 512);
-    auto hzDistance = new TH1D("hzDistance", "z distance (scaled);z [mm]", 100, 0, 300);
+    // Diagnostic counts for zDistance to understand why many events may be missing from the
+    // hzDistance histogram (which is defined in the 0..300 mm range).
+    auto nDFDebug = dfDebug.Count();
+    auto nZD_inRange = dfDebug.Filter([](const float z) { return (z >= 0.0f && z <= 300.0f); }, {"zDistance"}).Count();
+    auto nZD_neg = dfDebug.Filter([](const float z) { return (z < 0.0f); }, {"zDistance"}).Count();
+    auto nZD_gt300 = dfDebug.Filter([](const float z) { return (z > 300.0f); }, {"zDistance"}).Count();
 
-    dfDebug.Foreach(
-        [&](const std::pair<float, float>& zBeginEnd, const std::pair<float, float>& zMinMaxScaled,
-            const float zDistance)
-        {
-            hzBeginScaled->Fill(zMinMaxScaled.first);
-            hzEndScaled->Fill(zMinMaxScaled.second);
+    std::cout << "dfDebug counts:\n";
+    std::cout << "  Total dfDebug rows: " << *nDFDebug << "\n";
+    std::cout << "  zDistance in [0,300]: " << *nZD_inRange << "\n";
+    std::cout << "  zDistance < 0: " << *nZD_neg << "\n";
+    std::cout << "  zDistance > 300: " << *nZD_gt300 << "\n";
 
-            hzBeginRaw->Fill(zBeginEnd.first);
-            hzEndRaw->Fill(zBeginEnd.second);
+     auto hzBeginRaw = new TH1D("hzBeginRaw", "z begin (raw);z [mm]", 100, 0, 512);
+     auto hzEndRaw = new TH1D("hzEndRaw", "z end (raw);z [mm]", 100, 0, 512);
+     auto hzBeginScaled = new TH1D("hzBeginScaled", "z begin (scaled);z [mm]", 100, 0, 512);
+     auto hzEndScaled = new TH1D("hzEndScaled", "z end (scaled);z [mm]", 100, 0, 512);
+     auto hzDistance = new TH1D("hzDistance", "z distance (scaled);z [mm]", 100, 0, 300);
 
-            hzDistance->Fill(zDistance);
-        },
-        {"zBeginEnd_raw", "zMinMax_scaled", "zDistance"});
+     dfDebug.Foreach(
+         [&](const std::pair<float, float>& zBeginEnd, const std::pair<float, float>& zMinMaxScaled,
+             const float zDistance)
+         {
+             hzBeginScaled->Fill(zMinMaxScaled.first);
+             hzEndScaled->Fill(zMinMaxScaled.second);
+
+             hzBeginRaw->Fill(zBeginEnd.first);
+             hzEndRaw->Fill(zBeginEnd.second);
+
+             hzDistance->Fill(zDistance);
+         },
+         {"zBeginEnd_raw", "zMinMax_scaled", "zDistance"});
 
     // Debug strange behaviour at distZ < than 110 mm
-    int causalBreaks {0};
+    // int causalBreaks {0};
+    // dfSigmaLight.Foreach(
+    //    [&](const std::vector<std::pair<double, double>>& slices, ActRoot::MergerData& mer)
+    //    {
+    //        constexpr double zRPtoPad = 110.0; // same as in Define
+    //
+    //        for(const auto& [zDrift, sigma] : slices)
+    //        {
+    //            // deltaZ = zSlice - RP.Z() = zDrift - zRPtoPad
+    //            double deltaZ = zDrift - zRPtoPad;
+    //
+    //            // check if deltaZ positive but slice too close to pad plane
+    //            if(deltaZ > 0 && zDrift < 110.0)
+    //                causalBreaks++;
+    //        }
+    //    },
+    //    {"sigmaTransZ", "MergerData"});
+    //
+    // std::cout << "Number of slices breaking causality (deltaZ > 0 but zDrift < 110 mm): " << causalBreaks <<
+    // std::endl;
+
+    // Get histos for zdrift distribution and phi angle distribution to check posible assymetry
+    auto hZdrift = new TH1D("hZdrift", "Drift distance to pad plane;z_{drift} [mm];Entries", 100, 0, 300);
+    auto hPhiLight = new TH1D("hPhiLight", "Phi angle of light particle;#phi_{light} [deg];Entries", 50, -180, 180);
+    auto hThetaLight =
+        new TH1D("hThetaLight", "Theta angle of light particle;#theta_{light} [deg];Entries", 50, 0, 180);
+    auto hDirZ = new TH1D("hDirZ", "Direction Z component;u_{z};Counts", 200, -1, 1);
     dfSigmaLight.Foreach(
-        [&](const std::vector<std::pair<double, double>>& slices, ActRoot::MergerData& mer)
+        [&](const std::vector<std::pair<double, double>>& slices, ActRoot::MergerData& mer, ActRoot::TPCData& tpc)
         {
             constexpr double zRPtoPad = 110.0; // same as in Define
 
-            for(const auto& [zDrift, sigma] : slices)
-            {
-                // deltaZ = zSlice - RP.Z() = zDrift - zRPtoPad
-                double deltaZ = zDrift - zRPtoPad;
+            // Get only the last slice (final position of particle)
+            if(slices.empty())
+                return;
 
-                // check if deltaZ positive but slice too close to pad plane
-                if(deltaZ > 0 && zDrift < 110.0)
-                    causalBreaks++;
-            }
+            const auto& [zDrift, sigma] = slices.back();
+            hZdrift->Fill(zDrift);
+
+            int idx = mer.fLightIdx;
+            auto line = tpc.fClusters[idx].GetLine();
+            auto u = line.GetDirection().Unit();
+            hDirZ->Fill(u.Z());
+
+            hPhiLight->Fill(mer.fPhiLight);
+
+            hThetaLight->Fill(mer.fThetaLight);
         },
-        {"sigmaTransZ", "MergerData"});
+        {"sigmaTransZ", "MergerData", "TPCData"});
 
-    std::cout << "Number of slices breaking causality (deltaZ > 0 but zDrift < 110 mm): " << causalBreaks << std::endl;
+    // Get slices number for particles in silcon (a lot of them empty I think)
+    auto hNSlices = new TH1D("hNSlices", "Number of valid slices per event;N slices;Events", 20, 0, 20);
+
+    dfSigmaLight.Foreach([&](const std::vector<std::pair<double, double>>& v) { hNSlices->Fill(v.size()); },
+                         {"sigmaTransZ"});
 
 
     // auto hSigmaTheta = dfSigma.Histo2D(
@@ -385,14 +453,14 @@ void GetDiffusionParameters()
     // hTheta->DrawClone("COLZ");
 
     gStyle->SetOptFit(1111);
-    auto* c1 = new TCanvas("c1", "Transverse sigma of heavy particle", 800, 600);
+    auto* c1 = new TCanvas("c1", "Transverse sigma of light particle", 800, 600);
     c1->Divide(2, 1);
     c1->cd(1);
     hSigmaZ->DrawClone();
     c1->cd(2);
     prof->DrawClone();
 
-    auto* c2 = new TCanvas("c2", "Transverse sigma of heavy particle FIT", 800, 600);
+    auto* c2 = new TCanvas("c2", "Transverse sigma of light particle FIT", 800, 600);
     c2->Divide(2, 2);
     c2->cd(1);
     hSigmaSqrtZ->DrawClone();
@@ -402,20 +470,6 @@ void GetDiffusionParameters()
     hSigmaZ2->DrawClone();
     c2->cd(4);
     profZ2->DrawClone();
-    // Write fit result in the canvas
-    c2->cd(2);
-    TLatex latex;
-    latex.SetNDC();
-    latex.SetTextSize(0.04);
-    latex.DrawLatex(0.15, 0.85,
-                    TString::Format("a = %.3f #pm %.3f", a_SqrtZ, profSqrtZ->GetFunction("pol1")->GetParError(0)));
-    latex.DrawLatex(0.15, 0.80,
-                    TString::Format("b = %.3f #pm %.3f", b_SqrtZ, profSqrtZ->GetFunction("pol1")->GetParError(1)));
-    c2->cd(4);
-    latex.DrawLatex(0.15, 0.85,
-                    TString::Format("a = %.3f #pm %.3f", a_Z2, profZ2->GetFunction("pol1")->GetParError(0)));
-    latex.DrawLatex(0.15, 0.80,
-                    TString::Format("b = %.3f #pm %.3f  ", b_Z2, profZ2->GetFunction("pol1")->GetParError(1)));
 
     auto* c3 = new TCanvas("c3", "Z distances", 800, 600);
     c3->Divide(2, 2);
@@ -430,6 +484,20 @@ void GetDiffusionParameters()
 
     auto* c4 = new TCanvas("c4", "Z distance between begin and end", 800, 600);
     hzDistance->DrawClone();
+
+    auto* c5 = new TCanvas("c5", "Z drift and phi distribution", 800, 600);
+    c5->Divide(2, 2);
+    c5->cd(1);
+    hZdrift->DrawClone();
+    c5->cd(2);
+    hPhiLight->DrawClone();
+    c5->cd(3);
+    hThetaLight->DrawClone();
+    c5->cd(4);
+    hDirZ->DrawClone();
+
+    auto* c6 = new TCanvas("c6", "Number of slices", 800, 600);
+    hNSlices->DrawClone();
 
     // Look at the events to ensure they are good candidates
     // std::ofstream outFile {"./Outputs/Events_High_SigmaT.dat"};
@@ -457,13 +525,13 @@ void GetDiffusionParameters()
     //     },
     //     {"MergerData", "sigmaTransZ"});
     // outFile1.close();
-    std::ofstream outFile2 {"./Outputs/Events_LowDistZ.dat"};
+    std::ofstream outFile2 {"./Outputs/Events_DriftDistLower50_L1.dat"};
     dfDebug.Foreach(
         [&outFile2](const ActRoot::MergerData& mer, const std::vector<std::pair<double, double>>& v)
         {
             for(const auto& [zDistance, sigma] : v)
             {
-                if(zDistance < 80)
+                if(zDistance < 50)
                 {
                     mer.Stream(outFile2);
                     break; // Only need to save the event once, even if it has multiple slices with s < 0
@@ -472,4 +540,19 @@ void GetDiffusionParameters()
         },
         {"MergerData", "sigmaTransZ"});
     outFile2.close();
+    std::ofstream outFile3 {"./Outputs/Events_DriftDistGreater200_L1.dat"};
+    dfDebug.Foreach(
+        [&outFile3](const ActRoot::MergerData& mer, const std::vector<std::pair<double, double>>& v)
+        {
+            for(const auto& [zDistance, sigma] : v)
+            {
+                if(zDistance > 200)
+                {
+                    mer.Stream(outFile3);
+                    break; // Only need to save the event once, even if it has multiple slices with s < 0
+                }
+            }
+        },
+        {"MergerData", "sigmaTransZ"});
+    outFile3.close();
 }

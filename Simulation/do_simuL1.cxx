@@ -33,6 +33,7 @@
 #include "TTree.h"
 
 #include <cmath>
+#include <random>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -100,6 +101,16 @@ void ApplyThetaRes(double& theta)
 double RandomizeBeamEnergy(double Tini, double sigma)
 {
     return gRandom->Gaus(Tini, sigma);
+}
+
+// ============================================================
+// Polya function for gain distribution in Micromegas
+// ============================================================
+double Polya(double Gmean, double theta)
+{
+    static std::mt19937 gen(std::random_device {}());
+    std::gamma_distribution<double> gamma(theta + 1.0, Gmean / (theta + 1.0));
+    return gamma(gen);
 }
 
 // Get XS files depending on the reaction in place
@@ -170,6 +181,101 @@ bool GetXS(const std::string& target, const std::string& light, const std::strin
     }
     return isThereXS;
 }
+
+//     // ============================================================
+//     // Add charge to voxel map
+//     // ============================================================
+//     void AddChargeToVoxel(double x, double y, double z, double charge, std::map<voxelKey, ActRoot::Voxel>& voxelMap)
+//     {
+//         int ix = std::floor(x / voxelSize);
+//         int iy = std::floor(y / voxelSize);
+//         int iz = std::floor(z / voxelSize);
+//     
+//         voxelKey key {ix, iy, iz};
+//     
+//         auto it = voxelMap.find(key);
+//         if(it == voxelMap.end())
+//         {
+//             ActRoot::Voxel v;
+//             v.SetPosition(ActRoot::Voxel::XYZPointF {float((ix + 0.5) * voxelSize), float((iy + 0.5) * voxelSize),
+//                                                      float((iz + 0.5) * voxelSize)});
+//             v.SetCharge(charge);
+//             voxelMap.emplace(key, v);
+//         }
+//         else
+//         {
+//             it->second.SetCharge(it->second.GetCharge() + charge);
+//         }
+//     }
+//     
+//     // ============================================================
+//     // Divide segment → electrons → voxels
+//     // ============================================================
+//     void DivideSegmentInPortions(double eLoss, int nPortions, const XYZPoint& center,
+//                                  std::map<voxelKey, ActRoot::Voxel>& voxelMap, std::vector<XYZPoint>& electrons)
+//     {
+//         if(eLoss <= 0 || nPortions <= 0)
+//             return;
+//     
+//         const double W = 36.4 * 0.95 + 34.3 * 0.05; // eV / electron in 95% D2 + 5% CF4
+//         const double diffT = 0.10;                  // mm / sqrt(mm)
+//         const double diffL = 0;                     // mm / sqrt(mm) No diffusion in z direction
+//     
+//         double h = center.Y();
+//         if(h <= 0)
+//             return;
+//     
+//         double sigmaT = diffT * std::sqrt(h);
+//         double sigmaL = diffL * std::sqrt(h);
+//     
+//         double portionE = eLoss / nPortions; // MeV
+//         double meanNe = portionE * 1e6 / W;
+//     
+//         for(int i = 0; i < nPortions; i++)
+//         {
+//             int nElectrons = gRandom->Poisson(meanNe);
+//             if(nElectrons <= 0)
+//                 continue;
+//     
+//             for(int e = 0; e < nElectrons; e++)
+//             {
+//                 double x = gRandom->Gaus(center.X(), sigmaT);
+//                 double y = gRandom->Gaus(center.Y(), sigmaT);
+//                 double z = gRandom->Gaus(center.Z(), sigmaL);
+//     
+//                 double gain = Polya(Gmean, theta);
+//                 AddChargeToVoxel(x, y, z, gain, voxelMap);
+//                 electrons.emplace_back(x, y, z);
+//             }
+//         }
+//     }
+//     
+//     // ============================================================
+//     // Divide track using SRIM
+//     // ============================================================
+//     void DivideTrackInSegments(ActPhysics::SRIM* srim, double range, const XYZVector& dirIn, const XYZPoint& rp,
+//                                double step, int nSub, std::map<voxelKey, ActRoot::Voxel>& voxelMap,
+//                                std::vector<XYZPoint>& electrons)
+//     {
+//         XYZVector dir = dirIn.Unit();
+//         double E = srim->EvalInverse("light", range);
+//     
+//         for(double r = 0; r < range; r += step)
+//         {
+//             double Epost = srim->Slow("light", E, step);
+//             double eLoss = E - Epost;
+//             E = Epost;
+//     
+//             if(eLoss <= 0)
+//                 continue;
+//     
+//             XYZPoint center = rp + dir * (r + 0.5 * step);
+//             if(center.Y() <= 0)
+//                 continue;
+//     
+//             DivideSegmentInPortions(eLoss, nSub, center, voxelMap, electrons);
+//         }
+//     }
 
 padPlane
 DivideTrackInSegments(ActPhysics::SRIM* srim, double range, XYZVector dir, XYZPoint rp, double step, int nSubSegments)
