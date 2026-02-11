@@ -17,9 +17,10 @@
 
 bool IsOutsideBeamZone(ROOT::Math::XYZPointF point, ActRoot::TPCParameters& tpcPars)
 {
-    int nPadOffset {8};
-    bool isInY {point.Y() > (tpcPars.GetNPADSY() / 2 + nPadOffset) ||
-                point.Y() < (tpcPars.GetNPADSY() / 2 - nPadOffset)};
+    int nPadMin {55};
+    int nPadMax {70};
+    bool isInY {point.Y() > (nPadMax) ||
+                point.Y() < (nPadMin)};
     return (isInY);
 }
 
@@ -33,15 +34,15 @@ void countPadsOutExclusionZone()
     auto friend2 {dataman.GetChain(ActRoot::ModeType::EReadSilMod)};
     chain->AddFriend(friend2.get());
 
-    //ROOT::EnableImplicitMT();
+    ROOT::EnableImplicitMT();
     ROOT::RDataFrame df {*chain};
 
     auto tpcPars {ActRoot::TPCParameters("Actar")};
     // Count the number of events
     auto dfFilterL1 = df.Filter(
-        [&tpcPars](ActRoot::MergerData& d, ActRoot::ModularData& mod)
+        [&tpcPars](ActRoot::MergerData& mer, ActRoot::ModularData& mod)
         {
-            if(mod.Get("GATCONF") == 8)
+            if(mod.Get("GATCONF") == 8 && (mer.fLightIdx != -1))
             {
                 return true;
             }
@@ -64,11 +65,22 @@ void countPadsOutExclusionZone()
 
                                                   if(IsOutsideBeamZone(pos, tpcPars))
                                                   {
-                                                      int padx = static_cast<int>(std::floor(pos.X() / 2.0));
-                                                      int pady = static_cast<int>(std::floor(pos.Y() / 2.0));
+                                                      int padx = static_cast<int>(std::floor(pos.X()));
+                                                      int pady = static_cast<int>(std::floor(pos.Y()));
                                                       pads.insert({padx, pady});
                                                   }
                                               }
+                                          }
+                                          for(auto& voxels : tpc.fRaw)
+                                          {
+                                                const auto& pos = voxels.GetPosition();
+    
+                                                if(IsOutsideBeamZone(pos, tpcPars))
+                                                {
+                                                    int padx = static_cast<int>(std::floor(pos.X()));
+                                                    int pady = static_cast<int>(std::floor(pos.Y()));
+                                                    pads.insert({padx, pady});
+                                                }
                                           }
 
                                           return static_cast<int>(pads.size());
@@ -80,11 +92,11 @@ void countPadsOutExclusionZone()
     histCounts->DrawClone();
 
     // Save events if needed
-    std::ofstream out(TString::Format("./Outputs/eventsOnePadOutExclusion.dat").Data());
+    std::ofstream out(TString::Format("./Outputs/eventsLessThan4PadsOutExclusion.dat").Data());
     dfcounts.Foreach(
         [&](ActRoot::MergerData& m, int nPadsOutside)
         {
-            if(nPadsOutside > 50)
+            if(nPadsOutside < 4)
                 m.Stream(out);
         },
         {"MergerData", "nPadsOutside"});

@@ -141,6 +141,36 @@ void GetDiffusionParameters()
     std::cout << "  After local high-charge mask near RP: " << *nF3 << "\n";
     std::cout << "  After fLight.fQave > 300: " << *nFinal << "\n";
 
+    // Filter out events where the light-cluster fit is poor (keep chi2 <= 0.5)
+    auto dfChi = dfFilterFinal.Filter(
+        [](ActRoot::MergerData& mer, ActRoot::TPCData& tpc)
+        {
+            int idx = mer.fLightIdx;
+            if(idx < 0)
+                return false;
+            const auto& cluster = tpc.fClusters.at(idx);
+            double chi2 = cluster.GetLine().GetChi2();
+            return (chi2 <= 0.4);
+        },
+        {"MergerData", "TPCData"});
+
+    auto nAfterChi = dfChi.Count();
+    std::cout << "  After chi2 <= 0.4 filter: " << *nAfterChi << "\n";
+
+    // Get events that have high chi to visualize them
+    // auto dfBadChi = dfFilterFinal.Filter(
+    //     [](ActRoot::MergerData& mer, ActRoot::TPCData& tpc)
+    //     {
+    //         int idx = mer.fLightIdx;
+    //         if(idx < 0)
+    //             return false;
+    //
+    //         const auto& cluster = tpc.fClusters.at(idx);
+    //         double chi2 = cluster.GetLine().GetChi2();
+    //
+    //         return (chi2 > 0.4);
+    //     },
+    //     {"MergerData", "TPCData"});
 
     // Dummy parameters. Need tuning
     int nBinsS = 15;
@@ -149,7 +179,7 @@ void GetDiffusionParameters()
     int minVoxelsPerSlice = 8;
     double ds = (sMax - sMin) / nBinsS;
 
-    auto dfSigmaLight = dfFilterFinal.Define(
+    auto dfSigmaLightPreFilter = dfChi.Define(
         "sigmaTransZ",
         [&](ActRoot::TPCData& tpc, ActRoot::MergerData& mer)
         {
@@ -233,6 +263,23 @@ void GetDiffusionParameters()
         },
         {"TPCData", "MergerData"});
 
+    // Filter particles that go very near pad plane or cathode (10 mm distance). They could have bad fit.
+    auto dfSigmaLight = dfSigmaLightPreFilter.Filter(
+        [](const std::vector<std::pair<double, double>>& v)
+        {
+            for(const auto& [z, sigma] : v)
+            {
+                if(z < 10 || z > 246)
+                    return false;
+            }
+            return true;
+        },
+        {"sigmaTransZ"});
+
+    // Print number of events that survive all filters and have sigmaTransZ info
+    auto nSigmaLight = dfSigmaLight.Count();
+    std::cout << "  After near-pad/cathode filter: " << *nSigmaLight << "\n";
+
 
     auto hSigmaZ = new TH2D("hSigmaZ", "#sigma_{trans} vs z (light);z from pad plane [mm];#sigma_{trans} [mm]", nBinsS,
                             sMin, sMax, 500, 0, 5);
@@ -278,98 +325,99 @@ void GetDiffusionParameters()
     profZ2->Fit("pol1", "", "", sMinFitZ2, sMaxFitZ2);
 
     // Debug z distances (I think they are too big)
-    auto dfDebug = dfSigmaLight
-                       .Define("zBeginEnd_raw",
-                               [](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
-                               {
-                                   int idx = m.fLightIdx;
-                                   if(idx < 0)
-                                       return std::make_pair(0.f, 0.f);
+    // auto dfDebug = dfSigmaLight
+    //                    .Define("zBeginEnd_raw",
+    //                            [](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+    //                            {
+    //                                int idx = m.fLightIdx;
+    //                                if(idx < 0)
+    //                                    return std::make_pair(0.f, 0.f);
+    //
+    //                                auto cluster = tpc.fClusters.at(idx);
+    //                                auto line = cluster.GetLine();
+    //                                auto u = line.GetDirection().Unit();
+    //                                cluster.SortAlongDir(u);
+    //                                float zMin = 1e6;
+    //                                float zMax = -1e6;
+    //                                for(auto& vox : cluster.GetVoxels())
+    //                                {
+    //                                    for(auto& vext : vox.GetExtended())
+    //                                    {
+    //                                        auto pos = vext.GetPosition();
+    //                                        if(pos.Z() < zMin)
+    //                                            zMin = pos.Z();
+    //                                        if(pos.Z() > zMax)
+    //                                            zMax = pos.Z();
+    //                                    }
+    //                                }
+    //                                return std::make_pair(zMin * 4, zMax * 4); // Scale from btb to tb
+    //                            },
+    //                            {"MergerData", "TPCData"})
+    //                    .Define("zMinMax_scaled",
+    //                            [&](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+    //                            {
+    //                                int idx = m.fLightIdx;
+    //                                if(idx < 0)
+    //                                    return std::make_pair(0.f, 0.f);
+    //
+    //                                auto cluster = tpc.fClusters.at(idx);
+    //                                auto line = cluster.GetLine();
+    //                                line.Scale(2, driftFactor); // scale line and not whole cluster to avoid moving
+    //                                                            // voxels twice with GetExtended
+    //                                auto u = line.GetDirection().Unit();
+    //                                cluster.SortAlongDir(u);
+    //                                float zMin = 1e6;
+    //                                float zMax = -1e6;
+    //                                for(auto& vox : cluster.GetVoxels())
+    //                                {
+    //                                    for(auto& vext : vox.GetExtended())
+    //                                    {
+    //                                        auto pos = vext.GetPosition();
+    //                                        if(pos.Z() < zMin)
+    //                                            zMin = pos.Z();
+    //                                        if(pos.Z() > zMax)
+    //                                            zMax = pos.Z();
+    //                                    }
+    //                                }
+    //                                return std::make_pair(zMin, zMax);
+    //                            },
+    //                            {"MergerData", "TPCData"})
+    //                    .Define("zDistance", [&](const std::pair<float, float>& zBeginEnd)
+    //                            { return zBeginEnd.second - zBeginEnd.first; }, {"zMinMax_scaled"});
+    //
+    // // Diagnostic counts for zDistance to understand why many events may be missing from the
+    // // hzDistance histogram (which is defined in the 0..300 mm range).
+    // auto nDFDebug = dfDebug.Count();
+    // auto nZD_inRange = dfDebug.Filter([](const float z) { return (z >= 0.0f && z <= 300.0f); },
+    // {"zDistance"}).Count(); auto nZD_neg = dfDebug.Filter([](const float z) { return (z < 0.0f); },
+    // {"zDistance"}).Count(); auto nZD_gt300 = dfDebug.Filter([](const float z) { return (z > 300.0f); },
+    // {"zDistance"}).Count();
+    //
+    // std::cout << "dfDebug counts:\n";
+    // std::cout << "  Total dfDebug rows: " << *nDFDebug << "\n";
+    // std::cout << "  zDistance in [0,300]: " << *nZD_inRange << "\n";
+    // std::cout << "  zDistance < 0: " << *nZD_neg << "\n";
+    // std::cout << "  zDistance > 300: " << *nZD_gt300 << "\n";
 
-                                   auto cluster = tpc.fClusters.at(idx);
-                                   auto line = cluster.GetLine();
-                                   auto u = line.GetDirection().Unit();
-                                   cluster.SortAlongDir(u);
-                                   float zMin = 1e6;
-                                   float zMax = -1e6;
-                                   for(auto& vox : cluster.GetVoxels())
-                                   {
-                                       for(auto& vext : vox.GetExtended())
-                                       {
-                                           auto pos = vext.GetPosition();
-                                           if(pos.Z() < zMin)
-                                               zMin = pos.Z();
-                                           if(pos.Z() > zMax)
-                                               zMax = pos.Z();
-                                       }
-                                   }
-                                   return std::make_pair(zMin * 4, zMax * 4); // Scale from btb to tb
-                               },
-                               {"MergerData", "TPCData"})
-                       .Define("zMinMax_scaled",
-                               [&](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
-                               {
-                                   int idx = m.fLightIdx;
-                                   if(idx < 0)
-                                       return std::make_pair(0.f, 0.f);
+    auto hzBeginRaw = new TH1D("hzBeginRaw", "z begin (raw);z [mm]", 100, 0, 512);
+    auto hzEndRaw = new TH1D("hzEndRaw", "z end (raw);z [mm]", 100, 0, 512);
+    auto hzBeginScaled = new TH1D("hzBeginScaled", "z begin (scaled);z [mm]", 100, 0, 512);
+    auto hzEndScaled = new TH1D("hzEndScaled", "z end (scaled);z [mm]", 100, 0, 512);
+    auto hzDistance = new TH1D("hzDistance", "z distance (scaled);z [mm]", 100, 0, 300);
 
-                                   auto cluster = tpc.fClusters.at(idx);
-                                   auto line = cluster.GetLine();
-                                   line.Scale(2, driftFactor); // scale line and not whole cluster to avoid moving
-                                                               // voxels twice with GetExtended
-                                   auto u = line.GetDirection().Unit();
-                                   cluster.SortAlongDir(u);
-                                   float zMin = 1e6;
-                                   float zMax = -1e6;
-                                   for(auto& vox : cluster.GetVoxels())
-                                   {
-                                       for(auto& vext : vox.GetExtended())
-                                       {
-                                           auto pos = vext.GetPosition();
-                                           if(pos.Z() < zMin)
-                                               zMin = pos.Z();
-                                           if(pos.Z() > zMax)
-                                               zMax = pos.Z();
-                                       }
-                                   }
-                                   return std::make_pair(zMin, zMax);
-                               },
-                               {"MergerData", "TPCData"})
-                       .Define("zDistance", [&](const std::pair<float, float>& zBeginEnd)
-                               { return zBeginEnd.second - zBeginEnd.first; }, {"zMinMax_scaled"});
-
-    // Diagnostic counts for zDistance to understand why many events may be missing from the
-    // hzDistance histogram (which is defined in the 0..300 mm range).
-    auto nDFDebug = dfDebug.Count();
-    auto nZD_inRange = dfDebug.Filter([](const float z) { return (z >= 0.0f && z <= 300.0f); }, {"zDistance"}).Count();
-    auto nZD_neg = dfDebug.Filter([](const float z) { return (z < 0.0f); }, {"zDistance"}).Count();
-    auto nZD_gt300 = dfDebug.Filter([](const float z) { return (z > 300.0f); }, {"zDistance"}).Count();
-
-    std::cout << "dfDebug counts:\n";
-    std::cout << "  Total dfDebug rows: " << *nDFDebug << "\n";
-    std::cout << "  zDistance in [0,300]: " << *nZD_inRange << "\n";
-    std::cout << "  zDistance < 0: " << *nZD_neg << "\n";
-    std::cout << "  zDistance > 300: " << *nZD_gt300 << "\n";
-
-     auto hzBeginRaw = new TH1D("hzBeginRaw", "z begin (raw);z [mm]", 100, 0, 512);
-     auto hzEndRaw = new TH1D("hzEndRaw", "z end (raw);z [mm]", 100, 0, 512);
-     auto hzBeginScaled = new TH1D("hzBeginScaled", "z begin (scaled);z [mm]", 100, 0, 512);
-     auto hzEndScaled = new TH1D("hzEndScaled", "z end (scaled);z [mm]", 100, 0, 512);
-     auto hzDistance = new TH1D("hzDistance", "z distance (scaled);z [mm]", 100, 0, 300);
-
-     dfDebug.Foreach(
-         [&](const std::pair<float, float>& zBeginEnd, const std::pair<float, float>& zMinMaxScaled,
-             const float zDistance)
-         {
-             hzBeginScaled->Fill(zMinMaxScaled.first);
-             hzEndScaled->Fill(zMinMaxScaled.second);
-
-             hzBeginRaw->Fill(zBeginEnd.first);
-             hzEndRaw->Fill(zBeginEnd.second);
-
-             hzDistance->Fill(zDistance);
-         },
-         {"zBeginEnd_raw", "zMinMax_scaled", "zDistance"});
+    // dfDebug.Foreach(
+    //     [&](const std::pair<float, float>& zBeginEnd, const std::pair<float, float>& zMinMaxScaled,
+    //         const float zDistance)
+    //     {
+    //         hzBeginScaled->Fill(zMinMaxScaled.first);
+    //         hzEndScaled->Fill(zMinMaxScaled.second);
+    //
+    //        hzBeginRaw->Fill(zBeginEnd.first);
+    //        hzEndRaw->Fill(zBeginEnd.second);
+    //
+    //        hzDistance->Fill(zDistance);
+    //    },
+    //    {"zBeginEnd_raw", "zMinMax_scaled", "zDistance"});
 
     // Debug strange behaviour at distZ < than 110 mm
     // int causalBreaks {0};
@@ -525,13 +573,13 @@ void GetDiffusionParameters()
     //     },
     //     {"MergerData", "sigmaTransZ"});
     // outFile1.close();
-    std::ofstream outFile2 {"./Outputs/Events_DriftDistLower50_L1.dat"};
-    dfDebug.Foreach(
+    std::ofstream outFile2 {"./Outputs/Events_DriftDistLower60SigmaHigher1-4_NoNearBorders_L1.dat"};
+    dfSigmaLight.Foreach(
         [&outFile2](const ActRoot::MergerData& mer, const std::vector<std::pair<double, double>>& v)
         {
             for(const auto& [zDistance, sigma] : v)
             {
-                if(zDistance < 50)
+                if((zDistance < 70 && sigma > 1.4) || (zDistance < 130 && sigma > 1.3))
                 {
                     mer.Stream(outFile2);
                     break; // Only need to save the event once, even if it has multiple slices with s < 0
@@ -540,13 +588,14 @@ void GetDiffusionParameters()
         },
         {"MergerData", "sigmaTransZ"});
     outFile2.close();
-    std::ofstream outFile3 {"./Outputs/Events_DriftDistGreater200_L1.dat"};
-    dfDebug.Foreach(
+    std::ofstream outFile3 {"./Outputs/Events_DriftDistGreater190SigmaGreater2_NoNearBorders_L1.dat"};
+    dfSigmaLight.Foreach(
         [&outFile3](const ActRoot::MergerData& mer, const std::vector<std::pair<double, double>>& v)
         {
             for(const auto& [zDistance, sigma] : v)
             {
-                if(zDistance > 200)
+                if(((zDistance > 200 && zDistance < 230) && sigma > 1.8) ||
+                   ((zDistance > 140 && zDistance < 160) && sigma > 1.6))
                 {
                     mer.Stream(outFile3);
                     break; // Only need to save the event once, even if it has multiple slices with s < 0
@@ -554,5 +603,9 @@ void GetDiffusionParameters()
             }
         },
         {"MergerData", "sigmaTransZ"});
-    outFile3.close();
+    // outFile3.close();
+    // std::ofstream outFile4 {"./Outputs/Events_ChiGreater0-4_L1beforeThresholdChange.dat"};
+    // dfBadChi.Foreach([&outFile4](const ActRoot::MergerData& mer, const ActRoot::TPCData& tpc) { mer.Stream(outFile4);
+    // },
+    //                  {"MergerData", "TPCData"});
 }
