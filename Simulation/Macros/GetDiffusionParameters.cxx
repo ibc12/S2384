@@ -300,13 +300,21 @@ void GetDiffusionParameters()
         std::sqrt(nBinsS), std::sqrt(sMin), std::sqrt(sMax), 500, 0, 5);
     auto hSigmaZ2 = new TH2D("hSigmaZ2", "#sigma^2_{trans} vs z (light);z from pad plane [mm];#sigma_{trans}^2 [mm^2]",
                              25, 0, 300, 500, 0, 25);
+
+    // Plot all the slices without taking into account the last N slices
+    int nSlicesToExclude = 2;
     dfSigmaLight.Foreach(
         [&](const std::vector<std::pair<double, double>>& v)
         {
+            int silcesFilled = 0;
             for(const auto& [z, sigma] : v)
             {
+                // Exclude last N slices
+                int size = v.size();
+                if(silcesFilled >= size - nSlicesToExclude) break;
                 hSigmaSqrtZ->Fill(std::sqrt(z), sigma);
                 hSigmaZ2->Fill(z, sigma * sigma);
+                silcesFilled++;
             }
         },
         {"sigmaTransZ"});
@@ -603,6 +611,21 @@ void GetDiffusionParameters()
             }
         },
         {"MergerData", "sigmaTransZ"});
+    std::ofstream outFile4 {"./Outputs/Events_DriftDistLower70SigmaLower_1_NoNearBorders_L1.dat"};
+    dfSigmaLight.Foreach(
+        [&outFile4](const ActRoot::MergerData& mer, const std::vector<std::pair<double, double>>& v)
+        {
+            for(const auto& [zDistance, sigma] : v)
+            {
+                if((zDistance < 70 && sigma < 1))
+                {
+                    mer.Stream(outFile4);
+                    break; // Only need to save the event once, even if it has multiple slices with s < 0
+                }
+            }
+        },
+        {"MergerData", "sigmaTransZ"});
+    outFile4.close();
     // outFile3.close();
     // std::ofstream outFile4 {"./Outputs/Events_ChiGreater0-4_L1beforeThresholdChange.dat"};
     // dfBadChi.Foreach([&outFile4](const ActRoot::MergerData& mer, const ActRoot::TPCData& tpc) { mer.Stream(outFile4);

@@ -7,8 +7,10 @@
 #include <random>
 
 #include <TCanvas.h>
+#include <TF1.h>
 #include <TH1D.h>
 #include <TH2D.h>
+#include <TLegend.h>
 #include <TMath.h>
 #include <TProfile.h>
 #include <TRandom3.h>
@@ -18,6 +20,7 @@
 #include <Math/Vector3D.h>
 #include <cmath>
 #include <map>
+#include <set>
 #include <tuple>
 #include <vector>
 
@@ -28,10 +31,13 @@ using XYZVector = ROOT::Math::XYZVector;
 // Geometry
 // ============================================================
 constexpr double voxelSize = 2.0;               // mm
+ActRoot::TPCParameters tpc {"Actar"};           // TPC parameters
 constexpr double Gmean = 3000.0;                // Mean gain
 constexpr double theta = 0.7;                   // Polya parameter
 constexpr double thresholdPadCharge = 5.4857e6; // that n electrons corresponds to 0.8789 pC
-using voxelKey = std::tuple<int, int, int>;     // ix,iy,iz
+constexpr int yMinExclusionZone = 55;
+constexpr int yMaxExclusionZone = 70;
+using voxelKey = std::tuple<int, int, int>; // ix,iy,iz
 
 
 // ============================================================
@@ -56,6 +62,11 @@ void AddChargeToVoxel(double x, double y, double z, double charge, std::map<voxe
 
     voxelKey key {ix, iy, iz};
 
+    if(ix < 0 || ix >= (tpc.X() / voxelSize))
+        return;
+    if(iy < 0 || iy >= (tpc.Y() / voxelSize))
+        return;
+
     auto it = voxelMap.find(key);
     if(it == voxelMap.end())
     {
@@ -75,7 +86,8 @@ void AddChargeToVoxel(double x, double y, double z, double charge, std::map<voxe
 // Divide segment → electrons → voxels
 // ============================================================
 void DivideSegmentInPortions(double eLoss, int nPortions, const XYZPoint& center,
-                             std::map<voxelKey, ActRoot::Voxel>& voxelMap, std::vector<XYZPoint>& electrons)
+                             std::map<voxelKey, ActRoot::Voxel>& voxelMap, std::vector<XYZPoint>& electrons,
+                             ActRoot::TPCParameters& tpc)
 {
     if(eLoss <= 0 || nPortions <= 0)
         return;
@@ -84,14 +96,27 @@ void DivideSegmentInPortions(double eLoss, int nPortions, const XYZPoint& center
     const double diffT = 0.06;                  // mm / sqrt(mm)- Aprox form data
     const double diffL = 0;                     // mm / sqrt(mm) No diffusion in z direction
 
-    // Height in Z coordinate - distance to pad plane. Pad plane is in Z = 0 and asume rp is always in Z = 110. SO z
-    // coordinate is distance to pad plane.
+    // Height in Z coordinate - distance to pad plane. Pad plane is at Z = 0 and rp is assumed to be at Z = 110.
+    // Thus the z coordinate is the distance to the pad plane.
     double h = center.Z();
     if(h <= 0)
         return;
 
     double sigmaT = diffT * std::sqrt(h);
     double sigmaL = diffL * std::sqrt(h);
+
+    // =====================================================
+    // EARLY GEOMETRIC REJECTION (CRITICAL SPEEDUP)
+    // =====================================================
+
+    const double difXmax = tpc.X() + 20;
+    const double difYmax = tpc.Y() + 20;
+
+    if(center.X() < -20 || center.X() > difXmax || center.Y() < -20 || center.Y() > difYmax)
+    {
+        return; // entire cloud cannot reach pad plane
+    }
+    // =====================================================
 
     double portionE = eLoss / nPortions; // MeV
     double meanNe = portionE * 1e6 / W;
@@ -122,7 +147,7 @@ void DivideSegmentInPortions(double eLoss, int nPortions, const XYZPoint& center
 // ============================================================
 void DivideTrackInSegments(ActPhysics::SRIM* srim, double range, const XYZVector& dirIn, const XYZPoint& rp,
                            double step, int nSub, std::map<voxelKey, ActRoot::Voxel>& voxelMap,
-                           std::vector<XYZPoint>& electrons, bool isLight = true)
+                           std::vector<XYZPoint>& electrons, ActRoot::TPCParameters& tpc, bool isLight = true)
 {
     std::string particleType = isLight ? "light" : "heavy";
     XYZVector dir = dirIn.Unit();
@@ -144,7 +169,7 @@ void DivideTrackInSegments(ActPhysics::SRIM* srim, double range, const XYZVector
         if(center.Z() <= 0 || center.Z() > 256)
             continue;
 
-        DivideSegmentInPortions(eLoss, nSub, center, voxelMap, electrons);
+        DivideSegmentInPortions(eLoss, nSub, center, voxelMap, electrons, tpc);
     }
 }
 
@@ -201,8 +226,8 @@ std::pair<TProfile*, TH1D*> GetChargeProfile(const std::map<voxelKey, ActRoot::V
     // --------------------------------------------------
     // Histograms
     // --------------------------------------------------
-    auto* prof =
-        new TProfile("chargeProfileP", "Charge profile (mean);Track length [mm];Mean charge", nBins, sMin - 5, sMax + 5);
+    auto* prof = new TProfile("chargeProfileP", "Charge profile (mean);Track length [mm];Mean charge", nBins, sMin - 5,
+                              sMax + 5);
 
     auto* hist = new TH1D("chargeProfileH", "Charge profile (sum);Track length [mm];Charge", nBins, sMin - 5, sMax + 5);
 
@@ -221,7 +246,7 @@ std::pair<TProfile*, TH1D*> GetChargeProfile(const std::map<voxelKey, ActRoot::V
         {
             // Standard: one point per voxel, take the center
             v.SetPosition({(pos.X() + 0.5) * voxelSize, (pos.Y() + 0.5) * voxelSize,
-                       (pos.Z() + 0.5) * voxelSize}); // Convert voxel center from units of voxels to mm
+                           (pos.Z() + 0.5) * voxelSize}); // Convert voxel center from units of voxels to mm
             XYZVector d = XYZVector(v.GetPosition()) - XYZVector(p0);
             double s = d.Dot(u);
 
@@ -239,7 +264,8 @@ std::pair<TProfile*, TH1D*> GetChargeProfile(const std::map<voxelKey, ActRoot::V
                 {
                     for(int iz = -1; iz <= 1; iz++)
                     {
-                        XYZPoint miniPos(pos.X() * voxelSize + ix * div * voxelSize, pos.Y() * voxelSize + iy * div * voxelSize,
+                        XYZPoint miniPos(pos.X() * voxelSize + ix * div * voxelSize,
+                                         pos.Y() * voxelSize + iy * div * voxelSize,
                                          pos.Z() * voxelSize + iz * div * voxelSize);
 
                         XYZVector d = XYZVector(miniPos) - XYZVector(p0);
@@ -263,6 +289,169 @@ std::pair<TProfile*, TH1D*> GetChargeProfile(const std::map<voxelKey, ActRoot::V
     return {prof, hist};
 }
 
+// ============================================================
+// Count pads out Exclusion zone (not taking into account the angle or charge deposition)
+// ============================================================
+int PadsOutExclusionZone(const std::map<voxelKey, ActRoot::Voxel>& voxelMap1,
+                         const std::map<voxelKey, ActRoot::Voxel>& voxelMap2)
+{
+    std::set<std::pair<int, int>> activePads;
+
+    auto addPads = [&](const std::map<voxelKey, ActRoot::Voxel>& voxelMap)
+    {
+        for(const auto& [key, v] : voxelMap)
+        {
+            int ix = std::get<0>(key);
+            int iy = std::get<1>(key);
+
+            if(iy < yMinExclusionZone || iy > yMaxExclusionZone)
+                activePads.insert({ix, iy});
+        }
+    };
+
+    addPads(voxelMap1);
+    addPads(voxelMap2);
+
+    return activePads.size();
+}
+
+// ============================================================
+// Integral with bin width (physically correct)
+// ============================================================
+double IntegralWidth(const TH1D* h)
+{
+    return h->Integral("width");
+}
+
+// ============================================================
+// Normalize histogram to integral = 1 (shape only)
+// ============================================================
+void NormalizeHistogram(TH1D* h)
+{
+    double I = IntegralWidth(h);
+    if(I > 0)
+        h->Scale(1.0 / I);
+}
+
+// ============================================================
+// Shape chi2 (robust for large charges)
+// Does not use statistical errors -> compares shapes
+// ============================================================
+double Chi2Shape(const TH1D* data, const TH1D* model)
+{
+    double chi2 = 0.0;
+    int n = 0;
+
+    for(int i = 1; i <= data->GetNbinsX(); i++)
+    {
+        double d = data->GetBinContent(i);
+        double m = model->GetBinContent(i);
+
+        if(d <= 0 && m <= 0)
+            continue;
+
+        double denom = d + m; // stable symmetric weight
+        chi2 += (d - m) * (d - m) / denom;
+        n++;
+    }
+
+    if(n == 0)
+        return 1e12;
+
+    return chi2 / n;
+}
+
+TH1D* FitSRIMtoChargeProfile(ActPhysics::SRIM* srim, double range, TH1D* hCharge, const std::string& particleKey,
+                             double step = 0.5,
+                             int nSubSteps = 10) // <-- NEW
+{
+    // --- align charge axis to start at 0
+    double deltaS = -hCharge->GetXaxis()->GetXmin();
+    hCharge->GetXaxis()->SetLimits(hCharge->GetXaxis()->GetXmin() + deltaS, hCharge->GetXaxis()->GetXmax() + deltaS);
+
+    int nBins = hCharge->GetNbinsX();
+    double sMin = hCharge->GetXaxis()->GetXmin();
+    double sMax = hCharge->GetXaxis()->GetXmax();
+
+    // unique name to avoid overwrite in ROOT
+    std::string hname = "hSRIM_" + particleKey;
+
+    TH1D* hSRIM =
+        new TH1D(hname.c_str(), "SRIM energy loss profile;Track length [mm];Energy loss [MeV]", nBins, sMin, sMax);
+
+    // initial energy from range
+    double E = srim->EvalInverse(particleKey, range);
+
+    double sOffset = 5.0;
+
+    // size of the substep
+    double ds = step / nSubSteps;
+
+    // integrate along the track
+    for(double r = 0; r < range; r += step)
+    {
+        double Epost = srim->Slow(particleKey, E, step);
+        double dE = E - Epost;
+        E = Epost;
+
+        if(dE <= 0)
+            continue;
+
+        // distribute energy uniformly in the segment
+        double dEsub = dE / nSubSteps;
+
+        for(int i = 0; i < nSubSteps; i++)
+        {
+            double s = r + (i + 0.5) * ds + sOffset;
+            hSRIM->Fill(s, dEsub);
+        }
+    }
+
+    // ---------------------------------------------------------
+    // Put error manually in the histogram
+    // ---------------------------------------------------------
+    for(int i = 1; i <= hCharge->GetNbinsX(); ++i)
+    {
+        double q = hCharge->GetBinContent(i);
+        if(q > 0)
+            hCharge->SetBinError(i, std::sqrt(q));
+        else
+            hCharge->SetBinError(i, 1.0); // avoid bins with zero error
+    }
+
+    // ---------------------------------------------------------
+    // Scale fit: Charge = scale * SRIM
+    // ---------------------------------------------------------
+    std::string fname = "fScale_" + particleKey;
+
+    auto fScale = new TF1(
+        fname.c_str(),
+        [&](double* x, double* p)
+        {
+            int bin = hSRIM->FindBin(x[0]);
+            return p[0] * hSRIM->GetBinContent(bin);
+        },
+        sMin, sMax, 1);
+
+    fScale->SetParameter(0, 1e8);
+    fScale->SetParName(0, "scale (electrons/MeV)");
+
+    hCharge->Fit(fScale, "RQ");
+
+    double scale = fScale->GetParameter(0);
+
+    std::cout << "\n----------------------------------\n";
+    std::cout << "SRIM scale factor (" << particleKey << ") = " << scale << " electrons / MeV\n";
+    std::cout << "----------------------------------\n";
+
+    // scale to overlay
+    hSRIM->Scale(scale);
+    hSRIM->SetLineWidth(3);
+    hSRIM->Draw("HIST SAME");
+
+    return hSRIM;
+}
+
 
 // ============================================================
 // MAIN
@@ -272,10 +461,13 @@ void plotTPCevent(double range = 120, double thetaDeg = 45, double phiDeg = -45)
     gStyle->SetOptStat(0);
     gRandom->SetSeed(0);
 
-    ActRoot::TPCParameters tpc {"Actar"};
+    // double chargeThreshold = thresholdPadCharge; // Threshold in electrons
+    double chargeThreshold = 0;
 
     auto* srim = new ActPhysics::SRIM;
     srim->ReadTable("light", "../../Calibrations/SRIM/1H_900mb_CF4_95-5.txt");
+    srim->ReadTable("lightD", "../../Calibrations/SRIM/2H_900mb_CF4_95-5.txt");
+    srim->ReadTable("lightT", "../../Calibrations/SRIM/3H_900mb_CF4_95-5.txt");
     srim->ReadTable("heavy", "../../Calibrations/SRIM/11Li_900mb_CF4_95-5.txt");
 
     XYZPoint rp(tpc.X() / 2, tpc.Y() / 2,
@@ -285,8 +477,8 @@ void plotTPCevent(double range = 120, double thetaDeg = 45, double phiDeg = -45)
     double phLight = phiDeg * TMath::DegToRad();
     XYZVector dirLight(std::cos(thLight), std::sin(thLight) * std::sin(phLight), std::sin(thLight) * std::cos(phLight));
 
-    double thHeavy = 0;
-    double phHeavy = 0;
+    double thHeavy = 5 * TMath::DegToRad();
+    double phHeavy = 10 * TMath::DegToRad();
     XYZVector dirHeavy(std::cos(thHeavy), std::sin(thHeavy) * std::sin(phHeavy), std::sin(thHeavy) * std::cos(phHeavy));
 
     std::map<voxelKey, ActRoot::Voxel> voxelMapLight;
@@ -294,8 +486,8 @@ void plotTPCevent(double range = 120, double thetaDeg = 45, double phiDeg = -45)
     std::vector<XYZPoint> electronsLight;
     std::vector<XYZPoint> electronsHeavy;
 
-    DivideTrackInSegments(srim, range, dirLight, rp, 2.0, 5, voxelMapLight, electronsLight, true);
-    DivideTrackInSegments(srim, 3000, dirHeavy, rp, 2.0, 5, voxelMapHeavy, electronsHeavy, false);
+    DivideTrackInSegments(srim, range, dirLight, rp, 2.0, 5, voxelMapLight, electronsLight, tpc, true);
+    DivideTrackInSegments(srim, 3000, dirHeavy, rp, 2.0, 5, voxelMapHeavy, electronsHeavy, tpc, false);
 
     // ================= Primary electrons plots (units: mm) =================
     TH2D* hXY = new TH2D("hXY", "XY;X [mm];Y [mm]", tpc.X(), 0, tpc.X(), tpc.Y(), 0, tpc.Y());
@@ -330,7 +522,7 @@ void plotTPCevent(double range = 120, double thetaDeg = 45, double phiDeg = -45)
         const auto& pos = v.GetPosition();
         double q = v.GetCharge();
 
-        if(q > 0) // here should be the threshold
+        if(q > chargeThreshold) // here should be the threshold
         {
             hXYq->Fill(pos.X(), pos.Y(), q);
             hXZq->Fill(pos.X(), pos.Z(), q);
@@ -342,7 +534,7 @@ void plotTPCevent(double range = 120, double thetaDeg = 45, double phiDeg = -45)
         const auto& pos = v.GetPosition();
         double q = v.GetCharge();
 
-        if(q > 0) // here should be the threshold
+        if(q > chargeThreshold) // here should be the threshold
         {
             hXYq->Fill(pos.X(), pos.Y(), q);
             hXZq->Fill(pos.X(), pos.Z(), q);
@@ -352,6 +544,10 @@ void plotTPCevent(double range = 120, double thetaDeg = 45, double phiDeg = -45)
 
     // ================= Profiles =================
     auto [profile, hist] = GetChargeProfile(voxelMapLight, true);
+
+    // =============== Pads out of exclusion zone =================
+    int nPadsOutExclusionZone = PadsOutExclusionZone(voxelMapLight, voxelMapHeavy);
+    std::cout << "Number of pads out of exclusion zone: " << nPadsOutExclusionZone << std::endl;
 
     // ================= Electrons canvas =================
     TCanvas* cEle = new TCanvas("cEle", "Primary electrons", 1400, 450);
@@ -380,4 +576,51 @@ void plotTPCevent(double range = 120, double thetaDeg = 45, double phiDeg = -45)
     profile->Draw();
     c->cd(5);
     hist->Draw("HIST");
+    c->cd(6);
+    auto histProfileCopy = (TH1D*)hist->Clone("histProfileCopy");
+    histProfileCopy->SetTitle("Charge profile with SRIM fit;Track length [mm];Charge");
+    histProfileCopy->Draw("HIST");
+    // FitSRIMtoChargeProfile(srim, range, histProfileCopy, "light", 0.3);
+
+    std::map<std::string, int> colorMap = {{"light", kBlue + 1}, {"lightD", kBlack}, {"lightT", kGreen + 2}};
+
+    TLegend* leg = new TLegend(0.60, 0.65, 0.88, 0.88);
+    leg->SetBorderSize(0);
+    leg->SetFillStyle(0);
+    leg->SetTextSize(0.035);
+
+    std::vector<std::string> particles = {"light", "lightD", "lightT"};
+
+    double bestScore = 1e12;
+    std::string bestParticle;
+
+    for(const auto& key : particles)
+    {
+        TH1D* hSRIMFit = FitSRIMtoChargeProfile(srim, range, histProfileCopy, key);
+
+        // ----- color -----
+        hSRIMFit->SetLineColor(colorMap[key]);
+        hSRIMFit->SetLineWidth(3);
+
+        // ----- legend -----
+        leg->AddEntry(hSRIMFit, key.c_str(), "l");
+
+        // ----- shape comparison -----
+        TH1D* dataNorm = (TH1D*)histProfileCopy->Clone(("dataNorm_" + key).c_str());
+        TH1D* modelNorm = (TH1D*)hSRIMFit->Clone(("modelNorm_" + key).c_str());
+
+        NormalizeHistogram(dataNorm);
+        NormalizeHistogram(modelNorm);
+
+        double chiShape = Chi2Shape(dataNorm, modelNorm);
+
+        std::cout << "Particle " << key << "  shape-chi2 = " << chiShape << std::endl;
+
+        if(chiShape < bestScore)
+        {
+            bestScore = chiShape;
+            bestParticle = key;
+        }
+    }
+    leg->Draw();
 }

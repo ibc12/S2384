@@ -172,8 +172,21 @@ void GetDiffusionParametersHeavy()
                                  // --- <r_trans^2> ---
                                  double sumR2 = 0.;
 
+                                 // Do not consider first 10 and last 10 voxels, to avoid bad clustering at the edges
+                                 int nVoxelsStart = 10;
+                                 int nVoxelsEnd = 10;
+                                 int nVoxelsIterated = 0;
+                                 int size = cluster.GetVoxels().size();
                                  for(auto& vox : cluster.GetVoxels())
                                  {
+                                     nVoxelsIterated++;
+                                     if(nVoxelsIterated > size - nVoxelsEnd)
+                                         continue;
+                                     if(nVoxelsStart > 0)
+                                     {
+                                         nVoxelsStart--;
+                                         continue;
+                                     }
                                      for(auto& vext : vox.GetExtended())
                                      {
                                          vext.SetPosition({vext.GetPosition().X() * 2, vext.GetPosition().Y() * 2,
