@@ -544,16 +544,16 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     // std::ofstream out("./Outputs/pid_events_z1Front_11Li.dat");
     // dfOut.Foreach([&](ActRoot::MergerData& m) { m.Stream(out); }, {"MergerData"});
     // out.close();
-    cuts.ReadCut("f0f1", TString::Format("./cut_f0f1_events.root").Data());
-    auto dfOut = df.Filter(
-        [&](ActRoot::MergerData& m)
-        {
-            if(m.fLight.GetLayer(0) == "f0" && m.fLight.GetLayer(1) == "f1" && m.fLight.GetNLayers() == 2)
-                return (cuts.IsInside("f0f1", m.fLight.fEs[0], m.fLight.fEs[1]));
-            else
-                return false;
-        },
-        {"MergerData"});
+    // cuts.ReadCut("f0f1", TString::Format("./cut_f0f1_events.root").Data());
+    // auto dfOut = df.Filter(
+    //     [&](ActRoot::MergerData& m)
+    //     {
+    //         if(m.fLight.GetLayer(0) == "f0" && m.fLight.GetLayer(1) == "f1" && m.fLight.GetNLayers() == 2)
+    //             return (cuts.IsInside("f0f1", m.fLight.fEs[0], m.fLight.fEs[1]));
+    //         else
+    //             return false;
+    //     },
+    //     {"MergerData"});
     //std::ofstream out("./Outputs/pid_events_f0f1_11Li.dat");
     //dfOut.Foreach([&](ActRoot::MergerData& m) { m.Stream(out); }, {"MergerData"});
     //out.close();

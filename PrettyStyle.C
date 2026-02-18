@@ -6,7 +6,7 @@
 #include "TROOT.h"
 #include "TStyle.h"
 
-void PrettyStyle(bool showStats = true)
+void PrettyStyle(bool showStats = true, bool palete2D = true)
 {
     TStyle* st = new TStyle("PrettyStyle", "Pretty ROOT plots");
 
@@ -25,10 +25,13 @@ void PrettyStyle(bool showStats = true)
         TColor::GetColor("#bcbd22"), // Oliva
         TColor::GetColor("#17becf")  // Cian
     };
-    st->SetPalette(NColors, palette);
 
     // --- Colores y fuentes ---
-    // st->SetPalette(kCividis);
+    if(palete2D)
+        st->SetPalette(kCividis);
+    else
+        st->SetPalette(NColors, palette);
+
     st->SetTextFont(42);
     st->SetLabelFont(42, "XYZ");
     st->SetTitleFont(42, "XYZ");
@@ -90,7 +93,7 @@ void PrettyStyle(bool showStats = true)
     st->SetTitleW(0.30);
     st->SetTitleH(0.05);
 
-    //st->SetOptTitle(0); // <--- apaga el título por completo
+    // st->SetOptTitle(0); // <--- apaga el título por completo
 
     // --- Ticks y divisiones ---
     st->SetPadTickX(1);
