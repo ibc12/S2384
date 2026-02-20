@@ -15,4 +15,5 @@ add_userlibrary(
     SOURCES RecRANSAC.cxx   # solo el .cxx
     LINK ActAlgorithm        # ActAlgorithm debe estar en $ACTROOT/install/lib
 )
+add_userlibrary(NAME Task0 SOURCES Task0.cxx LINK ActAlgorithm)
 

@@ -64,6 +64,7 @@ CMAKE_BINARY_DIR = /media/data/S2384/configs/user
 
 # The main recursive "all" target.
 all: CMakeFiles/RecRANSAC.dir/all
+all: CMakeFiles/Task0.dir/all
 .PHONY : all
 
 # The main recursive "preinstall" target.
@@ -72,6 +73,7 @@ preinstall:
 
 # The main recursive "clean" target.
 clean: CMakeFiles/RecRANSAC.dir/clean
+clean: CMakeFiles/Task0.dir/clean
 .PHONY : clean
 
 #=============================================================================
@@ -99,6 +101,32 @@ RecRANSAC: CMakeFiles/RecRANSAC.dir/rule
 CMakeFiles/RecRANSAC.dir/clean:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/RecRANSAC.dir/build.make CMakeFiles/RecRANSAC.dir/clean
 .PHONY : CMakeFiles/RecRANSAC.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/Task0.dir
+
+# All Build rule for target.
+CMakeFiles/Task0.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Task0.dir/build.make CMakeFiles/Task0.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Task0.dir/build.make CMakeFiles/Task0.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/media/data/S2384/configs/user/CMakeFiles --progress-num=3,4 "Built target Task0"
+.PHONY : CMakeFiles/Task0.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/Task0.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /media/data/S2384/configs/user/CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/Task0.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /media/data/S2384/configs/user/CMakeFiles 0
+.PHONY : CMakeFiles/Task0.dir/rule
+
+# Convenience name for target.
+Task0: CMakeFiles/Task0.dir/rule
+.PHONY : Task0
+
+# clean rule for target.
+CMakeFiles/Task0.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Task0.dir/build.make CMakeFiles/Task0.dir/clean
+.PHONY : CMakeFiles/Task0.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

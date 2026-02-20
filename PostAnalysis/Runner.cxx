@@ -10,11 +10,11 @@
 
 void Runner(TString what = "")
 {
-    PrettyStyle(false);
+    PrettyStyle(true, true);
 
     std::string beam {"7Li"};
     std::string target {"d"};
-    std::string light {"p"};
+    std::string light {"d"};
 
     std::cout << BOLDGREEN << "···· Runner ····" << '\n';
     std::cout << "-> Beam   : " << beam << '\n';

@@ -129,6 +129,19 @@ RecRANSAC/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/RecRANSAC.dir/build.make CMakeFiles/RecRANSAC.dir/build
 .PHONY : RecRANSAC/fast
 
+#=============================================================================
+# Target rules for targets named Task0
+
+# Build rule for target.
+Task0: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 Task0
+.PHONY : Task0
+
+# fast build rule for target.
+Task0/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Task0.dir/build.make CMakeFiles/Task0.dir/build
+.PHONY : Task0/fast
+
 RecRANSAC.o: RecRANSAC.cxx.o
 .PHONY : RecRANSAC.o
 
@@ -153,6 +166,30 @@ RecRANSAC.cxx.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/RecRANSAC.dir/build.make CMakeFiles/RecRANSAC.dir/RecRANSAC.cxx.s
 .PHONY : RecRANSAC.cxx.s
 
+Task0.o: Task0.cxx.o
+.PHONY : Task0.o
+
+# target to build an object file
+Task0.cxx.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Task0.dir/build.make CMakeFiles/Task0.dir/Task0.cxx.o
+.PHONY : Task0.cxx.o
+
+Task0.i: Task0.cxx.i
+.PHONY : Task0.i
+
+# target to preprocess a source file
+Task0.cxx.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Task0.dir/build.make CMakeFiles/Task0.dir/Task0.cxx.i
+.PHONY : Task0.cxx.i
+
+Task0.s: Task0.cxx.s
+.PHONY : Task0.s
+
+# target to generate assembly for a file
+Task0.cxx.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Task0.dir/build.make CMakeFiles/Task0.dir/Task0.cxx.s
+.PHONY : Task0.cxx.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -162,9 +199,13 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... RecRANSAC"
+	@echo "... Task0"
 	@echo "... RecRANSAC.o"
 	@echo "... RecRANSAC.i"
 	@echo "... RecRANSAC.s"
+	@echo "... Task0.o"
+	@echo "... Task0.i"
+	@echo "... Task0.s"
 .PHONY : help
 
 
