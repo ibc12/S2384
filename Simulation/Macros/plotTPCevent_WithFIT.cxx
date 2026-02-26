@@ -11,7 +11,6 @@
 #include <TGraph.h>
 #include <TH1D.h>
 #include <TH2D.h>
-#include <TFile.h>
 #include <TLegend.h>
 #include <TMath.h>
 #include <TProfile.h>
@@ -320,6 +319,51 @@ int PadsOutExclusionZone(const std::map<voxelKey, ActRoot::Voxel>& voxelMap1,
 }
 
 // ============================================================
+// Integral with bin width (physically correct)
+// ============================================================
+double IntegralWidth(const TH1D* h)
+{
+    return h->Integral("width");
+}
+
+// ============================================================
+// Normalize histogram to integral = 1 (shape only)
+// ============================================================
+void NormalizeHistogram(TH1D* h)
+{
+    double I = IntegralWidth(h);
+    if(I > 0)
+        h->Scale(1.0 / I);
+}
+
+// ============================================================
+// Shape chi2 (robust for large charges)
+// Does not use statistical errors -> compares shapes
+// ============================================================
+double Chi2Shape(const TH1D* data, const TH1D* model)
+{
+    double chi2 = 0.0;
+    int n = 0;
+
+    for(int i = 1; i <= data->GetNbinsX(); i++)
+    {
+        double d = data->GetBinContent(i);
+        double m = model->GetBinContent(i);
+
+        if(d <= 0 && m <= 0)
+            continue;
+
+        double denom = d + m; // stable symmetric weight
+        chi2 += (d - m) * (d - m) / denom;
+        n++;
+    }
+
+    if(n == 0)
+        return 1e12;
+
+    return chi2 / n;
+}
+// ============================================================
 // Shift histogram along x-axis by a constant (for alignment) with x = 0 at the start of the track
 // ============================================================
 TH1D* ShiftHistogram(TH1D* h, double shift, const std::string& particleKey)
@@ -336,10 +380,174 @@ TH1D* ShiftHistogram(TH1D* h, double shift, const std::string& particleKey)
     return hnew;
 }
 
+TSpline3* BuildSRIMspline(ActPhysics::SRIM* srim, double range, const std::string& particleKey, double step = 0.5,
+                          double sOffset = 0.0)
+{
+    TSpline3* sp = nullptr;
+    std::vector<double> s_step_pts;
+    std::vector<double> y_step_pts;
+
+    double E = srim->EvalInverse(particleKey, range);
+
+    bool ran_out = false;
+    for(double r = 0; r < range; r += step)
+    {
+        double Epost = srim->Slow(particleKey, E, step);
+        if(Epost < 0.0)
+        {
+            Epost = 0.0;
+            ran_out = true;
+        }
+        double dE = E - Epost;
+        E = Epost;
+
+        if(dE <= 0)
+        {
+            if(ran_out)
+                break;
+            else
+                continue;
+        }
+
+        double s = r + 0.5 * step + sOffset;
+        s_step_pts.push_back(s);
+        y_step_pts.push_back(dE);
+
+        if(ran_out)
+            break;
+    }
+
+    int nSteps = (int)s_step_pts.size();
+    if(nSteps < 3)
+    {
+        std::cout << "Not enough points to build spline (nSteps=" << nSteps << "). Need at least 3 points.\n";
+        return nullptr;
+    }
+    sp = new TSpline3(("spSRIM_" + particleKey).c_str(), s_step_pts.data(), y_step_pts.data(), nSteps, "b2,e2", 0, 0);
+
+    return sp;
+}
+
+// ============================================================
+// Find offset along x-axis where cumulative integral reaches a given fraction of total charge (for alignment)
+// ============================================================
+double FindOffsetFromChargeFraction(const TH1D* h, double frac = 0.02)
+{
+    double total = h->Integral("width");
+    if(total <= 0)
+        return h->GetXaxis()->GetXmin();
+
+    double accum = 0.0;
+
+    for(int i = 1; i <= h->GetNbinsX(); ++i)
+    {
+        accum += h->GetBinContent(i) * h->GetBinWidth(i);
+
+        if(accum >= frac * total)
+            return h->GetBinLowEdge(i);
+    }
+
+    return h->GetXaxis()->GetXmin();
+}
+
+TF1* FitSRIMtoChargeProfile(ActPhysics::SRIM* srim, double range, TH1D* hCharge, const std::string& particleKey,
+                            double step = 0.5)
+{
+    // --- align charge axis to start at 0
+    double deltaS = -hCharge->GetXaxis()->GetXmin();
+    // Moving the axis outside the function call does not change the histogram bin values
+    // So we have to shift manually the histogram values
+    auto hShifted = ShiftHistogram(hCharge, deltaS, particleKey);
+
+    // compute spline
+    double sOffset = 5.0;
+
+    // ---------------------------------------------------------
+    // Build a per-step sampled TGraph (one point per full integration step)
+    // ---------------------------------------------------------
+
+    // Build TGraph and spline from per-step points
+    std::string spname = "spSRIM_" + particleKey;
+    TSpline3* spSRIM = nullptr;
+    spSRIM = BuildSRIMspline(srim, range, particleKey, step, sOffset);
+
+
+    TF1* fSpline = nullptr;
+    if(spSRIM)
+    {
+        std::string fname = "fSRIMfit_" + particleKey;
+
+        double fitMin = spSRIM->GetXmin();
+        double fitMax = spSRIM->GetXmax();
+
+        fSpline = new TF1(
+            fname.c_str(),
+            [spSRIM, fitMin, fitMax](double* x, double* par)
+            {
+                if(x[0] < fitMin || x[0] > fitMax)
+                    return 0.0;
+                return par[0] * spSRIM->Eval(x[0]);
+            },
+            fitMin, fitMax, 1);
+
+        // Initial amplitude is related with integrals of hist and spline
+        double histIntegral = hCharge->Integral("width");
+        double initAmp = histIntegral / hCharge->GetNbinsX();
+        // double splineIntegral = 0;
+        // double xMin = spSRIM->GetXmin();
+        // double xMax = spSRIM->GetXmax();
+        // double dx = (xMax - xMin) / (range / step - 1);
+        // for(int i = 0; i < range / step - 1; i++)
+        // {
+        //     double y1 = spSRIM->Eval(xMin + i * dx);
+        //     double y2 = spSRIM->Eval(xMin + (i + 1) * dx);
+        //     splineIntegral += 0.5 * (y1 + y2) * dx;
+        // }
+        // double initAmp = histIntegral / splineIntegral;
+
+        fSpline->SetNpx(400);
+        fSpline->SetParameter(0, initAmp);
+        fSpline->SetParLimits(0, 0, 1e12);
+        fSpline->SetParameter(1, 5);
+
+        hShifted->Fit(fSpline, "MRV0", "", fitMin, fitMax);
+
+        double amp = fSpline->GetParameter(0);
+        double ampErr = fSpline->GetParError(0);
+        std::cout << "SRIM spline fit amplitude (" << particleKey << ") = " << amp << " +/- " << ampErr
+                  << " electrons / MeV\n";
+    }
+    else
+    {
+        std::cout << "Not enough per-step points for spline fit (nSteps=" << range / step
+                  << "). Skipping spline fit.\n";
+    }
+
+    return fSpline;
+}
+
+TH1D* BuildModelHistogramFromTF1(const TH1D* data, TF1* f, const std::string& name)
+{
+    TH1D* model = (TH1D*)data->Clone(name.c_str());
+    model->Reset();
+
+    for(int ib = 1; ib <= model->GetNbinsX(); ++ib)
+    {
+        double x = model->GetBinCenter(ib);
+        double y = f->Eval(x);
+
+        model->SetBinContent(ib, y);
+        model->SetBinError(ib, std::sqrt(y));
+    }
+
+    return model;
+}
+
+
 // ============================================================
 // MAIN
 // ============================================================
-void plotTPCevent(double range = 120, double thetaDeg = 45, double phiDeg = -45)
+void plotTPCevent_WithFIT(double range = 120, double thetaDeg = 45, double phiDeg = -45)
 {
     gStyle->SetOptStat(0);
     gRandom->SetSeed(0);
@@ -461,17 +669,73 @@ void plotTPCevent(double range = 120, double thetaDeg = 45, double phiDeg = -45)
     hist->Draw("HIST");
     c->cd(6);
     auto histProfileCopy = (TH1D*)hist->Clone("histProfileCopy");
-    histProfileCopy->SetTitle("Charge profile shifted to origin;Track length [mm];Charge");
     double deltaS = -histProfileCopy->GetXaxis()->GetXmin();
-    auto hShifted = ShiftHistogram(histProfileCopy, deltaS, "light");
-    hShifted->Draw("HIST");
+    histProfileCopy->GetXaxis()->SetLimits(histProfileCopy->GetXaxis()->GetXmin() + deltaS,
+                                           histProfileCopy->GetXaxis()->GetXmax() + deltaS);
+    histProfileCopy->SetTitle("Charge profile with SRIM fit;Track length [mm];Charge");
+    histProfileCopy->Draw("HIST");
+    // FitSRIMtoChargeProfile(srim, range, histProfileCopy, "light", 0.3);
 
-    // Save hShifted for later fit: create output file and write the histogram there.
+    std::map<std::string, int> colorMap = {{"light", kBlue + 1}, {"lightD", kBlack}, {"lightT", kGreen + 2}};
+
+    TLegend* leg = new TLegend(0.60, 0.65, 0.88, 0.88);
+    leg->SetBorderSize(0);
+    leg->SetFillStyle(0);
+    leg->SetTextSize(0.035);
+
+    std::vector<std::string> particles = {"light", "lightD", "lightT"};
+
+    double bestScore = 1e12;
+    std::string bestParticle;
+
+    double bestFitScore = 1e12;
+    std::string bestFitParticle;
+
+    for(const auto& key : particles)
     {
-        TFile fout("./Outputs/hShifted_profile_light.root", "RECREATE");
-        hShifted->Write();
-        fout.Close();
+        auto fSpline = FitSRIMtoChargeProfile(srim, range, histProfileCopy, key, 0.5);
+
+        if(!fSpline)
+            continue;
+
+        // ---------- style ----------
+        fSpline->SetLineColor(colorMap[key]);
+        fSpline->SetLineWidth(3);
+        fSpline->Draw("same");
+
+        leg->AddEntry(fSpline, (key + " fit").c_str(), "l");
+
+        // ---------- ROOT fit chi2 ----------
+        double chiFit = fSpline->GetChisquare() / fSpline->GetNDF();
+        std::cout << "Particle " << key << "  fit-chi2/NDF = " << chiFit << std::endl;
+        if(chiFit < bestFitScore)
+        {
+            bestFitScore = chiFit;
+            bestFitParticle = key;
+        }
+
+        // ---------- build model histogram ----------
+        TH1D* model = BuildModelHistogramFromTF1(histProfileCopy, fSpline, "model_" + key);
+
+        // ---------- compare shape ----------
+        TH1D* dataNorm = (TH1D*)histProfileCopy->Clone(("dataNorm_" + key).c_str());
+        TH1D* modelNorm = (TH1D*)model->Clone(("modelNorm_" + key).c_str());
+
+        NormalizeHistogram(dataNorm);
+        NormalizeHistogram(modelNorm);
+
+        double chiShape = Chi2Shape(dataNorm, modelNorm);
+
+        std::cout << "Particle " << key << "  shape-chi2 = " << chiShape << std::endl;
+
+        if(chiShape < bestScore)
+        {
+            bestScore = chiShape;
+            bestParticle = key;
+        }
     }
-    // hShifted is owned by caller here; delete if you don't need it later.
-    // delete hShifted;
+    leg->Draw();
+
+    std::cout << "Best chi2 shape: " << bestParticle << " (chi2=" << bestScore << ")\n";
+    std::cout << "Best usual chi2 fit: " << bestFitParticle << " (chi2=" << bestFitScore << ")\n";
 }
