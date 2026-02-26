@@ -32,7 +32,7 @@
 // ============================================================
 // Shift histogram along x-axis by a constant (for alignment) with x = 0 at the start of the track
 // ============================================================
-TH1D* ShiftHistogram(TH1D* h, double shift, const std::string& particleKey)
+TH1* ShiftHistogram(TH1* h, double shift, const std::string& particleKey)
 {
     int n = h->GetNbinsX();
     double xmin = h->GetBinLowEdge(1) + shift;
@@ -49,7 +49,7 @@ TH1D* ShiftHistogram(TH1D* h, double shift, const std::string& particleKey)
 // ============================================================
 // Integral with bin width (physically correct)
 // ============================================================
-double IntegralWidth(const TH1D* h)
+double IntegralWidth(const TH1* h)
 {
     return h->Integral("width");
 }
@@ -57,9 +57,9 @@ double IntegralWidth(const TH1D* h)
 // ============================================================
 // Normalize histogram to integral = 1 (shape only)
 // ============================================================
-void NormalizeHistogram(TH1D* h)
+void NormalizeHistogram(TH1* h)
 {
-    double I = IntegralWidth(h);
+    double I = h->Integral("width");
     if(I > 0)
         h->Scale(1.0 / I);
 }
@@ -68,20 +68,20 @@ void NormalizeHistogram(TH1D* h)
 // Shape chi2 (robust for large charges)
 // Does not use statistical errors -> compares shapes
 // ============================================================
-double Chi2Shape(const TH1D* data, const TH1D* model)
+double Chi2Shape(const TH1* data, const TH1* model)
 {
     double chi2 = 0.0;
     int n = 0;
 
     for(int i = 1; i <= data->GetNbinsX(); i++)
     {
-        double d = data->GetBinContent(i);
-        double m = model->GetBinContent(i);
+        auto d = data->GetBinContent(i);
+        auto m = model->GetBinContent(i);
 
         if(d <= 0 && m <= 0)
             continue;
 
-        double denom = d + m; // stable symmetric weight
+        auto denom = d + m; // stable symmetric weight
         chi2 += (d - m) * (d - m) / denom;
         n++;
     }
@@ -143,7 +143,7 @@ TSpline3* BuildSRIMspline(ActPhysics::SRIM* srim, double range, const std::strin
 // ============================================================
 // Find position along x-axis where cumulative integral reaches a given fraction of total charge
 // ============================================================
-double FindPositionFromChargeFraction(TH1D* h, double frac)
+double FindPositionFromChargeFraction(TH1* h, double frac)
 {
     double total = h->Integral("width");
     double accum = 0.0;
@@ -159,7 +159,7 @@ double FindPositionFromChargeFraction(TH1D* h, double frac)
     return h->GetXaxis()->GetXmax();
 }
 
-TF1* FitSRIMtoChargeProfileUniversal(TH1D* hCharge, TSpline3* spSRIM, const std::string& particleKey)
+TF1* FitSRIMtoChargeProfileUniversal(TH1* hCharge, TSpline3* spSRIM, const std::string& particleKey)
 {
     if(!spSRIM)
         return nullptr;
@@ -215,7 +215,7 @@ TF1* FitSRIMtoChargeProfileUniversal(TH1D* hCharge, TSpline3* spSRIM, const std:
     return f;
 }
 
-TH1D* BuildModelHistogramFromTF1(const TH1D* data, TF1* f, const std::string& name)
+TH1* BuildModelHistogramFromTF1(const TH1* data, TF1* f, const std::string& name)
 {
     TH1D* model = (TH1D*)data->Clone(name.c_str());
     model->Reset();
@@ -235,14 +235,16 @@ TH1D* BuildModelHistogramFromTF1(const TH1D* data, TF1* f, const std::string& na
 void fitTPCevent()
 {
     // Get a charge profile histogram to do the fit
-    TFile* file = TFile::Open("./Outputs/hShifted_profile_light.root", "READ");
+    // TFile* file = TFile::Open("./Outputs/hShifted_profile_light.root", "READ");
+    TFile* file = TFile::Open("./Inputs/hProfile_experiment.root", "READ");
     if(!file || file->IsZombie())
     {
         std::cerr << "Error: Could not open file ./Outputs/hShifted_profile_light.root" << std::endl;
         return;
     }
 
-    TH1D* hShifted = dynamic_cast<TH1D*>(file->Get("shifted_light"));
+    // auto* hShifted = dynamic_cast<TH1D*>(file->Get("shifted_light"));
+    auto* hShifted = dynamic_cast<TH1F*>(file->Get("hQProfile"));
     if(!hShifted)
     {
         std::cerr << "Error: Could not find histogram shifted_light in file ./Outputs/hShifted_profile_light.root"
@@ -320,11 +322,11 @@ void fitTPCevent()
         }
 
         // ---------- build model histogram ----------
-        TH1D* model = BuildModelHistogramFromTF1(hShifted, fSpline, "model_" + key);
+        TH1* model = BuildModelHistogramFromTF1(hShifted, fSpline, "model_" + key);
 
         // ---------- compare shape ----------
-        TH1D* dataNorm = (TH1D*)hShifted->Clone(("dataNorm_" + key).c_str());
-        TH1D* modelNorm = (TH1D*)model->Clone(("modelNorm_" + key).c_str());
+        TH1* dataNorm = (TH1*)hShifted->Clone(("dataNorm_" + key).c_str());
+        TH1* modelNorm = (TH1*)model->Clone(("modelNorm_" + key).c_str());
 
         NormalizeHistogram(dataNorm);
         NormalizeHistogram(modelNorm);
