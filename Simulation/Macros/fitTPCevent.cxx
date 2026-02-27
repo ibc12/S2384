@@ -165,7 +165,7 @@ TF1* FitSRIMtoChargeProfileUniversal(TH1* hCharge, TSpline3* spSRIM, const std::
         return nullptr;
 
     double sOffset = FindPositionFromChargeFraction(hCharge, 0.02);
-    double sEnd = FindPositionFromChargeFraction(hCharge, 0.99);
+    double sEnd = FindPositionFromChargeFraction(hCharge, 0.98);
 
     std::cout << "Fit start offset = " << sOffset << " mm\n";
     std::cout << "Fit end position = " << sEnd << " mm\n";
@@ -200,17 +200,79 @@ TF1* FitSRIMtoChargeProfileUniversal(TH1* hCharge, TSpline3* spSRIM, const std::
     double integral = hCharge->Integral("width");
     double initAmp = integral / hCharge->GetNbinsX();
 
-    f->SetParameters(initAmp, 150.0);
+    f->SetParameters(initAmp, 700.0);
 
     f->SetParName(0, "Amplitude");
     f->SetParName(1, "Range");
 
     f->SetParLimits(0, 0, 1e12);
-    f->SetParLimits(1, 10, 400);
+    f->SetParLimits(1, 10, 700);
 
     f->SetNpx(500);
 
-    hCharge->Fit(f, "RQ0", "", sOffset, sEnd);
+    hCharge->Fit(f, "R0", "", sOffset, sEnd);
+
+    return f;
+}
+
+TF1* FitSRIMtoChargeProfileFixedEnd(TH1* hCharge, TSpline3* spSRIM, const std::string& particleKey,
+                                    double maxEndShift = 20.0) // cuanto puede moverse el final (mm)
+{
+    if(!spSRIM)
+        return nullptr;
+
+    // --- región útil del perfil ---
+    double sOffset = FindPositionFromChargeFraction(hCharge, 0.02);
+    double sEndData = FindPositionFromChargeFraction(hCharge, 0.98);
+
+    std::cout << "Fit start offset = " << sOffset << " mm\n";
+    std::cout << "Nominal end position = " << sEndData << " mm\n";
+
+    // --- final físico del spline (Bragg peak final) ---
+    double rMax = spSRIM->GetXmax();
+
+    std::string fname = "fSRIMfitFixedEnd_" + particleKey;
+
+    TF1* f = new TF1(
+        fname.c_str(),
+        [spSRIM, sOffset, sEndData, rMax](double* x, double* par)
+        {
+            double A = par[0];
+            double deltaEnd = par[1];
+
+            double s = x[0];
+
+            if(s < sOffset)
+                return 0.0;
+
+            // posición efectiva del final del track
+            double sEndFit = sEndData + deltaEnd;
+
+            // alineación spline-datos
+            double r = rMax - (sEndFit - s);
+
+            if(r < spSRIM->GetXmin() || r > spSRIM->GetXmax())
+                return 0.0;
+
+            return A * spSRIM->Eval(r);
+        },
+        sOffset, sEndData + maxEndShift, 2);
+
+    // --- inicialización ---
+    double integral = hCharge->Integral("width");
+    double initAmp = integral / hCharge->GetNbinsX();
+
+    f->SetParameters(initAmp, 0.0);
+
+    f->SetParName(0, "Amplitude");
+    f->SetParName(1, "EndShift");
+
+    f->SetParLimits(0, 0, 1e12);
+    f->SetParLimits(1, -maxEndShift, maxEndShift);
+
+    f->SetNpx(500);
+
+    hCharge->Fit(f, "MR0", "", sOffset, sEndData + maxEndShift);
 
     return f;
 }
@@ -236,7 +298,7 @@ void fitTPCevent()
 {
     // Get a charge profile histogram to do the fit
     // TFile* file = TFile::Open("./Outputs/hShifted_profile_light.root", "READ");
-    TFile* file = TFile::Open("./Inputs/hProfile_experiment.root", "READ");
+    TFile* file = TFile::Open("./Inputs/hProfile_experiment_easy.root", "READ");
     if(!file || file->IsZombie())
     {
         std::cerr << "Error: Could not open file ./Outputs/hShifted_profile_light.root" << std::endl;
@@ -289,7 +351,7 @@ void fitTPCevent()
     std::map<std::string, TSpline3*> splineMap;
     for(const auto& key : particles)
     {
-        splineMap[key] = BuildSRIMspline(srim, 400, key, 0.5);
+        splineMap[key] = BuildSRIMspline(srim, 700, key, 0.5);
     }
 
     double bestScore = 1e12;
@@ -300,7 +362,8 @@ void fitTPCevent()
     for(const auto& key : particles)
     {
         std::cout << "----------------------------------------------\n";
-        auto fSpline = FitSRIMtoChargeProfileUniversal(hShifted, splineMap[key], key);
+        // auto fSpline = FitSRIMtoChargeProfileUniversal(hShifted, splineMap[key], key);
+        auto fSpline = FitSRIMtoChargeProfileFixedEnd(hShifted, splineMap[key], key, 10);
 
         if(!fSpline)
             continue;
