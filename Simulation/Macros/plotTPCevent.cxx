@@ -8,10 +8,10 @@
 
 #include <TCanvas.h>
 #include <TF1.h>
+#include <TFile.h>
 #include <TGraph.h>
 #include <TH1D.h>
 #include <TH2D.h>
-#include <TFile.h>
 #include <TLegend.h>
 #include <TMath.h>
 #include <TProfile.h>
@@ -151,9 +151,9 @@ void DivideSegmentInPortions(double eLoss, int nPortions, const XYZPoint& center
 // ============================================================
 void DivideTrackInSegments(ActPhysics::SRIM* srim, double range, const XYZVector& dirIn, const XYZPoint& rp,
                            double step, int nSub, std::map<voxelKey, ActRoot::Voxel>& voxelMap,
-                           std::vector<XYZPoint>& electrons, ActRoot::TPCParameters& tpc, bool isLight = true)
+                           std::vector<XYZPoint>& electrons, ActRoot::TPCParameters& tpc,
+                           std::string particleType = "heavy")
 {
-    std::string particleType = isLight ? "light" : "heavy";
     XYZVector dir = dirIn.Unit();
     double E = srim->EvalInverse(particleType, range);
 
@@ -180,7 +180,7 @@ void DivideTrackInSegments(ActPhysics::SRIM* srim, double range, const XYZVector
 // ============================================================
 // Build profile + histogram
 // ============================================================
-std::pair<TProfile*, TH1D*> GetChargeProfile(const std::map<voxelKey, ActRoot::Voxel>& voxelMap, bool subdivideVoxels)
+std::pair<TGraph*, TH1D*> GetChargeProfile(const std::map<voxelKey, ActRoot::Voxel>& voxelMap, bool subdivideVoxels)
 {
     std::vector<ActRoot::Voxel> voxels;
     voxels.reserve(voxelMap.size());
@@ -230,8 +230,9 @@ std::pair<TProfile*, TH1D*> GetChargeProfile(const std::map<voxelKey, ActRoot::V
     // --------------------------------------------------
     // Histograms
     // --------------------------------------------------
-    auto* prof = new TProfile("chargeProfileP", "Charge profile (mean);Track length [mm];Mean charge", nBins, sMin - 5,
-                              sMax + 5);
+    auto* graph = new TGraph();
+    graph->SetName("chargeProfileG");
+    graph->SetTitle("Charge profile (mean);Track length [mm];Mean charge");
 
     auto* hist = new TH1D("chargeProfileH", "Charge profile (sum);Track length [mm];Charge", nBins, sMin - 5, sMax + 5);
 
@@ -254,7 +255,14 @@ std::pair<TProfile*, TH1D*> GetChargeProfile(const std::map<voxelKey, ActRoot::V
             XYZVector d = XYZVector(v.GetPosition()) - XYZVector(p0);
             double s = d.Dot(u);
 
-            prof->Fill(s, q);
+            // Get point in line with the same z coordinate than the voxel center
+            // auto t {(v.GetPosition().Z() - p0.Z()) / u.Z()};
+            // auto pointLineZcte = XYZPoint {p0.X() + u.X() * t, p0.Y() + u.Y() * t, p0.Z() + u.Z() * t};
+            // Compute distance in s of this point
+            // XYZVector d = XYZVector(v.GetPosition()) - XYZVector(p0);
+            // double s = d.Dot(u);
+
+            graph->SetPoint(graph->GetN(), s, q);
             hist->Fill(s, q);
         }
         else
@@ -275,7 +283,12 @@ std::pair<TProfile*, TH1D*> GetChargeProfile(const std::map<voxelKey, ActRoot::V
                         XYZVector d = XYZVector(miniPos) - XYZVector(p0);
                         double s = d.Dot(u);
 
-                        prof->Fill(s, qSub);
+                        // auto t {(miniPos.Z() - p0.Z()) / u.Z()};
+                        // auto pointLineZcte = XYZPoint {p0.X() + u.X() * t, p0.Y() + u.Y() * t, p0.Z() + u.Z() * t};
+                        // XYZVector d = XYZVector(v.GetPosition()) - XYZVector(p0);
+                        // double s = d.Dot(u);
+
+                        graph->SetPoint(graph->GetN(), s, qSub);
                         hist->Fill(s, qSub);
                     }
                 }
@@ -283,14 +296,14 @@ std::pair<TProfile*, TH1D*> GetChargeProfile(const std::map<voxelKey, ActRoot::V
         }
     }
 
-    for(int i = 1; i <= hist->GetNbinsX(); i++)
-        hist->SetBinError(i, std::sqrt(hist->GetBinContent(i)));
+    // for(int i = 1; i <= hist->GetNbinsX(); i++)
+    //     hist->SetBinError(i, std::sqrt(hist->GetBinContent(i)));
 
     hist->SetFillColorAlpha(kRed + 1, 0.35);
     hist->SetLineColor(kRed + 2);
     hist->SetLineWidth(2);
 
-    return {prof, hist};
+    return {graph, hist};
 }
 
 // ============================================================
@@ -328,10 +341,14 @@ TH1D* ShiftHistogram(TH1D* h, double shift, const std::string& particleKey)
     double xmin = h->GetBinLowEdge(1) + shift;
     double xmax = h->GetBinLowEdge(n + 1) + shift;
 
-    TH1D* hnew = new TH1D(("shifted_" + particleKey).c_str(), h->GetTitle(), n, xmin, xmax);
+    TH1D* hnew = new TH1D("hQProfile", h->GetTitle(), n, xmin, xmax);
 
     for(int i = 1; i <= n; i++)
+    {
         hnew->SetBinContent(i, h->GetBinContent(i));
+        hnew->SetBinError(i, h->GetBinError(i));
+    }
+
 
     return hnew;
 }
@@ -369,8 +386,10 @@ void plotTPCevent(double range = 120, double thetaDeg = 45, double phiDeg = -45)
     std::vector<XYZPoint> electronsLight;
     std::vector<XYZPoint> electronsHeavy;
 
-    DivideTrackInSegments(srim, range, dirLight, rp, 2.0, 5, voxelMapLight, electronsLight, tpc, true);
-    DivideTrackInSegments(srim, 3000, dirHeavy, rp, 2.0, 5, voxelMapHeavy, electronsHeavy, tpc, false);
+    std::string lightString = "lightD";
+
+    DivideTrackInSegments(srim, range, dirLight, rp, 2.0, 5, voxelMapLight, electronsLight, tpc, lightString);
+    DivideTrackInSegments(srim, 3000, dirHeavy, rp, 2.0, 5, voxelMapHeavy, electronsHeavy, tpc);
 
     // ================= Primary electrons plots (units: mm) =================
     TH2D* hXY = new TH2D("hXY", "XY;X [mm];Y [mm]", tpc.X(), 0, tpc.X(), tpc.Y(), 0, tpc.Y());
@@ -426,7 +445,7 @@ void plotTPCevent(double range = 120, double thetaDeg = 45, double phiDeg = -45)
     }
 
     // ================= Profiles =================
-    auto [profile, hist] = GetChargeProfile(voxelMapLight, true);
+    auto [graph, hist] = GetChargeProfile(voxelMapLight, true);
 
     // =============== Pads out of exclusion zone =================
     int nPadsOutExclusionZone = PadsOutExclusionZone(voxelMapLight, voxelMapHeavy);
@@ -456,7 +475,8 @@ void plotTPCevent(double range = 120, double thetaDeg = 45, double phiDeg = -45)
     c->cd(3);
     hYZq->Draw("COLZ");
     c->cd(4);
-    profile->Draw();
+    graph->SetMarkerStyle(4);
+    graph->Draw("AP");
     c->cd(5);
     hist->Draw("HIST");
     c->cd(6);
@@ -468,7 +488,7 @@ void plotTPCevent(double range = 120, double thetaDeg = 45, double phiDeg = -45)
 
     // Save hShifted for later fit: create output file and write the histogram there.
     {
-        TFile fout("./Outputs/hShifted_profile_light.root", "RECREATE");
+        TFile fout(TString::Format("./Outputs/hShifted_profile_%s.root", lightString.c_str()), "RECREATE");
         hShifted->Write();
         fout.Close();
     }

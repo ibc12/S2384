@@ -68,20 +68,41 @@ void NormalizeHistogram(TH1* h)
 // Shape chi2 (robust for large charges)
 // Does not use statistical errors -> compares shapes
 // ============================================================
-double Chi2Shape(const TH1* data, const TH1* model)
+double Chi2Shape(const TH1* data, const TH1* model, const TF1* f)
 {
+    double xmin = f->GetXmin();
+    double xmax = f->GetXmax();
+
+    int binMin = data->GetXaxis()->FindBin(xmin);
+    int binMax = data->GetXaxis()->FindBin(xmax);
+
+    // --- integrales SOLO en rango del fit ---
+    double intData = 0.0;
+    double intModel = 0.0;
+
+    for(int i = binMin; i <= binMax; i++)
+    {
+        double bw = data->GetBinWidth(i);
+        intData += data->GetBinContent(i) * bw;
+        intModel += model->GetBinContent(i) * bw;
+    }
+
+    if(intData <= 0 || intModel <= 0)
+        return 1e12;
+
+    // --- chi2 de forma ---
     double chi2 = 0.0;
     int n = 0;
 
-    for(int i = 1; i <= data->GetNbinsX(); i++)
+    for(int i = binMin; i <= binMax; i++)
     {
-        auto d = data->GetBinContent(i);
-        auto m = model->GetBinContent(i);
+        double d = data->GetBinContent(i) / intData;
+        double m = model->GetBinContent(i) / intModel;
 
         if(d <= 0 && m <= 0)
             continue;
 
-        auto denom = d + m; // stable symmetric weight
+        double denom = d + m;
         chi2 += (d - m) * (d - m) / denom;
         n++;
     }
@@ -90,6 +111,100 @@ double Chi2Shape(const TH1* data, const TH1* model)
         return 1e12;
 
     return chi2 / n;
+}
+
+double Chi2Manually(const TH1* data, const TH1* model, const TF1* f)
+{
+    double xmin = f->GetXmin();
+    double xmax = f->GetXmax();
+
+    int binMin = data->GetXaxis()->FindBin(xmin);
+    int binMax = data->GetXaxis()->FindBin(xmax);
+
+    double chi2 = 0.0;
+    int n = 0;
+
+    for(int i = binMin; i <= binMax; i++)
+    {
+        double d = data->GetBinContent(i);
+        double m = model->GetBinContent(i);
+
+        double ed = data->GetBinError(i);
+        double em = model->GetBinError(i);
+
+        double sigma2 = ed * ed + em * em;
+
+        if(sigma2 <= 0)
+            continue;
+
+        chi2 += (d - m) * (d - m) / sigma2;
+        n++;
+    }
+
+    if(n == 0)
+        return 1e12;
+
+    return chi2 / n; // reduced chi2
+}
+double NegLogLikelihood(const TH1* data, const TH1* model, const TF1* f)
+{
+    double xmin = f->GetXmin();
+    double xmax = f->GetXmax();
+
+    int binMin = data->GetXaxis()->FindBin(xmin);
+    int binMax = data->GetXaxis()->FindBin(xmax);
+
+    double nll = 0.0;
+
+    for(int i = binMin; i <= binMax; i++)
+    {
+        double d = data->GetBinContent(i);
+        double m = model->GetBinContent(i);
+
+        // ignorar bins completamente vacíos
+        if(d <= 0 && m <= 0)
+            continue;
+
+        // modelo imposible
+        if(m <= 0)
+            return 1e12;
+
+        nll += m - d * std::log(m);
+    }
+
+    return nll;
+}
+
+double PoissonDeviance(const TH1* data, const TH1* model, const TF1* f)
+{
+    double xmin = f->GetXmin();
+    double xmax = f->GetXmax();
+
+    int binMin = data->GetXaxis()->FindBin(xmin);
+    int binMax = data->GetXaxis()->FindBin(xmax);
+
+    double D = 0.0;
+
+    for(int i = binMin; i <= binMax; i++)
+    {
+        double d = data->GetBinContent(i);
+        double m = model->GetBinContent(i);
+
+        // ignorar bins completamente vacíos
+        if(d <= 0 && m <= 0)
+            continue;
+
+        // modelo imposible
+        if(m <= 0)
+            return 1e12;
+
+        if(d > 0)
+            D += 2.0 * (m - d + d * std::log(d / m));
+        else
+            D += 2.0 * m;
+    }
+
+    return D;
 }
 
 TSpline3* BuildSRIMspline(ActPhysics::SRIM* srim, double range, const std::string& particleKey, double step = 0.5,
@@ -129,6 +244,12 @@ TSpline3* BuildSRIMspline(ActPhysics::SRIM* srim, double range, const std::strin
             break;
     }
 
+    if(y_step_pts.back() > 0.0)
+    {
+        s_step_pts.push_back(range);
+        y_step_pts.push_back(0.0);
+    }
+
     int nSteps = (int)s_step_pts.size();
     if(nSteps < 3)
     {
@@ -136,6 +257,10 @@ TSpline3* BuildSRIMspline(ActPhysics::SRIM* srim, double range, const std::strin
         return nullptr;
     }
     sp = new TSpline3(("spSRIM_" + particleKey).c_str(), s_step_pts.data(), y_step_pts.data(), nSteps, "b2,e2", 0, 0);
+    sp->SetNpx(3000);
+
+    std::cout << "Spline max: " << sp->GetXmax() << "\n";
+    std::cout << "Value near max: " << sp->Eval(range - 1) << "\n";
 
     return sp;
 }
@@ -164,53 +289,61 @@ TF1* FitSRIMtoChargeProfileUniversal(TH1* hCharge, TSpline3* spSRIM, const std::
     if(!spSRIM)
         return nullptr;
 
+    // ---------- región útil del perfil ----------
     double sOffset = FindPositionFromChargeFraction(hCharge, 0.02);
-    double sEnd = FindPositionFromChargeFraction(hCharge, 0.98);
+    double sEndFit = FindPositionFromChargeFraction(hCharge, 0.98);
+    double sEndFull = FindPositionFromChargeFraction(hCharge, 0.9999);
 
     std::cout << "Fit start offset = " << sOffset << " mm\n";
-    std::cout << "Fit end position = " << sEnd << " mm\n";
+    std::cout << "Fit end position  = " << sEndFit << " mm\n";
 
-    double xmin = hCharge->GetXaxis()->GetXmin();
-    double xmax = hCharge->GetXaxis()->GetXmax();
+    // ---------- dominio de la spline ----------
+    const double splineMin = spSRIM->GetXmin();
+    const double splineMax = spSRIM->GetXmax();
 
-    std::string fname = "fSRIMfitUniversal_" + particleKey;
+    std::string fname = "fSRIMfitRigid_" + particleKey;
 
     TF1* f = new TF1(
         fname.c_str(),
-        [spSRIM, sOffset, sEnd](double* x, double* par)
+        [spSRIM, splineMin, splineMax](double* x, double* par)
         {
-            double A = par[0];
-            double R = par[1];
+            const double A = par[0];     // escala vertical
+            const double shift = par[1]; // desplazamiento en X
 
-            double s = x[0];
+            const double s = x[0];
+            const double u = s + shift; // coordenada en sistema Bragg
 
-            if(s < sOffset)
+            // evaluación física segura
+            if(u < splineMin)
                 return 0.0;
+            if(u > splineMax)
+                return 0.0; // spline debe extenderse hasta cola ~0
 
-            // Coordinate system change
-            double r = R - (sEnd - s);
-
-            if(r < spSRIM->GetXmin() || r > spSRIM->GetXmax())
-                return 0.0;
-
-            return A * spSRIM->Eval(r);
+            return A * spSRIM->Eval(u);
         },
-        sOffset, sEnd, 2);
+        sOffset, 130, 2);
 
+    // ---------- estimaciones iniciales ----------
     double integral = hCharge->Integral("width");
     double initAmp = integral / hCharge->GetNbinsX();
 
-    f->SetParameters(initAmp, 700.0);
+    // shift inicial: alinear inicio del perfil con inicio de spline
+    double initShift = splineMax - sEndFit;
+
+    f->SetParameters(initAmp, initShift);
 
     f->SetParName(0, "Amplitude");
-    f->SetParName(1, "Range");
+    f->SetParName(1, "Shift");
 
     f->SetParLimits(0, 0, 1e12);
-    f->SetParLimits(1, 10, 700);
 
-    f->SetNpx(500);
+    // límites amplios pero físicos para el desplazamiento
+    f->SetParLimits(1, 0.0, 720.0);
 
-    hCharge->Fit(f, "R0", "", sOffset, sEnd);
+    f->SetNpx(800);
+
+    // ---------- FIT ----------
+    hCharge->Fit(f, "QR0", "", sOffset, 130);
 
     return f;
 }
@@ -224,6 +357,7 @@ TF1* FitSRIMtoChargeProfileFixedEnd(TH1* hCharge, TSpline3* spSRIM, const std::s
     // --- región útil del perfil ---
     double sOffset = FindPositionFromChargeFraction(hCharge, 0.02);
     double sEndData = FindPositionFromChargeFraction(hCharge, 0.98);
+    double sEndFull = FindPositionFromChargeFraction(hCharge, 0.9999);
 
     std::cout << "Fit start offset = " << sOffset << " mm\n";
     std::cout << "Nominal end position = " << sEndData << " mm\n";
@@ -243,7 +377,7 @@ TF1* FitSRIMtoChargeProfileFixedEnd(TH1* hCharge, TSpline3* spSRIM, const std::s
             double s = x[0];
 
             if(s < sOffset)
-                return 0.0;
+                return 1e-9;
 
             // posición efectiva del final del track
             double sEndFit = sEndData + deltaEnd;
@@ -252,7 +386,7 @@ TF1* FitSRIMtoChargeProfileFixedEnd(TH1* hCharge, TSpline3* spSRIM, const std::s
             double r = rMax - (sEndFit - s);
 
             if(r < spSRIM->GetXmin() || r > spSRIM->GetXmax())
-                return 0.0;
+                return 1e-9;
 
             return A * spSRIM->Eval(r);
         },
@@ -270,9 +404,9 @@ TF1* FitSRIMtoChargeProfileFixedEnd(TH1* hCharge, TSpline3* spSRIM, const std::s
     f->SetParLimits(0, 0, 1e12);
     f->SetParLimits(1, -maxEndShift, maxEndShift);
 
-    f->SetNpx(500);
+    f->SetNpx(3000);
 
-    hCharge->Fit(f, "MR0", "", sOffset, sEndData + maxEndShift);
+    hCharge->Fit(f, "QR0", "", sOffset, sEndData + maxEndShift);
 
     return f;
 }
@@ -294,11 +428,14 @@ TH1* BuildModelHistogramFromTF1(const TH1* data, TF1* f, const std::string& name
     return model;
 }
 
-void fitTPCevent()
+void fitTPCevent() // LINEAR, CHI2 NORMALIZED, DQ/TL, RANGE
 {
     // Get a charge profile histogram to do the fit
-    // TFile* file = TFile::Open("./Outputs/hShifted_profile_light.root", "READ");
-    TFile* file = TFile::Open("./Inputs/hProfile_experiment_easy.root", "READ");
+    TFile* file = TFile::Open("./Outputs/hShifted_profile_lightD.root", "READ");
+    // TFile* file = TFile::Open("./Inputs/hProfile_experiment_easy.root", "READ");
+    // TFile* file =
+        TFile::Open("../../Macros/L1PID/Outputs/qProfile_d_long.root", "READ"); // for sure d from 7Li L1
+    // PID
     if(!file || file->IsZombie())
     {
         std::cerr << "Error: Could not open file ./Outputs/hShifted_profile_light.root" << std::endl;
@@ -306,7 +443,7 @@ void fitTPCevent()
     }
 
     // auto* hShifted = dynamic_cast<TH1D*>(file->Get("shifted_light"));
-    auto* hShifted = dynamic_cast<TH1F*>(file->Get("hQProfile"));
+    auto* hShifted = dynamic_cast<TH1D*>(file->Get("hQProfile"));
     if(!hShifted)
     {
         std::cerr << "Error: Could not find histogram shifted_light in file ./Outputs/hShifted_profile_light.root"
@@ -320,6 +457,15 @@ void fitTPCevent()
         }
         file->Close();
         return;
+    }
+
+    // Check bin contents and errors for histogram
+    for(int i = 1; i <= hShifted->GetNbinsX(); ++i)
+    {
+        double content = hShifted->GetBinContent(i);
+        double error = hShifted->GetBinError(i);
+        std::cout << "Bin " << i << ": content = " << content << ", error = " << error << std::endl;
+        hShifted->SetBinError(i, std::sqrt(hShifted->GetBinContent(i)));
     }
 
     // Do the fit here
@@ -345,25 +491,32 @@ void fitTPCevent()
     auto* c = new TCanvas("cFit", "Fit TPC event", 800, 600);
     c->cd();
     hShifted->SetLineColor(kRed);
-    hShifted->Draw("HIST");
+    hShifted->Draw("HISTE");
 
 
     std::map<std::string, TSpline3*> splineMap;
     for(const auto& key : particles)
     {
-        splineMap[key] = BuildSRIMspline(srim, 700, key, 0.5);
+        splineMap[key] = BuildSRIMspline(
+            srim, 250, key, 0.5); // If range of spline is bigger, the BP is badly reconstructed by the spline
     }
 
     double bestScore = 1e12;
+    double bestManualScore = 1e12;
     double bestFitScore = 1e12;
+    double bestNLL = 1e12;
+    double bestPoissonDeviance = 1e12;
     std::string bestParticle;
+    std::string bestManualParticle;
     std::string bestFitParticle;
+    std::string bestNLLParticle;
+    std::string bestPoissonDevianceParticle;
 
     for(const auto& key : particles)
     {
         std::cout << "----------------------------------------------\n";
         // auto fSpline = FitSRIMtoChargeProfileUniversal(hShifted, splineMap[key], key);
-        auto fSpline = FitSRIMtoChargeProfileFixedEnd(hShifted, splineMap[key], key, 10);
+        auto fSpline = FitSRIMtoChargeProfileFixedEnd(hShifted, splineMap[key], key, 5);
 
         if(!fSpline)
             continue;
@@ -394,21 +547,46 @@ void fitTPCevent()
         NormalizeHistogram(dataNorm);
         NormalizeHistogram(modelNorm);
 
-        double chiShape = Chi2Shape(dataNorm, modelNorm);
+        // now is normalice inside function of chi2
+        double chiManually = Chi2Manually(hShifted, model, fSpline);
+        double chiShape = Chi2Shape(hShifted, model, fSpline);
+        double poissonDeviance = PoissonDeviance(hShifted, model, fSpline);
+        double nll = NegLogLikelihood(hShifted, model, fSpline);
 
+        std::cout << "Particle " << key << "  manual-chi2 = " << chiManually << std::endl;
         std::cout << "Particle " << key << "  shape-chi2 = " << chiShape << std::endl;
-
+        std::cout << "Particle " << key << "  NLL = " << nll << std::endl;
+        std::cout << "Particle " << key << "  Poisson deviance = " << poissonDeviance << std::endl;
+        if(chiManually < bestManualScore)
+        {
+            bestManualScore = chiManually;
+            bestManualParticle = key;
+        }
         if(chiShape < bestScore)
         {
             bestScore = chiShape;
             bestParticle = key;
         }
+        if(nll < bestNLL)
+        {
+            bestNLL = nll;
+            bestNLLParticle = key;
+        }
+        if(poissonDeviance < bestPoissonDeviance)
+        {
+            bestPoissonDeviance = poissonDeviance;
+            bestPoissonDevianceParticle = key;
+        }
         std::cout << "----------------------------------------------\n";
     }
     leg->Draw();
 
-    std::cout << "Best chi2 shape: " << bestParticle << " (chi2=" << bestScore << ")\n";
     std::cout << "Best usual chi2 fit: " << bestFitParticle << " (chi2=" << bestFitScore << ")\n";
+    std::cout << "Best manual chi2: " << bestManualParticle << " (chi2=" << bestManualScore << ")\n";
+    std::cout << "Best chi2 shape: " << bestParticle << " (chi2=" << bestScore << ")\n";
+    std::cout << "Best NLL: " << bestNLLParticle << " (NLL=" << bestNLL << ")\n";
+    std::cout << "Best Poisson deviance: " << bestPoissonDevianceParticle
+              << " (Poisson deviance=" << bestPoissonDeviance << ")\n";
 
     // Detach histogram from file so it remains usable after closing the file/directory
     hShifted->SetDirectory(nullptr);
