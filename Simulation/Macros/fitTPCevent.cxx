@@ -29,6 +29,8 @@
 #include <utility>
 #include <vector>
 
+#include "../../PrettyStyle.C"
+
 // ============================================================
 // Shift histogram along x-axis by a constant (for alignment) with x = 0 at the start of the track
 // ============================================================
@@ -132,7 +134,8 @@ double Chi2Manually(const TH1* data, const TH1* model, const TF1* f)
         double ed = data->GetBinError(i);
         double em = model->GetBinError(i);
 
-        double sigma2 = ed * ed + em * em;
+        // double sigma2 = ed * ed + em * em;
+        double sigma2 = 1.0;
 
         if(sigma2 <= 0)
             continue;
@@ -256,7 +259,7 @@ TSpline3* BuildSRIMspline(ActPhysics::SRIM* srim, double range, const std::strin
         std::cout << "Not enough points to build spline (nSteps=" << nSteps << "). Need at least 3 points.\n";
         return nullptr;
     }
-    sp = new TSpline3(("spSRIM_" + particleKey).c_str(), s_step_pts.data(), y_step_pts.data(), nSteps, "b2,e2", 0, 0);
+    sp = new TSpline3(("spSRIM_" + particleKey).c_str(), s_step_pts.data(), y_step_pts.data(), nSteps, "b1,e1", 0, 0);
     sp->SetNpx(3000);
 
     std::cout << "Spline max: " << sp->GetXmax() << "\n";
@@ -422,7 +425,7 @@ TH1* BuildModelHistogramFromTF1(const TH1* data, TF1* f, const std::string& name
         double y = f->Eval(x);
 
         model->SetBinContent(ib, y);
-        model->SetBinError(ib, std::sqrt(y));
+        model->SetBinError(ib, 1);
     }
 
     return model;
@@ -430,11 +433,12 @@ TH1* BuildModelHistogramFromTF1(const TH1* data, TF1* f, const std::string& name
 
 void fitTPCevent() // LINEAR, CHI2 NORMALIZED, DQ/TL, RANGE
 {
+    PrettyStyle(false, false);
     // Get a charge profile histogram to do the fit
-    TFile* file = TFile::Open("./Outputs/hShifted_profile_lightD.root", "READ");
-    // TFile* file = TFile::Open("./Inputs/hProfile_experiment_easy.root", "READ");
-    // TFile* file =
-        TFile::Open("../../Macros/L1PID/Outputs/qProfile_d_long.root", "READ"); // for sure d from 7Li L1
+    // TFile* file = TFile::Open("./Outputs/hShifted_profile_lightD.root", "READ");
+    TFile* file = TFile::Open("./Inputs/hProfile_experiment_easy.root", "READ");
+    // TFile* file = TFile::Open("./Inputs/hProfile_experiment_p_easy.root", "READ");
+    // TFile* file = TFile::Open("../../Macros/L1PID/Outputs/qProfile_d_short_hard.root", "READ"); // for sure d from 7Li L1
     // PID
     if(!file || file->IsZombie())
     {
@@ -443,7 +447,7 @@ void fitTPCevent() // LINEAR, CHI2 NORMALIZED, DQ/TL, RANGE
     }
 
     // auto* hShifted = dynamic_cast<TH1D*>(file->Get("shifted_light"));
-    auto* hShifted = dynamic_cast<TH1D*>(file->Get("hQProfile"));
+    auto* hShifted = dynamic_cast<TH1F*>(file->Get("hQProfile"));
     if(!hShifted)
     {
         std::cerr << "Error: Could not find histogram shifted_light in file ./Outputs/hShifted_profile_light.root"
@@ -465,7 +469,7 @@ void fitTPCevent() // LINEAR, CHI2 NORMALIZED, DQ/TL, RANGE
         double content = hShifted->GetBinContent(i);
         double error = hShifted->GetBinError(i);
         std::cout << "Bin " << i << ": content = " << content << ", error = " << error << std::endl;
-        hShifted->SetBinError(i, std::sqrt(hShifted->GetBinContent(i)));
+        hShifted->SetBinError(i, 1);
     }
 
     // Do the fit here
@@ -501,11 +505,11 @@ void fitTPCevent() // LINEAR, CHI2 NORMALIZED, DQ/TL, RANGE
             srim, 250, key, 0.5); // If range of spline is bigger, the BP is badly reconstructed by the spline
     }
 
-    double bestScore = 1e12;
-    double bestManualScore = 1e12;
-    double bestFitScore = 1e12;
-    double bestNLL = 1e12;
-    double bestPoissonDeviance = 1e12;
+    double bestScore = 1e20;
+    double bestManualScore = 1e20;
+    double bestFitScore = 1e20;
+    double bestNLL = 1e20;
+    double bestPoissonDeviance = 1e20;
     std::string bestParticle;
     std::string bestManualParticle;
     std::string bestFitParticle;

@@ -25,7 +25,7 @@ void DebugDeuteriumPID()
     // Get all data for 7Li (there is no triton there, so easier to see deuterium)
     std::string beam {"7Li"};
     std::string target {"d"};
-    std::string light {"d"};
+    std::string light {"p"};
 
     std::string dataconf {};
     if(beam == "11Li")
@@ -52,17 +52,17 @@ void DebugDeuteriumPID()
     cuts.ReadCut("l1",
                  TString::Format("../../PostAnalysis/Cuts/pid_%s_l1_%s.root", light.c_str(), beam.c_str()).Data());
     cuts.ReadCut("l1_theta",
-                 TString::Format("./Cuts/%s_gs_ThetaVSq_%s.root", light.c_str(), beam.c_str()).Data());
+                 TString::Format("./Cuts/%s_ThetaVSq_%s.root", light.c_str(), beam.c_str()).Data());
 
-    auto dfL1Cut = df.Filter(
-        [&cuts](const ActRoot::MergerData& m)
-        {
-            if(cuts.GetCut("l1"))
-                return cuts.IsInside("l1", m.fLight.fRawTL, m.fLight.fQtotal);
-            else
-                return false;
-        },
-        {"MergerData"});
+    // auto dfL1Cut = df.Filter(
+    //     [&cuts](const ActRoot::MergerData& m)
+    //     {
+    //         if(cuts.GetCut("l1"))
+    //             return cuts.IsInside("l1", m.fLight.fRawTL, m.fLight.fQtotal);
+    //         else
+    //             return false;
+    //     },
+    //     {"MergerData"});
 
     // Fill histogram TL vs Q and ThetaLight vs Q for both dfs
     auto hL1_track = new TH2D("hL1_track", "L1 TL vs Q;TL [mm];Q_{total}", 240, 0, 120, 2000, 0, 300000);
@@ -80,17 +80,17 @@ void DebugDeuteriumPID()
         },
         {"MergerData"});
 
-    dfL1Cut.Foreach(
-        [&hL1_track_cut, &hL1_theta_cut](const ActRoot::MergerData& m)
-        {
-            hL1_track_cut->Fill(m.fLight.fRawTL, m.fLight.fQtotal);
-            hL1_theta_cut->Fill(m.fThetaLight, m.fLight.fQtotal);
-        },
-        {"MergerData"});
+    // dfL1Cut.Foreach(
+    //     [&hL1_track_cut, &hL1_theta_cut](const ActRoot::MergerData& m)
+    //     {
+    //         hL1_track_cut->Fill(m.fLight.fRawTL, m.fLight.fQtotal);
+    //         hL1_theta_cut->Fill(m.fThetaLight, m.fLight.fQtotal);
+    //     },
+    //     {"MergerData"});
 
     // Save events inside cut Theta vs Q
     std::ofstream outFile(TString::Format("./Outputs/events_inside_cut_%s_l1Theta_%s.dat", light.c_str(), beam.c_str()).Data());
-    dfL1Cut.Foreach(
+    df.Foreach(
         [&outFile, &cuts](const ActRoot::MergerData& m)        {
             if(cuts.GetCut("l1_theta"))
                 if(cuts.IsInside("l1_theta", m.fThetaLight, m.fLight.fQtotal))

@@ -1,14 +1,35 @@
+#include "ActCluster.h"
+#include "ActLine.h"
 #include "ActSRIM.h"
+#include "ActTPCParameters.h"
+#include "ActVoxel.h"
+
+#include <random>
 
 #include <TCanvas.h>
+#include <TF1.h>
+#include <TFile.h>
+#include <TGraph.h>
+#include <TH1D.h>
+#include <TH2D.h>
+#include <TKey.h>
+#include <TLegend.h>
+#include <TMath.h>
+#include <TProfile.h>
+#include <TRandom3.h>
 #include <TSpline.h>
 #include <TStyle.h>
 
-#include <iostream>
+#include <Math/Point3D.h>
+#include <Math/Vector3D.h>
+#include <cmath>
+#include <map>
+#include <set>
+#include <tuple>
+#include <utility>
 #include <vector>
 
-using namespace std;
-
+#include "../../PrettyStyle.C"
 
 // ------------------------------------------------------------
 // Building spline from SRIM sampling by steps
@@ -78,52 +99,34 @@ TSpline3* BuildSRIMspline(ActPhysics::SRIM* srim, double range, const std::strin
                         "b2,e2", 0, 0);
 }
 
-
-// ------------------------------------------------------------
-// Macro principal: dibujar SOLO spline
-// ------------------------------------------------------------
-void debugSplineProton()
+void convolutionSplineSRIMandGausDiffusion()
 {
-    gStyle->SetOptStat(0);
+    // This macro is to check the convolution of the spline from SRIM and a gaussian diffusion
+    // to see if it can reproduce the charge profile in the TPC
 
-    double range = 250;
-    double step = 0.3;
+    auto srim = new ActPhysics::SRIM();
+    srim->ReadTable("p", "../../Calibrations/SRIM/1H_900mb_CF4_95-5.txt");
+    double range = 120.0;
+    std::string particleKey = "p";
+    double step = 0.5;
 
-    ActPhysics::SRIM srim;
-    srim.ReadTable("light", "../../Calibrations/SRIM/3H_900mb_CF4_95-5.txt");
+    TSpline3* sp = BuildSRIMspline(srim, range, particleKey, step);
 
-    TSpline3* sp = BuildSRIMspline(&srim, range, "light", step);
-
-    if(!sp)
-        return;
-
-    std::cout << "Spline max: " << sp->GetXmax() << "\n";
-    std::cout << "Value near max: " << sp->Eval(range - 0.5) << "\n";
-
-    // Create TGraph sampling spline in steps
-    auto nPoints = static_cast<int>(range / step) + 1;
-    std::vector<double> s_vals(nPoints);
-    std::vector<double> sp_vals(nPoints);
-
-    for(int i = 0; i < nPoints; ++i)
+    // Build histogram with the spline values
+    int nbins = 1000;
+    TH1D* hSpline = new TH1D("hSpline", "hSpline", nbins, 0, range);
+    for(int i = 1; i <= nbins; i++)
     {
-        s_vals[i] = i * step;
-        sp_vals[i] = sp->Eval(s_vals[i]);
-        std::cout << "s = " << s_vals[i] << ", sp(s) = " << sp_vals[i] << "\n";
+        double x = hSpline->GetBinCenter(i);
+        double y = sp->Eval(x);
+        hSpline->SetBinContent(i, y);
     }
 
-    auto* g = new TGraph(nPoints, s_vals.data(), sp_vals.data());
-    g->SetLineWidth(3);
-    g->SetLineColor(kRed);
+    // copy the histogram to a new one to do the convolution
+    TH1D* hConv = (TH1D*)hSpline->Clone("hConv");
+    
 
-    auto* c = new TCanvas("c_SRIMspline", "SRIM spline", 900, 600);
-    sp->SetLineWidth(3);
-    sp->SetNpx(10001);
-    sp->Draw();
-
-    auto* c1 = new TCanvas("c_SRIMspline_points", "SRIM spline points", 900, 600);
-    g->SetMarkerStyle(20);
-    g->Draw("AP");
-
-    srim.Draw();
+    // Draw the spline histogram
+    TCanvas* c1 = new TCanvas("c1", "c1", 800, 600);
+    hSpline->Draw();
 }
