@@ -7,10 +7,10 @@
 #include <unordered_map>
 #include <vector>
 
-#include "./do_simu.cxx"
+#include "./do_simuL1.cxx"
 #include "./plotter.cxx"
 
-void runner(TString what = "simu", bool isL1 = false, bool inspect = true)
+void runnerL1(TString what = "simu", bool inspect = true)
 {
     // Neutron and Proton phase space
     int neutronPS {0}; // number of neutrons in final state
@@ -67,7 +67,7 @@ void runner(TString what = "simu", bool isL1 = false, bool inspect = true)
     {
         if(inspect)
         {
-            do_simu(beam, target, light, heavy, neutronPS, protonPS, Tbeam, Exs.front(), inspect);
+            do_simuL1(beam, target, light, heavy, neutronPS, protonPS, Tbeam, Exs.front(), inspect);
         }
         else
         {
@@ -75,7 +75,7 @@ void runner(TString what = "simu", bool isL1 = false, bool inspect = true)
             TString haddout {};
             if(isPS)
             {
-                haddout = TString::Format("./Outputs/%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d.root", beam.c_str(),
+                haddout = TString::Format("./Outputs/%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_L1.root", beam.c_str(),
                                           target.c_str(), light.c_str(), Exs.front(), neutronPS, protonPS);
                 // List of files generated per thread
                 // Number of threads = 6
@@ -84,10 +84,10 @@ void runner(TString what = "simu", bool isL1 = false, bool inspect = true)
                 for(int i = 1; i <= nthreads; i++)
                 {
                     auto str {TString::Format(
-                        "root -l -b -q -x 'do_simu.cxx(\"%s\",\"%s\",\"%s\",\"%s\",%d,%d,%f,%f,%d,%d)\'",
+                        "root -l -b -q -x 'do_simuL1.cxx(\"%s\",\"%s\",\"%s\",\"%s\",%d,%d,%f,%f,%d,%d)\'",
                         beam.c_str(), target.c_str(), light.c_str(), heavy.c_str(), neutronPS, protonPS, Tbeam,
                         Exs.front(), inspect, i)};
-                    haddlist += TString::Format("./Outputs/%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_%s.root",
+                    haddlist += TString::Format("./Outputs/%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_L1_%s.root",
                                                 beam.c_str(), target.c_str(), light.c_str(), Exs.front(), neutronPS,
                                                 protonPS, std::to_string(i).c_str()) +
                                 " ";
@@ -98,7 +98,7 @@ void runner(TString what = "simu", bool isL1 = false, bool inspect = true)
             {
                 for(const auto& ex : Exs)
                 {
-                    auto str = TString::Format("root -l -b -q -x 'do_simu.cxx(\"%s\",\"%s\",\"%s\",\"%s\",%d,%d,%f,%f,%d)'",
+                    auto str = TString::Format("root -l -b -q -x 'do_simuL1.cxx(\"%s\",\"%s\",\"%s\",\"%s\",%d,%d,%f,%f,%d)'",
                                                beam.c_str(), target.c_str(), light.c_str(), heavy.c_str(), neutronPS,
                                                protonPS, Tbeam, ex, inspect);
                     threads.emplace_back(std::thread {worker, str});

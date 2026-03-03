@@ -15,6 +15,8 @@
 #include "ActTPCParameters.h"
 #include "ActUtils.h"
 
+#include <random>
+
 #include "TCanvas.h"
 #include "TEfficiency.h"
 #include "TF1.h"
@@ -33,7 +35,6 @@
 #include "TTree.h"
 
 #include <cmath>
-#include <random>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -50,9 +51,19 @@ struct BeamOffset
     double fraction; // must sum to 1
 };
 
-using padPlane = std::map<std::pair<int, int>, double>;
-
 using BeamOffsetMap = std::map<std::string, std::vector<BeamOffset>>;
+
+// ============================================================
+// Geometry
+// ============================================================
+constexpr double voxelSize = 2.0;               // mm
+ActRoot::TPCParameters tpc {"Actar"};           // TPC parameters
+constexpr double Gmean = 3000.0;                // Mean gain
+constexpr double theta = 0.7;                   // Polya parameter
+constexpr double thresholdPadCharge = 5.4857e6; // that n electrons corresponds to 0.8789 pC
+constexpr int yMinExclusionZone = 55;
+constexpr int yMaxExclusionZone = 70;
+using voxelKey = std::tuple<int, int, int>; // ix,iy,iz
 
 std::pair<XYZPoint, XYZPoint> SampleVertex(double meanZ, double sigmaZ, TH3D* h, double lengthX)
 {
@@ -182,200 +193,156 @@ bool GetXS(const std::string& target, const std::string& light, const std::strin
     return isThereXS;
 }
 
-//     // ============================================================
-//     // Add charge to voxel map
-//     // ============================================================
-//     void AddChargeToVoxel(double x, double y, double z, double charge, std::map<voxelKey, ActRoot::Voxel>& voxelMap)
-//     {
-//         int ix = std::floor(x / voxelSize);
-//         int iy = std::floor(y / voxelSize);
-//         int iz = std::floor(z / voxelSize);
-//     
-//         voxelKey key {ix, iy, iz};
-//     
-//         auto it = voxelMap.find(key);
-//         if(it == voxelMap.end())
-//         {
-//             ActRoot::Voxel v;
-//             v.SetPosition(ActRoot::Voxel::XYZPointF {float((ix + 0.5) * voxelSize), float((iy + 0.5) * voxelSize),
-//                                                      float((iz + 0.5) * voxelSize)});
-//             v.SetCharge(charge);
-//             voxelMap.emplace(key, v);
-//         }
-//         else
-//         {
-//             it->second.SetCharge(it->second.GetCharge() + charge);
-//         }
-//     }
-//     
-//     // ============================================================
-//     // Divide segment → electrons → voxels
-//     // ============================================================
-//     void DivideSegmentInPortions(double eLoss, int nPortions, const XYZPoint& center,
-//                                  std::map<voxelKey, ActRoot::Voxel>& voxelMap, std::vector<XYZPoint>& electrons)
-//     {
-//         if(eLoss <= 0 || nPortions <= 0)
-//             return;
-//     
-//         const double W = 36.4 * 0.95 + 34.3 * 0.05; // eV / electron in 95% D2 + 5% CF4
-//         const double diffT = 0.10;                  // mm / sqrt(mm)
-//         const double diffL = 0;                     // mm / sqrt(mm) No diffusion in z direction
-//     
-//         double h = center.Y();
-//         if(h <= 0)
-//             return;
-//     
-//         double sigmaT = diffT * std::sqrt(h);
-//         double sigmaL = diffL * std::sqrt(h);
-//     
-//         double portionE = eLoss / nPortions; // MeV
-//         double meanNe = portionE * 1e6 / W;
-//     
-//         for(int i = 0; i < nPortions; i++)
-//         {
-//             int nElectrons = gRandom->Poisson(meanNe);
-//             if(nElectrons <= 0)
-//                 continue;
-//     
-//             for(int e = 0; e < nElectrons; e++)
-//             {
-//                 double x = gRandom->Gaus(center.X(), sigmaT);
-//                 double y = gRandom->Gaus(center.Y(), sigmaT);
-//                 double z = gRandom->Gaus(center.Z(), sigmaL);
-//     
-//                 double gain = Polya(Gmean, theta);
-//                 AddChargeToVoxel(x, y, z, gain, voxelMap);
-//                 electrons.emplace_back(x, y, z);
-//             }
-//         }
-//     }
-//     
-//     // ============================================================
-//     // Divide track using SRIM
-//     // ============================================================
-//     void DivideTrackInSegments(ActPhysics::SRIM* srim, double range, const XYZVector& dirIn, const XYZPoint& rp,
-//                                double step, int nSub, std::map<voxelKey, ActRoot::Voxel>& voxelMap,
-//                                std::vector<XYZPoint>& electrons)
-//     {
-//         XYZVector dir = dirIn.Unit();
-//         double E = srim->EvalInverse("light", range);
-//     
-//         for(double r = 0; r < range; r += step)
-//         {
-//             double Epost = srim->Slow("light", E, step);
-//             double eLoss = E - Epost;
-//             E = Epost;
-//     
-//             if(eLoss <= 0)
-//                 continue;
-//     
-//             XYZPoint center = rp + dir * (r + 0.5 * step);
-//             if(center.Y() <= 0)
-//                 continue;
-//     
-//             DivideSegmentInPortions(eLoss, nSub, center, voxelMap, electrons);
-//         }
-//     }
-
-padPlane
-DivideTrackInSegments(ActPhysics::SRIM* srim, double range, XYZVector dir, XYZPoint rp, double step, int nSubSegments)
+// ============================================================
+// Add charge to voxel map
+// ============================================================
+void AddChargeToVoxel(double x, double y, double z, double charge, std::map<voxelKey, ActRoot::Voxel>& voxelMap)
 {
-    // Divide track in segments of length = step
-    // Compute energy loss in that step
-    // Divide that eLoss in the segment in a number of portions
+    int ix = std::floor(x / voxelSize);
+    int iy = std::floor(y / voxelSize);
+    int iz = std::floor(z / voxelSize);
 
-    padPlane padMap {};
+    voxelKey key {ix, iy, iz};
 
-    // Normalize the drection
-    dir = dir.Unit();
-    // Initial energy
-    double Eiter {srim->EvalInverse("light", range)};
+    if(ix < 0 || ix >= (tpc.X() / voxelSize))
+        return;
+    if(iy < 0 || iy >= (tpc.Y() / voxelSize))
+        return;
+
+    auto it = voxelMap.find(key);
+    if(it == voxelMap.end())
+    {
+        ActRoot::Voxel v;
+        // Store voxel position in units of voxels as the corner of voxel
+        v.SetPosition(ActRoot::Voxel::XYZPointF {float((ix)), float((iy)), float((iz))});
+        v.SetCharge(charge);
+        voxelMap.emplace(key, v);
+    }
+    else
+    {
+        it->second.SetCharge(it->second.GetCharge() + charge);
+    }
+}
+
+// ============================================================
+// Divide segment → electrons → voxels
+// ============================================================
+void DivideSegmentInPortions(double eLoss, int nPortions, const XYZPoint& center,
+                             std::map<voxelKey, ActRoot::Voxel>& voxelMap, std::vector<XYZPoint>& electrons,
+                             ActRoot::TPCParameters& tpc)
+{
+    if(eLoss <= 0 || nPortions <= 0)
+        return;
+
+    const double W = 36.4 * 0.95 + 34.3 * 0.05; // eV / electron in 95% D2 + 5% CF4
+    const double diffT = 0.06;                  // mm / sqrt(mm) - Approx from data
+    const double diffL = 0;                     // mm / sqrt(mm) No diffusion in z direction
+
+    // Height in Z coordinate - distance to pad plane. Pad plane is at Z = 0 and rp is assumed to be at Z = 110.
+    // Thus the z coordinate is the distance to the pad plane.
+    double h = center.Z();
+    if(h <= 0)
+        return;
+
+    double sigmaT = diffT * std::sqrt(h);
+    double sigmaL = diffL * std::sqrt(h);
+
+    // =====================================================
+    // EARLY GEOMETRIC REJECTION (CRITICAL SPEEDUP)
+    // =====================================================
+
+    const double difXmax = tpc.X() + 20;
+    const double difYmax = tpc.Y() + 20;
+
+    if(center.X() < -20 || center.X() > difXmax || center.Y() < -20 || center.Y() > difYmax)
+    {
+        return; // entire cloud cannot reach pad plane
+    }
+    // =====================================================
+
+    double portionE = eLoss / nPortions; // MeV
+    double meanNe = portionE * 1e6 / W;
+
+    for(int i = 0; i < nPortions; i++)
+    {
+        int nElectrons = gRandom->Poisson(meanNe);
+        if(nElectrons <= 0)
+            continue;
+
+
+        for(int e = 0; e < nElectrons; e++)
+        {
+            double x = gRandom->Gaus(center.X(), sigmaT);
+            double y = gRandom->Gaus(center.Y(), sigmaT);
+            double z = gRandom->Gaus(center.Z(), sigmaL);
+
+            double gain = Polya(Gmean, theta);
+            AddChargeToVoxel(x, y, z, gain, voxelMap);
+            // store electron positions in mm
+            electrons.emplace_back(x, y, z);
+        }
+    }
+}
+
+// ============================================================
+// Divide track using SRIM
+// ============================================================
+void DivideTrackInSegments(ActPhysics::SRIM* srim, double range, const XYZVector& dirIn, const XYZPoint& rp,
+                           double step, int nSub, std::map<voxelKey, ActRoot::Voxel>& voxelMap,
+                           std::vector<XYZPoint>& electrons, ActRoot::TPCParameters& tpc,
+                           std::string particleType = "heavy")
+{
+    XYZVector dir = dirIn.Unit();
+    double E = srim->EvalInverse(particleType, range);
 
     for(double r = 0; r < range; r += step)
     {
-        double EpostSlow {srim->Slow("light", Eiter, step)};
-        double eLoss {Eiter - EpostSlow};
+        double Epost = srim->Slow(particleType, E, step);
+        double eLoss = E - Epost;
+        E = Epost;
 
         if(eLoss <= 0)
             continue;
 
-        // Mean height of the segment for the drift
-        XYZPoint posSegment = rp + dir * (r + 0.5 * step);
-        double hSegment = posSegment.Z();
-
-        // Divide in subsegments to drift
-        DivideSegmentInPortions(eLoss, nSubSegments, hSegment, padMap);
-
-        Eiter = EpostSlow;
-    }
-
-    return padMap;
-}
-
-void DivideSegmentInPortions(double eLoss, int nPortions, double hSegment, padPlane& padMap)
-{
-    // Each segment divide it in many portions
-
-    // Each portion has the same amount of energy
-
-    // Transform energy in electrons
-
-    // Randomize the electron numbers with Poisson distribution
-
-    // Drift Electrons into pad plane with gausian distribution with width the difusion taking into acount the heigth of
-    // the charge
-
-    // Fill map of <pad,pad> , charge that represents the pad plane
-
-    if(eLoss <= 0 || nPortions <= 0)
-        return;
-
-    // Constantes
-    const double W = 30.0;          // eV/electron
-    const double driftDiffT = 0.1;  // mm/sqrt(mm), transversal diffusion
-    const double driftDiffL = 0.05; // mm/sqrt(mm), longitudinal diffusion
-    const double padSize = 2.0;     // mm
-
-    double portionEnergy = eLoss / nPortions;
-    double meanElectrons = portionEnergy * 1e6 / W; // eLoss en MeV a eV a electrones
-
-    for(int i = 0; i < nPortions; i++)
-    {
-        // Randomize electrons in each portion
-        int nElectrons = gRandom->Poisson(meanElectrons);
-        if(nElectrons <= 0)
+        XYZPoint center = rp + dir * (r + 0.5 * step);
+        //  deltaZ > 0  -> track goes to larger Z (away from pad plane) - 146 mm to cathode
+        //  deltaZ < 0  -> track goes to smaller Z (closer to pad plane) - 110 mm to pad plane
+        // double DeltaZ = center.Z() - rp.Z();
+        if(center.Z() <= 0 || center.Z() > 256)
             continue;
 
-        // Difusión
-        double sigmaT = driftDiffT * std::sqrt(hSegment); // mm
-        double sigmaL = driftDiffL * std::sqrt(hSegment); // mm
-
-        for(int e = 0; e < nElectrons; e++)
-        {
-            // posición de cada electrón en plano de pads (x,z) con difusión gaussiana
-            double xPad = gRandom->Gaus(0.0, sigmaT);
-            double zPad = gRandom->Gaus(0.0, sigmaL);
-
-            // Convertir posición a número de pad (0–2 → 0, 2–4 → 1, ...)
-            int col = int(xPad / padSize);
-            int row = int(zPad / padSize);
-
-            padMap[std::make_pair(row, col)] += 1.0; // acumular carga
-        }
+        DivideSegmentInPortions(eLoss, nSub, center, voxelMap, electrons, tpc);
     }
-    // Check ActSim, to see if the drift is done electron by electron
-    // Check If the drift sigma is well computed with the height
 }
 
-bool CheckExclusionZone(padPlane padPlane, int nPadThreshold, int yMin, int yMax, int chargeThreshold = 0)
+// ============================================================
+// Count pads outside exclusion zone (not taking into account angle or charge deposition)
+// ============================================================
+int PadsOutExclusionZone(const std::map<voxelKey, ActRoot::Voxel>& voxelMap1,
+                         const std::map<voxelKey, ActRoot::Voxel>& voxelMap2)
 {
-    // Check the number of pads outside the exclusion zone defined by yMin and yMax have charge above threshold
+    std::set<std::pair<int, int>> activePads;
 
-    // I have to check, because maybe the consition is not only pads with charge, Thomas explained this in July
+    auto addPads = [&](const std::map<voxelKey, ActRoot::Voxel>& voxelMap)
+    {
+        for(const auto& [key, v] : voxelMap)
+        {
+            int ix = std::get<0>(key);
+            int iy = std::get<1>(key);
+
+            if(iy < yMinExclusionZone || iy > yMaxExclusionZone)
+                activePads.insert({ix, iy});
+        }
+    };
+
+    addPads(voxelMap1);
+    addPads(voxelMap2);
+
+    return activePads.size();
 }
 
-void do_simu(const std::string& beam, const std::string& target, const std::string& light, const std::string& heavy,
-             int neutronPS, int protonPS, double Tbeam, double Ex, bool inspect, int thread = -1)
+void do_simuL1(const std::string& beam, const std::string& target, const std::string& light, const std::string& heavy,
+               int neutronPS, int protonPS, double Tbeam, double Ex, bool inspect, int thread = -1)
 {
     // set batch mode if inspect is false
     if(!inspect)
@@ -383,7 +350,7 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     // Set whether is PS or not
     bool isPS {(neutronPS > 0) || (protonPS > 0)};
     // Set number of iterations
-    const int niter {static_cast<int>(inspect ? 1e7 : (isPS ? 1e8 : 1e8))};
+    const int niter {static_cast<int>(inspect ? 1e3 : (isPS ? 1e8 : 1e8))};
     gRandom->SetSeed(0);
     // Runner: contains utility functions to execute multiple actions as rotate directions
     ActSim::Runner runner(nullptr, nullptr, gRandom, 0);
@@ -501,6 +468,8 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     hRP_X->SetTitle("Reconstructed RP;X [mm];Counts");
     auto hRP {HistConfig::RP.GetHistogram()};
     hRP->SetTitle("Reconstructed RP;RP [mm];Counts");
+    // L1 specific histos
+    auto hPads {new TH1D("hPads", "Number of pads hit out of exclusion zone;Pads;Counts", 50, 0, 50)};
 
     // Allow multiple theads
     std::string tag {""};
@@ -541,14 +510,14 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     for(int it = 0; it < niter; it++)
     {
         // Print progress
-        // if(it >= nextPrint)
-        // {
-        //     percent = 100 * (it + 1) / niter;
-        //     int nchar {percent / percentPrint};
-        //     std::cout << "\r" << std::string((int)(percent / percentPrint), '|') << percent << "%";
-        //     std::cout.flush();
-        //     nextPrint += step;
-        // }
+        if(it >= nextPrint)
+        {
+            percent = 100 * (it + 1) / niter;
+            int nchar {percent / percentPrint};
+            std::cout << "\r" << std::string((int)(percent / percentPrint), '|') << percent << "%";
+            std::cout.flush();
+            nextPrint += step;
+        }
         // Sample vertex position
         auto [start, vertex] {SampleVertex(zMeanEntrance, zVertexSigma, hBeam, tpc.X())};
         auto distToVertex {(vertex - start).R()};
@@ -683,10 +652,6 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         auto dirWorldFrame {runner.RotateToWorldFrame(dirBeamFrame, beamDir)};
         auto heavyWorldFrame {runner.RotateToWorldFrame(heavyBeamFrame, beamDir)};
 
-
-        // Extract direction
-        XYZVector direction {TMath::Cos(theta3Lab), TMath::Sin(theta3Lab) * TMath::Sin(phi3Lab),
-                             TMath::Sin(theta3Lab) * TMath::Cos(phi3Lab)};
         // L1 condition, particles that stop in actar. Check if track stays inside
         double rangeInGas {srim->EvalRange("light", T3Lab)};
         ROOT::Math::XYZPoint finalPointGas {vertex + rangeInGas * dirWorldFrame.Unit()};
@@ -695,18 +660,29 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         if(!isL1)
             continue;
 
-        // Exclusion zone from pad 55 to 70 (pads start at 0, so from 108 to 142 mm in Y)
+        std::map<voxelKey, ActRoot::Voxel> voxelMapLight;
+        std::map<voxelKey, ActRoot::Voxel> voxelMapHeavy;
+        std::vector<XYZPoint> electronsLight;
+        std::vector<XYZPoint> electronsHeavy;
 
-        // Reconstruct track and charge drift, diffusion and deposition
+        DivideTrackInSegments(srim, rangeInGas, dirWorldFrame, vertex, 2.0, 5, voxelMapLight, electronsLight, tpc,
+                              "light");
+        DivideTrackInSegments(srim, 3000, heavyWorldFrame, vertex, 2.0, 5, voxelMapHeavy, electronsHeavy, tpc);
 
+        int nPadsOutExclusionZone = PadsOutExclusionZone(voxelMapLight, voxelMapHeavy);
+        hPads->Fill(nPadsOutExclusionZone);
+        if(nPadsOutExclusionZone < 8) // I have to implement the threshold of charge
+            continue;
 
         // Reconstruct Ex!
-        bool isOk {};          // no punchthrouhg
-        bool cutELoss0 {true}; // for f0 not yet implemented the graphical cuts
+        bool isOk {true};          // no punchthrouhg
+        bool cutELoss0 {true}; // for L1 not implemented yet the graphical cuts
         if(isOk && cutELoss0)
         {
-            double T3Rec {0};
-            double ExRec {0};
+            double T3Rec {T3Lab}; // for L1 we dont have a real reconstruction yet, so we will just use the smeared T3
+                                  // as "reconstructed" energy at vertex. Maybe useful to recover energy from range in
+                                  // gas with profile¿? but maybe to slow
+            auto ExRec {kin->ReconstructExcitationEnergy(T3Rec, theta3Lab)};
             // Fill
             hKinRec->Fill(theta3Lab * TMath::RadToDeg(), T3Rec); // after reconstruction
             hEx->Fill(ExRec, weight);                            // To get real counts weigth * alpha
@@ -777,6 +753,8 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         hPhi3CM->DrawClone();
         c1->cd(2);
         hPhiAll->DrawClone();
+        c1->cd(3);
+        hPads->DrawClone();
 
         auto* cEff {new TCanvas {"cEff", "Eff plots"}};
         cEff->DivideSquare(7);

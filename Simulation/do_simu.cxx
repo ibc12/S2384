@@ -628,10 +628,6 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         auto dirWorldFrame {runner.RotateToWorldFrame(dirBeamFrame, beamDir)};
         auto heavyWorldFrame {runner.RotateToWorldFrame(heavyBeamFrame, beamDir)};
 
-
-        // Extract direction
-        XYZVector direction {TMath::Cos(theta3Lab), TMath::Sin(theta3Lab) * TMath::Sin(phi3Lab),
-                             TMath::Sin(theta3Lab) * TMath::Cos(phi3Lab)};
         // Threshold L1, particles that stop in actar. Check before doing the continues
         double rangeInGas {srim->EvalRange("light", T3Lab)};
         ROOT::Math::XYZPoint finalPointGas {vertex + rangeInGas * dirWorldFrame.Unit()};
