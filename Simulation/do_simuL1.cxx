@@ -34,6 +34,7 @@
 #include "TSystem.h"
 #include "TTree.h"
 
+#include <Math/Random.h>
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -117,11 +118,37 @@ double RandomizeBeamEnergy(double Tini, double sigma)
 // ============================================================
 // Polya function for gain distribution in Micromegas
 // ============================================================
-double Polya(double Gmean, double theta)
+// double Polya(double Gmean, double theta)
+// {
+//     static std::mt19937 gen(std::random_device {}());
+//     std::gamma_distribution<double> gamma(theta + 1.0, Gmean / (theta + 1.0));
+//     return gamma(gen);
+// }
+
+double PolyaGamma(double k, double beta)
 {
-    static std::mt19937 gen(std::random_device {}());
-    std::gamma_distribution<double> gamma(theta + 1.0, Gmean / (theta + 1.0));
+    static thread_local std::mt19937 gen(0); // cada hilo tiene su RNG
+    static thread_local std::gamma_distribution<double> gamma;
+
+    // Reconstruye solo si los parámetros cambian
+    static thread_local double last_k = -1.0;
+    static thread_local double last_beta = -1.0;
+
+    if(k != last_k || beta != last_beta)
+    {
+        gamma = std::gamma_distribution<double>(k, beta);
+        last_k = k;
+        last_beta = beta;
+    }
+
     return gamma(gen);
+}
+
+double PolyaFast(double Gmean, double theta) {
+    static thread_local std::mt19937 gen(0);
+    static thread_local std::uniform_real_distribution<double> U(0.0,1.0);
+    double u = U(gen);
+    return Gmean * pow(u, -1.0/(theta+1));  // aproximación rápida de Polya
 }
 
 // Get XS files depending on the reaction in place
@@ -196,27 +223,16 @@ bool GetXS(const std::string& target, const std::string& light, const std::strin
 // ============================================================
 // Add charge to voxel map
 // ============================================================
-void AddChargeToVoxel(double x, double y, double z, double charge, std::map<voxelKey, ActRoot::Voxel>& voxelMap)
+void AddChargeToVoxel(const voxelKey& key, double charge, std::map<voxelKey, ActRoot::Voxel>& voxelMap)
 {
-    int ix = std::floor(x / voxelSize);
-    int iy = std::floor(y / voxelSize);
-    int iz = std::floor(z / voxelSize);
-
-    voxelKey key {ix, iy, iz};
-
-    if(ix < 0 || ix >= (tpc.X() / voxelSize))
-        return;
-    if(iy < 0 || iy >= (tpc.Y() / voxelSize))
-        return;
-
-    auto it = voxelMap.find(key);
-    if(it == voxelMap.end())
+    auto [it, inserted] = voxelMap.try_emplace(key);
+    if(inserted)
     {
         ActRoot::Voxel v;
-        // Store voxel position in units of voxels as the corner of voxel
-        v.SetPosition(ActRoot::Voxel::XYZPointF {float((ix)), float((iy)), float((iz))});
+        v.SetPosition(
+            ActRoot::Voxel::XYZPointF {float(std::get<0>(key)), float(std::get<1>(key)), float(std::get<2>(key))});
         v.SetCharge(charge);
-        voxelMap.emplace(key, v);
+        it->second = v;
     }
     else
     {
@@ -269,6 +285,8 @@ void DivideSegmentInPortions(double eLoss, int nPortions, const XYZPoint& center
         if(nElectrons <= 0)
             continue;
 
+        // Generamos posiciones de electrones con difusión
+        std::map<voxelKey, int> electronsPerVoxel;
 
         for(int e = 0; e < nElectrons; e++)
         {
@@ -276,10 +294,25 @@ void DivideSegmentInPortions(double eLoss, int nPortions, const XYZPoint& center
             double y = gRandom->Gaus(center.Y(), sigmaT);
             double z = gRandom->Gaus(center.Z(), sigmaL);
 
-            double gain = Polya(Gmean, theta);
-            AddChargeToVoxel(x, y, z, gain, voxelMap);
-            // store electron positions in mm
-            electrons.emplace_back(x, y, z);
+            int ix = int(std::floor(x / voxelSize));
+            int iy = int(std::floor(y / voxelSize));
+            int iz = int(std::floor(z / voxelSize));
+
+            if(ix < 0 || ix >= int(tpc.X() / voxelSize) || iy < 0 || iy >= int(tpc.Y() / voxelSize))
+                continue;
+
+            voxelKey key {ix, iy, iz};
+            electronsPerVoxel[key]++;
+        }
+
+        // Generamos la Polya **una vez por voxel**
+        for(auto& [key, nElec] : electronsPerVoxel)
+        {
+            double k = nElec * (theta + 1.0);
+            double beta = Gmean / (theta + 1.0);
+            double totalGain = PolyaGamma(k, beta);
+
+            AddChargeToVoxel(key, totalGain, voxelMap);
         }
     }
 }
@@ -675,7 +708,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
             continue;
 
         // Reconstruct Ex!
-        bool isOk {true};          // no punchthrouhg
+        bool isOk {true};      // no punchthrouhg
         bool cutELoss0 {true}; // for L1 not implemented yet the graphical cuts
         if(isOk && cutELoss0)
         {

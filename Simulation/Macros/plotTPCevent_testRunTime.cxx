@@ -47,38 +47,38 @@ using voxelKey = std::tuple<int, int, int>; // ix,iy,iz
 // ============================================================
 // Polya function for gain distribution in Micromegas
 // ============================================================
-double Polya(double Gmean, double theta)
+double Polya(double k, double beta)
 {
-    static std::mt19937 gen(std::random_device {}());
-    std::gamma_distribution<double> gamma(theta + 1.0, Gmean / (theta + 1.0));
+    static thread_local std::mt19937 gen(0); // cada hilo tiene su RNG
+    static thread_local std::gamma_distribution<double> gamma;
+
+    // Reconstruye solo si los parámetros cambian
+    static thread_local double last_k = -1.0;
+    static thread_local double last_beta = -1.0;
+
+    if(k != last_k || beta != last_beta)
+    {
+        gamma = std::gamma_distribution<double>(k, beta);
+        last_k = k;
+        last_beta = beta;
+    }
+
     return gamma(gen);
 }
-
 
 // ============================================================
 // Add charge to voxel map
 // ============================================================
-void AddChargeToVoxel(double x, double y, double z, double charge, std::map<voxelKey, ActRoot::Voxel>& voxelMap)
+void AddChargeToVoxel(const voxelKey& key, double charge, std::map<voxelKey, ActRoot::Voxel>& voxelMap)
 {
-    int ix = std::floor(x / voxelSize);
-    int iy = std::floor(y / voxelSize);
-    int iz = std::floor(z / voxelSize);
-
-    voxelKey key {ix, iy, iz};
-
-    if(ix < 0 || ix >= (tpc.X() / voxelSize))
-        return;
-    if(iy < 0 || iy >= (tpc.Y() / voxelSize))
-        return;
-
-    auto it = voxelMap.find(key);
-    if(it == voxelMap.end())
+    auto [it, inserted] = voxelMap.try_emplace(key);
+    if(inserted)
     {
         ActRoot::Voxel v;
-        // Store voxel position in units of voxels as the corner of voxel
-        v.SetPosition(ActRoot::Voxel::XYZPointF {float((ix)), float((iy)), float((iz))});
+        v.SetPosition(
+            ActRoot::Voxel::XYZPointF {float(std::get<0>(key)), float(std::get<1>(key)), float(std::get<2>(key))});
         v.SetCharge(charge);
-        voxelMap.emplace(key, v);
+        it->second = v;
     }
     else
     {
@@ -90,62 +90,80 @@ void AddChargeToVoxel(double x, double y, double z, double charge, std::map<voxe
 // Divide segment → electrons → voxels
 // ============================================================
 void DivideSegmentInPortions(double eLoss, int nPortions, const XYZPoint& center,
-                             std::map<voxelKey, ActRoot::Voxel>& voxelMap, std::vector<XYZPoint>& electrons,
+                             std::map<voxelKey, ActRoot::Voxel>& voxelMap,
                              ActRoot::TPCParameters& tpc)
 {
     if(eLoss <= 0 || nPortions <= 0)
         return;
 
-    const double W = 36.4 * 0.95 + 34.3 * 0.05; // eV / electron in 95% D2 + 5% CF4
-    const double diffT = 0.06;                  // mm / sqrt(mm) - Approx from data
-    const double diffL = 0;                     // mm / sqrt(mm) No diffusion in z direction
+    const double W = 36.4*0.95 + 34.3*0.05; // eV/electron
+    const double diffT = 0.06;              // mm/sqrt(mm)
+    const double diffL = 0.0;               // mm/sqrt(mm)
 
-    // Height in Z coordinate - distance to pad plane. Pad plane is at Z = 0 and rp is assumed to be at Z = 110.
-    // Thus the z coordinate is the distance to the pad plane.
     double h = center.Z();
-    if(h <= 0)
-        return;
+    if(h <= 0) return;
 
     double sigmaT = diffT * std::sqrt(h);
     double sigmaL = diffL * std::sqrt(h);
 
-    // =====================================================
-    // EARLY GEOMETRIC REJECTION (CRITICAL SPEEDUP)
-    // =====================================================
+    // Geometric rejection
+    if(center.X() < -20 || center.X() > tpc.X()+20 ||
+       center.Y() < -20 || center.Y() > tpc.Y()+20)
+        return;
 
-    const double difXmax = tpc.X() + 20;
-    const double difYmax = tpc.Y() + 20;
-
-    if(center.X() < -20 || center.X() > difXmax || center.Y() < -20 || center.Y() > difYmax)
-    {
-        return; // entire cloud cannot reach pad plane
-    }
-    // =====================================================
-
-    double portionE = eLoss / nPortions; // MeV
+    double portionE = eLoss / nPortions;
     double meanNe = portionE * 1e6 / W;
 
-    for(int i = 0; i < nPortions; i++)
+    for(int i=0; i<nPortions; i++)
     {
         int nElectrons = gRandom->Poisson(meanNe);
-        if(nElectrons <= 0)
-            continue;
+        if(nElectrons <= 0) continue;
 
+        // ===============================
+        // Voxel grid ±3 sigma
+        // ===============================
+        int ix0 = int(std::floor(center.X()/voxelSize));
+        int iy0 = int(std::floor(center.Y()/voxelSize));
+        int iz0 = int(std::floor(center.Z()/voxelSize));
 
-        for(int e = 0; e < nElectrons; e++)
+        int dX = int(3*sigmaT/voxelSize)+1;
+        int dY = int(3*sigmaT/voxelSize)+1;
+        int dZ = (sigmaL>0) ? int(3*sigmaL/voxelSize)+1 : 0; // si no hay difusión longitudinal
+
+        for(int dx=-dX; dx<=dX; dx++)
+        for(int dy=-dY; dy<=dY; dy++)
+        for(int dz=-dZ; dz<=dZ; dz++)
         {
-            double x = gRandom->Gaus(center.X(), sigmaT);
-            double y = gRandom->Gaus(center.Y(), sigmaT);
-            double z = gRandom->Gaus(center.Z(), sigmaL);
+            int ix = ix0 + dx;
+            int iy = iy0 + dy;
+            int iz = iz0 + dz;
 
-            double gain = Polya(Gmean, theta);
-            AddChargeToVoxel(x, y, z, gain, voxelMap);
-            // store electron positions in mm
-            electrons.emplace_back(x, y, z);
+            if(ix < 0 || ix >= int(tpc.X()/voxelSize) ||
+               iy < 0 || iy >= int(tpc.Y()/voxelSize) ||
+               iz < 0 || iz >= 256/voxelSize) // límite Z
+                continue;
+
+            // Probabilidad gaussiana de caer en este voxel
+            double px = exp(-0.5*pow((dx*voxelSize)/sigmaT,2));
+            double py = exp(-0.5*pow((dy*voxelSize)/sigmaT,2));
+            double pz = (sigmaL>0) ? exp(-0.5*pow((dz*voxelSize)/sigmaL,2)) : 1.0;
+
+            double p = px*py*pz;
+
+            // Número de electrones en este voxel
+            int nElectronsVoxel = gRandom->Poisson(nElectrons * p);
+            if(nElectronsVoxel <= 0) continue;
+
+            // Polya por voxel
+            double k = nElectronsVoxel * (theta + 1.0);
+            double beta = Gmean / (theta + 1.0);
+            double totalGain = Polya(k, beta);
+
+            voxelKey key {ix, iy, iz};
+            AddChargeToVoxel(key, totalGain, voxelMap);
         }
     }
 }
-
 // ============================================================
 // Divide track using SRIM
 // ============================================================
@@ -173,7 +191,7 @@ void DivideTrackInSegments(ActPhysics::SRIM* srim, double range, const XYZVector
         if(center.Z() <= 0 || center.Z() > 256)
             continue;
 
-        DivideSegmentInPortions(eLoss, nSub, center, voxelMap, electrons, tpc);
+        DivideSegmentInPortions(eLoss, nSub, center, voxelMap, tpc);
     }
 }
 
@@ -356,7 +374,7 @@ TH1D* ShiftHistogram(TH1D* h, double shift, const std::string& particleKey)
 // ============================================================
 // MAIN
 // ============================================================
-void plotTPCevent(double range = 120, double thetaDeg = 45, double phiDeg = -45)
+void plotTPCevent_testRunTime(double range = 120, double thetaDeg = 45, double phiDeg = -45)
 {
     gStyle->SetOptStat(0);
     gRandom->SetSeed(0);
@@ -388,8 +406,8 @@ void plotTPCevent(double range = 120, double thetaDeg = 45, double phiDeg = -45)
 
     std::string lightString = "lightD";
 
-    DivideTrackInSegments(srim, range, dirLight, rp, 2, 5, voxelMapLight, electronsLight, tpc, lightString);
-    DivideTrackInSegments(srim, 3000, dirHeavy, rp, 2, 5, voxelMapHeavy, electronsHeavy, tpc);
+    DivideTrackInSegments(srim, range, dirLight, rp, 2.0, 5, voxelMapLight, electronsLight, tpc, lightString);
+    DivideTrackInSegments(srim, 3000, dirHeavy, rp, 2.0, 5, voxelMapHeavy, electronsHeavy, tpc);
 
     // ================= Primary electrons plots (units: mm) =================
     TH2D* hXY = new TH2D("hXY", "XY;X [mm];Y [mm]", tpc.X(), 0, tpc.X(), tpc.Y(), 0, tpc.Y());
@@ -484,7 +502,6 @@ void plotTPCevent(double range = 120, double thetaDeg = 45, double phiDeg = -45)
     histProfileCopy->SetTitle("Charge profile shifted to origin;Track length [mm];Charge");
     double deltaS = -histProfileCopy->GetXaxis()->GetXmin();
     auto hShifted = ShiftHistogram(histProfileCopy, deltaS, "light");
-    hShifted->SetTitle("Charge profile shifted to origin;Track length from start of track [mm];Charge");
     hShifted->Draw("HIST");
 
     // Save hShifted for later fit: create output file and write the histogram there.
