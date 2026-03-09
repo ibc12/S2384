@@ -28,6 +28,8 @@
 #include <utility>
 #include <vector>
 
+#include "../../PrettyStyle.C"
+
 using XYZPoint = ROOT::Math::XYZPoint;
 using XYZVector = ROOT::Math::XYZVector;
 
@@ -358,7 +360,7 @@ TH1D* ShiftHistogram(TH1D* h, double shift, const std::string& particleKey)
 // ============================================================
 void plotTPCevent(double range = 120, double thetaDeg = 45, double phiDeg = -45)
 {
-    gStyle->SetOptStat(0);
+    PrettyStyle();
     gRandom->SetSeed(0);
 
     // double chargeThreshold = thresholdPadCharge; // Threshold in electrons

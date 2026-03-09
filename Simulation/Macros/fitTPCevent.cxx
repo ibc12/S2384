@@ -435,8 +435,8 @@ void fitTPCevent() // LINEAR, CHI2 NORMALIZED, DQ/TL, RANGE
 {
     PrettyStyle(false, false);
     // Get a charge profile histogram to do the fit
-    // TFile* file = TFile::Open("./Outputs/hShifted_profile_lightD.root", "READ");
-    TFile* file = TFile::Open("./Inputs/hProfile_experiment_easy.root", "READ");
+    TFile* file = TFile::Open("./Outputs/hShifted_profile_lightD.root", "READ");
+    // TFile* file = TFile::Open("./Inputs/hProfile_experiment_easy.root", "READ");
     // TFile* file = TFile::Open("./Inputs/hProfile_experiment_p_easy.root", "READ");
     // TFile* file = TFile::Open("../../Macros/L1PID/Outputs/qProfile_d_short_hard.root", "READ"); // for sure d from 7Li L1
     // PID
@@ -447,7 +447,7 @@ void fitTPCevent() // LINEAR, CHI2 NORMALIZED, DQ/TL, RANGE
     }
 
     // auto* hShifted = dynamic_cast<TH1D*>(file->Get("shifted_light"));
-    auto* hShifted = dynamic_cast<TH1F*>(file->Get("hQProfile"));
+    auto* hShifted = dynamic_cast<TH1D*>(file->Get("hQProfile"));
     if(!hShifted)
     {
         std::cerr << "Error: Could not find histogram shifted_light in file ./Outputs/hShifted_profile_light.root"
@@ -468,7 +468,7 @@ void fitTPCevent() // LINEAR, CHI2 NORMALIZED, DQ/TL, RANGE
     {
         double content = hShifted->GetBinContent(i);
         double error = hShifted->GetBinError(i);
-        std::cout << "Bin " << i << ": content = " << content << ", error = " << error << std::endl;
+        // std::cout << "Bin " << i << ": content = " << content << ", error = " << error << std::endl;
         hShifted->SetBinError(i, 1);
     }
 
