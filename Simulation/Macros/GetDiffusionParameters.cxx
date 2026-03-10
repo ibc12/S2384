@@ -84,8 +84,8 @@ void GetDiffusionParameters()
         {
             auto TL {m.fHeavy.fTL};
             auto theta {m.fThetaHeavy * TMath::DegToRad()};
-            auto z_end {m.fRP.X() + TL * TMath::Cos(theta)};
-            if(z_end < 240)
+            auto x_end {m.fRP.X() + TL * TMath::Cos(theta)};
+            if(x_end < 240)
                 return false;
             return true;
         },
@@ -137,7 +137,7 @@ void GetDiffusionParameters()
     std::cout << "  Total chain: " << *nTotal << "\n";
     std::cout << "  After GATCONF (1|2) & lightIdx!=-1: " << *nIni << "\n";
     std::cout << "  After fHeavy.fQave <= 1600: " << *nF1 << "\n";
-    std::cout << "  After z_end >= 240: " << *nF2 << "\n";
+    std::cout << "  After x_end >= 240: " << *nF2 << "\n";
     std::cout << "  After local high-charge mask near RP: " << *nF3 << "\n";
     std::cout << "  After fLight.fQave > 300: " << *nFinal << "\n";
 
@@ -450,12 +450,12 @@ void GetDiffusionParameters()
     // std::endl;
 
     // Get histos for zdrift distribution and phi angle distribution to check posible assymetry
-    auto hZdrift = new TH1D("hZdrift", "Drift distance to pad plane;z_{drift} [mm];Entries", 100, 0, 300);
+    auto hZdrift = new TH1D("hZdrift", "Drift distance to pad plane;z_{drift} [mm];Entries", 100, -30, 300);
     auto hPhiLight = new TH1D("hPhiLight", "Phi angle of light particle;#phi_{light} [deg];Entries", 50, -180, 180);
     auto hThetaLight =
         new TH1D("hThetaLight", "Theta angle of light particle;#theta_{light} [deg];Entries", 50, 0, 180);
     auto hDirZ = new TH1D("hDirZ", "Direction Z component;u_{z};Counts", 200, -1, 1);
-    dfSigmaLight.Foreach(
+    dfSigmaLightPreFilter.Foreach(
         [&](const std::vector<std::pair<double, double>>& slices, ActRoot::MergerData& mer, ActRoot::TPCData& tpc)
         {
             constexpr double zRPtoPad = 110.0; // same as in Define
@@ -581,54 +581,66 @@ void GetDiffusionParameters()
     //     },
     //     {"MergerData", "sigmaTransZ"});
     // outFile1.close();
-    std::ofstream outFile2 {"./Outputs/Events_DriftDistLower60SigmaHigher1-4_NoNearBorders_L1.dat"};
-    dfSigmaLight.Foreach(
-        [&outFile2](const ActRoot::MergerData& mer, const std::vector<std::pair<double, double>>& v)
-        {
-            for(const auto& [zDistance, sigma] : v)
-            {
-                if((zDistance < 70 && sigma > 1.4) || (zDistance < 130 && sigma > 1.3))
-                {
-                    mer.Stream(outFile2);
-                    break; // Only need to save the event once, even if it has multiple slices with s < 0
-                }
-            }
-        },
-        {"MergerData", "sigmaTransZ"});
-    outFile2.close();
-    std::ofstream outFile3 {"./Outputs/Events_DriftDistGreater190SigmaGreater2_NoNearBorders_L1.dat"};
-    dfSigmaLight.Foreach(
-        [&outFile3](const ActRoot::MergerData& mer, const std::vector<std::pair<double, double>>& v)
-        {
-            for(const auto& [zDistance, sigma] : v)
-            {
-                if(((zDistance > 200 && zDistance < 230) && sigma > 1.8) ||
-                   ((zDistance > 140 && zDistance < 160) && sigma > 1.6))
-                {
-                    mer.Stream(outFile3);
-                    break; // Only need to save the event once, even if it has multiple slices with s < 0
-                }
-            }
-        },
-        {"MergerData", "sigmaTransZ"});
-    std::ofstream outFile4 {"./Outputs/Events_DriftDistLower70SigmaLower_1_NoNearBorders_L1.dat"};
-    dfSigmaLight.Foreach(
-        [&outFile4](const ActRoot::MergerData& mer, const std::vector<std::pair<double, double>>& v)
-        {
-            for(const auto& [zDistance, sigma] : v)
-            {
-                if((zDistance < 70 && sigma < 1))
-                {
-                    mer.Stream(outFile4);
-                    break; // Only need to save the event once, even if it has multiple slices with s < 0
-                }
-            }
-        },
-        {"MergerData", "sigmaTransZ"});
-    outFile4.close();
+    // std::ofstream outFile2 {"./Outputs/Events_DriftDistLower60SigmaHigher1-4_NoNearBorders_L1.dat"};
+    // dfSigmaLight.Foreach(
+    //     [&outFile2](const ActRoot::MergerData& mer, const std::vector<std::pair<double, double>>& v)
+    //     {
+    //         for(const auto& [zDistance, sigma] : v)
+    //         {
+    //             if((zDistance < 70 && sigma > 1.4) || (zDistance < 130 && sigma > 1.3))
+    //             {
+    //                 mer.Stream(outFile2);
+    //                 break; // Only need to save the event once, even if it has multiple slices with s < 0
+    //             }
+    //         }
+    //     },
+    //     {"MergerData", "sigmaTransZ"});
+    // outFile2.close();
+    // std::ofstream outFile3 {"./Outputs/Events_DriftDistGreater190SigmaGreater2_NoNearBorders_L1.dat"};
+    // dfSigmaLight.Foreach(
+    //     [&outFile3](const ActRoot::MergerData& mer, const std::vector<std::pair<double, double>>& v)
+    //     {
+    //         for(const auto& [zDistance, sigma] : v)
+    //         {
+    //             if(((zDistance > 200 && zDistance < 230) && sigma > 1.8) ||
+    //                ((zDistance > 140 && zDistance < 160) && sigma > 1.6))
+    //             {
+    //                 mer.Stream(outFile3);
+    //                 break; // Only need to save the event once, even if it has multiple slices with s < 0
+    //             }
+    //         }
+    //     },
+    //     {"MergerData", "sigmaTransZ"});
+    // std::ofstream outFile4 {"./Outputs/Events_DriftDistLower70SigmaLower_1_NoNearBorders_L1.dat"};
+    // dfSigmaLight.Foreach(
+    //     [&outFile4](const ActRoot::MergerData& mer, const std::vector<std::pair<double, double>>& v)
+    //     {
+    //         for(const auto& [zDistance, sigma] : v)
+    //         {
+    //             if((zDistance < 70 && sigma < 1))
+    //             {
+    //                 mer.Stream(outFile4);
+    //                 break; // Only need to save the event once, even if it has multiple slices with s < 0
+    //             }
+    //         }
+    //     },
+    //     {"MergerData", "sigmaTransZ"});
+    // outFile4.close();
     // outFile3.close();
     // std::ofstream outFile4 {"./Outputs/Events_ChiGreater0-4_L1beforeThresholdChange.dat"};
     // dfBadChi.Foreach([&outFile4](const ActRoot::MergerData& mer, const ActRoot::TPCData& tpc) { mer.Stream(outFile4);
     // },
     //                  {"MergerData", "TPCData"});
+    // Output events with z drift lower than 5 mm
+    // std::ofstream outFile5 {"./Outputs/Events_DriftDistLower5mm_L1.dat"};
+    // dfSigmaLightPreFilter.Foreach(
+    // [&outFile5](const ActRoot::MergerData& mer, const std::vector<std::pair<double, double>>& v)
+    // {        for(const auto& [zDistance, sigma] : v)
+    //     {            if(zDistance < 5)
+    //         {                mer.Stream(outFile5);
+    //             break; // Only need to save the event once, even if it has multiple slices with s < 0
+    //         }        }
+    // },
+    // {"MergerData", "sigmaTransZ"});
+    // outFile5.close();
 }

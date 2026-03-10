@@ -426,7 +426,7 @@ void checkGoodFitsBraggPeak()
     // Get all data for 7Li (there is no triton there, so easier to see deuterium)
     std::string beam {"7Li"};
     std::string target {"d"};
-    std::string light {"d"};
+    std::string light {"p"};
 
     std::string dataconf {};
     if(beam == "11Li")
@@ -444,6 +444,12 @@ void checkGoodFitsBraggPeak()
     chain->AddFriend(chain2.get());
     chain->AddFriend(chain3.get());
 
+    // Get drift parameter
+    ActRoot::InputParser parser {};
+    parser.ReadFile("../../configs/detector.conf");
+    auto driftBlock = parser.GetBlock("Merger");
+    auto driftFactor = driftBlock->GetDouble("DriftFactor"); // in mm^2/us
+
     // Get SRIM files to do the fits
     auto* srim = new ActPhysics::SRIM;
     srim->ReadTable("light", "../../Calibrations/SRIM/1H_900mb_CF4_95-5.txt");
@@ -451,9 +457,9 @@ void checkGoodFitsBraggPeak()
     srim->ReadTable("lightT", "../../Calibrations/SRIM/3H_900mb_CF4_95-5.txt");
     srim->ReadTable("light3He", "../../Calibrations/SRIM/3He_900mb_CF4_95-5.txt");
     srim->ReadTable("light4He", "../../Calibrations/SRIM/4He_900mb_CF4_95-5.txt");
-    
+
     // Create the splines
-    std::vector<std::string> particles = {"light", "lightD", "lightT", "light3He", "light4He"};
+    std::vector<std::string> particles = {"light", "lightD", "lightT"};
     std::map<std::string, TSpline3*> splineMap;
     for(const auto& key : particles)
     {
@@ -521,7 +527,65 @@ void checkGoodFitsBraggPeak()
                                     return false;
                                 return true;
                             },
-                            {"MergerData", "GETTree.TPCData"});
+                            {"MergerData", "GETTree.TPCData"})
+                        // .Filter( // Check if light cluster go to the pad or cathode
+                        //     [&](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+                        //     {
+                        //         auto& rp {m.fRP}; // This equals aprox 110 mm
+                        //         // Get last point of the track
+                        //         auto idx = m.fLightIdx;
+                        //         if(idx < 0)
+                        //             return false;
+                        //         // guard against out-of-range index (this was causing vector::at to throw)
+                        //         if(static_cast<std::size_t>(idx) >= tpc.fClusters.size())
+                        //             return false;
+                        //         auto& cluster = tpc.fClusters.at(idx);
+                        //         auto line = cluster.GetLine();
+                        //         cluster.SortAlongDir(line.GetDirection().Unit());
+                        //         auto& voxels = cluster.GetRefToVoxels();
+                        //         auto lastZ = voxels.back().GetPosition().Z() * driftFactor;
+                        //         // Z difference relative to the RP
+                        //         //  deltaZ > 0  -> track goes to larger Z (away from pad plane)
+                        //         //  deltaZ < 0  -> track goes to smaller Z (closer to pad plane)
+                        //         double deltaZ = lastZ - rp.Z();
+                        //         if(deltaZ < -100 || deltaZ > 140) // aprox pad plane and cathode position
+                        //         {
+                        //             return false;
+                        //             // std::cout << "Event rejected by light cluster Z position: deltaZ = " << deltaZ <<
+                        //             // " mm\n"; std::cout << "RP Z position: " << rp.Z() << " mm, last point Z position:
+                        //             // " << lastZ << " mm\n";
+                        //         }
+                        //         // std::cout << "Event accepted by light cluster Z position: deltaZ = " << deltaZ << "
+                        //         // mm\n"; std::cout << "RP Z position: " << rp.Z() << " mm, last point Z position: " <<
+                        //         // lastZ << " mm\n";
+                        //         return true;
+                        //     },
+                        //     {"MergerData", "GETTree.TPCData"})
+                        .Define("zDrift",
+                                [&](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+                                {
+                                    auto& rp {m.fRP}; // This equals aprox 110 mm
+                                    // Get last point of the track
+                                    auto idx = m.fLightIdx;
+                                    if(idx < 0)
+                                        return -100.0;
+                                    // guard against out-of-range index (this was causing vector::at to throw)
+                                    if(static_cast<std::size_t>(idx) >= tpc.fClusters.size())
+                                        return -100.0;
+                                    auto& cluster = tpc.fClusters.at(idx);
+                                    auto line = cluster.GetLine();
+                                    cluster.SortAlongDir(line.GetDirection().Unit());
+                                    auto& voxels = cluster.GetRefToVoxels();
+                                    auto lastZ = voxels.back().GetPosition().Z() * driftFactor;
+                                    // Z difference relative to the RP
+                                    //  deltaZ > 0  -> track goes to larger Z (away from pad plane)
+                                    //  deltaZ < 0  -> track goes to smaller Z (closer to pad plane)
+                                    double deltaZ = lastZ - rp.Z();
+                                    double zRProPad = 110; // mm, distance from RP to pad plane
+                                    double zDrift = zRProPad + deltaZ;
+                                    return zDrift;
+                                },
+                                {"MergerData", "GETTree.TPCData"});
     //////////////////////////////////////////////////////////
     // Get events in elastic area of plot theta vs Qtotal
     //////////////////////////////////////////////////////////
@@ -529,7 +593,7 @@ void checkGoodFitsBraggPeak()
     // Get the cut for PID
     ActRoot::CutsManager<std::string> cuts;
     cuts.ReadCut("l1", TString::Format("./Cuts/%s_TLvsQ_%s.root", light.c_str(), beam.c_str()).Data());
-    cuts.ReadCut("l1_theta", "./Cuts/restrict.root");
+    cuts.ReadCut("l1_theta", TString::Format("./Cuts/%s_ThetaVSq_%s.root", light.c_str(), beam.c_str()).Data());
 
     // Apply cut in theta - Qtotal
     auto dfDeuterium = dfFilter.Filter(
@@ -538,7 +602,7 @@ void checkGoodFitsBraggPeak()
         dfDeuterium.Filter([&](ActRoot::MergerData& m)
                            { return cuts.IsInside("l1_theta", m.fThetaLight, m.fLight.fQtotal); }, {"MergerData"});
 
-    auto dfPID = dfFilter.Define("IsDeuterium",
+    auto dfPID = dfElastic.Define("IsDeuterium",
                                   [&](ActRoot::MergerData& m)
                                   {
                                       auto& hProfile {m.fQProf};
@@ -600,55 +664,83 @@ void checkGoodFitsBraggPeak()
                                   },
                                   {"MergerData"});
 
-    auto dfRange = dfPID.Define("Range",
-                                [&](ActRoot::MergerData& m, std::string key)
-                                {
-                                    auto& hProfile {m.fQProf};
-                                    // Fix bin errors to 1 to use chi2 test without statistical errors
-                                    for(int i = 1; i <= hProfile.GetNbinsX(); ++i)
-                                    {
-                                        double content = hProfile.GetBinContent(i);
-                                        double error = hProfile.GetBinError(i);
-                                        hProfile.SetBinError(i, 1);
-                                    }
-                                    TF1* bestFitFunction =
-                                        FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap[key], key);
-                                    // Get range from spline max - fitted end shift
-                                    double range = 0;
-                                    if(bestFitFunction)
-                                    {
-                                        // Get the maximum of the TF1 (Bragg eak)
-                                        // Then get the value where Eloss decreases to a 1/5 of the maximum after it
-                                        double max = bestFitFunction->GetMaximum();
-                                        double maxPos = bestFitFunction->GetMaximumX();
-                                        double rangeValue = max / 5.0;
+    /////////////////////////
+    // Correct the range with the BP position
+    /////////////////////////////////////////
 
-                                        for(double x = maxPos; x < bestFitFunction->GetXmax(); x += 0.05)
-                                        {
-                                            double y = bestFitFunction->Eval(x);
-                                            if(y < rangeValue)
-                                            {
-                                                range = x;
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    return range;
-                                },
-                                {"MergerData", "IsDeuterium"});
+    // auto dfRange = dfPID.Define("Range",
+    //                             [&](ActRoot::MergerData& m, std::string key)
+    //                             {
+    //                                 auto& hProfile {m.fQProf};
+    //                                 // Fix bin errors to 1 to use chi2 test without statistical errors
+    //                                 for(int i = 1; i <= hProfile.GetNbinsX(); ++i)
+    //                                 {
+    //                                     double content = hProfile.GetBinContent(i);
+    //                                     double error = hProfile.GetBinError(i);
+    //                                     hProfile.SetBinError(i, 1);
+    //                                 }
+    //                                 TF1* bestFitFunction =
+    //                                     FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap[key], key);
+    //                                 // Get range from spline max - fitted end shift
+    //                                 double range = 0;
+    //                                 if(bestFitFunction)
+    //                                 {
+    //                                     // Get the maximum of the TF1 (Bragg peak)
+    //                                     // Then get the value where Eloss decreases to a 1/5 of the maximum after it
+    //                                     double max = bestFitFunction->GetMaximum();
+    //                                     double maxPos = bestFitFunction->GetMaximumX();
+    //                                     double rangeValue = max / 5.0;
+    //
+    //                                     for(double x = maxPos; x < bestFitFunction->GetXmax(); x += 0.05)
+    //                                     {
+    //                                         double y = bestFitFunction->Eval(x);
+    //                                         if(y < rangeValue)
+    //                                         {
+    //                                             range = x;
+    //                                             break;
+    //                                         }
+    //                                     }
+    //                                 }
+    //                                 return range;
+    //                             },
+    //                             {"MergerData", "IsDeuterium"});
+
+
+    ////////////////////////////////////////////////////////////
+    // Get the proportion of the best fit and the deuterium fit
+    ////////////////////////////////////////////////////////////
+    // auto dfChiNormalized =
+    //     dfPID.Define("chi2NormalizedToDeuterium",
+    //                  [&](ActRoot::MergerData& m, std::string pid)
+    //                  {
+    //                      auto& hProfile {m.fQProf};
+    //                      // Fix bin errors to 1 to use chi2 test without statistical errors
+    //                      for(int i = 1; i <= hProfile.GetNbinsX(); ++i)
+    //                      {
+    //                          double content = hProfile.GetBinContent(i);
+    //                          double error = hProfile.GetBinError(i);
+    //                          hProfile.SetBinError(i, 1);
+    //                      }
+    //                      auto fDeuterium = FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap["light"], "light");
+    //                      auto fParticle = FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap[pid], pid);
+    //                      if(!fDeuterium || !fParticle)
+    //                          return 1e12;
+    //                      double chiDeuterium = fDeuterium->GetChisquare() / fDeuterium->GetNDF();
+    //                      double chiParticle = fParticle->GetChisquare() / fParticle->GetNDF();
+    //                      return chiParticle / chiDeuterium;
+    //                  },
+    //                  {"MergerData", "IsDeuterium"});
+
+
     // Count how many deuterium we have
     auto countDeuterium = dfPID.Filter([](const std::string& pid) { return pid == "lightD"; }, {"IsDeuterium"}).Count();
     auto countTritium = dfPID.Filter([](const std::string& pid) { return pid == "lightT"; }, {"IsDeuterium"}).Count();
     auto countProton = dfPID.Filter([](const std::string& pid) { return pid == "light"; }, {"IsDeuterium"}).Count();
-    auto countHelium3 = dfPID.Filter([](const std::string& pid) { return pid == "light3He"; }, {"IsDeuterium"}).Count();
-    auto countHelium4 = dfPID.Filter([](const std::string& pid) { return pid == "light4He"; }, {"IsDeuterium"}).Count();
     // Get the proportion of deuterium
     auto totalCount = dfPID.Count();
     std::cout << "Deuterium count: " << *countDeuterium << "\n";
     std::cout << "Tritium count: " << *countTritium << "\n";
     std::cout << "Proton count: " << *countProton << "\n";
-    std::cout << "Helium-3 count: " << *countHelium3 << "\n";
-    std::cout << "Helium-4 count: " << *countHelium4 << "\n";
     std::cout << "Total count: " << *totalCount << "\n";
 
     // Plot PID with and without cuts
@@ -661,94 +753,29 @@ void checkGoodFitsBraggPeak()
                           "MergerData.fLight.fRawTL", "MergerData.fLight.fQtotal");
 
     auto hTheta_Qtot =
-        dfElastic.Histo2D({"hTheta_Qtot", "Theta vs Qtotal;Theta [deg];Qtotal [a.u.]", 180, 0, 180, 2000, 0, 3e5},
-                          "MergerData.fThetaLight", "MergerData.fLight.fQtotal");
+        dfFilter.Histo2D({"hTheta_Qtot", "Theta vs Qtotal;Theta [deg];Qtotal [a.u.]", 180, 0, 180, 2000, 0, 3e5},
+                         "MergerData.fThetaLight", "MergerData.fLight.fQtotal");
     auto hTheta_Qtot_cut = dfElastic.Histo2D(
         {"hTheta_Qtot_cut", "Theta vs Qtotal with cut;Theta [deg];Qtotal [a.u.]", 180, 0, 180, 2000, 0, 3e5},
         "MergerData.fThetaLight", "MergerData.fLight.fQtotal");
 
-    auto hPID_correctedRange =
-        dfRange.Histo2D({"hPID_correctedRange", "Corrected Range vs Qtotal;Corrected Range [mm];Qtotal [a.u.]", 120, 0,
-                         240, 2000, 0, 3e5},
-                        "Range", "MergerData.fLight.fQtotal");
-    auto hPID_no_correctedRange = dfRange.Histo2D(
-        {"hPID_norm_correctedRange", "Corrected Range vs Qtotal normalized;Corrected Range [mm];Qtotal [a.u.]", 120, 0,
-         240, 2000, 0, 3e5},
-        "MergerData.fLight.fTL", "MergerData.fLight.fQtotal");
+    // auto hPID_correctedRange =
+    //     dfRange.Histo2D({"hPID_correctedRange", "Corrected Range vs Qtotal;Corrected Range [mm];Qtotal [a.u.]", 120,
+    //     0,
+    //                      240, 2000, 0, 3e5},
+    //                     "Range", "MergerData.fLight.fQtotal");
+    // auto hPID_no_correctedRange = dfRange.Histo2D(
+    //     {"hPID_norm_correctedRange", "Corrected Range vs Qtotal normalized;Corrected Range [mm];Qtotal [a.u.]", 120,
+    //     0,
+    //      240, 2000, 0, 3e5},
+    //     "MergerData.fLight.fTL", "MergerData.fLight.fQtotal");
 
-    auto gr_lightD = new TGraph();
-    auto gr_lightT = new TGraph();
-    auto gr_light = new TGraph();
-    auto gr_light3He = new TGraph();
-    auto gr_light4He = new TGraph();
-    gr_lightD->SetName("gr_lightD");
-    gr_lightT->SetName("gr_lightT");
-    gr_light->SetName("gr_light");
-    gr_light3He->SetName("gr_light3He");
-    gr_light4He->SetName("gr_light4He");
-    gr_lightD->SetMarkerColor(kRed);
-    gr_lightT->SetMarkerColor(kBlue);
-    gr_light->SetMarkerColor(kGreen + 2);
-    gr_light3He->SetMarkerColor(kMagenta);
-    gr_light4He->SetMarkerColor(kCyan);
-    gr_lightD->SetMarkerStyle(6);
-    gr_lightT->SetMarkerStyle(6);
-    gr_light->SetMarkerStyle(6);
-    gr_light3He->SetMarkerStyle(6);
-    gr_light4He->SetMarkerStyle(6);
+    // auto hChi2NormalizedByDeuterium = dfChiNormalized.Histo1D(
+    //     {"hChi2NormalizedByDeuterium", "Chi2 normalized to proton Chi2;Chi2 normalized to proton;Counts", 300, 0, 3},
+    //     "chi2NormalizedToDeuterium");
 
-    dfPID.Foreach(
-        [&](ActRoot::MergerData& m, const std::string& pid)
-        {
-            if(pid == "lightD")
-                gr_lightD->SetPoint(gr_lightD->GetN(), m.fThetaLight, m.fLight.fQtotal);
-            else if(pid == "lightT")
-                gr_lightT->SetPoint(gr_lightT->GetN(), m.fThetaLight, m.fLight.fQtotal);
-            else if(pid == "light")
-                gr_light->SetPoint(gr_light->GetN(), m.fThetaLight, m.fLight.fQtotal);
-            else if(pid == "light3He")
-                gr_light3He->SetPoint(gr_light3He->GetN(), m.fThetaLight, m.fLight.fQtotal);
-            else if(pid == "light4He")
-                gr_light4He->SetPoint(gr_light4He->GetN(), m.fThetaLight, m.fLight.fQtotal);
-        },
-        {"MergerData", "IsDeuterium"});
-
-        auto gr_lightD_PID = new TGraph();
-    auto gr_lightT_PID = new TGraph();
-    auto gr_light_PID = new TGraph();
-    auto gr_light3He_PID = new TGraph();
-    auto gr_light4He_PID = new TGraph();
-    gr_lightD_PID->SetName("gr_lightD_PID");
-    gr_lightT_PID->SetName("gr_lightT_PID");
-    gr_light_PID->SetName("gr_light_PID");
-    gr_light3He_PID->SetName("gr_light3He_PID");
-    gr_light4He_PID->SetName("gr_light4He_PID");
-    gr_lightD_PID->SetMarkerColor(kRed);
-    gr_lightT_PID->SetMarkerColor(kBlue);
-    gr_light_PID->SetMarkerColor(kGreen + 2);
-    gr_light3He_PID->SetMarkerColor(kMagenta);
-    gr_light4He_PID->SetMarkerColor(kCyan);
-    gr_lightD_PID->SetMarkerStyle(6);
-    gr_lightT_PID->SetMarkerStyle(6);
-    gr_light_PID->SetMarkerStyle(6);
-    gr_light3He_PID->SetMarkerStyle(6);
-    gr_light4He_PID->SetMarkerStyle(6);
-
-    dfPID.Foreach(
-        [&](ActRoot::MergerData& m, const std::string& pid)
-        {
-            if(pid == "lightD")
-                gr_lightD_PID->SetPoint(gr_lightD_PID->GetN(), m.fLight.fRawTL, m.fLight.fQtotal);
-            else if(pid == "lightT")
-                gr_lightT_PID->SetPoint(gr_lightT_PID->GetN(), m.fLight.fRawTL, m.fLight.fQtotal);
-            else if(pid == "light")
-                gr_light_PID->SetPoint(gr_light_PID->GetN(), m.fLight.fRawTL, m.fLight.fQtotal);
-            else if(pid == "light3He")
-                gr_light3He_PID->SetPoint(gr_light3He_PID->GetN(), m.fLight.fRawTL, m.fLight.fQtotal);
-            else if(pid == "light4He")
-                gr_light4He_PID->SetPoint(gr_light4He_PID->GetN(), m.fLight.fRawTL, m.fLight.fQtotal);
-        },
-        {"MergerData", "IsDeuterium"});
+    auto hZdrift =
+        dfFilter.Histo1D({"hZdrift", "Z drift distribution;Z drift [mm];Counts", 340, -40, 300}, "zDrift");
 
     auto* c1 = new TCanvas("c1", "c1", 1200, 800);
     c1->Divide(2, 2);
@@ -763,84 +790,116 @@ void checkGoodFitsBraggPeak()
     c1->cd(4);
     hTheta_Qtot_cut->DrawClone("COLZ");
 
-    auto* c2 = new TCanvas("c2", "c2", 800, 600);
-    c2->Divide(2, 1);
-    c2->cd(1);
-    hPID_correctedRange->DrawClone("COLZ");
-    c2->cd(2);
-    hPID_no_correctedRange->DrawClone("COLZ");
+    // auto cChi2 = new TCanvas("cChi2", "cChi2", 800, 600);
+    // hChi2NormalizedByDeuterium->DrawClone();
 
-    auto* c3 = new TCanvas("c3", "c3", 800, 600);
-    c3->Divide(3,2);
-    c3->cd(1);
-    gr_lightD->SetTitle("All particles 3 runs candidates;Theta [deg];Qtotal [a.u.]");
-    gr_lightD->Draw("AP");
-    gr_lightT->SetTitle("Tritium candidates;Theta [deg];Qtotal [a.u.]");
-    gr_lightT->Draw("P SAME");
-    gr_light->SetTitle("Proton candidates;Theta [deg];Qtotal [a.u.]");
-    gr_light->Draw("P SAME");
-    gr_light3He->SetTitle("Helium-3 candidates;Theta [deg];Qtotal [a.u.]");
-    gr_light3He->Draw("P SAME");
-    gr_light4He->SetTitle("Helium-4 candidates;Theta [deg];Qtotal [a.u.]");
-    gr_light4He->Draw("P SAME");
-    TLegend* legend = new TLegend(0.7, 0.7, 0.9, 0.9);
-    legend->AddEntry(gr_lightD, "Deuterium", "P");
-    legend->AddEntry(gr_lightT, "Tritium", "P");
-    legend->AddEntry(gr_light, "Proton", "P");
-    legend->AddEntry(gr_light3He, "Helium-3", "P");
-    legend->AddEntry(gr_light4He, "Helium-4", "P");
-    legend->Draw();
-    c3->cd(2);
-    gr_lightD->SetTitle("Deuterium candidates;Theta [deg];Qtotal [a.u.]");
-    gr_lightD->Draw("AP");
-    c3->cd(3);
-    gr_lightT->SetTitle("Tritium candidates;Theta [deg];Qtotal [a.u.]");
-    gr_lightT->Draw("AP");
-    c3->cd(4);
-    gr_light->SetTitle("Proton candidates;Theta [deg];Qtotal [a.u.]");
-    gr_light->Draw("AP");
-    c3->cd(5);
-    gr_light3He->SetTitle("Helium-3 candidates;Theta [deg];Qtotal [a.u.]");
-    gr_light3He->Draw("AP");
-    c3->cd(6);
-    gr_light4He->SetTitle("Helium-4 candidates;Theta [deg];Qtotal [a.u.]");
-    gr_light4He->Draw("AP");
+    auto cZdrift = new TCanvas("cZdrift", "cZdrift", 800, 600);
+    hZdrift->DrawClone();
 
-    auto* c4 = new TCanvas("c4", "c4", 800, 600);
-    c4->Divide(3,2);
-    c4->cd(1);
-    gr_lightD_PID->SetTitle("Deuterium candidates;Track Length [a.u.];Qtotal [a.u.]");
-    gr_lightD_PID->Draw("AP");
-    gr_lightT_PID->SetTitle("Tritium candidates;Track Length [a.u.];Qtotal [a.u.]");
-    gr_lightT_PID->Draw("P SAME");
-    gr_light_PID->SetTitle("Proton candidates;Track Length [a.u.];Qtotal [a.u.]");
-    gr_light_PID->Draw("P SAME");
-    gr_light3He_PID->SetTitle("Helium-3 candidates;Track Length [a.u.];Qtotal [a.u.]");
-    gr_light3He_PID->Draw(" P SAME");
-    gr_light4He_PID->SetTitle("Helium-4 candidates;Track Length [a.u.];Qtotal [a.u.]");
-    gr_light4He_PID->Draw("P SAME");
-    TLegend* legendPID = new TLegend(0.7, 0.7, 0.9, 0.9);
-    legendPID->AddEntry(gr_lightD_PID, "Deuterium", "P");
-    legendPID->AddEntry(gr_lightT_PID, "Tritium", "P");
-    legendPID->AddEntry(gr_light_PID, "Proton", "P");
-    legendPID->AddEntry(gr_light3He_PID, "Helium-3", "P");
-    legendPID->AddEntry(gr_light4He_PID, "Helium-4", "P");
-    legendPID->Draw();
-    c4->cd(2);
-    gr_lightD_PID->SetTitle("Deuterium candidates;Track Length [a.u.];Qtotal [a.u.]");
-    gr_lightD_PID->Draw("AP");
-    c4->cd(3);
-    gr_lightT_PID->SetTitle("Tritium candidates;Track Length [a.u   .];Qtotal [a.u.]");
-    gr_lightT_PID->Draw("AP");
-    c4->cd(4);
-    gr_light_PID->SetTitle("Proton candidates;Track Length [a.u.];Qtotal [a.u.]");
-    gr_light_PID->Draw("AP");
-    c4->cd(5);  
-    gr_light3He_PID->SetTitle("Helium-3 candidates;Track Length [a.u.];Qtotal [a.u.]");
-    gr_light3He_PID->Draw("AP");
-    c4->cd(6);
-    gr_light4He_PID->SetTitle("Helium-4 candidates;Track Length [a.u.];Qtotal [a.u.]");
-    gr_light4He_PID->Draw("AP");
+    // auto* c2 = new TCanvas("c2", "c2", 800, 600);
+    // c2->Divide(2, 1);
+    // c2->cd(1);
+    // hPID_correctedRange->DrawClone("COLZ");
+    // c2->cd(2);
+    // hPID_no_correctedRange->DrawClone("COLZ");
+
+    // auto gr_lightD = new TGraph();
+    // auto gr_lightT = new TGraph();
+    // auto gr_light = new TGraph();
+    // gr_lightD->SetName("gr_lightD");
+    // gr_lightT->SetName("gr_lightT");
+    // gr_light->SetName("gr_light");
+    // gr_lightD->SetMarkerColor(kRed);
+    // gr_lightT->SetMarkerColor(kBlue);
+    // gr_light->SetMarkerColor(kGreen + 2);
+    // gr_lightD->SetMarkerStyle(6);
+    // gr_lightT->SetMarkerStyle(6);
+    // gr_light->SetMarkerStyle(6);
+    //
+    // dfPID.Foreach(
+    //     [&](ActRoot::MergerData& m, const std::string& pid)
+    //     {
+    //         if(pid == "lightD")
+    //             gr_lightD->SetPoint(gr_lightD->GetN(), m.fThetaLight, m.fLight.fQtotal);
+    //         else if(pid == "lightT")
+    //             gr_lightT->SetPoint(gr_lightT->GetN(), m.fThetaLight, m.fLight.fQtotal);
+    //         else if(pid == "light")
+    //             gr_light->SetPoint(gr_light->GetN(), m.fThetaLight, m.fLight.fQtotal);
+    //     },
+    //     {"MergerData", "IsDeuterium"});
+    //
+    // auto gr_lightD_PID = new TGraph();
+    // auto gr_lightT_PID = new TGraph();
+    // auto gr_light_PID = new TGraph();
+    // gr_lightD_PID->SetName("gr_lightD_PID");
+    // gr_lightT_PID->SetName("gr_lightT_PID");
+    // gr_light_PID->SetName("gr_light_PID");
+    // gr_lightD_PID->SetMarkerColor(kRed);
+    // gr_lightT_PID->SetMarkerColor(kBlue);
+    // gr_light_PID->SetMarkerColor(kGreen + 2);
+    // gr_lightD_PID->SetMarkerStyle(6);
+    // gr_lightT_PID->SetMarkerStyle(6);
+    // gr_light_PID->SetMarkerStyle(6);
+    //
+    // dfPID.Foreach(
+    //     [&](ActRoot::MergerData& m, const std::string& pid)
+    //     {
+    //         if(pid == "lightD")
+    //             gr_lightD_PID->SetPoint(gr_lightD_PID->GetN(), m.fLight.fRawTL, m.fLight.fQtotal);
+    //         else if(pid == "lightT")
+    //             gr_lightT_PID->SetPoint(gr_lightT_PID->GetN(), m.fLight.fRawTL, m.fLight.fQtotal);
+    //         else if(pid == "light")
+    //             gr_light_PID->SetPoint(gr_light_PID->GetN(), m.fLight.fRawTL, m.fLight.fQtotal);
+    //     },
+    //     {"MergerData", "IsDeuterium"});
+    //
+    // auto* c3 = new TCanvas("c3", "c3", 800, 600);
+    // c3->Divide(2, 2);
+    // c3->cd(1);
+    // gr_lightD->SetTitle("All particles 3 runs candidates;Theta [deg];Qtotal [a.u.]");
+    // gr_lightD->Draw("AP");
+    // gr_lightT->SetTitle("Tritium candidates;Theta [deg];Qtotal [a.u.]");
+    // gr_lightT->Draw("P SAME");
+    // gr_light->SetTitle("Proton candidates;Theta [deg];Qtotal [a.u.]");
+    // gr_light->Draw("P SAME");
+    // TLegend* legend = new TLegend(0.7, 0.7, 0.9, 0.9);
+    // legend->AddEntry(gr_lightD, "Deuterium", "P");
+    // legend->AddEntry(gr_lightT, "Tritium", "P");
+    // legend->AddEntry(gr_light, "Proton", "P");
+    // legend->Draw();
+    // c3->cd(2);
+    // gr_lightD->SetTitle("Deuterium candidates;Theta [deg];Qtotal [a.u.]");
+    // gr_lightD->Draw("AP");
+    // c3->cd(3);
+    // gr_lightT->SetTitle("Tritium candidates;Theta [deg];Qtotal [a.u.]");
+    // gr_lightT->Draw("AP");
+    // c3->cd(4);
+    // gr_light->SetTitle("Proton candidates;Theta [deg];Qtotal [a.u.]");
+    // gr_light->Draw("AP");
+    //
+    // auto* c4 = new TCanvas("c4", "c4", 800, 600);
+    // c4->Divide(2, 2);
+    // c4->cd(1);
+    // gr_lightD_PID->SetTitle("Deuterium candidates;Track Length [a.u.];Qtotal [a.u.]");
+    // gr_lightD_PID->Draw("AP");
+    // gr_lightT_PID->SetTitle("Tritium candidates;Track Length [a.u.];Qtotal [a.u.]");
+    // gr_lightT_PID->Draw("P SAME");
+    // gr_light_PID->SetTitle("Proton candidates;Track Length [a.u.];Qtotal [a.u.]");
+    // gr_light_PID->Draw("P SAME");
+    // TLegend* legendPID = new TLegend(0.7, 0.7, 0.9, 0.9);
+    // legendPID->AddEntry(gr_lightD_PID, "Deuterium", "P");
+    // legendPID->AddEntry(gr_lightT_PID, "Tritium", "P");
+    // legendPID->AddEntry(gr_light_PID, "Proton", "P");
+    // legendPID->Draw();
+    // c4->cd(2);
+    // gr_lightD_PID->SetTitle("Deuterium candidates;Track Length [a.u.];Qtotal [a.u.]");
+    // gr_lightD_PID->Draw("AP");
+    // c4->cd(3);
+    // gr_lightT_PID->SetTitle("Tritium candidates;Track Length [a.u   .];Qtotal [a.u.]");
+    // gr_lightT_PID->Draw("AP");
+    // c4->cd(4);
+    // gr_light_PID->SetTitle("Proton candidates;Track Length [a.u.];Qtotal [a.u.]");
+    // gr_light_PID->Draw("AP");
 
     // Fit the tritiums in a ForEach to plot the fit result over the hProfile
     // auto cProfile = new TCanvas("cProfile", "cProfile", 800, 600);
@@ -905,4 +964,48 @@ void checkGoodFitsBraggPeak()
     //         }
     //     },
     //     {"MergerData", "IsDeuterium"});
+    std::ofstream outFileCharge("./Outputs/events_lowdrift.dat");
+    // cuts.ReadCut("lowQ", "./Cuts/events_lowQ_deposition.root");
+    // dfFilter.Foreach(
+    //     [&](ActRoot::MergerData& m)
+    //     {
+    //         if(cuts.IsInside("lowQ", m.fLight.fRawTL, m.fLight.fQtotal))
+    //         {
+    //             m.Stream(outFileCharge);
+    //         }
+    //     },
+    //     {"MergerData"});
+    // cuts.ReadCut("lowQ", "./Cuts/events_lowQ_deposition.root");
+    dfFilter.Foreach(
+        [&](ActRoot::MergerData& m, double zDrift)
+        {
+            // if(cuts.IsInside("lowQ", m.fLight.fRawTL, m.fLight.fQtotal))
+            // {
+                // auto& rp {m.fRP}; // This equals aprox 110 mm
+                // // Get last point of the track
+                // auto idx = m.fLightIdx;
+                // if(idx < 0)
+                //     return false;
+                // // guard against out-of-range index (this was causing vector::at to throw)
+                // if(static_cast<std::size_t>(idx) >= tpc.fClusters.size())
+                //     return false;
+                // auto& cluster = tpc.fClusters.at(idx);
+                // auto line = cluster.GetLine();
+                // cluster.SortAlongDir(line.GetDirection().Unit());
+                // auto& voxels = cluster.GetRefToVoxels();
+                // auto lastZ = voxels.back().GetPosition().Z() * driftFactor;
+                // // Z difference relative to the RP
+                // //  deltaZ > 0  -> track goes to larger Z (away from pad plane)
+                // //  deltaZ < 0  -> track goes to smaller Z (closer to pad plane)
+                // double deltaZ = lastZ - rp.Z();
+                // double zRProPad = 110; // mm, distance from RP to pad plane
+                // double zDrift = zRProPad + deltaZ;
+                if(zDrift < 20 || zDrift > 240) // aprox pad plane and cathode position
+                {
+                    m.Stream(outFileCharge);
+                }
+            // }
+            return true;
+        },
+        {"MergerData", "zDrift"});
 }
