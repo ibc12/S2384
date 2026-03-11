@@ -179,7 +179,7 @@ void GetDiffusionParameters()
     int minVoxelsPerSlice = 8;
     double ds = (sMax - sMin) / nBinsS;
 
-    auto dfSigmaLightPreFilter = dfChi.Define(
+    auto dfSigmaLightPreFilter = dfFilter3.Define(
         "sigmaTransZ",
         [&](ActRoot::TPCData& tpc, ActRoot::MergerData& mer)
         {

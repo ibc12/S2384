@@ -440,7 +440,7 @@ void checkGoodFitsBraggPeak()
     ActRoot::DataManager dataman {dataconf, ActRoot::ModeType::EMerge};
     auto chain {dataman.GetChain()};
     auto chain2 {dataman.GetChain(ActRoot::ModeType::EReadSilMod)};
-    auto chain3 {dataman.GetChain(ActRoot::ModeType::EReadTPC)};
+    auto chain3 {dataman.GetChain(ActRoot::ModeType::EFilter)};
     chain->AddFriend(chain2.get());
     chain->AddFriend(chain3.get());
 
@@ -527,65 +527,93 @@ void checkGoodFitsBraggPeak()
                                     return false;
                                 return true;
                             },
-                            {"MergerData", "GETTree.TPCData"})
-                        // .Filter( // Check if light cluster go to the pad or cathode
-                        //     [&](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
-                        //     {
-                        //         auto& rp {m.fRP}; // This equals aprox 110 mm
-                        //         // Get last point of the track
-                        //         auto idx = m.fLightIdx;
-                        //         if(idx < 0)
-                        //             return false;
-                        //         // guard against out-of-range index (this was causing vector::at to throw)
-                        //         if(static_cast<std::size_t>(idx) >= tpc.fClusters.size())
-                        //             return false;
-                        //         auto& cluster = tpc.fClusters.at(idx);
-                        //         auto line = cluster.GetLine();
-                        //         cluster.SortAlongDir(line.GetDirection().Unit());
-                        //         auto& voxels = cluster.GetRefToVoxels();
-                        //         auto lastZ = voxels.back().GetPosition().Z() * driftFactor;
-                        //         // Z difference relative to the RP
-                        //         //  deltaZ > 0  -> track goes to larger Z (away from pad plane)
-                        //         //  deltaZ < 0  -> track goes to smaller Z (closer to pad plane)
-                        //         double deltaZ = lastZ - rp.Z();
-                        //         if(deltaZ < -100 || deltaZ > 140) // aprox pad plane and cathode position
-                        //         {
-                        //             return false;
-                        //             // std::cout << "Event rejected by light cluster Z position: deltaZ = " << deltaZ <<
-                        //             // " mm\n"; std::cout << "RP Z position: " << rp.Z() << " mm, last point Z position:
-                        //             // " << lastZ << " mm\n";
-                        //         }
-                        //         // std::cout << "Event accepted by light cluster Z position: deltaZ = " << deltaZ << "
-                        //         // mm\n"; std::cout << "RP Z position: " << rp.Z() << " mm, last point Z position: " <<
-                        //         // lastZ << " mm\n";
-                        //         return true;
-                        //     },
-                        //     {"MergerData", "GETTree.TPCData"})
-                        .Define("zDrift",
-                                [&](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
-                                {
-                                    auto& rp {m.fRP}; // This equals aprox 110 mm
-                                    // Get last point of the track
-                                    auto idx = m.fLightIdx;
-                                    if(idx < 0)
-                                        return -100.0;
-                                    // guard against out-of-range index (this was causing vector::at to throw)
-                                    if(static_cast<std::size_t>(idx) >= tpc.fClusters.size())
-                                        return -100.0;
-                                    auto& cluster = tpc.fClusters.at(idx);
-                                    auto line = cluster.GetLine();
-                                    cluster.SortAlongDir(line.GetDirection().Unit());
-                                    auto& voxels = cluster.GetRefToVoxels();
-                                    auto lastZ = voxels.back().GetPosition().Z() * driftFactor;
-                                    // Z difference relative to the RP
-                                    //  deltaZ > 0  -> track goes to larger Z (away from pad plane)
-                                    //  deltaZ < 0  -> track goes to smaller Z (closer to pad plane)
-                                    double deltaZ = lastZ - rp.Z();
-                                    double zRProPad = 110; // mm, distance from RP to pad plane
-                                    double zDrift = zRProPad + deltaZ;
-                                    return zDrift;
-                                },
-                                {"MergerData", "GETTree.TPCData"});
+                            {"MergerData", "TPCData"});
+    // .Filter( // Check if light cluster go to the pad or cathode
+    //     [&](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+    //     {
+    //         auto& rp {m.fRP}; // This equals aprox 110 mm
+    //         // Get last point of the track
+    //         auto idx = m.fLightIdx;
+    //         if(idx < 0)
+    //             return false;
+    //         // guard against out-of-range index (this was causing vector::at to throw)
+    //         if(static_cast<std::size_t>(idx) >= tpc.fClusters.size())
+    //             return false;
+    //         auto& cluster = tpc.fClusters.at(idx);
+    //         auto line = cluster.GetLine();
+    //         cluster.SortAlongDir(line.GetDirection().Unit());
+    //         auto& voxels = cluster.GetRefToVoxels();
+    //         auto lastZ = voxels.back().GetPosition().Z() * driftFactor;
+    //         // Z difference relative to the RP
+    //         //  deltaZ > 0  -> track goes to larger Z (away from pad plane)
+    //         //  deltaZ < 0  -> track goes to smaller Z (closer to pad plane)
+    //         double deltaZ = lastZ - rp.Z();
+    //         if(deltaZ < -100 || deltaZ > 140) // aprox pad plane and cathode position
+    //         {
+    //             return false;
+    //             // std::cout << "Event rejected by light cluster Z position: deltaZ = " << deltaZ <<
+    //             // " mm\n"; std::cout << "RP Z position: " << rp.Z() << " mm, last point Z position:
+    //             // " << lastZ << " mm\n";
+    //         }
+    //         // std::cout << "Event accepted by light cluster Z position: deltaZ = " << deltaZ << "
+    //         // mm\n"; std::cout << "RP Z position: " << rp.Z() << " mm, last point Z position: " <<
+    //         // lastZ << " mm\n";
+    //         return true;
+    //     },
+    //     {"MergerData", "TPCData"})
+
+    auto dfZandQ = dfFilter.Define("zDrift",
+                                   [&](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+                                   {
+                                       auto& rp {m.fRP};
+
+                                       auto idx = m.fLightIdx;
+                                       if(idx < 0)
+                                           return -100.0f;
+
+                                       if(static_cast<std::size_t>(idx) >= tpc.fClusters.size())
+                                           return -100.0f;
+
+                                       auto& cluster = tpc.fClusters.at(idx);
+                                       auto& voxels = cluster.GetRefToVoxels();
+
+                                       if(tpc.fRPs.empty())
+                                           return -100.0f;
+                                       auto rpVox = tpc.fRPs.front();
+
+                                       float maxDist = -1.0;
+                                       float zExtreme = 0.0;
+
+                                       for(auto& v : voxels)
+                                       {
+                                           auto pos = v.GetPosition();
+
+                                           float dx = pos.X() - rpVox.X();
+                                           float dy = pos.Y() - rpVox.Y();
+                                           float dz = pos.Z() - rpVox.Z();
+
+                                           float dist = std::sqrt(dx * dx + dy * dy + dz * dz);
+
+                                           if(dist > maxDist)
+                                           {
+                                               maxDist = dist;
+                                               zExtreme = pos.Z();
+                                           }
+                                       }
+
+                                       // diferencia en Z respecto al RP voxel
+                                       float deltaZ = (zExtreme - rpVox.Z()) * driftFactor;
+
+                                       float zDrift = 110.0 + deltaZ;
+
+                                       return zDrift;
+                                   },
+                                   {"MergerData", "TPCData"});
+
+    auto dfFilterZandQ =
+        dfZandQ.Filter([](float zDrift, ActRoot::MergerData& m)
+                       { return zDrift > -2.99441 && zDrift < 251.461 && m.fLight.fQave > 129.208; },
+                       {"zDrift", "MergerData"}); // Keep only events with light cluster in the detector
     //////////////////////////////////////////////////////////
     // Get events in elastic area of plot theta vs Qtotal
     //////////////////////////////////////////////////////////
@@ -668,68 +696,68 @@ void checkGoodFitsBraggPeak()
     // Correct the range with the BP position
     /////////////////////////////////////////
 
-    // auto dfRange = dfPID.Define("Range",
-    //                             [&](ActRoot::MergerData& m, std::string key)
-    //                             {
-    //                                 auto& hProfile {m.fQProf};
-    //                                 // Fix bin errors to 1 to use chi2 test without statistical errors
-    //                                 for(int i = 1; i <= hProfile.GetNbinsX(); ++i)
-    //                                 {
-    //                                     double content = hProfile.GetBinContent(i);
-    //                                     double error = hProfile.GetBinError(i);
-    //                                     hProfile.SetBinError(i, 1);
-    //                                 }
-    //                                 TF1* bestFitFunction =
-    //                                     FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap[key], key);
-    //                                 // Get range from spline max - fitted end shift
-    //                                 double range = 0;
-    //                                 if(bestFitFunction)
-    //                                 {
-    //                                     // Get the maximum of the TF1 (Bragg peak)
-    //                                     // Then get the value where Eloss decreases to a 1/5 of the maximum after it
-    //                                     double max = bestFitFunction->GetMaximum();
-    //                                     double maxPos = bestFitFunction->GetMaximumX();
-    //                                     double rangeValue = max / 5.0;
-    //
-    //                                     for(double x = maxPos; x < bestFitFunction->GetXmax(); x += 0.05)
-    //                                     {
-    //                                         double y = bestFitFunction->Eval(x);
-    //                                         if(y < rangeValue)
-    //                                         {
-    //                                             range = x;
-    //                                             break;
-    //                                         }
-    //                                     }
-    //                                 }
-    //                                 return range;
-    //                             },
-    //                             {"MergerData", "IsDeuterium"});
+    auto dfRange = dfPID.Define("Range",
+                                [&](ActRoot::MergerData& m, std::string key)
+                                {
+                                    auto& hProfile {m.fQProf};
+                                    // Fix bin errors to 1 to use chi2 test without statistical errors
+                                    for(int i = 1; i <= hProfile.GetNbinsX(); ++i)
+                                    {
+                                        double content = hProfile.GetBinContent(i);
+                                        double error = hProfile.GetBinError(i);
+                                        hProfile.SetBinError(i, 1);
+                                    }
+                                    TF1* bestFitFunction =
+                                        FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap[key], key);
+                                    // Get range from spline max - fitted end shift
+                                    double range = 0;
+                                    if(bestFitFunction)
+                                    {
+                                        // Get the maximum of the TF1 (Bragg peak)
+                                        // Then get the value where Eloss decreases to a 1/5 of the maximum after it
+                                        double max = bestFitFunction->GetMaximum();
+                                        double maxPos = bestFitFunction->GetMaximumX();
+                                        double rangeValue = max / 5.0;
+
+                                        for(double x = maxPos; x < bestFitFunction->GetXmax(); x += 0.05)
+                                        {
+                                            double y = bestFitFunction->Eval(x);
+                                            if(y < rangeValue)
+                                            {
+                                                range = x;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    return range;
+                                },
+                                {"MergerData", "IsDeuterium"});
 
 
     ////////////////////////////////////////////////////////////
     // Get the proportion of the best fit and the deuterium fit
     ////////////////////////////////////////////////////////////
-    // auto dfChiNormalized =
-    //     dfPID.Define("chi2NormalizedToDeuterium",
-    //                  [&](ActRoot::MergerData& m, std::string pid)
-    //                  {
-    //                      auto& hProfile {m.fQProf};
-    //                      // Fix bin errors to 1 to use chi2 test without statistical errors
-    //                      for(int i = 1; i <= hProfile.GetNbinsX(); ++i)
-    //                      {
-    //                          double content = hProfile.GetBinContent(i);
-    //                          double error = hProfile.GetBinError(i);
-    //                          hProfile.SetBinError(i, 1);
-    //                      }
-    //                      auto fDeuterium = FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap["light"], "light");
-    //                      auto fParticle = FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap[pid], pid);
-    //                      if(!fDeuterium || !fParticle)
-    //                          return 1e12;
-    //                      double chiDeuterium = fDeuterium->GetChisquare() / fDeuterium->GetNDF();
-    //                      double chiParticle = fParticle->GetChisquare() / fParticle->GetNDF();
-    //                      return chiParticle / chiDeuterium;
-    //                  },
-    //                  {"MergerData", "IsDeuterium"});
+    auto dfChiNormalized =
+        dfPID.Define("chi2NormalizedToDeuterium",
+                     [&](ActRoot::MergerData& m, std::string pid)
+                     {
+                         auto& hProfile {m.fQProf};
+                         // Fix bin errors to 1 to use chi2 test without statistical errors
+                         for(int i = 1; i <= hProfile.GetNbinsX(); ++i)
+                         {
+                             double content = hProfile.GetBinContent(i);
+                             double error = hProfile.GetBinError(i);
+                             hProfile.SetBinError(i, 1);
+                         }
+                         auto fDeuterium = FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap["light"], "light");
+                         auto fParticle = FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap[pid], pid);
+                         if(!fDeuterium || !fParticle)
+                             return 1e12;
+                         double chiDeuterium = fDeuterium->GetChisquare() / fDeuterium->GetNDF();
+                         double chiParticle = fParticle->GetChisquare() / fParticle->GetNDF();
+                         return chiParticle / chiDeuterium;
+                     },
+                     {"MergerData", "IsDeuterium"});
 
 
     // Count how many deuterium we have
@@ -751,6 +779,10 @@ void checkGoodFitsBraggPeak()
         dfElastic.Histo2D({"hTL_Qtot_cut", "Track Length vs Qtotal with cut;Track Length [a.u.];Qtotal [a.u.]", 240, 0,
                            120, 2000, 0, 3e5},
                           "MergerData.fLight.fRawTL", "MergerData.fLight.fQtotal");
+    auto hTL_Qtot_filterZandQ = dfFilterZandQ.Histo2D(
+        {"hTL_Qtot_filterZandQ", "Track Length vs Qtotal with Z and Q cut;Track Length [a.u.];Qtotal [a.u.]", 240, 0,
+         120, 2000, 0, 3e5},
+        "MergerData.fLight.fRawTL", "MergerData.fLight.fQtotal");
 
     auto hTheta_Qtot =
         dfFilter.Histo2D({"hTheta_Qtot", "Theta vs Qtotal;Theta [deg];Qtotal [a.u.]", 180, 0, 180, 2000, 0, 3e5},
@@ -758,24 +790,23 @@ void checkGoodFitsBraggPeak()
     auto hTheta_Qtot_cut = dfElastic.Histo2D(
         {"hTheta_Qtot_cut", "Theta vs Qtotal with cut;Theta [deg];Qtotal [a.u.]", 180, 0, 180, 2000, 0, 3e5},
         "MergerData.fThetaLight", "MergerData.fLight.fQtotal");
+    auto hTheta_Qtot_filterZandQ =
+        dfFilterZandQ.Histo2D({"hTheta_Qtot_filterZandQ", "Theta vs Qtotal with Z and Q cut;Theta [deg];Qtotal [a.u.]",
+                               180, 0, 180, 2000, 0, 3e5},
+                              "MergerData.fThetaLight", "MergerData.fLight.fQtotal");
 
-    // auto hPID_correctedRange =
-    //     dfRange.Histo2D({"hPID_correctedRange", "Corrected Range vs Qtotal;Corrected Range [mm];Qtotal [a.u.]", 120,
-    //     0,
-    //                      240, 2000, 0, 3e5},
-    //                     "Range", "MergerData.fLight.fQtotal");
-    // auto hPID_no_correctedRange = dfRange.Histo2D(
-    //     {"hPID_norm_correctedRange", "Corrected Range vs Qtotal normalized;Corrected Range [mm];Qtotal [a.u.]", 120,
-    //     0,
-    //      240, 2000, 0, 3e5},
-    //     "MergerData.fLight.fTL", "MergerData.fLight.fQtotal");
+    auto hPID_correctedRange =
+        dfRange.Histo2D({"hPID_correctedRange", "Corrected Range vs Qtotal;Corrected Range [mm];Qtotal [a.u.]", 120, 0,
+                         240, 2000, 0, 3e5},
+                        "Range", "MergerData.fLight.fQtotal");
+    auto hPID_no_correctedRange = dfRange.Histo2D(
+        {"hPID_norm_correctedRange", "Corrected Range vs Qtotal normalized;Corrected Range [mm];Qtotal [a.u.]", 120, 0,
+         240, 2000, 0, 3e5},
+        "MergerData.fLight.fTL", "MergerData.fLight.fQtotal");
 
-    // auto hChi2NormalizedByDeuterium = dfChiNormalized.Histo1D(
-    //     {"hChi2NormalizedByDeuterium", "Chi2 normalized to proton Chi2;Chi2 normalized to proton;Counts", 300, 0, 3},
-    //     "chi2NormalizedToDeuterium");
-
-    auto hZdrift =
-        dfFilter.Histo1D({"hZdrift", "Z drift distribution;Z drift [mm];Counts", 340, -40, 300}, "zDrift");
+    auto hChi2NormalizedByDeuterium = dfChiNormalized.Histo1D(
+        {"hChi2NormalizedByDeuterium", "Chi2 normalized to proton Chi2;Chi2 normalized to proton;Counts", 300, 0, 3},
+        "chi2NormalizedToDeuterium");
 
     auto* c1 = new TCanvas("c1", "c1", 1200, 800);
     c1->Divide(2, 2);
@@ -790,18 +821,26 @@ void checkGoodFitsBraggPeak()
     c1->cd(4);
     hTheta_Qtot_cut->DrawClone("COLZ");
 
-    // auto cChi2 = new TCanvas("cChi2", "cChi2", 800, 600);
-    // hChi2NormalizedByDeuterium->DrawClone();
+    auto cChi2 = new TCanvas("cChi2", "cChi2", 800, 600);
+    hChi2NormalizedByDeuterium->DrawClone();
 
-    auto cZdrift = new TCanvas("cZdrift", "cZdrift", 800, 600);
-    hZdrift->DrawClone();
+    auto* c2 = new TCanvas("c2", "c2", 800, 600);
+    c2->Divide(2, 1);
+    c2->cd(1);
+    hPID_correctedRange->DrawClone("COLZ");
+    c2->cd(2);
+    hPID_no_correctedRange->DrawClone("COLZ");
 
-    // auto* c2 = new TCanvas("c2", "c2", 800, 600);
-    // c2->Divide(2, 1);
-    // c2->cd(1);
-    // hPID_correctedRange->DrawClone("COLZ");
-    // c2->cd(2);
-    // hPID_no_correctedRange->DrawClone("COLZ");
+    auto* c3 = new TCanvas("Filter Z and Q comparison", "Filter Z and Q comparison", 800, 600);
+    c3->Divide(2, 2);
+    c3->cd(1);
+    hTheta_Qtot->DrawClone("COLZ");
+    c3->cd(2);
+    hTheta_Qtot_filterZandQ->DrawClone("COLZ");
+    c3->cd(3);
+    hTL_Qtot->DrawClone("COLZ");
+    c3->cd(4);
+    hTL_Qtot_filterZandQ->DrawClone("COLZ");
 
     // auto gr_lightD = new TGraph();
     // auto gr_lightT = new TGraph();
@@ -964,48 +1003,4 @@ void checkGoodFitsBraggPeak()
     //         }
     //     },
     //     {"MergerData", "IsDeuterium"});
-    std::ofstream outFileCharge("./Outputs/events_lowdrift.dat");
-    // cuts.ReadCut("lowQ", "./Cuts/events_lowQ_deposition.root");
-    // dfFilter.Foreach(
-    //     [&](ActRoot::MergerData& m)
-    //     {
-    //         if(cuts.IsInside("lowQ", m.fLight.fRawTL, m.fLight.fQtotal))
-    //         {
-    //             m.Stream(outFileCharge);
-    //         }
-    //     },
-    //     {"MergerData"});
-    // cuts.ReadCut("lowQ", "./Cuts/events_lowQ_deposition.root");
-    dfFilter.Foreach(
-        [&](ActRoot::MergerData& m, double zDrift)
-        {
-            // if(cuts.IsInside("lowQ", m.fLight.fRawTL, m.fLight.fQtotal))
-            // {
-                // auto& rp {m.fRP}; // This equals aprox 110 mm
-                // // Get last point of the track
-                // auto idx = m.fLightIdx;
-                // if(idx < 0)
-                //     return false;
-                // // guard against out-of-range index (this was causing vector::at to throw)
-                // if(static_cast<std::size_t>(idx) >= tpc.fClusters.size())
-                //     return false;
-                // auto& cluster = tpc.fClusters.at(idx);
-                // auto line = cluster.GetLine();
-                // cluster.SortAlongDir(line.GetDirection().Unit());
-                // auto& voxels = cluster.GetRefToVoxels();
-                // auto lastZ = voxels.back().GetPosition().Z() * driftFactor;
-                // // Z difference relative to the RP
-                // //  deltaZ > 0  -> track goes to larger Z (away from pad plane)
-                // //  deltaZ < 0  -> track goes to smaller Z (closer to pad plane)
-                // double deltaZ = lastZ - rp.Z();
-                // double zRProPad = 110; // mm, distance from RP to pad plane
-                // double zDrift = zRProPad + deltaZ;
-                if(zDrift < 20 || zDrift > 240) // aprox pad plane and cathode position
-                {
-                    m.Stream(outFileCharge);
-                }
-            // }
-            return true;
-        },
-        {"MergerData", "zDrift"});
 }
