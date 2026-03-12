@@ -692,7 +692,7 @@ void checkGoodFitsBraggPeak()
                                   },
                                   {"MergerData"});
 
-    /////////////////////////
+    /////////////////////////////////////////
     // Correct the range with the BP position
     /////////////////////////////////////////
 

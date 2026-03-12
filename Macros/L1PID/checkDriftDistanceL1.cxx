@@ -17,6 +17,7 @@
 #include <TF1.h>
 #include <TFile.h>
 #include <TGraph.h>
+#include <TGraphErrors.h>
 #include <TH1D.h>
 #include <TH2D.h>
 #include <TKey.h>
@@ -53,13 +54,13 @@ void checkDriftDistanceL1()
     std::string target {"d"};
     std::string light {"p"};
 
-    std::string dataconf {};
-    if(beam == "11Li")
-        dataconf = "../../configs/data_11Li.conf";
-    else if(beam == "7Li")
-        dataconf = "../../configs/data_7Li.conf";
-    else
-        throw std::runtime_error("Beam cannot differ from 11Li or 7Li");
+    std::string dataconf {"../../configs/data.conf"};
+    // if(beam == "11Li")
+    //     dataconf = "../../configs/data_11Li.conf";
+    // else if(beam == "7Li")
+    //     dataconf = "../../configs/data_7Li.conf";
+    // else
+    //     throw std::runtime_error("Beam cannot differ from 11Li or 7Li");
 
     // Read data
     ActRoot::DataManager dataman {dataconf, ActRoot::ModeType::EMerge};
@@ -241,7 +242,7 @@ void checkDriftDistanceL1()
                                         return zDrift;
                                     },
                                     {"MergerData", "TPCData"});
-
+                          
     auto hZdrift = dfZdrift.Histo1D({"hZdrift", "Z drift distribution;Z drift [mm];Counts", 340, -40, 300}, "zDrift");
     // Fit extremes into gaussian to get mean and sigma of the distribution
     auto fitGausStart = new TF1("fitFunc", "gaus", -20, 5);
@@ -318,6 +319,229 @@ void checkDriftDistanceL1()
     hQaveFiltered->DrawClone();
     fitGausQ->SetLineColor(kRed);
     fitGausQ->Draw("same");
+
+    // ============================================================
+    // Per-run fit of zDrift extremes (pad-plane and cathode peaks)
+    // ============================================================
+    // Strategy: fill a 2D histogram (run, zDrift) via RDataFrame (MT-safe),
+    // then after the event loop project each run bin, fit Gaussians, and
+    // store results in TGraphErrors.
+
+    // Define the run number as a column
+    auto dfWithRun = dfZdrift.Define("RunNumber",
+                                     [](ActRoot::MergerData& m) -> int { return m.fRun; },
+                                     {"MergerData"});
+
+    // 2D histo: x = run number, y = zDrift — bin width 1 in run so each bin = one run
+    auto hZdriftVsRun = dfWithRun.Histo2D(
+        {"hZdriftVsRun", "Z drift vs Run;Run number;Z drift [mm]", 300, 0, 300, 340, -40, 300},
+        "RunNumber", "zDrift");
+
+    // Force event loop
+    hZdriftVsRun->GetEntries();
+
+    // Containers for per-run fit results
+    std::vector<double> runVec, meanStartVec, meanStartErrVec, meanEndVec, meanEndErrVec;
+    std::vector<double> sigmaStartVec, sigmaStartErrVec, sigmaEndVec, sigmaEndErrVec;
+
+    // Group runs in pairs of nGroup to increase statistics per fit point
+    constexpr int nGroup = 1;
+    int nBins = hZdriftVsRun->GetNbinsX();
+    for(int ib = 1; ib <= nBins; ib += nGroup)
+    {
+        int ibEnd = std::min(ib + nGroup - 1, nBins);
+        // Project the Y slice merging nGroup consecutive run bins
+        TH1D* hSlice = hZdriftVsRun->ProjectionY(Form("hSlice_%d", ib), ib, ibEnd);
+        if(hSlice->GetEntries() < 50) // need enough statistics
+        {
+            delete hSlice;
+            continue;
+        }
+
+        // Run label = average of the bin-center range
+        double runCenter = 0.5 * (hZdriftVsRun->GetXaxis()->GetBinCenter(ib) +
+                                  hZdriftVsRun->GetXaxis()->GetBinCenter(ibEnd));
+
+        // Fit pad-plane peak (low-Z extreme)
+        TF1 fStart("fStart", "gaus", -20, 5);
+        int statusStart = hSlice->Fit(&fStart, "RQ0");
+
+        // Fit cathode peak (high-Z extreme)
+        TF1 fEnd("fEnd", "gaus", 250, 270);
+        int statusEnd = hSlice->Fit(&fEnd, "RQ0");
+
+        // Only store if both fits converged
+        if(statusStart == 0 && statusEnd == 0)
+        {
+            runVec.push_back(runCenter);
+
+            meanStartVec.push_back(fStart.GetParameter(1));
+            meanStartErrVec.push_back(fStart.GetParError(1));
+            sigmaStartVec.push_back(fStart.GetParameter(2));
+            sigmaStartErrVec.push_back(fStart.GetParError(2));
+
+            meanEndVec.push_back(fEnd.GetParameter(1));
+            meanEndErrVec.push_back(fEnd.GetParError(1));
+            sigmaEndVec.push_back(fEnd.GetParameter(2));
+            sigmaEndErrVec.push_back(fEnd.GetParError(2));
+        }
+
+        delete hSlice;
+    }
+
+    int nRuns = (int)runVec.size();
+    std::vector<double> runErr(nRuns, 0.0); // no error on run number
+
+    auto* grMeanStart = new TGraphErrors(nRuns, runVec.data(), meanStartVec.data(),
+                                         runErr.data(), meanStartErrVec.data());
+    grMeanStart->SetName("grMeanStart");
+    grMeanStart->SetTitle("Pad-plane peak mean vs Run;Run number;#mu_{start} [mm]");
+    grMeanStart->SetMarkerStyle(20);
+    grMeanStart->SetMarkerColor(kRed);
+    grMeanStart->SetLineColor(kRed);
+
+    auto* grMeanEnd = new TGraphErrors(nRuns, runVec.data(), meanEndVec.data(),
+                                       runErr.data(), meanEndErrVec.data());
+    grMeanEnd->SetName("grMeanEnd");
+    grMeanEnd->SetTitle("Cathode peak mean vs Run;Run number;#mu_{end} [mm]");
+    grMeanEnd->SetMarkerStyle(20);
+    grMeanEnd->SetMarkerColor(kBlue);
+    grMeanEnd->SetLineColor(kBlue);
+
+    auto* grSigmaStart = new TGraphErrors(nRuns, runVec.data(), sigmaStartVec.data(),
+                                          runErr.data(), sigmaStartErrVec.data());
+    grSigmaStart->SetName("grSigmaStart");
+    grSigmaStart->SetTitle("Pad-plane peak #sigma vs Run;Run number;#sigma_{start} [mm]");
+    grSigmaStart->SetMarkerStyle(21);
+    grSigmaStart->SetMarkerColor(kRed);
+    grSigmaStart->SetLineColor(kRed);
+
+    auto* grSigmaEnd = new TGraphErrors(nRuns, runVec.data(), sigmaEndVec.data(),
+                                        runErr.data(), sigmaEndErrVec.data());
+    grSigmaEnd->SetName("grSigmaEnd");
+    grSigmaEnd->SetTitle("Cathode peak #sigma vs Run;Run number;#sigma_{end} [mm]");
+    grSigmaEnd->SetMarkerStyle(21);
+    grSigmaEnd->SetMarkerColor(kBlue);
+    grSigmaEnd->SetLineColor(kBlue);
+
+    // Save zDrift per-run fit results to .dat
+    {
+        std::ofstream fout("./Outputs/zDrift_perRun.dat");
+        fout << "# run  meanStart  sigmaStart  meanEnd  sigmaEnd\n";
+        for(int i = 0; i < nRuns; ++i)
+            fout << runVec[i] << "  " << meanStartVec[i] << "  " << sigmaStartVec[i]
+                 << "  " << meanEndVec[i] << "  " << sigmaEndVec[i] << "\n";
+        fout.close();
+        std::cout << "Saved zDrift per-run fits to ./Outputs/zDrift_perRun.dat (" << nRuns << " entries)\n";
+    }
+
+    // Draw per-run fit evolution
+    auto* cPerRun = new TCanvas("cPerRun", "zDrift extreme fits vs Run", 1200, 800);
+    cPerRun->Divide(2, 2);
+
+    cPerRun->cd(1);
+    grMeanStart->Draw("APE");
+
+    cPerRun->cd(2);
+    grMeanEnd->Draw("APE");
+
+    cPerRun->cd(3);
+    grSigmaStart->Draw("APE");
+
+    cPerRun->cd(4);
+    grSigmaEnd->Draw("APE");
+
+    // Also draw the 2D histo
+    auto* cZdriftRun = new TCanvas("cZdriftRun", "Z drift vs Run (2D)", 800, 600);
+    hZdriftVsRun->DrawClone("COLZ");
+
+    // ============================================================
+    // Per-run fit of Qave (same strategy as zDrift)
+    // ============================================================
+    // 2D histo: x = run number, y = Qave
+    auto hQaveVsRun = dfWithRun.Histo2D(
+        {"hQaveVsRun", "Qave vs Run;Run number;Qave [a.u.]", 300, 0, 300, 300, 0, 3000},
+        "RunNumber", "MergerData.fQave");
+
+    // Force event loop
+    hQaveVsRun->GetEntries();
+
+    // Containers for per-run Qave fit results
+    std::vector<double> runQVec, meanQVec, meanQErrVec, sigmaQVec, sigmaQErrVec;
+
+    for(int ib = 1; ib <= hQaveVsRun->GetNbinsX(); ib += nGroup)
+    {
+        int ibEnd = std::min(ib + nGroup - 1, hQaveVsRun->GetNbinsX());
+        TH1D* hSliceQ = hQaveVsRun->ProjectionY(Form("hSliceQ_%d", ib), ib, ibEnd);
+        if(hSliceQ->GetEntries() < 50)
+        {
+            delete hSliceQ;
+            continue;
+        }
+
+        double runCenterQ = 0.5 * (hQaveVsRun->GetXaxis()->GetBinCenter(ib) +
+                                   hQaveVsRun->GetXaxis()->GetBinCenter(ibEnd));
+
+        // Fit Qave peak with Gaussian in the same range as the global fit
+        TF1 fQ("fQ", "gaus", 0, 120);
+        int statusQ = hSliceQ->Fit(&fQ, "RQ0");
+
+        if(statusQ == 0)
+        {
+            runQVec.push_back(runCenterQ);
+            meanQVec.push_back(fQ.GetParameter(1));
+            meanQErrVec.push_back(fQ.GetParError(1));
+            sigmaQVec.push_back(fQ.GetParameter(2));
+            sigmaQErrVec.push_back(fQ.GetParError(2));
+        }
+
+        delete hSliceQ;
+    }
+
+    int nRunsQ = (int)runQVec.size();
+    std::vector<double> runQErr(nRunsQ, 0.0);
+
+    auto* grMeanQ = new TGraphErrors(nRunsQ, runQVec.data(), meanQVec.data(),
+                                     runQErr.data(), meanQErrVec.data());
+    grMeanQ->SetName("grMeanQ");
+    grMeanQ->SetTitle("Qave peak mean vs Run;Run number;#mu_{Qave} [a.u.]");
+    grMeanQ->SetMarkerStyle(20);
+    grMeanQ->SetMarkerColor(kGreen + 2);
+    grMeanQ->SetLineColor(kGreen + 2);
+
+    auto* grSigmaQ = new TGraphErrors(nRunsQ, runQVec.data(), sigmaQVec.data(),
+                                      runQErr.data(), sigmaQErrVec.data());
+    grSigmaQ->SetName("grSigmaQ");
+    grSigmaQ->SetTitle("Qave peak #sigma vs Run;Run number;#sigma_{Qave} [a.u.]");
+    grSigmaQ->SetMarkerStyle(21);
+    grSigmaQ->SetMarkerColor(kGreen + 2);
+    grSigmaQ->SetLineColor(kGreen + 2);
+
+    // Save Qave per-run fit results to .dat
+    {
+        std::ofstream fout("./Outputs/Qave_perRun.dat");
+        fout << "# run  meanQave  sigmaQave\n";
+        for(int i = 0; i < nRunsQ; ++i)
+            fout << runQVec[i] << "  " << meanQVec[i] << "  " << sigmaQVec[i] << "\n";
+        fout.close();
+        std::cout << "Saved Qave per-run fits to ./Outputs/Qave_perRun.dat (" << nRunsQ << " entries)\n";
+    }
+
+    // Draw per-run Qave fit evolution
+    auto* cPerRunQ = new TCanvas("cPerRunQ", "Qave fits vs Run", 1200, 400);
+    cPerRunQ->Divide(2, 1);
+
+    cPerRunQ->cd(1);
+    grMeanQ->Draw("APE");
+
+    cPerRunQ->cd(2);
+    grSigmaQ->Draw("APE");
+
+    // 2D Qave vs Run
+    auto* cQaveRun = new TCanvas("cQaveRun", "Qave vs Run (2D)", 800, 600);
+    hQaveVsRun->DrawClone("COLZ");
+
+    // Save some specific data for debuging
 
     // cuts.ReadCut("lowQ", "./Cuts/events_lowQ_deposition.root");
     // dfFilter.Foreach(
