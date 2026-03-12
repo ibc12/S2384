@@ -383,7 +383,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
     // Set whether is PS or not
     bool isPS {(neutronPS > 0) || (protonPS > 0)};
     // Set number of iterations
-    const int niter {static_cast<int>(inspect ? 1e3 : (isPS ? 1e8 : 1e8))};
+    const int niter {static_cast<int>(inspect ? 1e2 : (isPS ? 1e8 : 1e8))};
     gRandom->SetSeed(0);
     // Runner: contains utility functions to execute multiple actions as rotate directions
     ActSim::Runner runner(nullptr, nullptr, gRandom, 0);
@@ -392,27 +392,46 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
     ActRoot::TPCParameters tpc {"Actar"};
     std::cout << "TPC: " << tpc.X() << " " << tpc.Y() << " " << tpc.Z() << '\n';
     // Vertex sampling and beam z variables
-    std::string emittancefilename {};
-    std::string beamPositionTimefilename {};
+    // Each emittance entry: {histogram, fraction of beam time}
+    struct EmittanceEntry
+    {
+        TH3D* hist {};
+        double fraction {};
+    };
+    std::vector<EmittanceEntry> emittances;
+
     if(beam == "7Li")
     {
-        emittancefilename = {"../Macros/Emittance/Outputs/histos" + beam + ".root"};
-        beamPositionTimefilename = ""; // 7Li did not change position during experiment
+        auto f = std::make_unique<TFile>(("../Macros/Emittance/Outputs/histos" + beam + ".root").c_str());
+        auto* h = f->Get<TH3D>("h3d");
+        if(!h)
+            throw std::runtime_error("Could not load beam emittance histogram for 7Li");
+        h->SetDirectory(nullptr);
+        emittances.push_back({h, 1.0});
     }
-
     else if(beam == "11Li")
     {
-        emittancefilename = {"../Macros/Emittance/Outputs/histos" + beam + "_pre.root"};
-        beamPositionTimefilename =
-            "./Inputs/Efficiencies/beamEmittancePeriods_11Li.dat"; // File with proportion of time that beam was in
-                                                                   // each position
+        // Read emittance periods and fractions from .dat file (3rd column = offset, ignored here)
+        std::string datPath {"./Inputs/Efficiencies/beamEmittancePeriods_And_Zoffsets_" + beam + ".dat"};
+        std::ifstream finEm(datPath);
+        if(!finEm.is_open())
+            throw std::runtime_error("Could not open emittance periods file: " + datPath);
+        std::string suffix;
+        double frac;
+        double offset; // read but not used in L1
+        while(finEm >> suffix >> frac >> offset)
+        {
+            std::string fname = "../Macros/Emittance/Outputs/histos" + beam + "_" + suffix + ".root";
+            auto f = std::make_unique<TFile>(fname.c_str());
+            auto* h = f->Get<TH3D>("h3d");
+            if(!h)
+                throw std::runtime_error("Could not load beam emittance histogram: " + fname);
+            h->SetDirectory(nullptr);
+            emittances.push_back({h, frac});
+            std::cout << "Loaded emittance: " << fname << " (fraction = " << frac << ")\n";
+        }
+        finEm.close();
     }
-    auto beamfile {std::make_unique<TFile>(emittancefilename.c_str())};
-    auto* hBeam {beamfile->Get<TH3D>("h3d")};
-    if(!hBeam)
-        throw std::runtime_error("Could not load beam emittance histogram");
-    hBeam->SetDirectory(nullptr);
-    beamfile.reset();
     // No silicons for L1
 
     const double zMeanEntrance {
@@ -552,6 +571,19 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
             nextPrint += step;
         }
         // Sample vertex position
+        // Pick emittance histogram according to beam-time fractions
+        TH3D* hBeam = [&]() -> TH3D*
+        {
+            double rEm = gRandom->Uniform();
+            double accEm = 0.0;
+            for(auto& em : emittances)
+            {
+                accEm += em.fraction;
+                if(rEm < accEm)
+                    return em.hist;
+            }
+            return emittances.back().hist;
+        }();
         auto [start, vertex] {SampleVertex(zMeanEntrance, zVertexSigma, hBeam, tpc.X())};
         auto distToVertex {(vertex - start).R()};
 

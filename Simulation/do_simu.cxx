@@ -237,34 +237,57 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     ActRoot::TPCParameters tpc {"Actar"};
     std::cout << "TPC: " << tpc.X() << " " << tpc.Y() << " " << tpc.Z() << '\n';
     // Vertex sampling and beam z variables
-    std::string emittancefilename {};
-    std::string beamPositionTimefilename {};
-    if(beam == "7Li")
+    // Each emittance entry: {histogram, fraction of beam time}
+    struct EmittanceEntry
     {
-        emittancefilename = {"../Macros/Emittance/Outputs/histos" + beam + ".root"};
-        beamPositionTimefilename = ""; // 7Li did not change position during experiment
-    }
+        TH3D* hist {};
+        double fraction {};
+    };
+    std::vector<EmittanceEntry> emittances;
 
-    else if(beam == "11Li")
-    {
-        emittancefilename = {"../Macros/Emittance/Outputs/histos" + beam + "_pre.root"};
-        beamPositionTimefilename =
-            "./Inputs/Efficiencies/beamEmittancePeriods_11Li.dat"; // File with proportion of time that beam was in
-                                                                   // each position
-    }
-    auto beamfile {std::make_unique<TFile>(emittancefilename.c_str())};
-    auto* hBeam {beamfile->Get<TH3D>("h3d")};
-    if(!hBeam)
-        throw std::runtime_error("Could not load beam emittance histogram");
-    hBeam->SetDirectory(nullptr);
-    beamfile.reset();
     // Give the offsets respect to the front silicon (more stats)
     // Offset defined as Mean silicon point - beam position
     BeamOffsetMap beamOffsets {{"7Li",
                                 {
                                     {4.68, 1.0} // fixed beam
-                                }},
-                               {"11Li", {{5.09, 0.636659}, {-0.09, 0.173063}, {-2.56, 0.190278}}}};
+                                }}};
+
+    if(beam == "7Li")
+    {
+        auto f = std::make_unique<TFile>(("../Macros/Emittance/Outputs/histos" + beam + ".root").c_str());
+        auto* h = f->Get<TH3D>("h3d");
+        if(!h)
+            throw std::runtime_error("Could not load beam emittance histogram for 7Li");
+        h->SetDirectory(nullptr);
+        emittances.push_back({h, 1.0});
+    }
+    else if(beam == "11Li")
+    {
+        // Read emittance periods, fractions and beam offsets from .dat file
+        std::string datPath {"./Inputs/Efficiencies/beamEmittancePeriods_And_Zoffsets_" + beam + ".dat"};
+        std::ifstream finEm(datPath);
+        if(!finEm.is_open())
+            throw std::runtime_error("Could not open emittance periods file: " + datPath);
+        std::string suffix;
+        double frac;
+        double offset;
+        std::vector<BeamOffset>& boVec = beamOffsets[beam]; // create entry for 11Li
+        while(finEm >> suffix >> frac >> offset)
+        {
+            // Load emittance histogram
+            std::string fname = "../Macros/Emittance/Outputs/histos" + beam + "_" + suffix + ".root";
+            auto f = std::make_unique<TFile>(fname.c_str());
+            auto* h = f->Get<TH3D>("h3d");
+            if(!h)
+                throw std::runtime_error("Could not load beam emittance histogram: " + fname);
+            h->SetDirectory(nullptr);
+            emittances.push_back({h, frac});
+            // Store beam offset for this period
+            boVec.push_back({offset, frac});
+            std::cout << "Loaded emittance: " << fname << " (fraction = " << frac << ", offset = " << offset << ")\n";
+        }
+        finEm.close();
+    }
     // Silicons
     auto* sils {new ActPhysics::SilSpecs};
     std::string silConfig("silspecs"); // no front silicons, only lateral ones
@@ -495,6 +518,19 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         // Sample vertex position
         double beamOffset = PickBeamOffset(beam, beamOffsets);
         double zVertexMeanEvt = silCentreFront - beamOffset;
+        // Pick emittance histogram according to beam-time fractions
+        TH3D* hBeam = [&]() -> TH3D*
+        {
+            double rEm = gRandom->Uniform();
+            double accEm = 0.0;
+            for(auto& em : emittances)
+            {
+                accEm += em.fraction;
+                if(rEm < accEm)
+                    return em.hist;
+            }
+            return emittances.back().hist;
+        }();
         auto [start, vertex] {SampleVertex(zVertexMeanEvt, zVertexSigma, hBeam, tpc.X())};
         auto distToVertex {(vertex - start).R()};
 

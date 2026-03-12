@@ -426,7 +426,7 @@ void checkGoodFitsBraggPeak()
     // Get all data for 7Li (there is no triton there, so easier to see deuterium)
     std::string beam {"7Li"};
     std::string target {"d"};
-    std::string light {"p"};
+    std::string light {"d"};
 
     std::string dataconf {};
     if(beam == "11Li")
@@ -624,13 +624,13 @@ void checkGoodFitsBraggPeak()
     cuts.ReadCut("l1_theta", TString::Format("./Cuts/%s_ThetaVSq_%s.root", light.c_str(), beam.c_str()).Data());
 
     // Apply cut in theta - Qtotal
-    auto dfDeuterium = dfFilter.Filter(
+    auto dfDeuterium = dfFilterZandQ.Filter(
         [&](ActRoot::MergerData& m) { return cuts.IsInside("l1", m.fLight.fRawTL, m.fLight.fQtotal); }, {"MergerData"});
     auto dfElastic =
         dfDeuterium.Filter([&](ActRoot::MergerData& m)
                            { return cuts.IsInside("l1_theta", m.fThetaLight, m.fLight.fQtotal); }, {"MergerData"});
 
-    auto dfPID = dfElastic.Define("IsDeuterium",
+    auto dfPID = dfDeuterium.Define("IsDeuterium",
                                   [&](ActRoot::MergerData& m)
                                   {
                                       auto& hProfile {m.fQProf};
@@ -776,7 +776,7 @@ void checkGoodFitsBraggPeak()
         {"hTL_Qtot", "Track Length vs Qtotal;Track Length [a.u.];Qtotal [a.u.]", 240, 0, 120, 2000, 0, 3e5},
         "MergerData.fLight.fRawTL", "MergerData.fLight.fQtotal");
     auto hTL_Qtot_cut =
-        dfElastic.Histo2D({"hTL_Qtot_cut", "Track Length vs Qtotal with cut;Track Length [a.u.];Qtotal [a.u.]", 240, 0,
+        dfDeuterium.Histo2D({"hTL_Qtot_cut", "Track Length vs Qtotal with cut;Track Length [a.u.];Qtotal [a.u.]", 240, 0,
                            120, 2000, 0, 3e5},
                           "MergerData.fLight.fRawTL", "MergerData.fLight.fQtotal");
     auto hTL_Qtot_filterZandQ = dfFilterZandQ.Histo2D(
@@ -787,7 +787,7 @@ void checkGoodFitsBraggPeak()
     auto hTheta_Qtot =
         dfFilter.Histo2D({"hTheta_Qtot", "Theta vs Qtotal;Theta [deg];Qtotal [a.u.]", 180, 0, 180, 2000, 0, 3e5},
                          "MergerData.fThetaLight", "MergerData.fLight.fQtotal");
-    auto hTheta_Qtot_cut = dfElastic.Histo2D(
+    auto hTheta_Qtot_cut = dfDeuterium.Histo2D(
         {"hTheta_Qtot_cut", "Theta vs Qtotal with cut;Theta [deg];Qtotal [a.u.]", 180, 0, 180, 2000, 0, 3e5},
         "MergerData.fThetaLight", "MergerData.fLight.fQtotal");
     auto hTheta_Qtot_filterZandQ =
@@ -986,21 +986,24 @@ void checkGoodFitsBraggPeak()
     // std::ofstream outFileD("./Outputs/good_deuterium_events.dat");
     // std::ofstream outFileT("./Outputs/good_tritium_events.dat");
     // std::ofstream outFileP("./Outputs/good_proton_events.dat");
+    // std::ofstream outFileHe("./Outputs/good_helium_events.dat");
     // dfPID.Foreach(
-    //     [&](ActRoot::MergerData& m, const std::string& pid)
+    //     [&](ActRoot::MergerData& m)
     //     {
-    //         if(pid == "lightD")
+    //         if(cuts.IsInside("l1", m.fLight.fRawTL, m.fLight.fQtotal))
     //         {
-    //             m.Stream(outFileD);
-    //         }
-    //         else if(pid == "lightT")
-    //         {
-    //             m.Stream(outFileT);
-    //         }
-    //         else if(pid == "light")
-    //         {
-    //             m.Stream(outFileP);
+    //             m.Stream(outFileHe);
     //         }
     //     },
-    //     {"MergerData", "IsDeuterium"});
+    //     {"MergerData"});
+    std::ofstream outFileLowQ("./Outputs/lowQ_events.dat");
+    dfFilter.Foreach(
+        [&](ActRoot::MergerData& m, float zDrift)
+        {
+            if(m.fLight.fQave < 400 && m.fLight.fQave > 350 && zDrift > 15 && zDrift < 200)
+            {
+                m.Stream(outFileLowQ);
+            }
+        },
+        {"MergerData", "zDrift"});
 }
