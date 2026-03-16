@@ -426,7 +426,17 @@ void checkGoodFitsBraggPeak()
     // Get all data for 7Li (there is no triton there, so easier to see deuterium)
     std::string beam {"7Li"};
     std::string target {"d"};
-    std::string light {"d"};
+    std::string light {"p"};
+
+    std::string goodParticle {};
+    if(light == "p")
+        goodParticle = "light";
+    else if(light == "d")
+        goodParticle = "lightD";
+    else if(light == "t")
+        goodParticle = "lightT";
+    else
+        throw std::runtime_error("Light particle cannot differ from p, d, t");
 
     std::string dataconf {};
     if(beam == "11Li")
@@ -473,7 +483,7 @@ void checkGoodFitsBraggPeak()
     }
 
     // RDataFrame
-    // ROOT::EnableImplicitMT();
+    ROOT::EnableImplicitMT();
     ROOT::RDataFrame dforigin {*chain};
 
     // Filter GATCONF == L1
@@ -610,10 +620,42 @@ void checkGoodFitsBraggPeak()
                                    },
                                    {"MergerData", "TPCData"});
 
-    auto dfFilterZandQ =
-        dfZandQ.Filter([](float zDrift, ActRoot::MergerData& m)
-                       { return zDrift > -2.99441 && zDrift < 251.461 && m.fLight.fQave > 129.208; },
-                       {"zDrift", "MergerData"}); // Keep only events with light cluster in the detector
+    // Filter the z distances with file zDrift_cut_perRun.dat
+    // Read per-run zDrift cuts: columns are run, meanStart, sigmaStart, meanEnd, sigmaEnd
+    struct ZDriftCut
+    {
+        double zMin; // meanStart + nSigma * sigmaStart
+        double zMax; // meanEnd   - nSigma * sigmaEnd
+    };
+    const double nSigmaZDrift {3.0};
+    std::map<int, ZDriftCut> zDriftCuts;
+    {
+        std::ifstream finZ("./Outputs/zDrift_cut_perRun.dat");
+        if(!finZ.is_open())
+            throw std::runtime_error("Could not open zDrift_cut_perRun.dat");
+        std::string line;
+        while(std::getline(finZ, line))
+        {
+            if(line.empty() || line[0] == '#')
+                continue;
+            std::istringstream iss(line);
+            int run;
+            double meanS, sigmaS, meanE, sigmaE;
+            if(iss >> run >> meanS >> sigmaS >> meanE >> sigmaE)
+                zDriftCuts[run] = {meanS + nSigmaZDrift * sigmaS, meanE - nSigmaZDrift * sigmaE};
+        }
+        finZ.close();
+    }
+
+    auto dfFilterZandQ = dfZandQ.Filter(
+        [&zDriftCuts](float zDrift, ActRoot::MergerData& m)
+        {
+            auto it = zDriftCuts.find(m.fRun);
+            if(it == zDriftCuts.end())
+                return false; // run not in file → reject
+            return zDrift > it->second.zMin && zDrift < it->second.zMax && m.fLight.fQave > 600;
+        },
+        {"zDrift", "MergerData"});
     //////////////////////////////////////////////////////////
     // Get events in elastic area of plot theta vs Qtotal
     //////////////////////////////////////////////////////////
@@ -631,66 +673,67 @@ void checkGoodFitsBraggPeak()
                            { return cuts.IsInside("l1_theta", m.fThetaLight, m.fLight.fQtotal); }, {"MergerData"});
 
     auto dfPID = dfDeuterium.Define("IsDeuterium",
-                                  [&](ActRoot::MergerData& m)
-                                  {
-                                      auto& hProfile {m.fQProf};
-                                      // Fix bin errors to 1 to use chi2 test without statistical errors
-                                      for(int i = 1; i <= hProfile.GetNbinsX(); ++i)
-                                      {
-                                          double content = hProfile.GetBinContent(i);
-                                          double error = hProfile.GetBinError(i);
-                                          hProfile.SetBinError(i, 1);
-                                      }
-                                      // double bestScore = 1e20;
-                                      // double bestManualScore = 1e20;
-                                      double bestFitScore = 1e20;
-                                      // std::string bestParticle;
-                                      // std::string bestManualParticle;
-                                      std::string bestFitParticle;
-                                      for(const auto& key : particles)
-                                      {
-                                          auto fSpline = FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap[key], key);
+                                    [&](ActRoot::MergerData& m)
+                                    {
+                                        auto& hProfile {m.fQProf};
+                                        // Fix bin errors to 1 to use chi2 test without statistical errors
+                                        for(int i = 1; i <= hProfile.GetNbinsX(); ++i)
+                                        {
+                                            double content = hProfile.GetBinContent(i);
+                                            double error = hProfile.GetBinError(i);
+                                            hProfile.SetBinError(i, 1);
+                                        }
+                                        // double bestScore = 1e20;
+                                        // double bestManualScore = 1e20;
+                                        double bestFitScore = 1e20;
+                                        // std::string bestParticle;
+                                        // std::string bestManualParticle;
+                                        std::string bestFitParticle;
+                                        for(const auto& key : particles)
+                                        {
+                                            auto fSpline =
+                                                FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap[key], key);
 
-                                          if(!fSpline)
-                                              continue;
+                                            if(!fSpline)
+                                                continue;
 
-                                          // ---------- ROOT fit chi2 ----------
-                                          double chiFit = fSpline->GetChisquare() / fSpline->GetNDF();
-                                          if(chiFit < bestFitScore)
-                                          {
-                                              bestFitScore = chiFit;
-                                              bestFitParticle = key;
-                                          }
+                                            // ---------- ROOT fit chi2 ----------
+                                            double chiFit = fSpline->GetChisquare() / fSpline->GetNDF();
+                                            if(chiFit < bestFitScore)
+                                            {
+                                                bestFitScore = chiFit;
+                                                bestFitParticle = key;
+                                            }
 
-                                          // // ---------- build model histogram ----------
-                                          // TH1* model = BuildModelHistogramFromTF1(&hProfile, fSpline, "model_" +
-                                          // key);
-                                          //
-                                          // // ---------- compare shape ----------
-                                          // TH1* dataNorm = (TH1*)hProfile.Clone(("dataNorm_" + key).c_str());
-                                          // TH1* modelNorm = (TH1*)model->Clone(("modelNorm_" + key).c_str());
-                                          //
-                                          // NormalizeHistogram(dataNorm);
-                                          // NormalizeHistogram(modelNorm);
-                                          //
-                                          // // now is normalice inside function of chi2
-                                          // double chiManually = Chi2Manually(&hProfile, model, fSpline);
-                                          // double chiShape = Chi2Shape(&hProfile, model, fSpline);
-                                          //
-                                          // if(chiManually < bestManualScore)
-                                          // {
-                                          //     bestManualScore = chiManually;
-                                          //     bestManualParticle = key;
-                                          // }
-                                          // if(chiShape < bestScore)
-                                          // {
-                                          //     bestScore = chiShape;
-                                          //     bestParticle = key;
-                                          // }
-                                      }
-                                      return bestFitParticle; // deuterium is the one we want to identify
-                                  },
-                                  {"MergerData"});
+                                            // // ---------- build model histogram ----------
+                                            // TH1* model = BuildModelHistogramFromTF1(&hProfile, fSpline, "model_" +
+                                            // key);
+                                            //
+                                            // // ---------- compare shape ----------
+                                            // TH1* dataNorm = (TH1*)hProfile.Clone(("dataNorm_" + key).c_str());
+                                            // TH1* modelNorm = (TH1*)model->Clone(("modelNorm_" + key).c_str());
+                                            //
+                                            // NormalizeHistogram(dataNorm);
+                                            // NormalizeHistogram(modelNorm);
+                                            //
+                                            // // now is normalice inside function of chi2
+                                            // double chiManually = Chi2Manually(&hProfile, model, fSpline);
+                                            // double chiShape = Chi2Shape(&hProfile, model, fSpline);
+                                            //
+                                            // if(chiManually < bestManualScore)
+                                            // {
+                                            //     bestManualScore = chiManually;
+                                            //     bestManualParticle = key;
+                                            // }
+                                            // if(chiShape < bestScore)
+                                            // {
+                                            //     bestScore = chiShape;
+                                            //     bestParticle = key;
+                                            // }
+                                        }
+                                        return bestFitParticle; // deuterium is the one we want to identify
+                                    },
+                                    {"MergerData"});
 
     /////////////////////////////////////////
     // Correct the range with the BP position
@@ -738,7 +781,7 @@ void checkGoodFitsBraggPeak()
     // Get the proportion of the best fit and the deuterium fit
     ////////////////////////////////////////////////////////////
     auto dfChiNormalized =
-        dfPID.Define("chi2NormalizedToDeuterium",
+        dfPID.Define("chi2NormalizedToGoodParticle",
                      [&](ActRoot::MergerData& m, std::string pid)
                      {
                          auto& hProfile {m.fQProf};
@@ -749,13 +792,14 @@ void checkGoodFitsBraggPeak()
                              double error = hProfile.GetBinError(i);
                              hProfile.SetBinError(i, 1);
                          }
-                         auto fDeuterium = FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap["light"], "light");
+                         auto fGoodParticle =
+                             FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap[goodParticle], goodParticle);
                          auto fParticle = FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap[pid], pid);
-                         if(!fDeuterium || !fParticle)
+                         if(!fGoodParticle || !fParticle)
                              return 1e12;
-                         double chiDeuterium = fDeuterium->GetChisquare() / fDeuterium->GetNDF();
+                         double chiGoodParticle = fGoodParticle->GetChisquare() / fGoodParticle->GetNDF();
                          double chiParticle = fParticle->GetChisquare() / fParticle->GetNDF();
-                         return chiParticle / chiDeuterium;
+                         return chiParticle / chiGoodParticle;
                      },
                      {"MergerData", "IsDeuterium"});
 
@@ -776,9 +820,9 @@ void checkGoodFitsBraggPeak()
         {"hTL_Qtot", "Track Length vs Qtotal;Track Length [a.u.];Qtotal [a.u.]", 240, 0, 120, 2000, 0, 3e5},
         "MergerData.fLight.fRawTL", "MergerData.fLight.fQtotal");
     auto hTL_Qtot_cut =
-        dfDeuterium.Histo2D({"hTL_Qtot_cut", "Track Length vs Qtotal with cut;Track Length [a.u.];Qtotal [a.u.]", 240, 0,
-                           120, 2000, 0, 3e5},
-                          "MergerData.fLight.fRawTL", "MergerData.fLight.fQtotal");
+        dfDeuterium.Histo2D({"hTL_Qtot_cut", "Track Length vs Qtotal with cut;Track Length [a.u.];Qtotal [a.u.]", 240,
+                             0, 120, 2000, 0, 3e5},
+                            "MergerData.fLight.fRawTL", "MergerData.fLight.fQtotal");
     auto hTL_Qtot_filterZandQ = dfFilterZandQ.Histo2D(
         {"hTL_Qtot_filterZandQ", "Track Length vs Qtotal with Z and Q cut;Track Length [a.u.];Qtotal [a.u.]", 240, 0,
          120, 2000, 0, 3e5},
@@ -806,7 +850,22 @@ void checkGoodFitsBraggPeak()
 
     auto hChi2NormalizedByDeuterium = dfChiNormalized.Histo1D(
         {"hChi2NormalizedByDeuterium", "Chi2 normalized to proton Chi2;Chi2 normalized to proton;Counts", 300, 0, 3},
-        "chi2NormalizedToDeuterium");
+        "chi2NormalizedToGoodParticle");
+
+    auto hQave = dfFilterZandQ.Histo1D({"hQave", "Qave distribution;Qave [a.u.];Counts", 200, 0, 3000},
+                                       "MergerData.fLight.fQave");
+    auto hQaveZdrift =
+        dfFilterZandQ.Histo2D({"hQaveZdrift", "Qave vs Zdrift;Zdrift [mm];Qave [a.u.]", 200, 0, 3000, 120, -100, 266},
+                              "zDrift", "MergerData.fLight.fQave");
+
+    auto hPhiGoodFit = dfPID.Filter([&](const std::string& pid) { return pid == goodParticle; }, {"IsDeuterium"})
+                           .Histo1D({"hPhiGoodFit", "Phi distribution for good fit;Phi [deg];Counts", 180, 0, 180},
+                                    "MergerData.fPhiLight");
+    auto hPhiBadFit = dfPID.Filter([&](const std::string& pid) { return pid != goodParticle; }, {"IsDeuterium"})
+                          .Histo1D({"hPhiBadFit", "Phi distribution for bad fit;Phi [deg];Counts", 180, 0, 180},
+                                   "MergerData.fPhiLight");
+    auto hPhiAll =
+        dfPID.Histo1D({"hPhiAll", "Phi distribution for all;Phi [deg];Counts", 180, 0, 180}, "MergerData.fPhiLight");
 
     auto* c1 = new TCanvas("c1", "c1", 1200, 800);
     c1->Divide(2, 2);
@@ -841,6 +900,22 @@ void checkGoodFitsBraggPeak()
     hTL_Qtot->DrawClone("COLZ");
     c3->cd(4);
     hTL_Qtot_filterZandQ->DrawClone("COLZ");
+
+    auto* c4 = new TCanvas("c4", "c4", 800, 600);
+    c4->Divide(1, 2);
+    c4->cd(1);
+    hQaveZdrift->DrawClone("COLZ");
+    c4->cd(2);
+    hQave->DrawClone();
+
+    auto cPhi = new TCanvas("cPhi", "cPhi", 800, 600);
+    cPhi->Divide(3, 1);
+    cPhi->cd(1);
+    hPhiAll->DrawClone();
+    cPhi->cd(2);
+    hPhiGoodFit->DrawClone();
+    cPhi->cd(3);
+    hPhiBadFit->DrawClone();
 
     // auto gr_lightD = new TGraph();
     // auto gr_lightT = new TGraph();
@@ -946,13 +1021,13 @@ void checkGoodFitsBraggPeak()
     // dfPID.Foreach(
     //     [&](ActRoot::MergerData& m, const std::string& pid)
     //     {
-    //         if(pid == "light")
+    //         if(pid == "lightD")
     //         {
     //             auto& hProfile {m.fQProf};
     //             auto fSplineT = FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap["lightT"], "lightT");
     //             auto fSplineD = FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap["lightD"], "lightD");
     //             auto fSplineP = FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap["light"], "light");
-    //             if(fSplineT)
+    //             if(fSplineT && counter % 300 == 0) // plot only some fits to avoid too many canvases
     //             {
     //                 TCanvas* c = new TCanvas(("c_" + pid + "_" + std::to_string(counter)).c_str(),
     //                                          ("Fit for " + pid).c_str(), 800, 600);
@@ -981,7 +1056,6 @@ void checkGoodFitsBraggPeak()
     //         }
     //     },
     //     {"MergerData", "IsDeuterium"});
-
     // Save events with good deuterium fit to ofstream
     // std::ofstream outFileD("./Outputs/good_deuterium_events.dat");
     // std::ofstream outFileT("./Outputs/good_tritium_events.dat");
@@ -996,14 +1070,14 @@ void checkGoodFitsBraggPeak()
     //         }
     //     },
     //     {"MergerData"});
-    std::ofstream outFileLowQ("./Outputs/lowQ_events.dat");
-    dfFilter.Foreach(
-        [&](ActRoot::MergerData& m, float zDrift)
-        {
-            if(m.fLight.fQave < 400 && m.fLight.fQave > 350 && zDrift > 15 && zDrift < 200)
-            {
-                m.Stream(outFileLowQ);
-            }
-        },
-        {"MergerData", "zDrift"});
+    // std::ofstream outFileLowQ("./Outputs/lowQ_events.dat");
+    // dfFilterZandQ.Foreach(
+    //     [&](ActRoot::MergerData& m, float zDrift)
+    //     {
+    //         if(m.fLight.fQave < 600 && m.fLight.fQave > 550)
+    //         {
+    //             m.Stream(outFileLowQ);
+    //         }
+    //     },
+    //     {"MergerData", "zDrift"});
 }

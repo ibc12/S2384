@@ -132,6 +132,8 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
                 return true;
         },
         {"MergerData"});
+    // std::cout << "Number of entries before silicon pad filtering: " << *dforigin.Count() << std::endl;
+    // std::cout << "Number of entries after silicon pad filtering: " << *df.Count() << std::endl;
 
 
     // LIGHT particle
