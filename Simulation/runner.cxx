@@ -13,7 +13,7 @@
 void runner(TString what = "simu", bool inspect = true)
 {
     // Neutron and Proton phase space
-    int neutronPS {0}; // number of neutrons in final state
+    int neutronPS {1}; // number of neutrons in final state
     int protonPS {0};  // number of protons in final state
     bool isPS {neutronPS > 0 || protonPS > 0};
     // Particles
@@ -42,7 +42,7 @@ void runner(TString what = "simu", bool inspect = true)
     else if(neutronPS == 0 && protonPS == 0 && target == "2H" && light == "2H") // Elastic and Inelastic scattering
     {
         if(beam == "11Li")
-            Exs = {0, 1.266, 2.474};
+            Exs = {0};
         else if(beam == "7Li")
             Exs = {0, 0.477};
     }
@@ -51,7 +51,7 @@ void runner(TString what = "simu", bool inspect = true)
     else if(heavy == "9He" || heavy == "10He") // d3He,alpha (only g.s)
         Exs = {0};
     else if(neutronPS == 2 && protonPS == 0 && target == "2H" && light == "2H")
-        Exs = {(1.26642 + 0.36928) / 2}; // half value between first excited state and the S_2n
+        Exs = {0}; // half value between first excited state and the S_2n
     else if(neutronPS > 0 && protonPS == 0)
         Exs = {0}; // only gs for n phase space
     else if(neutronPS == 0 && protonPS > 0)

@@ -228,7 +228,7 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     // Set whether is PS or not
     bool isPS {(neutronPS > 0) || (protonPS > 0)};
     // Set number of iterations
-    const int niter {static_cast<int>(inspect ? 1e7 : (isPS ? 1e8 : 1e8))};
+    const int niter {static_cast<int>(inspect ? 1e7 : (isPS ? 3e7 : 1e8))};
     gRandom->SetSeed(0);
     // Runner: contains utility functions to execute multiple actions as rotate directions
     ActSim::Runner runner(nullptr, nullptr, gRandom, 0);
@@ -297,7 +297,7 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     const double sigmaSilFront {0.050 / 2.355}; // Si resolution for front, around 50 keV FWHM
     auto silRes = std::make_unique<TF1>(
         "silRes", [=](double* x, double* p) { return p[0] * TMath::Sqrt(x[0] / 5.5); }, 0.0, 100.0, 1);
-    std::vector<std::string> silLayers {"f0", "l0", "r0"};
+    std::vector<std::string> silLayers {"l0", "r0"}; // For the moment only laterals, front not yet available for analysis
     std::vector<std::string> AllsilLayers {"f0", "f1", "f2", "f3", "l0", "r0"};
 
     std::string filenameSMlat {"../Macros/SilVetos/Outputs/Dists/sms_f0.root"};
@@ -435,6 +435,8 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     auto hTheta3CM {HistConfig::ThetaCM.GetHistogram()};
     auto hTheta3CMside {HistConfig::ThetaCM.GetHistogram()};
     auto hTheta3CMfront {HistConfig::ThetaCM.GetHistogram()};
+    auto hTheta3CMGateHeavy {HistConfig::ThetaCM.GetHistogram()};
+    auto hTheta3CMsideGateHeavy {HistConfig::ThetaCM.GetHistogram()};
     auto hThetaCMAll {HistConfig::ThetaCM.GetHistogram()};
     hThetaCMAll->SetTitle("Theta3CM all;#theta_{CM} [#circ];Counts");
     auto hThetaLabAll {HistConfig::ThetaCM.GetHistogram()};
@@ -445,6 +447,10 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     hTheta3Labside->SetTitle("Theta3Lab;#theta_{Lab} [#circ];Counts");
     auto hTheta3Labfront {HistConfig::ThetaCM.GetHistogram()};
     hTheta3Labfront->SetTitle("Theta3Lab;#theta_{Lab} [#circ];Counts");
+    auto hTheta3LabGateHeavy {HistConfig::ThetaCM.GetHistogram()};
+    hTheta3LabGateHeavy->SetTitle("Theta3Lab;#theta_{Lab} [#circ];Counts");
+    auto hTheta3LabsideGateHeavy {HistConfig::ThetaCM.GetHistogram()};
+    hTheta3LabsideGateHeavy->SetTitle("Theta3Lab;#theta_{Lab} [#circ];Counts");
     auto hPhiAll {HistConfig::PhiCM.GetHistogram()};
     hPhiAll->SetTitle("Phi3CM all;#phi_{CM} [#circ];Counts");
     auto hPhi3CM {HistConfig::PhiCM.GetHistogram()};
@@ -458,6 +464,7 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     hSPr0->SetTitle("SP for r0");
     // Reconstructed histos
     auto hEx {HistConfig::Ex.GetHistogram()};
+    auto hExGateHeavy {HistConfig::Ex.GetHistogram()};
     auto hKinRec {HistConfig::Kin.GetHistogram()};
     hKinRec->SetTitle("Reconstructed Kinetic Energy;#theta_{Lab} [#circ];E_{Vertex} [MeV]");
     auto hRP_X {HistConfig::RPx.GetHistogram()};
@@ -484,6 +491,8 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     outTree->Branch("theta3CM", &theta3CM_tree);
     double Eex_tree {};
     outTree->Branch("Eex", &Eex_tree);
+    double EexGateHeavy_tree {};
+    outTree->Branch("EexGateHeavy", &EexGateHeavy_tree);
     double EVertex_tree {};
     outTree->Branch("EVertex", &EVertex_tree);
     double theta3Lab_tree {};
@@ -747,6 +756,24 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
                 }
             }
         }
+        // Check if heavy particle hit f3
+        int silIndexHeavy {};
+        ROOT::Math::XYZPoint silPointHeavy {};
+        std::tie(silIndexHeavy, silPointHeavy) = sils->FindSPInLayer("f3", vertex, heavyWorldFrame);
+        if(silIndexHeavy != -1)
+        {
+            hTheta3CMGateHeavy->Fill(theta3CMBefore);
+            hTheta3LabGateHeavy->Fill(theta3Lab * TMath::RadToDeg());
+            if(layer0 == "l0" || layer0 == "r0")
+            {
+                hTheta3CMsideGateHeavy->Fill(theta3CMBefore);
+                hTheta3LabsideGateHeavy->Fill(theta3Lab * TMath::RadToDeg());
+            }
+        }
+        else
+        {
+            EexGateHeavy_tree = -1000; // if heavy does not hit f3, fill with -1000 to be able to do gate in analysis
+        }
         // Reconstruct!
         if(T3AfterSil0 > 0)
         {
@@ -805,12 +832,16 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
             theta3Lab_tree = theta3Lab * TMath::RadToDeg();
             phi3CM_tree = phi3CM;
             weight_tree = weight;
+            if(silIndexHeavy != -1)
+            {
+                EexGateHeavy_tree = ExRec;
+            }
             outTree->Fill();
         }
     }
 
 
-    // Compute efficiency side, front and total
+    // Compute efficiency side, front, heavy gate and total
     auto* effCM {new TEfficiency {*hTheta3CM, *hThetaCMAll}};
     effCM->SetNameTitle("effCM", " #epsilon_{TOT} (#theta_{CM});#epsilon;#theta_{CM} [#circ]");
     auto* effLab {new TEfficiency {*hTheta3Lab, *hThetaLabAll}};
@@ -826,6 +857,16 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     auto* effLabfront {new TEfficiency {*hTheta3Labfront, *hThetaLabAll}};
     effLabfront->SetNameTitle("effLabfront", "#epsilon_{front} (#theta_{Lab});#epsilon;#theta_{Lab} [#circ]");
 
+    auto* effCMgateHeavy {new TEfficiency {*hTheta3CMGateHeavy, *hThetaCMAll}};
+    effCMgateHeavy->SetNameTitle("effCMgateHeavy", " #epsilon_{heavy gate} (#theta_{CM});#epsilon;#theta_{CM} [#circ]");
+    auto* effLabgateHeavy {new TEfficiency {*hTheta3LabGateHeavy, *hThetaLabAll}};
+    effLabgateHeavy->SetNameTitle("effLabgateHeavy",
+                                  "#epsilon_{heavy gate} (#theta_{Lab});#epsilon;#theta_{Lab} [#circ]");
+    auto* effCMsideGateHeavy {new TEfficiency {*hTheta3CMsideGateHeavy, *hThetaCMAll}};
+    effCMsideGateHeavy->SetNameTitle("effCMsideGateHeavy", " #epsilon_{side} (#theta_{CM});#epsilon;#theta_{CM} [#circ]");
+    auto* effLabsideGateHeavy {new TEfficiency {*hTheta3LabsideGateHeavy, *hThetaLabAll}};
+    effLabsideGateHeavy->SetNameTitle("effLabsideGateHeavy", "#epsilon_{side} (#theta_{Lab});#epsilon;#theta_{Lab} [#circ]");
+
     // SAVING
     if(!inspect)
     {
@@ -837,6 +878,8 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         effLabside->Write();
         effCMfront->Write();
         effLabfront->Write();
+        effCMgateHeavy->Write();
+        effLabgateHeavy->Write();
         hRP->Write("hRP");
         outFile->Close();
         delete outFile;
