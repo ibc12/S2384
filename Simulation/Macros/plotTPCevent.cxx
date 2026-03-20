@@ -358,7 +358,7 @@ TH1D* ShiftHistogram(TH1D* h, double shift, const std::string& particleKey)
 // ============================================================
 // MAIN
 // ============================================================
-void plotTPCevent(double range = 120, double thetaDeg = 45, double phiDeg = -45)
+void plotTPCevent(double range = 120, double thetaDeg = 30, double phiDeg = -90)
 {
     PrettyStyle();
     gRandom->SetSeed(0);

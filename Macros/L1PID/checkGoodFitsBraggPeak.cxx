@@ -257,6 +257,86 @@ TGraph* BuildSRIMgraph(ActPhysics::SRIM* srim, double range, const std::string& 
     return gr;
 }
 
+// ============================================================
+// Convolve spline with Gaussian kernel to simulate diffusion (simple numerical convolution)
+// ============================================================
+TSpline3* BuildDiffusedSpline(TSpline3* spSRIM, double sigma, // sigma^2 = a + b*z
+                              int nPoints = 3000, double nSigma = 5.0)
+{
+    if(!spSRIM)
+        return nullptr;
+
+    double xmin = spSRIM->GetXmin();
+    double xmax = spSRIM->GetXmax();
+
+    double dx = (xmax - xmin) / (nPoints - 1);
+
+    // --- sample the spline ---
+    std::vector<double> x(nPoints), y(nPoints);
+    for(int i = 0; i < nPoints; ++i)
+    {
+        x[i] = xmin + i * dx;
+        y[i] = spSRIM->Eval(x[i]);
+    }
+
+    // --- extend range to allow for kernel tail ---
+    int extraPoints = static_cast<int>(nSigma * sigma / dx);
+    int nTotal = nPoints + extraPoints;
+
+    std::vector<double> xExt(nTotal), yConv(nTotal, 0.0);
+
+    for(int i = 0; i < nTotal; ++i)
+        xExt[i] = xmin + i * dx;
+
+    // --- causal smearing (only earlier points affect later positions) ---
+    for(int i = 0; i < nTotal; ++i)
+    {
+        double sum = 0.0;
+        double norm = 0.0;
+
+        // only real SRIM points contribute
+        for(int j = 0; j < nPoints; ++j)
+        {
+            if(x[j] > xExt[i])
+                continue; // causality: only points <= current x contribute
+
+            double d = xExt[i] - x[j];
+
+            // limit kernel reach
+            if(d > nSigma * sigma)
+                continue;
+
+            double w = std::exp(-0.5 * d * d / (sigma * sigma));
+
+            sum += y[j] * w;
+            norm += w;
+        }
+
+        if(norm > 0)
+            yConv[i] = sum / norm;
+    }
+
+    // --- (optional) preserve integral ---
+    double integral_before = 0.0;
+    for(auto v : y)
+        integral_before += v;
+
+    double integral_after = 0.0;
+    for(auto v : yConv)
+        integral_after += v;
+
+    if(integral_after > 0)
+    {
+        double scale = integral_before / integral_after;
+        for(auto& v : yConv)
+            v *= scale;
+    }
+
+    // --- new spline ---
+    auto spDiff = new TSpline3("spSRIM_diffused", xExt.data(), yConv.data(), nTotal);
+
+    return spDiff;
+}
 double FindPositionFromChargeFraction(TH1* h, double frac)
 {
     double total = h->Integral("width");
@@ -294,7 +374,7 @@ TF1* FitSRIMtoChargeProfileFixedEnd(TH1* hCharge, TSpline3* spSRIM, const std::s
 
     TF1* f = new TF1(
         fname.c_str(),
-        [spSRIM, sOffset, sEndData, rMax](double* x, double* par)
+        [spSRIM, sOffset, sEndFull, rMax](double* x, double* par)
         {
             double A = par[0];
             double deltaEnd = par[1];
@@ -305,7 +385,7 @@ TF1* FitSRIMtoChargeProfileFixedEnd(TH1* hCharge, TSpline3* spSRIM, const std::s
                 return 1e-9;
 
             // posición efectiva del final del track
-            double sEndFit = sEndData + deltaEnd;
+            double sEndFit = sEndFull + deltaEnd;
 
             // alineación spline-datos
             double r = rMax - (sEndFit - s);
@@ -426,7 +506,7 @@ void checkGoodFitsBraggPeak()
     // Get all data for 7Li (there is no triton there, so easier to see deuterium)
     std::string beam {"7Li"};
     std::string target {"d"};
-    std::string light {"p"};
+    std::string light {"d"};
 
     std::string goodParticle {};
     if(light == "p")
@@ -470,10 +550,10 @@ void checkGoodFitsBraggPeak()
 
     // Create the splines
     std::vector<std::string> particles = {"light", "lightD", "lightT"};
-    std::map<std::string, TSpline3*> splineMap;
+    std::map<std::string, TSpline3*> splineMapNoDiffusion;
     for(const auto& key : particles)
     {
-        splineMap[key] = BuildSRIMspline(
+        splineMapNoDiffusion[key] = BuildSRIMspline(
             srim, 250, key, 0.5); // If range of spline is bigger, the BP is badly reconstructed by the spline
     }
     std::map<std::string, TGraph*> graphMap;
@@ -481,9 +561,15 @@ void checkGoodFitsBraggPeak()
     {
         graphMap[key] = BuildSRIMgraph(srim, 250, key, 0.5);
     }
+    std::map<std::string, TSpline3*> splineMapDiffusion;
+    for(const auto& key : particles)
+    {
+        splineMapDiffusion[key] = BuildDiffusedSpline(splineMapNoDiffusion[key], 0.6); // Example sigma value
+    }
+    std::map<std::string, TSpline3*> splineMap = splineMapDiffusion; // Choose which spline to use for fitting
 
     // RDataFrame
-    ROOT::EnableImplicitMT();
+    // ROOT::EnableImplicitMT();
     ROOT::RDataFrame dforigin {*chain};
 
     // Filter GATCONF == L1
@@ -672,7 +758,7 @@ void checkGoodFitsBraggPeak()
         dfDeuterium.Filter([&](ActRoot::MergerData& m)
                            { return cuts.IsInside("l1_theta", m.fThetaLight, m.fLight.fQtotal); }, {"MergerData"});
 
-    auto dfPID = dfDeuterium.Define("IsDeuterium",
+    auto dfPID = dfElastic.Define("IsDeuterium",
                                   [&](ActRoot::MergerData& m)
                                   {
                                       auto& hProfile {m.fQProf};
@@ -1042,18 +1128,17 @@ void checkGoodFitsBraggPeak()
     // gr_light_PID->Draw("AP");
 
     // Fit the tritiums in a ForEach to plot the fit result over the hProfile
-    // auto cProfile = new TCanvas("cProfile", "cProfile", 800, 600);
     // int counter = 0;
     // dfPID.Foreach(
     //     [&](ActRoot::MergerData& m, const std::string& pid)
     //     {
-    //         if(pid == "lightD")
+    //         if(pid == "light")
     //         {
     //             auto& hProfile {m.fQProf};
     //             auto fSplineT = FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap["lightT"], "lightT");
     //             auto fSplineD = FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap["lightD"], "lightD");
     //             auto fSplineP = FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap["light"], "light");
-    //             if(fSplineT && counter % 300 == 0) // plot only some fits to avoid too many canvases
+    //             if(fSplineT && counter % 100 == 0) // plot only some fits to avoid too many canvases
     //             {
     //                 TCanvas* c = new TCanvas(("c_" + pid + "_" + std::to_string(counter)).c_str(),
     //                                          ("Fit for " + pid).c_str(), 800, 600);
@@ -1082,11 +1167,11 @@ void checkGoodFitsBraggPeak()
     //         }
     //     },
     //     {"MergerData", "IsDeuterium"});
-    // Save events with good deuterium fit to ofstream
-    // std::ofstream outFileD("./Outputs/good_deuterium_events.dat");
-    // std::ofstream outFileT("./Outputs/good_tritium_events.dat");
-    // std::ofstream outFileP("./Outputs/good_proton_events.dat");
-    // std::ofstream outFileHe("./Outputs/good_helium_events.dat");
+    // // Save events with good deuterium fit to ofstream
+    // // std::ofstream outFileD("./Outputs/good_deuterium_events.dat");
+    // // std::ofstream outFileT("./Outputs/good_tritium_events.dat");
+    // // std::ofstream outFileP("./Outputs/good_proton_events.dat");
+    // // std::ofstream outFileHe("./Outputs/good_helium_events.dat");
     // dfPID.Foreach(
     //     [&](ActRoot::MergerData& m)
     //     {
