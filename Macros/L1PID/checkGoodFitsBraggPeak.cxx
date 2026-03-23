@@ -41,6 +41,16 @@
 #include "../../PrettyStyle.C"
 
 // ============================================================
+// Compute sigma for a given z (takes account of diffusion changes with z)
+// ============================================================
+double ComputeSigma(double z)
+{
+    constexpr double a = 0.8596;
+    constexpr double b = 0.003634;
+    return std::sqrt(a + b * z);
+}
+
+// ============================================================
 // Integral with bin width (physically correct)
 // ============================================================
 double IntegralWidth(const TH1* h)
@@ -260,63 +270,84 @@ TGraph* BuildSRIMgraph(ActPhysics::SRIM* srim, double range, const std::string& 
 // ============================================================
 // Convolve spline with Gaussian kernel to simulate diffusion (simple numerical convolution)
 // ============================================================
-TSpline3* BuildDiffusedSpline(TSpline3* spSRIM, double sigma, // sigma^2 = a + b*z
-                              int nPoints = 3000, double nSigma = 5.0)
+TSpline3* BuildDiffusedSpline(TSpline3* spSRIM,
+                              double z0,  // RP.Z()
+                              float TL,   // track length experimental
+                              float dirZ, // componente Z de la dirección
+                              int nPoints = 3000, double nSigma = 1.0)
 {
     if(!spSRIM)
         return nullptr;
 
+    constexpr double a = 0.8596;
+    constexpr double b = 0.003634;
+
     double xmin = spSRIM->GetXmin();
-    double xmax = spSRIM->GetXmax();
+    double xmax = spSRIM->GetXmax(); // = rMax
 
     double dx = (xmax - xmin) / (nPoints - 1);
 
-    // --- sample the spline ---
-    std::vector<double> x(nPoints), y(nPoints);
+    // --- sample SRIM spline (en r) ---
+    std::vector<double> r(nPoints), y(nPoints);
     for(int i = 0; i < nPoints; ++i)
     {
-        x[i] = xmin + i * dx;
-        y[i] = spSRIM->Eval(x[i]);
+        r[i] = xmin + i * dx;
+        y[i] = spSRIM->Eval(r[i]);
     }
 
-    // --- extend range to allow for kernel tail ---
-    int extraPoints = static_cast<int>(nSigma * sigma / dx);
+    // --- posición del Bragg peak en Z ---
+    double z_BP = 110 + TL * dirZ; // rp is at 110 mm aprox
+
+    // --- precalcular sigma_s para cada punto ---
+    std::vector<double> sigma_zs(nPoints);
+
+    for(int j = 0; j < nPoints; ++j)
+    {
+        double r_j = r[j];
+        double dr = xmax - r_j; // distancia al BP
+
+        double z_j = z_BP - dr * dirZ; // posición real
+
+        double sigma_z = std::sqrt(a + b * z_j);
+
+        sigma_zs[j] = sigma_z;
+    }
+
+    // --- extender dominio para cola gaussiana ---
+    int extraPoints = static_cast<int>(nSigma * (*std::max_element(sigma_zs.begin(), sigma_zs.end())) / dx);
     int nTotal = nPoints + extraPoints;
 
-    std::vector<double> xExt(nTotal), yConv(nTotal, 0.0);
+    std::vector<double> rExt(nTotal), yConv(nTotal, 0.0);
 
     for(int i = 0; i < nTotal; ++i)
-        xExt[i] = xmin + i * dx;
+        rExt[i] = xmin + i * dx;
 
-    // --- causal smearing (only earlier points affect later positions) ---
+    // --- convolución no estacionaria ---
     for(int i = 0; i < nTotal; ++i)
     {
         double sum = 0.0;
         double norm = 0.0;
 
-        // only real SRIM points contribute
         for(int j = 0; j < nPoints; ++j)
         {
-            if(x[j] > xExt[i])
-                continue; // causality: only points <= current x contribute
+            double d = rExt[i] - r[j];
 
-            double d = xExt[i] - x[j];
+            double sig = sigma_zs[j];
 
-            // limit kernel reach
-            if(d > nSigma * sigma)
+            if(std::abs(d) > nSigma * sig)
                 continue;
 
-            double w = std::exp(-0.5 * d * d / (sigma * sigma));
+            double w = std::exp(-0.5 * d * d / (sig * sig));
 
             sum += y[j] * w;
             norm += w;
         }
 
-        if(norm > 0)
+        if(norm > 0.0)
             yConv[i] = sum / norm;
     }
 
-    // --- (optional) preserve integral ---
+    // --- preservar integral ---
     double integral_before = 0.0;
     for(auto v : y)
         integral_before += v;
@@ -332,11 +363,118 @@ TSpline3* BuildDiffusedSpline(TSpline3* spSRIM, double sigma, // sigma^2 = a + b
             v *= scale;
     }
 
-    // --- new spline ---
-    auto spDiff = new TSpline3("spSRIM_diffused", xExt.data(), yConv.data(), nTotal);
+    // --- construir spline final ---
+    auto* spDiff = new TSpline3("spSRIM_diffused_directional", rExt.data(), yConv.data(), nTotal);
+
+    spDiff->SetNpx(3000);
 
     return spDiff;
 }
+
+TGraph* BuildDiffusedGraph(TGraph* grSRIM,
+                           double z0,  // RP.Z()
+                           float TL,   // track length experimental
+                           float dirZ, // componente Z de la dirección
+                           int nPoints = 3000, double nSigma = 5.0)
+{
+    if(!grSRIM)
+        return nullptr;
+
+    constexpr double a = 0.8596;
+    constexpr double b = 0.003634;
+
+    // --- rango del TGraph ---
+    double xmin = grSRIM->GetX()[0];
+    double xmax = grSRIM->GetX()[grSRIM->GetN() - 1];
+
+    double dx = (xmax - xmin) / (nPoints - 1);
+
+    // --- sample del graph (equivalente a spline->Eval) ---
+    std::vector<double> r(nPoints), y(nPoints);
+    for(int i = 0; i < nPoints; ++i)
+    {
+        r[i] = xmin + i * dx;
+        y[i] = grSRIM->Eval(r[i]); // interpolación lineal ROOT
+    }
+
+    // --- posición del Bragg peak en Z ---
+    double z_BP = 110 + TL * dirZ; // mantengo tu convención
+
+    // --- precalcular sigma_z ---
+    std::vector<double> sigma_zs(nPoints);
+
+    for(int j = 0; j < nPoints; ++j)
+    {
+        double r_j = r[j];
+        double dr = xmax - r_j;
+
+        double z_j = z_BP - dr * dirZ;
+
+        double sigma_z = std::sqrt(a + b * z_j);
+
+        sigma_zs[j] = sigma_z;
+    }
+
+    // --- extensión del dominio ---
+    double maxSigma = *std::max_element(sigma_zs.begin(), sigma_zs.end());
+    int extraPoints = static_cast<int>(nSigma * maxSigma / dx);
+
+    int nTotal = nPoints + extraPoints;
+
+    std::vector<double> rExt(nTotal), yConv(nTotal, 0.0);
+
+    for(int i = 0; i < nTotal; ++i)
+        rExt[i] = xmin + i * dx;
+
+    // --- convolución ---
+    for(int i = 0; i < nTotal; ++i)
+    {
+        double sum = 0.0;
+        double norm = 0.0;
+
+        for(int j = 0; j < nPoints; ++j)
+        {
+            double d = rExt[i] - r[j];
+
+            double sig = sigma_zs[j];
+
+            // ⚠️ aquí dejo EXACTAMENTE tu lógica (sin abs)
+            if(std::abs(d) > nSigma * sig)
+                continue;
+
+            double w = std::exp(-0.5 * d * d / (sig * sig));
+
+            sum += y[j] * w;
+            norm += w;
+        }
+
+        if(norm > 0.0)
+            yConv[i] = sum / norm;
+    }
+
+    // --- preservar integral ---
+    double integral_before = 0.0;
+    for(auto v : y)
+        integral_before += v;
+
+    double integral_after = 0.0;
+    for(auto v : yConv)
+        integral_after += v;
+
+    if(integral_after > 0)
+    {
+        double scale = integral_before / integral_after;
+        for(auto& v : yConv)
+            v *= scale;
+    }
+
+    // --- construir graph ---
+    auto* grDiff = new TGraph(nTotal, rExt.data(), yConv.data());
+    grDiff->SetName("grSRIM_diffused_directional");
+
+    return grDiff;
+}
+
 double FindPositionFromChargeFraction(TH1* h, double frac)
 {
     double total = h->Integral("width");
@@ -499,6 +637,7 @@ TH1* BuildModelHistogramFromTF1(const TH1* data, TF1* f, const std::string& name
 void checkGoodFitsBraggPeak()
 {
     PrettyStyle(false, true);
+    bool isDiffusion = true; // Change between diffusion spline or not
 
     // Get all L1 experimental data for 7Li; cut in L1 and filter bad events, select elastic, check good fits to
     // deuterium
@@ -561,15 +700,15 @@ void checkGoodFitsBraggPeak()
     {
         graphMap[key] = BuildSRIMgraph(srim, 250, key, 0.5);
     }
-    std::map<std::string, TSpline3*> splineMapDiffusion;
-    for(const auto& key : particles)
-    {
-        splineMapDiffusion[key] = BuildDiffusedSpline(splineMapNoDiffusion[key], 0.6); // Example sigma value
-    }
-    std::map<std::string, TSpline3*> splineMap = splineMapDiffusion; // Choose which spline to use for fitting
+    // std::map<std::string, TSpline3*> splineMapDiffusion;
+    // for(const auto& key : particles)
+    // {
+    //     splineMapDiffusion[key] = BuildDiffusedSpline(splineMapNoDiffusion[key], 0.6); // Old implementation
+    // }
+    std::map<std::string, TSpline3*> splineMap = splineMapNoDiffusion; // Choose which spline to use for fitting
 
     // RDataFrame
-    // ROOT::EnableImplicitMT();
+    ROOT::EnableImplicitMT();
     ROOT::RDataFrame dforigin {*chain};
 
     // Filter GATCONF == L1
@@ -758,67 +897,79 @@ void checkGoodFitsBraggPeak()
         dfDeuterium.Filter([&](ActRoot::MergerData& m)
                            { return cuts.IsInside("l1_theta", m.fThetaLight, m.fLight.fQtotal); }, {"MergerData"});
 
-    auto dfPID = dfElastic.Define("IsDeuterium",
-                                  [&](ActRoot::MergerData& m)
-                                  {
-                                      auto& hProfile {m.fQProf};
-                                      // Fix bin errors to 1 to use chi2 test without statistical errors
-                                      for(int i = 1; i <= hProfile.GetNbinsX(); ++i)
-                                      {
-                                          double content = hProfile.GetBinContent(i);
-                                          double error = hProfile.GetBinError(i);
-                                          hProfile.SetBinError(i, 1);
-                                      }
-                                      // double bestScore = 1e20;
-                                      // double bestManualScore = 1e20;
-                                      double bestFitScore = 1e20;
-                                      // std::string bestParticle;
-                                      // std::string bestManualParticle;
-                                      std::string bestFitParticle;
-                                      for(const auto& key : particles)
-                                      {
-                                          auto fSpline = FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap[key], key);
+    auto dfPID = dfElastic.Define(
+        "IsDeuterium",
+        [&](ActRoot::MergerData& m)
+        {
+            auto& hProfile {m.fQProf};
+            // Fix bin errors to 1 to use chi2 test without statistical errors
+            for(int i = 1; i <= hProfile.GetNbinsX(); ++i)
+            {
+                double content = hProfile.GetBinContent(i);
+                double error = hProfile.GetBinError(i);
+                hProfile.SetBinError(i, 1);
+            }
+            // double bestScore = 1e20;
+            // double bestManualScore = 1e20;
+            double bestFitScore = 1e20;
+            // std::string bestParticle;
+            // std::string bestManualParticle;
+            std::string bestFitParticle;
+            for(const auto& key : particles)
+            {
+                auto splineDiffused = BuildDiffusedSpline(splineMap[key], m.fRP.Z(), m.fLight.fTL,
+                                                          std::sin(m.fThetaLight) * std::cos(m.fPhiLight));
 
-                                          if(!fSpline)
-                                              continue;
+                TF1* fSpline = nullptr;
+                if(isDiffusion)
+                {
+                    fSpline = FitSRIMtoChargeProfileFixedEnd(&hProfile, splineDiffused, key);
+                }
+                else
+                {
+                    fSpline = FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMapNoDiffusion[key], key);
+                }
 
-                                          // ---------- ROOT fit chi2 ----------
-                                          double chiFit = fSpline->GetChisquare() / fSpline->GetNDF();
-                                          if(chiFit < bestFitScore)
-                                          {
-                                              bestFitScore = chiFit;
-                                              bestFitParticle = key;
-                                          }
+                if(!fSpline)
+                    continue;
 
-                                          // // ---------- build model histogram ----------
-                                          // TH1* model = BuildModelHistogramFromTF1(&hProfile, fSpline, "model_" +
-                                          // key);
-                                          //
-                                          // // ---------- compare shape ----------
-                                          // TH1* dataNorm = (TH1*)hProfile.Clone(("dataNorm_" + key).c_str());
-                                          // TH1* modelNorm = (TH1*)model->Clone(("modelNorm_" + key).c_str());
-                                          //
-                                          // NormalizeHistogram(dataNorm);
-                                          // NormalizeHistogram(modelNorm);
-                                          //
-                                          // // now is normalice inside function of chi2
-                                          // double chiManually = Chi2Manually(&hProfile, model, fSpline);
-                                          // double chiShape = Chi2Shape(&hProfile, model, fSpline);
-                                          //
-                                          // if(chiManually < bestManualScore)
-                                          // {
-                                          //     bestManualScore = chiManually;
-                                          //     bestManualParticle = key;
-                                          // }
-                                          // if(chiShape < bestScore)
-                                          // {
-                                          //     bestScore = chiShape;
-                                          //     bestParticle = key;
-                                          // }
-                                      }
-                                      return bestFitParticle; // deuterium is the one we want to identify
-                                  },
-                                  {"MergerData"});
+                // ---------- ROOT fit chi2 ----------
+                double chiFit = fSpline->GetChisquare() / fSpline->GetNDF();
+                if(chiFit < bestFitScore)
+                {
+                    bestFitScore = chiFit;
+                    bestFitParticle = key;
+                }
+
+                // // ---------- build model histogram ----------
+                // TH1* model = BuildModelHistogramFromTF1(&hProfile, fSpline, "model_" +
+                // key);
+                //
+                // // ---------- compare shape ----------
+                // TH1* dataNorm = (TH1*)hProfile.Clone(("dataNorm_" + key).c_str());
+                // TH1* modelNorm = (TH1*)model->Clone(("modelNorm_" + key).c_str());
+                //
+                // NormalizeHistogram(dataNorm);
+                // NormalizeHistogram(modelNorm);
+                //
+                // // now is normalice inside function of chi2
+                // double chiManually = Chi2Manually(&hProfile, model, fSpline);
+                // double chiShape = Chi2Shape(&hProfile, model, fSpline);
+                //
+                // if(chiManually < bestManualScore)
+                // {
+                //     bestManualScore = chiManually;
+                //     bestManualParticle = key;
+                // }
+                // if(chiShape < bestScore)
+                // {
+                //     bestScore = chiShape;
+                //     bestParticle = key;
+                // }
+            }
+            return bestFitParticle; // deuterium is the one we want to identify
+        },
+        {"MergerData"});
 
     /////////////////////////////////////////
     // Correct the range with the BP position
@@ -1129,49 +1280,55 @@ void checkGoodFitsBraggPeak()
 
     // Fit the tritiums in a ForEach to plot the fit result over the hProfile
     // int counter = 0;
-    // dfPID.Foreach(
-    //     [&](ActRoot::MergerData& m, const std::string& pid)
-    //     {
-    //         if(pid == "light")
-    //         {
-    //             auto& hProfile {m.fQProf};
-    //             auto fSplineT = FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap["lightT"], "lightT");
-    //             auto fSplineD = FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap["lightD"], "lightD");
-    //             auto fSplineP = FitSRIMtoChargeProfileFixedEnd(&hProfile, splineMap["light"], "light");
-    //             if(fSplineT && counter % 100 == 0) // plot only some fits to avoid too many canvases
-    //             {
-    //                 TCanvas* c = new TCanvas(("c_" + pid + "_" + std::to_string(counter)).c_str(),
-    //                                          ("Fit for " + pid).c_str(), 800, 600);
-    //                 hProfile.DrawClone("hist");
-    //                 fSplineT->SetLineColor(kGreen);
-    //                 fSplineT->DrawClone("same P");
-    //                 fSplineD->SetLineColor(kBlack);
-    //                 fSplineD->DrawClone("same");
-    //                 fSplineP->SetLineColor(kBlue);
-    //                 fSplineP->DrawClone("same");
+    //  dfPID.Foreach(
+    //      [&](ActRoot::MergerData& m, const std::string& pid)
+    //      {
+    //          if(pid == "light")
+    //          {
+    //              auto& hProfile {m.fQProf};
+    //              auto splineDiffusedTritium = BuildDiffusedSpline(splineMap["lightT"], m.fRP.Z(), m.fLight.fTL,
+    //                                                               std::sin(m.fThetaLight) * std::cos(m.fPhiLight));
+    //              auto splineDiffusedDeuterium = BuildDiffusedSpline(splineMap["lightD"], m.fRP.Z(), m.fLight.fTL,
+    //                                                                 std::sin(m.fThetaLight) * std::cos(m.fPhiLight));
+    //              auto splineDiffusedProton = BuildDiffusedSpline(splineMap["light"], m.fRP.Z(), m.fLight.fTL,
+    //                                                              std::sin(m.fThetaLight) * std::cos(m.fPhiLight));
+    //              auto fSplineT = FitSRIMtoChargeProfileFixedEnd(&hProfile, splineDiffusedTritium, "lightT");
+    //              auto fSplineD = FitSRIMtoChargeProfileFixedEnd(&hProfile, splineDiffusedDeuterium, "lightD");
+    //              auto fSplineP = FitSRIMtoChargeProfileFixedEnd(&hProfile, splineDiffusedProton, "light");
+    //              if(fSplineT && counter % 50 == 0) // plot only some fits to avoid too many canvases
+    //              {
+    //                  TCanvas* c = new TCanvas(("c_" + pid + "_" + std::to_string(counter)).c_str(),
+    //                                           ("Fit for " + pid).c_str(), 800, 600);
+    //                  hProfile.DrawClone("hist");
+    //                  fSplineT->SetLineColor(kGreen);
+    //                  fSplineT->DrawClone("same P");
+    //                  fSplineD->SetLineColor(kBlack);
+    //                  fSplineD->DrawClone("same");
+    //                  fSplineP->SetLineColor(kBlue);
+    //                  fSplineP->DrawClone("same");
     //
-    //                 // Create text for chi2 values, normalize to lower chi2 to 1 for better visualization
-    //                 double chi2T = fSplineT->GetChisquare() / fSplineT->GetNDF();
-    //                 double chi2D = fSplineD->GetChisquare() / fSplineD->GetNDF();
-    //                 double chi2P = fSplineP->GetChisquare() / fSplineP->GetNDF();
-    //                 double minChi2 = std::min({chi2T, chi2D, chi2P});
-    //                 chi2T /= minChi2;
-    //                 chi2D /= minChi2;
-    //                 chi2P /= minChi2;
-    //                 TLatex* text =
-    //                     new TLatex(0.15, 0.85, Form("#chi^{2}/NDF: T=%.4f, D=%.4f, P=%.4f", chi2T, chi2D, chi2P));
-    //                 text->SetNDC();
-    //                 text->Draw();
-    //             }
-    //             counter++;
-    //         }
-    //     },
-    //     {"MergerData", "IsDeuterium"});
-    // // Save events with good deuterium fit to ofstream
-    // // std::ofstream outFileD("./Outputs/good_deuterium_events.dat");
-    // // std::ofstream outFileT("./Outputs/good_tritium_events.dat");
-    // // std::ofstream outFileP("./Outputs/good_proton_events.dat");
-    // // std::ofstream outFileHe("./Outputs/good_helium_events.dat");
+    //                  // Create text for chi2 values, normalize to lower chi2 to 1 for better visualization
+    //                  double chi2T = fSplineT->GetChisquare() / fSplineT->GetNDF();
+    //                  double chi2D = fSplineD->GetChisquare() / fSplineD->GetNDF();
+    //                  double chi2P = fSplineP->GetChisquare() / fSplineP->GetNDF();
+    //                  double minChi2 = std::min({chi2T, chi2D, chi2P});
+    //                  chi2T /= minChi2;
+    //                  chi2D /= minChi2;
+    //                  chi2P /= minChi2;
+    //                  TLatex* text =
+    //                      new TLatex(0.15, 0.85, Form("#chi^{2}/NDF: T=%.4f, D=%.4f, P=%.4f", chi2T, chi2D, chi2P));
+    //                  text->SetNDC();
+    //                  text->Draw();
+    //              }
+    //              counter++;
+    //          }
+    //      },
+    //      {"MergerData", "IsDeuterium"});
+    // Save events with good deuterium fit to ofstream
+    // std::ofstream outFileD("./Outputs/good_deuterium_events.dat");
+    // std::ofstream outFileT("./Outputs/good_tritium_events.dat");
+    // std::ofstream outFileP("./Outputs/good_proton_events.dat");
+    // std::ofstream outFileHe("./Outputs/good_helium_events.dat");
     // dfPID.Foreach(
     //     [&](ActRoot::MergerData& m)
     //     {
