@@ -39,37 +39,92 @@
 #include <utility>
 #include <vector>
 
-unsigned int BuildGlobalIndex(const int& x, const int& y, const int& z, const ActRoot::TPCParameters& fPars)
-{
-    return x + y * fPars.GetNPADSX() + z * fPars.GetNPADSX() * fPars.GetNPADSY();
-}
 
-std::pair<std::vector<ActRoot::Cluster>, std::vector<ActRoot::Voxel>>
-RebinTracks(std::vector<ActRoot::Voxel>& voxels, ActRoot::TPCParameters& fPars, int rebinFactor = 2)
+struct UnrebinedVoxel
 {
-    // Rebin in Z by a factor of rebinFactor
+    UnrebinedVoxel(int nPadsX, int nPadsY, int nPadsZ) : nPadsX(nPadsX), nPadsY(nPadsY), nPadsZ(nPadsZ) {}
+
+    std::map<unsigned int, std::vector<ActRoot::Voxel>>
+        rebinnedIndexToVoxels {}; // Coorelation of Global Index in rebinned space to voxels in original space
+    int nPadsX {};
+    int nPadsY {};
+    int nPadsZ {};
+
+    unsigned int BuildGlobalIndex(const int& x, const int& y, const int& z)
+    {
+        return x + y * nPadsX + z * nPadsX * nPadsY;
+    }
+};
+
+
+std::pair<std::vector<ActRoot::Voxel>, UnrebinedVoxel> RebinTracks(const std::vector<ActRoot::Voxel>& voxels,
+                                                                   ActRoot::TPCParameters* tpcPars, int rebinX,
+                                                                   int rebinY = -1, int rebinZ = -1)
+{
+    // Rebin all voxels by the rebin factor and store the rebined voxels (no repeat positions, if so sum the charges)
+    std::vector<ActRoot::Voxel> rebinnedVoxels;
+    int nPadsX = tpcPars->GetNPADSX() / rebinX;
+    if(rebinY == -1)
+        rebinY = rebinX;
+    if(rebinZ == -1)
+        rebinZ = rebinX;
+    int nPadsY = tpcPars->GetNPADSY() / rebinY;
+    int nPadsZ = tpcPars->GetNPADSZ() / rebinZ;
+    UnrebinedVoxel unrebinedData {nPadsX, nPadsY, nPadsZ};
+    std::cout << "pad numbers: " << unrebinedData.nPadsX << " " << unrebinedData.nPadsY << " " << unrebinedData.nPadsZ
+              << '\n';
+    // position
+    std::map<unsigned int, unsigned int> rebinedIndexAndPosition; // global rebined index -> position in rebinnedVoxels
+                                                                  // vector
     for(auto& voxel : voxels)
     {
         auto pos = voxel.GetPosition();
-        pos.SetX(std::floor(pos.X() / rebinFactor));
-        pos.SetY(std::floor(pos.Y() / rebinFactor));
-        pos.SetZ(std::floor(pos.Z() / rebinFactor));
-        voxel.SetPosition(pos);
+        int x = std::floor(pos.X() / rebinX);
+        int y = std::floor(pos.Y() / rebinY);
+        int z = std::floor(pos.Z() / rebinZ);
+
+        // Get the global index of the rebinned voxel
+        auto globalIndex = unrebinedData.BuildGlobalIndex(x, y, z);
+        unrebinedData.rebinnedIndexToVoxels[globalIndex].push_back(voxel);
+
+        if(!rebinedIndexAndPosition.count(globalIndex))
+        {
+            ActRoot::Voxel rebinnedVoxel {{static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)},
+                                          voxel.GetCharge(),
+                                          voxel.GetIsSaturated()};
+            rebinnedVoxels.push_back(rebinnedVoxel);
+            rebinedIndexAndPosition[globalIndex] = rebinnedVoxels.size() - 1;
+        }
+        else
+        {
+            auto idx {rebinedIndexAndPosition[globalIndex]};
+            rebinnedVoxels[idx].SetCharge(rebinnedVoxels[idx].GetCharge() + voxel.GetCharge());
+        }
+        std::cout << "rebinnedVoxels size: " << rebinnedVoxels.size() << '\n';
     }
-
-    ActRoot::TPCParameters rebinnedPars {fPars.GetNPADSX() / rebinFactor, fPars.GetNPADSY() / rebinFactor,
-                                         fPars.GetNPADSZ() / rebinFactor};
-
-    // Apply continuity to the rebinned voxels.
-    auto* continuity = new ActAlgorithm::Continuity(&rebinnedPars, 4);
-    auto result = continuity->Run(voxels, true);
-    std::cout << "Continuity result for noise: " << result.second.size() << " voxels" << '\n';
-    std::cout << "Continuity result for clusters: " << result.first.size() << " clusters" << '\n';
-
-    return result;
+    return {rebinnedVoxels, unrebinedData};
 }
 
-void UndoRebinning() {}
+std::vector<ActRoot::Voxel> UndoRebinning(std::vector<ActRoot::Voxel>& rebinnedVoxels, UnrebinedVoxel& rebinnedData)
+{
+    // Compute the global index for the rebined voxel, and return the voxels in the map with that index
+    std::vector<ActRoot::Voxel> unrebinedVoxels;
+    for(const auto& voxel : rebinnedVoxels)
+    {
+        auto pos = voxel.GetPosition();
+        int x = static_cast<int>(pos.X());
+        int y = static_cast<int>(pos.Y());
+        int z = static_cast<int>(pos.Z());
+
+        unsigned int globalIndex = rebinnedData.BuildGlobalIndex(x, y, z);
+        if(rebinnedData.rebinnedIndexToVoxels.count(globalIndex))
+        {
+            unrebinedVoxels.insert(unrebinedVoxels.end(), rebinnedData.rebinnedIndexToVoxels.at(globalIndex).begin(),
+                                   rebinnedData.rebinnedIndexToVoxels.at(globalIndex).end());
+        }
+    }
+    return unrebinedVoxels;
+}
 
 void fixBrokenTracksZ()
 {
@@ -86,12 +141,23 @@ void fixBrokenTracksZ()
     chain->AddFriend(chain4.get(), "GETTree");
 
     ROOT::RDataFrame df {*chain};
-    df.Describe().Print();
+    // df.Describe().Print();
 
     // Get the parameters for TPCDetector
     ActRoot::TPCParameters* tpcPars = new ActRoot::TPCParameters("Actar");
     std::cout << "TPC Parameters: " << '\n';
+    tpcPars->SetREBINZ(4);
     tpcPars->Print();
+
+    int rebinFactor = 4;
+    ActRoot::TPCParameters tpcParsRebined = {
+        (tpcPars->GetNPADSX() / rebinFactor),
+        (tpcPars->GetNPADSY() / rebinFactor),
+        (tpcPars->GetNPADSZ() / rebinFactor),
+    };
+    tpcParsRebined.Print();
+
+    ActAlgorithm::Continuity continuity {&tpcParsRebined, 2};
 
     auto dfEvent = df.Filter([](const ActRoot::MergerData& m) { return m.fEntry == 36114; }, {"MergerData"});
 
@@ -116,18 +182,31 @@ void fixBrokenTracksZ()
                                   tpcPars->GetNPADSX(), tpcPars->GetNPADSY(), 0, tpcPars->GetNPADSY());
 
     auto* hEventXZ = new TH2D("hEventXZ", "Event display;X;Z", tpcPars->GetNPADSX(), 0, tpcPars->GetNPADSX(),
-                              tpcPars->GetNPADSZ() / 4, 0, tpcPars->GetNPADSZ() / 4);
+                              tpcPars->GetNPADSZ(), 0, tpcPars->GetNPADSZ());
     auto* hNoiseXZ = new TH2D("hNoiseXZ", "Noise display;X;Z", tpcPars->GetNPADSX(), 0, tpcPars->GetNPADSX(),
-                              tpcPars->GetNPADSZ() / 4, 0, tpcPars->GetNPADSZ() / 4);
+                              tpcPars->GetNPADSZ(), 0, tpcPars->GetNPADSZ());
     auto* hAllVoxelsXZ = new TH2D("hAllVoxelsXZ", "All voxels display;X;Z", tpcPars->GetNPADSX(), 0,
-                                  tpcPars->GetNPADSX(), tpcPars->GetNPADSZ() / 4, 0, tpcPars->GetNPADSZ() / 4);
+                                  tpcPars->GetNPADSX(), tpcPars->GetNPADSZ(), 0, tpcPars->GetNPADSZ());
 
     auto* hEventYZ = new TH2D("hEventYZ", "Event display;Y;Z", tpcPars->GetNPADSY(), 0, tpcPars->GetNPADSY(),
-                              tpcPars->GetNPADSZ() / 4, 0, tpcPars->GetNPADSZ() / 4);
+                              tpcPars->GetNPADSZ(), 0, tpcPars->GetNPADSZ());
     auto* hNoiseYZ = new TH2D("hNoiseYZ", "Noise display;Y;Z", tpcPars->GetNPADSY(), 0, tpcPars->GetNPADSY(),
-                              tpcPars->GetNPADSZ() / 4, 0, tpcPars->GetNPADSZ() / 4);
+                              tpcPars->GetNPADSZ(), 0, tpcPars->GetNPADSZ());
     auto* hAllVoxelsYZ = new TH2D("hAllVoxelsYZ", "All voxels display;Y;Z", tpcPars->GetNPADSY(), 0,
-                                  tpcPars->GetNPADSY(), tpcPars->GetNPADSZ() / 4, 0, tpcPars->GetNPADSZ() / 4);
+                                  tpcPars->GetNPADSY(), tpcPars->GetNPADSZ(), 0, tpcPars->GetNPADSZ());
+
+    auto* hEventAfterProcessingXY =
+        new TH2D("hEventAfterProcessingXY", "Event display after processing;X;Y", tpcPars->GetNPADSX(), 0,
+                 tpcPars->GetNPADSX(), tpcPars->GetNPADSY(), 0, tpcPars->GetNPADSY());
+    auto* hEventAfterProcessingXZ =
+        new TH2D("hEventAfterProcessingXZ", "Event display after processing;X;Z", tpcPars->GetNPADSX(), 0,
+                 tpcPars->GetNPADSX(), tpcPars->GetNPADSZ(), 0, tpcPars->GetNPADSZ());
+    auto* hEventAfterProcessingYZ =
+        new TH2D("hEventAfterProcessingYZ", "Event display after processing;Y;Z", tpcPars->GetNPADSY(), 0,
+                 tpcPars->GetNPADSY(), tpcPars->GetNPADSZ(), 0, tpcPars->GetNPADSZ());
+
+    std::vector<ActRoot::Voxel> voxelsBefore;
+    std::vector<ActRoot::Voxel> voxelsAfter;
 
     // Now, rebin the TPC data in Z, apply continuity, and then undo the rebinning to get the corrected raw voxels.
     dfEvent.Foreach(
@@ -141,6 +220,8 @@ void fixBrokenTracksZ()
                 return;
             }
             auto lightCluster = tpcFilter.fClusters[lightIdx];
+            std::cout << "Light cluster before processing: " << lightCluster.GetVoxels().size() << " voxels" << '\n';
+            lightCluster.GetLine().Print();
             auto lightVoxels = lightCluster.GetVoxels();
             auto rawVoxels = tpc.fRaw;
             std::cout << "Light voxels: " << lightVoxels.size() << '\n';
@@ -151,8 +232,41 @@ void fixBrokenTracksZ()
             voxels.insert(voxels.end(), rawVoxels.begin(), rawVoxels.end());
 
             // Rebin in Z
-            auto result = RebinTracks(voxels, *tpcPars);
-            for(auto& voxel : result.second)
+            auto result = RebinTracks(voxels, tpcPars, rebinFactor, rebinFactor, rebinFactor);
+
+            // Apply continuity
+            auto clusterRebinedAfterContinuity = continuity.Run(result.first, true);
+            // Get the vector of voxels of the cluster, if there is more than one cluster, get the voxels of the biggest
+            // one
+            std::vector<ActRoot::Voxel> VoxelsToUnrebin;
+            if(!clusterRebinedAfterContinuity.first.empty())
+            {
+                auto maxCluster = std::max_element(clusterRebinedAfterContinuity.first.begin(),
+                                                   clusterRebinedAfterContinuity.first.end(),
+                                                   [](const ActRoot::Cluster& a, const ActRoot::Cluster& b)
+                                                   { return a.GetVoxels().size() < b.GetVoxels().size(); });
+                VoxelsToUnrebin = maxCluster->GetRefToVoxels();
+            }
+            else
+            {
+                std::cout << "No clusters found after continuity, skipping event" << '\n';
+                return;
+            }
+
+            // Undo rebinning
+            auto unrebinedClusterAfterContinuity = UndoRebinning(VoxelsToUnrebin, result.second);
+
+            // Get clusters to do the plots
+            ActRoot::Cluster clusterAfterProcessing {};
+            clusterAfterProcessing.SetVoxels(unrebinedClusterAfterContinuity);
+            clusterAfterProcessing.SortAlongDir(lightCluster.GetLine().GetDirection());
+            clusterAfterProcessing.ReFit();
+            std::cout << "Cluster after processing: " << clusterAfterProcessing.GetVoxels().size() << " voxels" << '\n';
+            std::cout << "Clusters procesed: " << clusterRebinedAfterContinuity.first.size() << " voxels" << '\n';
+            std::cout << "Noise after processing: " << clusterRebinedAfterContinuity.second.size() << " voxels" << '\n';
+            clusterAfterProcessing.GetLine();
+
+            for(auto& voxel : rawVoxels)
             {
                 auto pos = voxel.GetPosition();
                 hNoiseXY->Fill(pos.X(), pos.Y());
@@ -162,26 +276,41 @@ void fixBrokenTracksZ()
                 hNoiseYZ->Fill(pos.Y(), pos.Z());
                 hAllVoxelsYZ->Fill(pos.Y(), pos.Z());
             }
-            for(auto& cluster : result.first)
+            for(auto& voxel : lightVoxels)
             {
-                for(auto& voxel : cluster.GetVoxels())
-                {
-                    auto pos = voxel.GetPosition();
-                    hEventXY->Fill(pos.X(), pos.Y());
-                    hAllVoxelsXY->Fill(pos.X(), pos.Y());
-                    hEventXZ->Fill(pos.X(), pos.Z());
-                    hAllVoxelsXZ->Fill(pos.X(), pos.Z());
-                    hEventYZ->Fill(pos.Y(), pos.Z());
-                    hAllVoxelsYZ->Fill(pos.Y(), pos.Z());
-                }
+                auto pos = voxel.GetPosition();
+                hEventXY->Fill(pos.X(), pos.Y());
+                hAllVoxelsXY->Fill(pos.X(), pos.Y());
+                hEventXZ->Fill(pos.X(), pos.Z());
+                hAllVoxelsXZ->Fill(pos.X(), pos.Z());
+                hEventYZ->Fill(pos.Y(), pos.Z());
+                hAllVoxelsYZ->Fill(pos.Y(), pos.Z());
+            }
+            for(auto& voxel : unrebinedClusterAfterContinuity)
+            {
+                auto pos = voxel.GetPosition();
+                hEventAfterProcessingXY->Fill(pos.X(), pos.Y());
+                hEventAfterProcessingXZ->Fill(pos.X(), pos.Z());
+                hEventAfterProcessingYZ->Fill(pos.Y(), pos.Z());
             }
 
-            // Apply continuity
-
-            // Undo rebinning
-            UndoRebinning();
+            // Set voxles before and after processing for later use
+            voxelsBefore = lightVoxels;
+            voxelsAfter = unrebinedClusterAfterContinuity;
         },
         {"TPCData", "GETTree.TPCData", "MergerData"});
+
+    // Create clusters and get lines
+    ActRoot::Cluster clusterBeforeProcessing {};
+    clusterBeforeProcessing.SetVoxels(voxelsBefore);
+    clusterBeforeProcessing.ReFit();
+    ActRoot::Cluster clusterAfterProcessing {};
+    clusterAfterProcessing.SetVoxels(voxelsAfter);
+    clusterAfterProcessing.ReFit();
+
+    // Get the lines
+    auto lineBefore = clusterBeforeProcessing.GetLine();
+    auto lineAfter = clusterAfterProcessing.GetLine();
 
     auto* c1 = new TCanvas("c1", "Event display", 1200, 400);
     c1->Divide(3, 1);
@@ -200,6 +329,8 @@ void fixBrokenTracksZ()
     // Dibujar
     hEventXY->Draw("BOX");
     hNoiseXY->Draw("BOX SAME");
+    lineBefore.GetPolyLine("xy", 0, tpcPars->GetNPADSX(), tpcPars->GetNPADSY(), tpcPars->GetNPADSZ(), 1)
+        ->DrawClone("same");
 
     // Leyenda
     {
@@ -215,12 +346,14 @@ void fixBrokenTracksZ()
 
     hEventXZ->SetFillColorAlpha(kBlue, 0.35);
     hEventXZ->SetLineColor(kBlue);
-
     hNoiseXZ->SetFillColorAlpha(kRed, 0.35);
     hNoiseXZ->SetLineColor(kRed);
 
     hEventXZ->Draw("BOX");
     hNoiseXZ->Draw("BOX SAME");
+    lineBefore.GetPolyLine("xz", 0, tpcPars->GetNPADSX(), tpcPars->GetNPADSY(), tpcPars->GetNPADSZ(), 1)
+        ->DrawClone("same");
+
 
     {
         auto* leg = new TLegend(0.7, 0.75, 0.9, 0.9);
@@ -241,6 +374,9 @@ void fixBrokenTracksZ()
 
     hEventYZ->Draw("BOX");
     hNoiseYZ->Draw("BOX SAME");
+    lineBefore.GetPolyLine("yz", 0, tpcPars->GetNPADSX(), tpcPars->GetNPADSY(), tpcPars->GetNPADSZ(), 1)
+        ->DrawClone("same");
+
 
     {
         auto* leg = new TLegend(0.7, 0.75, 0.9, 0.9);
@@ -248,4 +384,31 @@ void fixBrokenTracksZ()
         leg->AddEntry(hNoiseYZ, "Noise", "f");
         leg->Draw();
     }
+
+    auto* c2 = new TCanvas("c2", "Event display after processing", 1200, 400);
+    c2->Divide(3, 1);
+    c2->cd(1);
+    hEventAfterProcessingXY->Draw("BOX");
+    auto polyLineBeforeXY =
+        lineBefore.GetPolyLine("xy", 0, tpcPars->GetNPADSX(), tpcPars->GetNPADSY(), tpcPars->GetNPADSZ(), 1);
+    polyLineBeforeXY->SetLineColor(kBlue);
+    polyLineBeforeXY->DrawClone("same");
+    lineAfter.GetPolyLine("xy", 0, tpcPars->GetNPADSX(), tpcPars->GetNPADSY(), tpcPars->GetNPADSZ(), 1)
+        ->DrawClone("same");
+    c2->cd(2);
+    hEventAfterProcessingXZ->Draw("BOX");
+    auto polyLineBeforeXZ =
+        lineBefore.GetPolyLine("xz", 0, tpcPars->GetNPADSX(), tpcPars->GetNPADSY(), tpcPars->GetNPADSZ(), 1);
+    polyLineBeforeXZ->SetLineColor(kBlue);
+    polyLineBeforeXZ->DrawClone("same");
+    lineAfter.GetPolyLine("xz", 0, tpcPars->GetNPADSX(), tpcPars->GetNPADSY(), tpcPars->GetNPADSZ(), 1)
+        ->DrawClone("same");
+    c2->cd(3);
+    hEventAfterProcessingYZ->Draw("BOX");
+    auto polyLineBeforeYZ =
+        lineBefore.GetPolyLine("yz", 0, tpcPars->GetNPADSX(), tpcPars->GetNPADSY(), tpcPars->GetNPADSZ(), 1);
+    polyLineBeforeYZ->SetLineColor(kBlue);
+    polyLineBeforeYZ->DrawClone("same");
+    lineAfter.GetPolyLine("yz", 0, tpcPars->GetNPADSX(), tpcPars->GetNPADSY(), tpcPars->GetNPADSZ(), 1)
+        ->DrawClone("same");
 }
