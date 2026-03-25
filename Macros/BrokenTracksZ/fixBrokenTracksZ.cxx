@@ -71,8 +71,8 @@ std::pair<std::vector<ActRoot::Voxel>, UnrebinedVoxel> RebinTracks(const std::ve
     int nPadsY = tpcPars->GetNPADSY() / rebinY;
     int nPadsZ = tpcPars->GetNPADSZ() / rebinZ;
     UnrebinedVoxel unrebinedData {nPadsX, nPadsY, nPadsZ};
-    std::cout << "pad numbers: " << unrebinedData.nPadsX << " " << unrebinedData.nPadsY << " " << unrebinedData.nPadsZ
-              << '\n';
+    // std::cout << "pad numbers: " << unrebinedData.nPadsX << " " << unrebinedData.nPadsY << " " << unrebinedData.nPadsZ
+    //           << '\n';
     // position
     std::map<unsigned int, unsigned int> rebinedIndexAndPosition; // global rebined index -> position in rebinnedVoxels
                                                                   // vector
@@ -100,7 +100,7 @@ std::pair<std::vector<ActRoot::Voxel>, UnrebinedVoxel> RebinTracks(const std::ve
             auto idx {rebinedIndexAndPosition[globalIndex]};
             rebinnedVoxels[idx].SetCharge(rebinnedVoxels[idx].GetCharge() + voxel.GetCharge());
         }
-        std::cout << "rebinnedVoxels size: " << rebinnedVoxels.size() << '\n';
+        // std::cout << "rebinnedVoxels size: " << rebinnedVoxels.size() << '\n';
     }
     return {rebinnedVoxels, unrebinedData};
 }

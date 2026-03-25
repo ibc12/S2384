@@ -645,7 +645,7 @@ void checkGoodFitsBraggPeak()
     // Get all data for 7Li (there is no triton there, so easier to see deuterium)
     std::string beam {"7Li"};
     std::string target {"d"};
-    std::string light {"d"};
+    std::string light {"p"};
 
     std::string goodParticle {};
     if(light == "p")
@@ -708,7 +708,7 @@ void checkGoodFitsBraggPeak()
     std::map<std::string, TSpline3*> splineMap = splineMapNoDiffusion; // Choose which spline to use for fitting
 
     // RDataFrame
-    ROOT::EnableImplicitMT();
+    // ROOT::EnableImplicitMT();
     ROOT::RDataFrame dforigin {*chain};
 
     // Filter GATCONF == L1
@@ -1348,11 +1348,11 @@ void checkGoodFitsBraggPeak()
     //         }
     //     },
     //     {"MergerData", "zDrift"});
-    // std::ofstream outFileElasticInProtonBanana("./Outputs/elasticInProtonBanana.dat");
-    // dfElasticInProtonBanana.Foreach(
-    //     [&](ActRoot::MergerData& m)
-    //     {
-    //         m.Stream(outFileElasticInProtonBanana);
-    //     },
-    //     {"MergerData"});
+    std::ofstream outFileElasticInProtonBanana("./Outputs/elasticInProtonBananaAfterRebining.dat");
+    dfElasticInProtonBanana.Foreach(
+        [&](ActRoot::MergerData& m)
+        {
+            m.Stream(outFileElasticInProtonBanana);
+        },
+        {"MergerData"});
 }
