@@ -102,6 +102,31 @@ void ActAlgorithm::BrokenTracksZ::Run()
         }
         return;
     }
+    // Check that the noise do not form a bigger cluster than the light one, coming from a track in z
+    ActRoot::Cluster newCluster {};
+    newCluster.SetVoxels(unrebinedClusterAfterContinuity);
+    newCluster.ReFit();
+    double chi2 = newCluster.GetLine().GetChi2();
+    if(chi2 > 10) // This value is arbitrary, but we want to be sure that the cluster is not formed by noise (light +
+                  // vertical z)
+    {
+        if(fIsVerbose)
+        {
+            std::cout << BOLDRED << "Continuity added voxels but the fit is bad, skipping event" << RESET << '\n';
+        }
+        return;
+    }
+    if(lightCluster.GetLine().GetDirection().Z() < 0.9 &&
+       newCluster.GetLine().GetDirection().Z() >
+           0.9) // This avoids getting tracks in z with more clusters to be the new light
+    {
+        if(fIsVerbose)
+        {
+            std::cout << BOLDRED << "Track is already in z, skipping event" << RESET << '\n';
+        }
+        return;
+    }
+
     if(unrebinedClusterAfterContinuity.size() > lightCluster.GetVoxels().size())
     {
         if(fIsVerbose)
@@ -142,7 +167,8 @@ void ActAlgorithm::BrokenTracksZ::Run()
         newCluster.ReFit();
         newCluster.ReFillSets();
         auto& line = newCluster.GetLine(); // Force to not have nans in the directions
-        if(std::isnan(line.GetDirection().X()) || std::isnan(line.GetDirection().Y()) || std::isnan(line.GetDirection().Z()))
+        if(std::isnan(line.GetDirection().X()) || std::isnan(line.GetDirection().Y()) ||
+           std::isnan(line.GetDirection().Z()))
         {
             if(fIsVerbose)
             {
