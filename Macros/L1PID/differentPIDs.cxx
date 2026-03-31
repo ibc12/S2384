@@ -49,7 +49,7 @@ void differentPIDs()
     // deuterium
 
     // Get all data for 7Li (there is no triton there, so easier to see deuterium)
-    std::string beam {"7Li"};
+    std::string beam {"11Li"};
     std::string target {"d"};
     std::string light {"p"};
 
