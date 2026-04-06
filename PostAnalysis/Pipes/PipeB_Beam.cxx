@@ -10,7 +10,7 @@
 #include <atomic>
 #include <stdexcept>
 
-void Pipe0_Beam(const std::string& beam)
+void PipeB_Beam(const std::string& beam)
 {
     std::string dataconf {};
     if(beam == "11Li")

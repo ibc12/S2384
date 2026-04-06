@@ -29,9 +29,9 @@ void Runner(TString what = "")
     TString ext {".cxx"};
 
     // CFA counter
-    if(what.Contains("0"))
+    if(what.Contains("B"))
     {
-        func = "Pipe0_Beam";
+        func = "PipeB_Beam";
         gROOT->LoadMacro(path + func + ext);
         gROOT->ProcessLine(func + TString::Format("(\"%s\")", beam.c_str()));
     }

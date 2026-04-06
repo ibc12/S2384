@@ -18,27 +18,26 @@ bool ActAlgorithm::Task0::Run()
         return true; // Run not affected by any silicon issue, do nothing
 
     const auto& layers = fSilData->GetLayers();
-    for(const auto& [layer, n] : it->second)
+    for(const auto& [name, n] : it->second)
     {
-        auto itLayer = std::find(layers.begin(), layers.end(), layer);
+        auto itLayer = std::find(layers.begin(), layers.end(), name);
         if(itLayer != layers.end())
         {
-            auto idx = std::distance(layers.begin(), itLayer);
-            auto itVec = fSilData->fSiN.find(layer);
-            if(itVec == fSilData->fSiN.end())
-                continue;
-            const auto& vec = itVec->second;
-            if(idx < vec.size() && vec[idx] == n)
+            // Get layer
+            auto& layerNs = fSilData->fSiN[name];
+            auto itN = std::find(layerNs.begin(), layerNs.end(), n);
+            if(itN == layerNs.end())
+                continue; // This silicon hit is not present in this event, do nothing
+            auto idx = std::distance(layerNs.begin(), itN);
+            // Neutralize that silicon hit by setting its calibrated energy to 0
+            // later threshold checks will ignore the hit because energy is zero.
+            if(idx < fSilData->fSiE[name].size())
             {
-                // Neutralize that silicon hit by setting its calibrated energy to 0
-                // later threshold checks will ignore the hit because energy is zero.
-                if(idx < fSilData->fSiE[layer].size())
-                {
-                    fSilData->fSiE[layer][idx] = 0.0f;
-                }
+                fSilData->fSiE[name][idx] = 0.0f;
             }
         }
     }
+    // fSilData->Print(); // Print the silicon data for this event to check that the changes were applied correctly
     return true;
 }
 

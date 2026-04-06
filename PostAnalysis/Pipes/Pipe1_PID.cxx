@@ -42,98 +42,97 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     chain->AddFriend(chain4.get(), "GETTree");
 
     // RDataFrame
-    ROOT::EnableImplicitMT();
-    ROOT::RDataFrame dforigin {*chain};
+    // ROOT::EnableImplicitMT();
+    ROOT::RDataFrame df {*chain};
 
     // Filter silicon pads
-    auto df = dforigin.Filter(
-        [](ActRoot::MergerData& m)
-        {
-            // Mask L0_9
-            if(m.fLight.fNs.size())
-                if((m.fLight.fLayers.front() == "l0") && (m.fLight.fNs.front() == 9))
-                    return false;
-            // Mask F0_2
-            if(m.fLight.fNs.size())
-                if((m.fLight.fLayers.front() == "f0") && (m.fLight.fNs.front() == 2))
-                    return false;
-            // Mask R0_3
-            if(m.fLight.fNs.size())
-                if((m.fLight.fLayers.front() == "r0") && (m.fLight.fNs.front() == 3))
-                    return false;
-            // Mask R0 sils depending on run number
-            if(m.fRun > 29 && m.fRun < 35)
-            {
-                if(m.fRun == 30 || m.fRun == 31 || m.fRun == 33)
-                {
-                    if(!m.fLight.fLayers.empty() && m.fLight.fLayers.front() == "r0")
-                    {
-                        if(!m.fLight.fNs.empty() && (m.fLight.fNs.front() == 3 || m.fLight.fNs.front() == 5))
-                        {
-                            return false;
-                        }
-                        else
-                            return true;
-                    }
-                    else
-                        return true;
-                }
-                if(m.fRun == 32)
-                {
-                    if(!m.fLight.fLayers.empty() && m.fLight.fLayers.front() == "r0")
-                    {
-                        return false;
-                    }
-                    else
-                        return true;
-                }
-                if(m.fRun == 34)
-                {
-                    if(!m.fLight.fLayers.empty() &&
-                       (m.fLight.fLayers.front() == "r0" || m.fLight.fLayers.front() == "l0"))
-                    {
-                        return false;
-                    }
-                    else
-                        return true;
-                }
-                else
-                    return true;
-            }
-            if(m.fRun > 35 && m.fRun < 45)
-            {
-                if(!m.fLight.fLayers.empty() && m.fLight.fLayers.front() == "f0")
-                {
-                    if(!m.fLight.fNs.empty() && m.fLight.fNs.front() == 5)
-                    {
-                        return false;
-                    }
-                    else
-                        return true;
-                }
-                else
-                    return true;
-            }
-            if(m.fRun == 116 || m.fRun == 117)
-            {
-                if(!m.fLight.fLayers.empty() && m.fLight.fLayers.front() == "r0")
-                {
-                    if(!m.fLight.fNs.empty() && m.fLight.fNs.front() == 2)
-                    {
-                        return false;
-                    }
-                    else
-                        return true;
-                }
-                else
-                    return true;
-            }
-            else
-                return true;
-        },
-        {"MergerData"});
-    // std::cout << "Number of entries before silicon pad filtering: " << *dforigin.Count() << std::endl;
-    // std::cout << "Number of entries after silicon pad filtering: " << *df.Count() << std::endl;
+    // auto df = dforigin.Filter(  // If task0 enabled, this has no use
+    //     [](ActRoot::MergerData& m)
+    //     {
+    //         return true;
+    //         // Mask L0_9
+    //         if(m.fLight.fNs.size())
+    //             if((m.fLight.fLayers.front() == "l0") && (m.fLight.fNs.front() == 9))
+    //                 return false;
+    //         // Mask F0_2
+    //         if(m.fLight.fNs.size())
+    //             if((m.fLight.fLayers.front() == "f0") && (m.fLight.fNs.front() == 2))
+    //                 return false;
+    //         // Mask R0_3
+    //         if(m.fLight.fNs.size())
+    //             if((m.fLight.fLayers.front() == "r0") && (m.fLight.fNs.front() == 3))
+    //                 return false;
+    //         // Mask R0 sils depending on run number
+    //         if(m.fRun > 29 && m.fRun < 35)
+    //         {
+    //             if(m.fRun == 30 || m.fRun == 31 || m.fRun == 33)
+    //             {
+    //                 if(!m.fLight.fLayers.empty() && m.fLight.fLayers.front() == "r0")
+    //                 {
+    //                     if(!m.fLight.fNs.empty() && (m.fLight.fNs.front() == 3 || m.fLight.fNs.front() == 5))
+    //                     {
+    //                         return false;
+    //                     }
+    //                     else
+    //                         return true;
+    //                 }
+    //                 else
+    //                     return true;
+    //             }
+    //             if(m.fRun == 32)
+    //             {
+    //                 if(!m.fLight.fLayers.empty() && m.fLight.fLayers.front() == "r0")
+    //                 {
+    //                     return false;
+    //                 }
+    //                 else
+    //                     return true;
+    //             }
+    //             if(m.fRun == 34)
+    //             {
+    //                 if(!m.fLight.fLayers.empty() &&
+    //                    (m.fLight.fLayers.front() == "r0" || m.fLight.fLayers.front() == "l0"))
+    //                 {
+    //                     return false;
+    //                 }
+    //                 else
+    //                     return true;
+    //             }
+    //             else
+    //                 return true;
+    //         }
+    //         if(m.fRun > 35 && m.fRun < 45)
+    //         {
+    //             if(!m.fLight.fLayers.empty() && m.fLight.fLayers.front() == "f0")
+    //             {
+    //                 if(!m.fLight.fNs.empty() && m.fLight.fNs.front() == 5)
+    //                 {
+    //                     return false;
+    //                 }
+    //                 else
+    //                     return true;
+    //             }
+    //             else
+    //                 return true;
+    //         }
+    //         if(m.fRun == 116 || m.fRun == 117)
+    //         {
+    //             if(!m.fLight.fLayers.empty() && m.fLight.fLayers.front() == "r0")
+    //             {
+    //                 if(!m.fLight.fNs.empty() && m.fLight.fNs.front() == 2)
+    //                 {
+    //                     return false;
+    //                 }
+    //                 else
+    //                     return true;
+    //             }
+    //             else
+    //                 return true;
+    //         }
+    //         else
+    //             return true;
+    //     },
+    //     {"MergerData"});
 
 
     // LIGHT particle
