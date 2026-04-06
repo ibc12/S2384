@@ -82,13 +82,13 @@ void WriteRejectedEvents(const std::string& infile)
 }
 
 
-void Pipe3_Filter(const std::string& beam, const std::string& target, const std::string& light)
+void Pipe3_Filter(const std::string& beam, const std::string& target, const std::string& light, bool isFiltered)
 {
     // PrettyStyle(false);
     bool savePlots {false};
     bool onlySil {true};
 
-    auto infile {TString::Format("./Outputs/tree_ex_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
+    auto infile {TString::Format("./Outputs/tree_ex%s_%s_%s_%s.root", isFiltered ? "_F" : "", beam.c_str(), target.c_str(), light.c_str())};
 
     ROOT::DisableImplicitMT();
     ROOT::RDataFrame df {"Final_Tree", infile.Data()};
@@ -152,8 +152,8 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
                             {"MergerData", "GETTree_TPCData"});
     std::cout << "Counts after filtering: " << dfFilter.Count().GetValue() << std::endl;
     // Guardar resultado final
-    auto outfile {
-        TString::Format("./Outputs/tree_ex_%s_%s_%s_filtered.root", beam.c_str(), target.c_str(), light.c_str())};
+    auto outfile {TString::Format("./Outputs/tree_ex%s_%s_%s_%s_filtered.root", isFiltered ? "_F" : "", beam.c_str(),
+                                  target.c_str(), light.c_str())};
     dfFilter.Snapshot("Final_Tree", outfile);
     std::cout << "Saving Final_Tree in " << outfile << '\n';
     // Create and save Ex histos on file
@@ -249,7 +249,7 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
     hkinL1->DrawClone("colz");
 
     // Opcional: guardar eventos rechazados
-    //WriteRejectedEvents(infile.Data());
+    // WriteRejectedEvents(infile.Data());
     // std::ofstream out("./Outputs/good_pipe3_4multiplicity_sil.dat");
     // df.Foreach([&](ActRoot::MergerData& m) { m.Stream(out); }, {"MergerData"});
     // out.close();

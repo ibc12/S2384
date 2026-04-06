@@ -23,11 +23,11 @@
 #include "../../PrettyStyle.C"
 #include "../HistConfig.h"
 
-void Pipe2_Ex(const std::string& beam, const std::string& target, const std::string& light)
+void Pipe2_Ex(const std::string& beam, const std::string& target, const std::string& light, bool isFiltered)
 {
     // PrettyStyle(true);
     //  Read data
-    auto filename {TString::Format("./Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(),
+    auto filename {TString::Format("./Outputs/tree_pid%s_%s_%s_%s.root", isFiltered ? "_F" : "", beam.c_str(), target.c_str(),
     light.c_str())};
     // auto filename {TString::Format("./Outputs/tree_pid_11Li_d_p.root")};
     ROOT::EnableImplicitMT();
@@ -184,7 +184,7 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
         def.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})
             .Histo1D({"hEBeamRecEBeam", "EBeam;EBeam [MeV]", 200, 0, initialEnergy * pb.GetAMU() + 15}, "RecEBeam")};
     // Save!
-    auto outfile {TString::Format("./Outputs/tree_ex_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
+    auto outfile {TString::Format("./Outputs/tree_ex%s_%s_%s_%s.root", isFiltered ? "_F" : "", beam.c_str(), target.c_str(), light.c_str())};
     def.Snapshot("Final_Tree", outfile);
     std::cout << "Saving Final_Tree in " << outfile << '\n';
     // Save Ex histos on file

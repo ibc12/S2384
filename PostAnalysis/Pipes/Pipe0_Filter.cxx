@@ -1,5 +1,5 @@
-#ifndef PIPE0_FILTER_H
-#define PIPE0_FILTER_H
+#ifndef PIPE0_PREPROCESS_H
+#define PIPE0_PREPROCESS_H
 #include "ActCutsManager.h"
 #include "ActDataManager.h"
 #include "ActKinematics.h"
@@ -23,7 +23,7 @@
 #include "../../PrettyStyle.C"
 #include "../HistConfig.h"
 
-void Pipe0_Filter(const std::string& beam, const std::string& target, const std::string& light)
+void Pipe0_Preprocess(const std::string& beam, const std::string& target, const std::string& light, bool isFiltered)
 {
     ///////////////////////////////////////////////////////
     // Filter all the 7Li or the 11Li before doing the PID
@@ -83,15 +83,72 @@ void Pipe0_Filter(const std::string& beam, const std::string& target, const std:
     ROOT::EnableImplicitMT();
     ROOT::RDataFrame df {*chain};
 
+    // 1-> Define zDrift for all events (maybe better only for L1)
+    auto dfZ = df.Define("zDrift",
+                         [&driftFactor](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+                         {
+                             auto& rp {m.fRP};
+
+                             auto idx = m.fLightIdx;
+                             if(idx < 0)
+                                 return -111.0f;
+
+                             if(static_cast<std::size_t>(idx) >= tpc.fClusters.size())
+                                 return -111.0f;
+
+                             auto& cluster = tpc.fClusters.at(idx);
+                             auto& voxels = cluster.GetRefToVoxels();
+
+                             if(tpc.fRPs.empty())
+                                 return -111.0f;
+                             auto rpVox = tpc.fRPs.front();
+
+                             float maxDist = -1.0;
+                             float zExtreme = 0.0;
+
+                             for(auto& v : voxels)
+                             {
+                                 auto pos = v.GetPosition();
+
+                                 float dx = pos.X() - rpVox.X();
+                                 float dy = pos.Y() - rpVox.Y();
+                                 float dz = pos.Z() - rpVox.Z();
+
+                                 float dist = std::sqrt(dx * dx + dy * dy + dz * dz);
+
+                                 if(dist > maxDist)
+                                 {
+                                     maxDist = dist;
+                                     zExtreme = pos.Z();
+                                 }
+                             }
+
+                             // diferencia en Z respecto al RP voxel
+                             float deltaZ = (zExtreme - rpVox.Z()) * driftFactor;
+
+                             float zDrift = 110.0 + deltaZ; // Force rp to be at 110 mm
+
+                             return zDrift;
+                         },
+                         {"MergerData", "TPCData"});
+
+    if(!isFiltered)
+    {
+        auto name {TString::Format("./Outputs/tree_preprocess_%s.root", beam.c_str())};
+        std::cout << "Saving Preprocessed_Tree in file : " << name << '\n';
+        dfZ.Snapshot("PreProcessed_Tree", name.Data());
+        return;
+    }
+
     // 1-> Filter the high charge deposits
-    auto dfFilterCharge = df.Filter( // Check for heavier clusters than Li
-                                [](ActRoot::MergerData& m)
-                                {
-                                    if(m.fHeavy.fQave > 2000.)
-                                        return false;
-                                    return true;
-                                },
-                                {"MergerData"})
+    auto dfFilterCharge = dfZ.Filter( // Check for heavier clusters than Li
+                                 [](ActRoot::MergerData& m)
+                                 {
+                                     if(m.fHeavy.fQave > 2000.)
+                                         return false;
+                                     return true;
+                                 },
+                                 {"MergerData"})
                               .Filter( // Check if heavy reaches end of ACTAR (other way to mask heavier clusters,
                                        // but can delete good events with heavy particle bad reconstructed)
                                   [](ActRoot::MergerData& m)
@@ -129,58 +186,9 @@ void Pipe0_Filter(const std::string& beam, const std::string& target, const std:
                                   },
                                   {"MergerData", "GETTree_TPCData"});
 
-    // 2-> Define zDrift for all events (maybe better only for L1)
-    auto dfZ = dfFilterCharge.Define("zDrift",
-                                     [&driftFactor](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
-                                     {
-                                         auto& rp {m.fRP};
-
-                                         auto idx = m.fLightIdx;
-                                         if(idx < 0)
-                                             return -100.0f;
-
-                                         if(static_cast<std::size_t>(idx) >= tpc.fClusters.size())
-                                             return -100.0f;
-
-                                         auto& cluster = tpc.fClusters.at(idx);
-                                         auto& voxels = cluster.GetRefToVoxels();
-
-                                         if(tpc.fRPs.empty())
-                                             return -100.0f;
-                                         auto rpVox = tpc.fRPs.front();
-
-                                         float maxDist = -1.0;
-                                         float zExtreme = 0.0;
-
-                                         for(auto& v : voxels)
-                                         {
-                                             auto pos = v.GetPosition();
-
-                                             float dx = pos.X() - rpVox.X();
-                                             float dy = pos.Y() - rpVox.Y();
-                                             float dz = pos.Z() - rpVox.Z();
-
-                                             float dist = std::sqrt(dx * dx + dy * dy + dz * dz);
-
-                                             if(dist > maxDist)
-                                             {
-                                                 maxDist = dist;
-                                                 zExtreme = pos.Z();
-                                             }
-                                         }
-
-                                         // diferencia en Z respecto al RP voxel
-                                         float deltaZ = (zExtreme - rpVox.Z()) * driftFactor;
-
-                                         float zDrift = 110.0 + deltaZ;
-
-                                         return zDrift;
-                                     },
-                                     {"MergerData", "TPCData"});
-
 
     // 3-> Filter events with bad zDrift and low charge (only for L1 events)
-    auto dfFilterZandQ = dfZ.Filter(
+    auto dfFilterZandQ = dfFilterCharge.Filter(
         [&zDriftCuts](float zDrift, ActRoot::MergerData& m, ActRoot::ModularData& mod)
         {
             if(mod.Get("GATCONF") != 8)
@@ -191,6 +199,13 @@ void Pipe0_Filter(const std::string& beam, const std::string& target, const std:
             return zDrift > it->second.zMin && zDrift < it->second.zMax && m.fLight.fQave > 600;
         },
         {"zDrift", "MergerData", "ModularData"});
+
+    if(isFiltered)
+    {
+        auto name {TString::Format("./Outputs/tree_preprocess_F_%s.root", beam.c_str())};
+        std::cout << "Saving Filtered_Tree in file : " << name << '\n';
+        dfFilterZandQ.Snapshot("Filtered_Tree", name.Data());
+    }
 }
 
 #endif

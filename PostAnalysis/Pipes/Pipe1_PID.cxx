@@ -19,31 +19,16 @@
 
 #include "../../PrettyStyle.C"
 
-void Pipe1_PID(const std::string& beam, const std::string& target, const std::string& light)
+void Pipe1_PID(const std::string& beam, const std::string& target, const std::string& light, bool isFiltered)
 {
     // PrettyStyle(false);
     bool savePlots = false;
-    std::string dataconf {};
-    if(beam == "11Li")
-        dataconf = "./../configs/data_11Li.conf";
-    else if(beam == "7Li")
-        dataconf = "./../configs/data_7Li.conf";
-    else
-        throw std::runtime_error("Beam cannot differ from 11Li or 7Li");
 
-    // Read data
-    ActRoot::DataManager dataman {dataconf, ActRoot::ModeType::EMerge};
-    auto chain {dataman.GetChain()};
-    auto chain2 {dataman.GetChain(ActRoot::ModeType::EReadSilMod)};
-    auto chain3 {dataman.GetChain(ActRoot::ModeType::EFilter)};
-    auto chain4 {dataman.GetChain(ActRoot::ModeType::EReadTPC)};
-    chain->AddFriend(chain2.get());
-    chain->AddFriend(chain3.get(), "TPCData");
-    chain->AddFriend(chain4.get(), "GETTree");
+    auto inFile {TString::Format("./Outputs/tree_preprocess%s_%s.root", isFiltered ? "_F" : "", beam.c_str())};
 
     // RDataFrame
-    // ROOT::EnableImplicitMT();
-    ROOT::RDataFrame df {*chain};
+    ROOT::EnableImplicitMT();
+    ROOT::RDataFrame df {"PreProcessed_Tree", inFile};
 
     // Filter silicon pads
     // auto df = dforigin.Filter(  // If task0 enabled, this has no use
@@ -293,7 +278,8 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
                     return false;
             },
             {"MergerData", "ModularData"})};
-        auto name {TString::Format("./Outputs/tree_pid_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str())};
+        auto name {TString::Format("./Outputs/tree_pid%s_%s_%s_%s.root", isFiltered ? "_F" : "", beam.c_str(),
+                                   target.c_str(), light.c_str())};
         std::cout << "Saving PID_Tree in file : " << name << '\n';
         gated.Snapshot("PID_Tree", name.Data());
     }
@@ -555,7 +541,7 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     //             return false;
     //     },
     //     {"MergerData"});
-    //std::ofstream out("./Outputs/pid_events_f0f1_11Li.dat");
-    //dfOut.Foreach([&](ActRoot::MergerData& m) { m.Stream(out); }, {"MergerData"});
-    //out.close();
+    // std::ofstream out("./Outputs/pid_events_f0f1_11Li.dat");
+    // dfOut.Foreach([&](ActRoot::MergerData& m) { m.Stream(out); }, {"MergerData"});
+    // out.close();
 }

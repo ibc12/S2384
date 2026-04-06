@@ -22,13 +22,13 @@
 #include "../../PrettyStyle.C"
 #include "../HistConfig.h"
 
-void Pipe4_HeavyCuts(const std::string& beam, const std::string& target, const std::string& light)
+void Pipe4_HeavyCuts(const std::string& beam, const std::string& target, const std::string& light, bool isFiltered)
 {
     PrettyStyle(false);
     // gStyle->SetPalette(kViridis);
 
     auto infile {
-        TString::Format("./Outputs/tree_ex_%s_%s_%s_filtered.root", beam.c_str(), target.c_str(), light.c_str())};
+        TString::Format("./Outputs/tree_ex%s_%s_%s_%s_filtered.root", isFiltered ? "_F" : "", beam.c_str(), target.c_str(), light.c_str())};
     // ROOT::EnableImplicitMT();
     ROOT::RDataFrame df {"Final_Tree", infile.Data()};
 

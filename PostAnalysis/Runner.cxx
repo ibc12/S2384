@@ -23,7 +23,9 @@ void Runner(TString what = "")
     std::cout << "-> What   : " << what << '\n';
     std::cout << "······························" << RESET << '\n';
 
-    auto args {TString::Format("(\"%s\", \"%s\", \"%s\")", beam.c_str(), target.c_str(), light.c_str())};
+    bool isFiltered {what.Contains("F")};
+
+    auto args {TString::Format("(\"%s\", \"%s\", \"%s\", %s)", beam.c_str(), target.c_str(), light.c_str(), isFiltered ? "true" : "false")};
     TString path {"./Pipes/"};
     TString func {};
     TString ext {".cxx"};
@@ -34,6 +36,13 @@ void Runner(TString what = "")
         func = "PipeB_Beam";
         gROOT->LoadMacro(path + func + ext);
         gROOT->ProcessLine(func + TString::Format("(\"%s\")", beam.c_str()));
+    }
+    // Filtering of events that pass actroot -f and events through cathode/padPlane
+    if(what.Contains("0"))
+    {
+        func = "Pipe0_PreProcess";
+        gROOT->LoadMacro(path + func + ext);
+        gROOT->ProcessLine(func + args);
     }
     // PID
     if(what.Contains("1"))
