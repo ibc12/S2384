@@ -268,6 +268,52 @@ TSpline3* BuildSRIMspline(ActPhysics::SRIM* srim, double range, const std::strin
     return sp;
 }
 
+/////////////////////////////////////
+// Spline computing the Eloss from SRIM tables, but using directly dE/dx to remove step size dependence
+/////////////////////////////////////
+TSpline3* BuildSRIMsplineEvaldEdxDirectly(ActPhysics::SRIM* srim, double range, const std::string& particleKey, double step = 0.5,
+                          double sOffset = 0.0)
+{
+    std::vector<double> s_pts;
+    std::vector<double> y_pts;
+
+    for(double s = 0; s < range; s += step)
+    {
+        double R = range - s; // remaining range
+
+        if(R <= 0)
+            break;
+
+        double E = srim->EvalInverse(particleKey, R);
+        double dEdx = srim->EvalStoppingPower(particleKey, E);
+
+        if(dEdx < 0)
+            dEdx = 0;
+
+        s_pts.push_back(s + 0.5 * step + sOffset);
+        y_pts.push_back(dEdx);
+    }
+    //  ensure endpoint goes to zero
+    if(!y_pts.empty() && y_pts.back() > 0)
+    {
+        s_pts.push_back(range);
+        y_pts.push_back(0.0);
+    }
+
+    if(s_pts.size() < 3)
+    {
+        std::cout << "Not enough points to build spline (nSteps=" << s_pts.size() << "). Need at least 3 points.\n";
+        return nullptr;
+    }
+
+    auto* sp = new TSpline3(("spSRIM_" + particleKey).c_str(), s_pts.data(), y_pts.data(), s_pts.size());
+
+    sp->SetNpx(3000);
+    // std::cout << "Spline max: " << sp->GetXmax() << "\n";
+    // std::cout << "Value near max: " << sp->Eval(range - 1) << "\n";
+    return sp;
+}
+
 // ============================================================
 // Find position along x-axis where cumulative integral reaches a given fraction of total charge
 // ============================================================

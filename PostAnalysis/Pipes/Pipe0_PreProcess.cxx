@@ -23,7 +23,7 @@
 #include "../../PrettyStyle.C"
 #include "../HistConfig.h"
 
-void Pipe0_Preprocess(const std::string& beam, const std::string& target, const std::string& light, bool isFiltered)
+void Pipe0_PreProcess(const std::string& beam, const std::string& target, const std::string& light, bool isFiltered)
 {
     ///////////////////////////////////////////////////////
     // Filter all the 7Li or the 11Li before doing the PID
@@ -184,7 +184,7 @@ void Pipe0_Preprocess(const std::string& beam, const std::string& target, const 
                                           return false;
                                       return true;
                                   },
-                                  {"MergerData", "GETTree_TPCData"});
+                                  {"MergerData", "GETTree.TPCData"});
 
 
     // 3-> Filter events with bad zDrift and low charge (only for L1 events)
@@ -203,8 +203,8 @@ void Pipe0_Preprocess(const std::string& beam, const std::string& target, const 
     if(isFiltered)
     {
         auto name {TString::Format("./Outputs/tree_preprocess_F_%s.root", beam.c_str())};
-        std::cout << "Saving Filtered_Tree in file : " << name << '\n';
-        dfFilterZandQ.Snapshot("Filtered_Tree", name.Data());
+        std::cout << "Saving PreProcessed_Tree in file : " << name << '\n';
+        dfFilterZandQ.Snapshot("PreProcessed_Tree", name.Data());
     }
 }
 
