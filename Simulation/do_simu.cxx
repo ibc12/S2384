@@ -228,7 +228,7 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     // Set whether is PS or not
     bool isPS {(neutronPS > 0) || (protonPS > 0)};
     // Set number of iterations
-    const int niter {static_cast<int>(inspect ? 1e7 : (isPS ? 3e7 : 1e8))};
+    const int niter {static_cast<int>(inspect ? 1e3 : (isPS ? 3e7 : 1e8))};
     gRandom->SetSeed(0);
     // Runner: contains utility functions to execute multiple actions as rotate directions
     ActSim::Runner runner(nullptr, nullptr, gRandom, 0);
@@ -297,7 +297,8 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     const double sigmaSilFront {0.050 / 2.355}; // Si resolution for front, around 50 keV FWHM
     auto silRes = std::make_unique<TF1>(
         "silRes", [=](double* x, double* p) { return p[0] * TMath::Sqrt(x[0] / 5.5); }, 0.0, 100.0, 1);
-    std::vector<std::string> silLayers {"l0", "r0"}; // For the moment only laterals, front not yet available for analysis
+    std::vector<std::string> silLayers {"l0",
+                                        "r0"}; // For the moment only laterals, front not yet available for analysis
     std::vector<std::string> AllsilLayers {"f0", "f1", "f2", "f3", "l0", "r0"};
 
     std::string filenameSMlat {"../Macros/SilVetos/Outputs/Dists/sms_f0.root"};
@@ -323,9 +324,11 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     {
         if(name == "f0" || name == "f1")
             layer.MoveZTo(silCentreFront, {5});
-        if(name == "f2" || name == "f3")
+        if(name == "f2")
+            layer.MoveZTo(silCentreFront + 12.5, {0}); // Manually substract 12.5 to get the f2 in the same height as the f3
+        if(name == "f3")
             layer.MoveZTo(silCentreFront, {0});
-        if(name == "l0" || name == "r0") // beam went at the height of the half of the second highest silicon
+        if(name == "l0" || name == "r0")
             layer.MoveZTo(silCentreLat, {4});
     }
     sils->DrawGeo();
@@ -679,7 +682,7 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         if(0 <= finalPointGas.X() && finalPointGas.X() <= 256 && 0 <= finalPointGas.Y() && finalPointGas.Y() <= 256 &&
            0 <= finalPointGas.Z() && finalPointGas.Z() <= 256)
         {
-        }
+        } // do nothing, the z coordinate is refered to experimental values so do not use it to addres L1 events
         // How to check whether tracks would read the silicons with new class:
         int silIndex0 = -1;
         ROOT::Math::XYZPoint silPoint0;
@@ -863,9 +866,11 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     effLabgateHeavy->SetNameTitle("effLabgateHeavy",
                                   "#epsilon_{heavy gate} (#theta_{Lab});#epsilon;#theta_{Lab} [#circ]");
     auto* effCMsideGateHeavy {new TEfficiency {*hTheta3CMsideGateHeavy, *hThetaCMAll}};
-    effCMsideGateHeavy->SetNameTitle("effCMsideGateHeavy", " #epsilon_{side} (#theta_{CM});#epsilon;#theta_{CM} [#circ]");
+    effCMsideGateHeavy->SetNameTitle("effCMsideGateHeavy",
+                                     " #epsilon_{side} (#theta_{CM});#epsilon;#theta_{CM} [#circ]");
     auto* effLabsideGateHeavy {new TEfficiency {*hTheta3LabsideGateHeavy, *hThetaLabAll}};
-    effLabsideGateHeavy->SetNameTitle("effLabsideGateHeavy", "#epsilon_{side} (#theta_{Lab});#epsilon;#theta_{Lab} [#circ]");
+    effLabsideGateHeavy->SetNameTitle("effLabsideGateHeavy",
+                                      "#epsilon_{side} (#theta_{Lab});#epsilon;#theta_{Lab} [#circ]");
 
     // SAVING
     if(!inspect)
