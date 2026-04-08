@@ -14,6 +14,7 @@
 #include "TString.h"
 
 #include <string>
+#include <fstream>
 #include <vector>
 
 #include "../../PrettyStyle.C"
@@ -25,7 +26,7 @@ void pidFrontEachSilicon()
 
     std::string beam {"7Li"};
     std::string target {"d"};
-    std::string light {"t"};
+    std::string light {"d"};
     std::string heavy {"7Li"};
 
     ActPhysics::Particle pb {beam};
@@ -49,7 +50,7 @@ void pidFrontEachSilicon()
     auto chain {dataman.GetChain()};
 
     // RDataFrame
-    ROOT::EnableImplicitMT();
+    // ROOT::EnableImplicitMT();
     ROOT::RDataFrame dforigin {*chain};
 
     // Filter silicon pads
@@ -149,7 +150,7 @@ void pidFrontEachSilicon()
                                             ret = srim->EvalInitialEnergy(light, d.fLight.fEs.front(), d.fLight.fTL);
                                         else // L1 trigger
                                             ret = srim->EvalEnergy(light, d.fLight.fTL);
-                                        return ret;
+                                        return ret - 22;
                                     },
                                     {"MergerData"});
     double initialEnergy {7.558}; // meassured by operators; resolution of 0,19%
@@ -160,6 +161,8 @@ void pidFrontEachSilicon()
                                   { return srim->Slow(beam, initialEnergy * pb.GetAMU(), d.fRP.X()); }, {"MergerData"});
 
     ActPhysics::Kinematics kinTheo {pb, pt, pl, initialEnergy * pb.GetAMU()}; // energy meassured by operators
+    ActPhysics::Kinematics kinTheo_1MeV {pb, pt, pl, initialEnergy * pb.GetAMU(), 1}; // energy meassured by operators
+    ActPhysics::Kinematics kinTheo_5MeV {pb, pt, pl, initialEnergy * pb.GetAMU(), 5}; // energy meassured by operators
     ActPhysics::Kinematics kin {pb, pt, pl, initialEnergy * pb.GetAMU()};     // energy meassured by operators
     // Vector of kinematics as one object is needed per
     // processing slot (since we are changing EBeam in each entry)
@@ -335,20 +338,40 @@ void pidFrontEachSilicon()
     cKin->cd(1);
     hKin_total->DrawClone("colz");
     kinTheo.GetKinematicLine3()->DrawClone("same");
+    kinTheo_1MeV.GetKinematicLine3()->DrawClone("same");
+    kinTheo_5MeV.GetKinematicLine3()->DrawClone("same");
     cKin->cd(2);
     hEx->DrawClone();
     cKin->cd(3);
     hThetaLight_ThetaHeavy->DrawClone("colz");
     kinTheo.GetTheta3vs4Line()->DrawClone("same");
+    kinTheo_1MeV.GetTheta3vs4Line()->DrawClone("same");
+    kinTheo_5MeV.GetTheta3vs4Line()->DrawClone("same");
 
     auto* cHeavy = new TCanvas("cHeavy", "Heavy gated for f0", 800, 600);
     cHeavy->Divide(3, 1);
     cHeavy->cd(1);
     hKin_total_heavy->DrawClone("colz");
     kinTheo.GetKinematicLine3()->DrawClone("same");
+    kinTheo_1MeV.GetKinematicLine3()->DrawClone("same");
+    kinTheo_5MeV.GetKinematicLine3()->DrawClone("same");
     cHeavy->cd(2);
     hEx_heavy->DrawClone();
     cHeavy->cd(3);
     hThetaLight_ThetaHeavy_heavy->DrawClone("colz");
     kinTheo.GetTheta3vs4Line()->DrawClone("same");
+    kinTheo_1MeV.GetTheta3vs4Line()->DrawClone("same");
+    kinTheo_5MeV.GetTheta3vs4Line()->DrawClone("same");
+
+    // Save some events
+    cuts.ReadCut("save", "./Cuts/cut_more_events_lowE_7Lidd.root");
+    std::ofstream out("./Outputs/pid_more_more_events_7Li_dd.dat");
+    dfVertex.Foreach(
+        [&out, &cuts](const ActRoot::MergerData& m, double EVertex)
+        {
+            double theta = m.fThetaLight;
+            if(cuts.IsInside("save", theta, EVertex))
+                m.Stream(out);
+        },
+        {"MergerData", "EVertex"});
 }

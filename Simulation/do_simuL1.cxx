@@ -435,7 +435,8 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
     // No silicons for L1
 
     const double zMeanEntrance {
-        135}; // Mean position of ACTAR entrance (exp values z position are not refered to a certain point)
+        110}; // Mean position of ACTAR entrance (exp values z position are not refered to a certain point)
+    // IMPORTANT: Pad plane is in z = 0, so the z position is the distance to the pad plane directly.
     const double zVertexSigma {0.81}; // From emitance study / always  around the same)
 
     // No experimental cuts for L1 yet

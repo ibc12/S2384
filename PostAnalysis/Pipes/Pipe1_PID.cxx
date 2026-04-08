@@ -142,7 +142,7 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     std::map<std::string, ROOT::TThreadedObject<TH2D>> hsgas, hstwo, hszero;
     // Histogram models
     auto hGasSil {new TH2D {"hGasSil", ";E_{Sil} [MeV];#Delta E_{gas} [arb. units]", 450, 0, 70, 600, 0, 3000}};
-    auto hTwoSils {new TH2D {"hTwoSils", ";#DeltaE_{0} [MeV];#DeltaE_{1} [MeV]", 500, 0, 80, 400, 0, 35}};
+    auto hTwoSils {new TH2D {"hTwoSils", ";#DeltaE_{0} [MeV];#DeltaE_{1} [MeV]", 80, 0, 80, 50, 0, 50}};
     for(const auto& layer : {"f0", "l0", "r0"})
     {
         hsgas.emplace(layer, *hGasSil);
