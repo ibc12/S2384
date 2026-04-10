@@ -1,5 +1,6 @@
 /media/data/S2384/configs/user/CMakeFiles/RecRANSAC.dir
 /media/data/S2384/configs/user/CMakeFiles/BrokenTracksZ.dir
+/media/data/S2384/configs/user/CMakeFiles/PrintAfterFindRP.dir
 /media/data/S2384/configs/user/CMakeFiles/Task0.dir
 /media/data/S2384/configs/user/CMakeFiles/edit_cache.dir
 /media/data/S2384/configs/user/CMakeFiles/rebuild_cache.dir

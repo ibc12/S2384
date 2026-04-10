@@ -20,5 +20,10 @@ add_userlibrary(
     SOURCES BrokenTracksZ.cxx   # solo el .cxx
     LINK ActAlgorithm        # ActAlgorithm debe estar en $ACTROOT/install/lib
 )
+add_userlibrary(
+    NAME PrintAfterFindRP
+    SOURCES PrintAfterFindRP.cxx   # solo el .cxx
+    LINK ActAlgorithm        # ActAlgorithm debe estar en $ACTROOT/install/lib
+)
 add_userlibrary(NAME Task0 SOURCES Task0.cxx LINK ActAlgorithm)
 
