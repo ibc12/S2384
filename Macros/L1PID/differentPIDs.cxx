@@ -461,13 +461,15 @@ void differentPIDs()
     h_nVoxelsPhi->DrawClone("colz");
 
     // Save some events
-    // std::ofstream outFile("./Outputs/events_phiFlat_lowTL.dat");
-    // dfPhiFlat.Foreach(
+    cuts.ReadCut("deuterium", "./Cuts/d_TLvsQ_11Li.root");
+    // std::ofstream outFile("./Outputs/eventsElastic_phiNear90positive.dat");
+    // df.Foreach(
     //     [&](ActRoot::MergerData& m)
     //     {
-    //         if(cuts.IsInside("phiFlat_lowTL", m.fLight.fRawTL, m.fLight.fQtotal))
+    //         if(cuts.IsInside("deuterium", m.fLight.fRawTL, m.fLight.fQtotal))
     //         {
-    //             m.Stream(outFile);
+    //             if((m.fPhiLight > 80 && m.fPhiLight < 100) && (m.fThetaLight > 85 && m.fThetaLight < 90))
+    //                 m.Stream(outFile);
     //         }
     //     },
     //     {"MergerData"});
