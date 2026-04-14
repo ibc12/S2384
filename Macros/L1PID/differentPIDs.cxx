@@ -239,7 +239,7 @@ void differentPIDs()
 
 
     // PIDs and angle histograms
-    auto h_TLvsQtotal = df.Histo2D({"h_TLvsQtotal", "L1 PID;Raw TL [a.u.];Qtotal [a.u.]", 240, 0, 120, 2000, 0, 3e5},
+    auto h_TLvsQtotal = df.Histo2D({"h_TLvsQtotal", "L1 PID;Raw TL [a.u.];Qtotal [a.u.]", 597, 0, 120, 2000, 0, 3e5},
                                    "MergerData.fLight.fRawTL", "MergerData.fLight.fQtotal");
     auto h_TLvsQave = df.Histo2D({"h_TLvsQave", "L1 PID;Raw TL [a.u.];Qave [a.u.]", 240, 0, 120, 2000, 0, 3500},
                                  "MergerData.fLight.fRawTL", "MergerData.fLight.fQave");
