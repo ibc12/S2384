@@ -40,6 +40,14 @@
 
 #include "../../PrettyStyle.C"
 
+void ScalePoint(ROOT::Math::XYZPointF& point, float xy, float z, bool addOffset)
+{
+    if(addOffset) // when converting a bin point to physical units which wasnt already corrected
+        point += ROOT::Math::XYZVectorF {0.5, 0.5, 0.5};
+    point.SetX(point.X() * xy);
+    point.SetY(point.Y() * xy);
+    point.SetZ(point.Z() * z);
+}
 
 void differentPIDs()
 {
@@ -49,7 +57,7 @@ void differentPIDs()
     // deuterium
 
     // Get all data for 7Li (there is no triton there, so easier to see deuterium)
-    std::string beam {"11Li"};
+    std::string beam {"7Li"};
     std::string target {"d"};
     std::string light {"p"};
 
@@ -185,7 +193,40 @@ void differentPIDs()
                         }
                         if(nLastThird == 0)
                             return -1.0f;
-                        return qLastThird / nLastThird; // TODO: normalize by number of voxels in the last third?
+                        return qLastThird; // TODO: normalize by number of voxels in the last third?
+                    },
+                    {"MergerData", "TPCData"}).Define("lastThirdQNorm",
+                    [&](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+                    {
+                        auto idx = m.fLightIdx;
+                        if(idx < 0)
+                            return -1.0f;
+                        auto& cluster = tpc.fClusters[idx];
+                        auto& voxels = cluster.GetRefToVoxels();
+
+                        // Track direction from the fitted line
+                        auto dir = cluster.GetLine().GetDirection().Unit();
+                        auto rp = tpc.fRPs.front(); // reaction point
+
+                        float qLastThird = 0;
+                        float qTotal = 0;
+                        int nLastThird = 0;
+
+                        for(auto& v : voxels)
+                        {
+                            auto pos = v.GetPosition();
+                            float proj = (pos - rp).Dot(dir); // projected distance from RP
+                            float twoThirdTL = 2.0f * m.fLight.fRawTL / 3.0f;
+                            qTotal += v.GetCharge();
+                            if(proj >= twoThirdTL)
+                            {
+                                qLastThird += v.GetCharge();
+                                nLastThird++;
+                            }
+                        }
+                        if(nLastThird == 0)
+                            return -1.0f;
+                        return qLastThird / qTotal; // TODO: normalize by number of voxels in the last third?
                     },
                     {"MergerData", "TPCData"})
             .Define("TLsquare", [&](ActRoot::MergerData& m) { return m.fLight.fRawTL * m.fLight.fRawTL; },
@@ -198,6 +239,23 @@ void differentPIDs()
                             return -1;
                         int nVoxels = tpc.fClusters[idx].GetSizeOfVoxels();
                         return nVoxels;
+                    },
+                    {"MergerData", "TPCData"})
+            .Define("oldTL",
+                    [](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+                    {
+                        ROOT::Math::XYZPointF begin {tpc.fRPs.front()};
+                        auto lightCl {tpc.fClusters[m.fLightIdx]};
+                        auto line {lightCl.GetLine()};
+                        // Sort voxels in case they are not
+                        lightCl.SortAlongDir();
+                        auto end {lightCl.GetVoxels().back().GetPosition()};
+                        ScalePoint(end, 1, 1, true); // Put the position of the voxel on its center
+                        // Get projections onto fit
+                        auto projBegin {line.ProjectionPointOnLine(begin)};
+                        auto projEnd {line.ProjectionPointOnLine(end)};
+                        // Get TL as the distance between the projections
+                        return (projEnd - projBegin).R();
                     },
                     {"MergerData", "TPCData"});
 
@@ -298,7 +356,7 @@ void differentPIDs()
 
     // Try different variable plots
     auto h_TLsquareVsQtotal =
-        df.Histo2D({"h_TLsquareVsQtotal", "L1 PID;Raw TL^{2} [a.u.];Qtotal [a.u.]", 240, 0, 150 * 150, 4000, 0, 3e5},
+        df.Histo2D({"h_TLsquareVsQtotal", "L1 PID;Raw TL^{2} [a.u.];Qtotal [a.u.]", 240, 0, 150 * 150, 8000, 0, 8e5},
                    "TLsquare", "MergerData.fLight.fQtotal");
     auto h_QLastThirdVsQtotal = df.Histo2D(
         {"h_QLastThirdVsQtotal", "L1 PID;Q in last third of track [a.u.];Qtotal [a.u.]", 2000, 0, 2e5, 2000, 0, 3e5},
@@ -460,16 +518,20 @@ void differentPIDs()
     c6->cd(6);
     h_nVoxelsPhi->DrawClone("colz");
 
+    // Save root file with PCA variables for ML
+    df.Snapshot("L1PCA", "./Outputs/L1PCA_7Li.root",
+                {"fQave", "fLight.fQtotal", "fThetaLight", "fLight.fTL", "fLight.fRawTL", "fPhiLight", "chargePerVoxelLight", "qRatio",
+                 "lastThirdQ", "nVoxelsLight", "zDrift"});
+
     // Save some events
-    cuts.ReadCut("deuterium", "./Cuts/d_TLvsQ_11Li.root");
-    // std::ofstream outFile("./Outputs/eventsElastic_phiNear90positive.dat");
+    // cuts.ReadCut("ThetaLightVSThetaHeavy", "./Cuts/verticalLine_ThetaLightVSThetaHeavy.root");
+    // std::ofstream outFile("./Outputs/verticalLine_ThetaLightVSThetaHeavy.dat");
     // df.Foreach(
     //     [&](ActRoot::MergerData& m)
     //     {
-    //         if(cuts.IsInside("deuterium", m.fLight.fRawTL, m.fLight.fQtotal))
+    //         if(cuts.IsInside("ThetaLightVSThetaHeavy", m.fThetaLight, m.fThetaHeavy))
     //         {
-    //             if((m.fPhiLight > 80 && m.fPhiLight < 100) && (m.fThetaLight > 85 && m.fThetaLight < 90))
-    //                 m.Stream(outFile);
+    //             m.Stream(outFile);
     //         }
     //     },
     //     {"MergerData"});
