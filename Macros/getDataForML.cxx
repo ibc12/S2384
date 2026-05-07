@@ -108,7 +108,7 @@ void getDataForML()
                     },
                     {"MergerData", "TPCData"});
 
-    dfDefines.Snapshot("ML_Tree", "./Outputs/dataForML.root", {"X", "Y", "Z", "Charge"});
+    // dfDefines.Snapshot("ML_Tree", "./Outputs/dataForML.root", {"X", "Y", "Z", "Charge"});
 
     int counter = 0;
     // Print the voxel positions and charge for all the events
