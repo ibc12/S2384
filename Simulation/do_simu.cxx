@@ -228,7 +228,7 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     // Set whether is PS or not
     bool isPS {(neutronPS > 0) || (protonPS > 0)};
     // Set number of iterations
-    const int niter {static_cast<int>(inspect ? 1e3 : (isPS ? 3e7 : 1e8))};
+    const int niter {static_cast<int>(inspect ? 1e5 : (isPS ? 3e7 : 1e8))};
     gRandom->SetSeed(0);
     // Runner: contains utility functions to execute multiple actions as rotate directions
     ActSim::Runner runner(nullptr, nullptr, gRandom, 0);
@@ -494,8 +494,12 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     outTree->Branch("theta3CM", &theta3CM_tree);
     double Eex_tree {};
     outTree->Branch("Eex", &Eex_tree);
+    double Eex_tree_side {};
+    outTree->Branch("Eex_side", &Eex_tree_side);
     double EexGateHeavy_tree {};
     outTree->Branch("EexGateHeavy", &EexGateHeavy_tree);
+    double EexGateHeavy_tree_side {};
+    outTree->Branch("EexGateHeavy_side", &EexGateHeavy_tree_side);
     double EVertex_tree {};
     outTree->Branch("EVertex", &EVertex_tree);
     double theta3Lab_tree {};
@@ -835,6 +839,14 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
             theta3Lab_tree = theta3Lab * TMath::RadToDeg();
             phi3CM_tree = phi3CM;
             weight_tree = weight;
+            if(layer0 == "l0" || layer0 == "r0")
+            {
+                Eex_tree_side = ExRec;
+                if(silIndexHeavy != -1)
+                {
+                    EexGateHeavy_tree_side = ExRec;
+                }
+            }
             if(silIndexHeavy != -1)
             {
                 EexGateHeavy_tree = ExRec;

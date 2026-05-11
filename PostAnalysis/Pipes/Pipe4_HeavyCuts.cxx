@@ -10,10 +10,8 @@
 #include "ROOT/TThreadedObject.hxx"
 
 #include "TCanvas.h"
-#include "TColor.h"
 #include "THStack.h"
 #include "TString.h"
-#include "TStyle.h"
 #include "TVirtualPad.h"
 
 #include <string>

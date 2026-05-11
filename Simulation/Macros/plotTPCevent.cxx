@@ -364,7 +364,8 @@ void plotTPCevent(double range = 120, double thetaDeg = 30, double phiDeg = -90)
     gRandom->SetSeed(0);
 
     // double chargeThreshold = thresholdPadCharge; // Threshold in electrons
-    double chargeThreshold = 0;
+    double chargeThreshold = 0; 
+    // double chargeThreshold = 4500000 / 40;
 
     auto* srim = new ActPhysics::SRIM;
     srim->ReadTable("light", "../../Calibrations/SRIM/1H_900mb_CF4_95-5.txt");

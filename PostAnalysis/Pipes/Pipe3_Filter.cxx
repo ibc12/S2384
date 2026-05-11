@@ -1,7 +1,5 @@
 #ifndef PIPE3_FILTER_H
 #define PIPE3_FILTER_H
-#include "ActCutsManager.h"
-#include "ActDataManager.h"
 #include "ActKinematics.h"
 #include "ActMergerData.h"
 #include "ActParticle.h"
@@ -161,7 +159,7 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
                      .Histo1D(HistConfig::Ex200, "Ex")};
     hExSil->SetTitle("Ex with silicons");
     auto hExL1 {dfFilter.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; }, {"MergerData"})
-                    .Histo1D(HistConfig::ExZoom, "Ex")};
+                    .Histo1D(HistConfig::Ex, "Ex")};
     hExL1->SetTitle("Ex with L1");
     auto file {std::make_shared<TFile>(outfile.Data(), "update")};
     hExSil->Write("hExSil");

@@ -17,10 +17,10 @@ void runnerL1(TString what = "simu", bool inspect = true)
     int protonPS {0};  // number of protons in final state
     bool isPS {neutronPS > 0 || protonPS > 0};
     // Particles
-    std::string beam {"11Li"};
+    std::string beam {"7Li"};
     std::string target {"2H"};
     std::string light {"2H"};
-    std::string heavy {"11Li"};
+    std::string heavy {"7Li"};
     // Beam energy
     double Tbeam {};
     if(beam == "7Li")
@@ -36,7 +36,8 @@ void runnerL1(TString what = "simu", bool inspect = true)
         else if(beam == "7Li")
             // Exs = {0,  0.981, 2.255, 3.210};
             // Exs = {5.400, 6.100, 6.530, 7.100};
-            Exs = {0, 0.981, 2.255, 3.210, 5.400, 6.100, 6.530, 7.100};
+            Exs = {0, 0.981, 2.255};
+            // Exs = {0, 0.981, 2.255, 3.210, 5.400, 6.100, 6.530, 7.100};
     }
 
     else if(neutronPS == 0 && protonPS == 0 && target == "2H" && light == "2H") // Elastic and Inelastic scattering

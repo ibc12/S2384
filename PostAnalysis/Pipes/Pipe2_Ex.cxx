@@ -1,7 +1,6 @@
 #ifndef Pipe2_Ex_cxx
 #define Pipe2_Ex_cxx
 
-#include "ActCutsManager.h"
 #include "ActKinematics.h"
 #include "ActMergerData.h"
 #include "ActParticle.h"
