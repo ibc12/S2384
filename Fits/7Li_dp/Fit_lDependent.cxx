@@ -41,11 +41,11 @@ void Fit_lDependent()
     inter.AddState("g1", {30, 0.98, sigma});
     inter.AddState("g2", {60, 2.2, sigma});
     inter.AddState("v0", {20, 3.2, sigma, 1});
-    inter.AddState("v1", {15, 4.1, sigma, 0.65});
-    inter.AddState("v2", {15, 5.4, sigma, 0.65});
-    inter.AddState("v3", {15, 6.1, sigma, 1});
-    inter.AddState("v4", {10, 6.5, sigma, 0.035});
-    inter.AddState("v5", {10, 7.1, sigma, 0.4});
+    // inter.AddState("v1", {15, 4.1, sigma, 0.65});
+    inter.AddState("v1", {15, 5.4, sigma, 0.65});
+    inter.AddState("v2", {15, 6.1, sigma, 1});
+    inter.AddState("v3", {10, 6.5, sigma, 0.035});
+    inter.AddState("v4", {10, 7.1, sigma, 0.4});
     inter.AddState("ps0", {1e-6}, "ps0");
     inter.EndAddingStates();
     inter.EvalSigma(sigmas.GetGraph());
@@ -56,12 +56,13 @@ void Fit_lDependent()
     inter.SetBounds("g0", 0, {10, 200});
     inter.SetBounds("g1", 0, {10, 100});
     inter.SetBounds("g2", 0, {10, 100});
+    inter.SetBounds("v0", 0, {20, 30});
     inter.SetBounds("v0", 3, {0.5, 1.5}); // gamma bounds
-    inter.SetBounds("v1", 3, {0.01, 1});
-    inter.SetBounds("v2", 3, {0.3, 1});
-    inter.SetBounds("v3", 3, {0.5, 1.5});
-    inter.SetBounds("v4", 3, {0.01, 0.1});
-    inter.SetBounds("v5", 3, {0.2, 0.8});
+    // inter.SetBounds("v1", 3, {0.01, 1});
+    inter.SetBounds("v1", 3, {0.3, 1});
+    inter.SetBounds("v2", 3, {0.5, 1.5});
+    inter.SetBounds("v3", 3, {0.01, 0.1});
+    inter.SetBounds("v4", 3, {0.2, 0.8});
 
     // Save to be used later
     inter.Write("./Outputs/interface.root");

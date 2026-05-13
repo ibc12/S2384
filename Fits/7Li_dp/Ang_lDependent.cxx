@@ -52,7 +52,7 @@ void Ang_lDependent(bool isLab = false)
 
     // Init fitter
     Angular::Fitter fitter {&ivs};
-    fitter.SetAllowFreeMean(true);
+    fitter.SetAllowFreeMean(false);
     // fitter.SetFreeMeanRange(0.1);
     fitter.Configure("./Outputs/fit_lDependent.root");
     double R {(std::pow(7, 1. / 3.) + std::pow(1, 1. / 3.)) * 1.25}; // interaction radius in fm, with r0 = 1.25 fm
