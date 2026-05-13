@@ -8,8 +8,6 @@
 #include "TMath.h"
 #include "TMultiGraph.h"
 
-#include "FitModel.h"
-
 #include <iostream>
 #include <vector>
 
@@ -180,8 +178,8 @@ void TestGammaConvolution()
     line_unity->SetLineStyle(2);
     line_unity->Draw();
 
-    c1->Update();
-    c1->SaveAs("test_gamma_convolution.pdf");
+    // c1->Update();
+    // c1->SaveAs("test_gamma_convolution.pdf");
 
     std::cout << "\n========================================" << std::endl;
     std::cout << "Test completed successfully!" << std::endl;
