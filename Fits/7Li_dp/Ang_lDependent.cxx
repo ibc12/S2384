@@ -41,8 +41,8 @@ void Ang_lDependent(bool isLab = false)
 
     // Init intervals
     double thetaMin {32};
-    double thetaMax {63};
-    double thetaStep {5};
+    double thetaMax {80};
+    double thetaStep {8};
     Angular::Intervals ivs {thetaMin, thetaMax, S2384Fit::Exdp_7Li, thetaStep, 1};
     def.Foreach([&](double thetacm, double ex) { ivs.Fill(thetacm, ex); }, {"ThetaCM", "Ex"});
     phase.Foreach([&](double thetacm, double ex, double weight) { ivs.FillPS(0, thetacm, ex, weight); },
@@ -57,7 +57,7 @@ void Ang_lDependent(bool isLab = false)
     fitter.Configure("./Outputs/fit_lDependent.root");
     double R {(std::pow(7, 1. / 3.) + std::pow(1, 1. / 3.)) * 1.25}; // interaction radius in fm, with r0 = 1.25 fm
     double mu {7 * 1. / (7 + 1) * 931.5};                            // reduced mass in MeV/c^2
-    fitter.ApplyLambdaToModels([mu, R](Fitters::Model& m) { m.AddGammaL(0, 2, 2.03262, mu, R); });
+    fitter.ApplyLambdaToModels([mu, R, &hEx](Fitters::Model& m) { m.AddBWL(0, 2, 2.03262, mu, R); });
     fitter.Run();
     fitter.Draw();
     fitter.DrawCounts();
