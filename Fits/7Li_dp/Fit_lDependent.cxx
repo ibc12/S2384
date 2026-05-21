@@ -75,9 +75,9 @@ void Fit_lDependent()
     Fitters::Model model {inter.GetNGauss(), inter.GetNVoigt(), {*hPS}};
     double R {(std::pow(7, 1. / 3.) + std::pow(1, 1. / 3.)) * 1.25}; // interaction radius in fm, with r0 = 1.25 fm
     double mu {7 * 1. / (7 + 1) * 931.5};                            // reduced mass in MeV/c^2
-    model.AddBWL(0, 1, 2.03262, mu, R); 
-    // model.AddGammaL(1, 1, 2.03262, mu, R, exmin, exmax);
-    // model.AddGammaL(2, 1, 2.03262, mu, R, exmin, exmax);
+    model.AddBWL(0, 2, 2.03262, mu, R); 
+    model.AddBWL(1, 1, 2.03262, mu, R);
+    model.AddBWL(2, 1, 2.03262, mu, R);
 
     // Run!
     Fitters::RunFit(hEx.GetPtr(), exmin, exmax, model, inter.GetInitial(), inter.GetBounds(), inter.GetFixed(),

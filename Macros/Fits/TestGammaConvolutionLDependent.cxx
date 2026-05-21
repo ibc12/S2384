@@ -90,12 +90,12 @@ double EvalCorrectConvolution(double x, double Er, double sigma, double Gamma0, 
                               std::function<double(double, double)>& gammaFunc)
 {
     // Integration settings
-    const int nPoints = 1500;
+    const int nPoints = 15000;
     const double nSigmas = 45.0;
 
     double xMin = -2;
     double xMax = 9;
-    double dx = 0.01;
+    double dx = 0.001;
 
     double result = 0.0;
 
@@ -157,7 +157,7 @@ double EvalRootConvolution(double x, double Er, double sigma, double Gamma0, dou
     fConv.SetRange(xMin, xMax);
 
     // Configurar número de puntos para FFT (más puntos = más precisión)
-    // fConv.SetNofPointsFFT(2000);
+    fConv.SetNofPointsFFT(20000);
 
     // Crear TF1 desde la convolución
     TF1 fResult(Form("fResult_temp_%d", call_counter), fConv, xMin, xMax, 0);
@@ -193,7 +193,7 @@ void TestGammaConvolutionLDependent()
 
     // Parámetros físicos para 7Li(d,p)
     double Sn = 2.03262;                                             // MeV - threshold energy
-    double Er = 2.4;                                                 // MeV - resonance energy (v1)
+    double Er = 2.2;                                                 // MeV - resonance energy (v1)
     double Gamma0 = 1;                                               // MeV - resonance width
     double sigma = 0.14;                                             // MeV - experimental resolution
     double mu = 7 * 1. / (7 + 1) * 931.5;                            // MeV/c^2 - reduced mass

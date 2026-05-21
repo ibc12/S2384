@@ -57,7 +57,7 @@ void Ang_lDependent(bool isLab = false)
     fitter.Configure("./Outputs/fit_lDependent.root");
     double R {(std::pow(7, 1. / 3.) + std::pow(1, 1. / 3.)) * 1.25}; // interaction radius in fm, with r0 = 1.25 fm
     double mu {7 * 1. / (7 + 1) * 931.5};                            // reduced mass in MeV/c^2
-    fitter.ApplyLambdaToModels([mu, R, &hEx](Fitters::Model& m) { m.AddBWL(0, 2, 2.03262, mu, R); });
+    fitter.ApplyLambdaToModels([mu, R](Fitters::Model& m) { m.AddBWL(0, 2, 2.03262, mu, R); });
     fitter.Run();
     fitter.Draw();
     fitter.DrawCounts();
@@ -106,13 +106,23 @@ void Ang_lDependent(bool isLab = false)
     inter.FillComp();
     inter.FitComp();
 
-    // Angular::Comparator comp {"g.s", xs.Get("g0")};
-    // comp.Add("ADWA", "./Inputs/gs/21.gs");
-    // comp.Add("DA1p-Delaroche", "./Inputs/gs_DA1p_Delaroche/21.g0");
-    // comp.Add("Daehnik-Delaroche", "./Inputs/gs_Daehnik_Delaroche/21.g0");
-    // comp.Add("DA1pcorr-Delaroche", "./Inputs/gs_DA1pcorr_Delaroche/21.gs");
-    // comp.Fit();
-    // comp.Draw("", true);
+    Angular::Comparator comp {"g.s", xs.Get("g0")};
+    comp.Add("ADWA", "./Inputs/gs/21.gs");
+    comp.Add("DA1p-Delaroche", "./Inputs/gs_DA1p_Delaroche/21.g0");
+    comp.Add("Daehnik-Delaroche", "./Inputs/gs_Daehnik_Delaroche/21.g0");
+    comp.Add("DA1pcorr-Delaroche", "./Inputs/gs_DA1pcorr_Delaroche/21.gs");
+    Angular::Comparator comp1 {"1st Ex", xs.Get("g1")};
+    comp1.Add("Daehnik-Delaroche 1st Ex", "./Inputs/g1_Daehnik_Delaroche/21.g1");
+    Angular::Comparator comp2 {"2nd Ex", xs.Get("g2")};
+    comp2.Add("Daehnik-Delaroche 2nd Ex", "./Inputs/g2_Daehnik_Delaroche/21.g2");
+    comp.Fit();
+    comp.Draw("gs", true);
+    comp.DrawTheo();
+    comp1.Fit();
+    comp1.Draw("1st", true);
+    comp2.Fit();
+    comp2.Draw("2nd", true);   
+    comp2.DrawTheo();
 
     auto* c0 {new TCanvas {"c0", "(d,p) canvas"}};
     c0->DivideSquare(2);
