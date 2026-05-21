@@ -42,7 +42,7 @@ void Ang_lDependent(bool isLab = false)
     // Init intervals
     double thetaMin {32};
     double thetaMax {80};
-    double thetaStep {8};
+    double thetaStep {5};
     Angular::Intervals ivs {thetaMin, thetaMax, S2384Fit::Exdp_7Li, thetaStep, 1};
     def.Foreach([&](double thetacm, double ex) { ivs.Fill(thetacm, ex); }, {"ThetaCM", "Ex"});
     phase.Foreach([&](double thetacm, double ex, double weight) { ivs.FillPS(0, thetacm, ex, weight); },
@@ -62,17 +62,10 @@ void Ang_lDependent(bool isLab = false)
     fitter.Draw();
     fitter.DrawCounts();
 
-    std::cout << "xd" << std::endl;
-
     // Interface
     Fitters::Interface inter;
     inter.Read("./Outputs/interface.root");
     auto peaks {inter.GetKeys()};
-    for(auto peak : peaks)
-    {
-        std::cout << "Peak: " << peak << std::endl;
-    }
-
 
     // Efficiency
     Interpolators::Efficiency eff;
@@ -110,19 +103,27 @@ void Ang_lDependent(bool isLab = false)
     comp.Add("ADWA", "./Inputs/gs/21.gs");
     comp.Add("DA1p-Delaroche", "./Inputs/gs_DA1p_Delaroche/21.g0");
     comp.Add("Daehnik-Delaroche", "./Inputs/gs_Daehnik_Delaroche/21.g0");
-    comp.Add("DA1pcorr-Delaroche", "./Inputs/gs_DA1pcorr_Delaroche/21.gs");
+    comp.Add("DA1pcorr-Delaroche", "./Inputs/gs_DA1pcorr_Delaroche/21.g0");
     Angular::Comparator comp1 {"1st Ex", xs.Get("g1")};
     comp1.Add("Daehnik-Delaroche 1st Ex", "./Inputs/g1_Daehnik_Delaroche/21.g1");
+    comp1.Add("DA1pcorr-Delaroche 1st Ex", "./Inputs/g1_DA1pcorr_Delaroche/21.g1");
     Angular::Comparator comp2 {"2nd Ex", xs.Get("g2")};
     comp2.Add("Daehnik-Delaroche 2nd Ex", "./Inputs/g2_Daehnik_Delaroche/21.g2");
+    comp2.Add("DA1pcorr-Delaroche 2nd Ex", "./Inputs/g2_DA1pcorr_Delaroche/21.g2");
+    Angular::Comparator comp3 {"3rd Ex", xs.Get("v0")};
+    comp3.Add("Daehnik-Delaroche 3rd Ex", "./Inputs/g3_Daehnik_Delaroche/21.g3");
+    comp3.Add("DA1pcorr-Delaroche 3rd Ex", "./Inputs/g3_DA1pcorr_Delaroche/21.g3");
     comp.Fit();
     comp.Draw("gs", true);
     comp.DrawTheo();
     comp1.Fit();
     comp1.Draw("1st", true);
     comp2.Fit();
-    comp2.Draw("2nd", true);   
+    comp2.Draw("2nd", true);
     comp2.DrawTheo();
+    comp3.Fit();
+    comp3.Draw("3rd", true);
+    comp3.DrawTheo();
 
     auto* c0 {new TCanvas {"c0", "(d,p) canvas"}};
     c0->DivideSquare(2);

@@ -53,9 +53,9 @@ void Fit_lDependent()
     inter.SetFix("v0", 3, true); // fix gamma of v0 to 1 (previous results)
     // inter.SetFixAll(3, true); // fix all gammas
     // inter.SetBoundsAll(2, {0.05, 0.3}); // sigma bounds
-    inter.SetBounds("g0", 0, {2, 200});
-    inter.SetBounds("g1", 0, {2, 100});
-    inter.SetBounds("g2", 0, {2, 100});
+    // inter.SetBounds("g0", 0, {2, 200});
+    // inter.SetBounds("g1", 0, {2, 100});
+    // inter.SetBounds("g2", 0, {2, 100});
     // inter.SetBounds("v0", 0, {20, 30});
     inter.SetBounds("v0", 3, {0.5, 1.5}); // gamma bounds
     inter.SetBounds("v1", 3, {0.01, 1});
