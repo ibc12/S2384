@@ -1,8 +1,12 @@
+#include "ActMergerData.h"
+
 #include "ROOT/RDataFrame.hxx"
 
 #include "TCanvas.h"
+#include "TColor.h"
 #include "TROOT.h"
 #include "TString.h"
+#include "TStyle.h"
 
 #include "AngComparator.h"
 #include "AngDifferentialXS.h"
@@ -13,16 +17,11 @@
 #include "Interpolators.h"
 #include "PhysExperiment.h"
 
-#include "ActMergerData.h"
-
 #include <string>
 #include <vector>
-#include "TStyle.h"
-#include "TColor.h"
-
-#include "../Histos.h"
 
 #include "../../PrettyStyle.C"
+#include "../Histos.h"
 
 void Ang()
 {
@@ -30,7 +29,8 @@ void Ang()
     ROOT::EnableImplicitMT();
 
     ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_11Li_d_d_filtered.root"};
-    auto def {df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})}; // only silicons, == false is for L1 events
+    auto def {df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; },
+                        {"MergerData"})}; // only silicons, == false is for L1 events
 
     // Book histograms
     auto hEx {def.Histo1D(S2384Fit::Exdd, "Ex")};
@@ -73,12 +73,12 @@ void Ang()
 
     // Plot
     Angular::Comparator comp {"g.s", xs.Get("g0")};
-    // comp.Add("Haixia", "./Inputs/gsH/fort.201");
-    // comp.Fit();
-    // comp.Add("Daehnick", "./Inputs/gsD/fort.201");
-    // comp.Fit();
-    // comp.Add("DA1p", "./Inputs/gsDA1p/fort.201");
-    // comp.Fit();
+    comp.Add("Haixia", "./Inputs/gsH/fort.201");
+    comp.Fit();
+    comp.Add("Daehnick", "./Inputs/gsD/fort.201");
+    comp.Fit();
+    comp.Add("DA1p", "./Inputs/gsDA1p/fort.201");
+    comp.Fit();
     comp.Draw("", true);
 
     auto* c0 {new TCanvas {"c0", "(d,d) canvas"}};

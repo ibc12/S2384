@@ -80,8 +80,8 @@ void Ang(bool isLab = false)
     //                                     : TString::Format("Inputs/effs/%s_7Li_dd_sil.root", peak.c_str());
     //     eff.Add(peak, inputPath.Data(), isLab ? "effLab" : "effCM");
     // }
-    eff.Add("g0", "../../Simulation/Outputs/7Li/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0.root", isLab ? "effLab" : "effCM");
-    eff.Add("g1", "../../Simulation/Outputs/7Li/2H_2H_TRIUMF_Eex_0.477_nPS_0_pPS_0.root", isLab ? "effLab" : "effCM");
+    eff.Add("g0", "../../Simulation/Outputs/7Li/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
+    eff.Add("g1", "../../Simulation/Outputs/7Li/2H_2H_TRIUMF_Eex_0.477_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
     // Draw to check is fine
     eff.Draw();
 
@@ -96,13 +96,13 @@ void Ang(bool isLab = false)
 
     // Plot
     Angular::Comparator comp {"g.s", xs.Get("g0")};
-    //comp.Add("Haixia", "./Inputs/gsH/fort.201");
-    //comp.Add("Daehnick", "./Inputs/gsD/fort.201");
-    //comp.Add("DA1p", "./Inputs/gsDA1p/fort.201");
-    comp.Add("DA1p", "./Inputs/gsDA1p_corr/fort.201");
+    comp.Add("Haixia", "./Inputs/gsH/fort.201");
+    comp.Add("Daehnick", "./Inputs/gsD/fort.201");
+    comp.Add("DA1p", "./Inputs/gsDA1p/fort.201");
+    comp.Add("DA1pcorr", "./Inputs/gsDA1p_corr/fort.201");
     Angular::Comparator comp1 {"1st Ex", xs.Get("g1")};
-    //comp1.Add("DA1p BE2 deformation", "./Inputs/g1_DA1p/fort.202");
-    comp1.Add("DA1p BE2 deformation", "./Inputs/g1_DA1p_corr/fort.202");
+    comp1.Add("DA1p BE2 deformation", "./Inputs/g1_DA1p/fort.202");
+    comp1.Add("DA1pcorr BE2 deformation", "./Inputs/g1_DA1p_corr/fort.202");
     // Plot
     if(isLab)
     {
@@ -128,14 +128,14 @@ void Ang(bool isLab = false)
     // Paper japones 14,7 MeV Ed
     TGraphErrors* gExp_14_7MeV_Ed {new TGraphErrors("./re-ana_exp_7MeVEd/Inputs/14-7MeVEd.dat", "%lg %lg")};
     Angular::Comparator comp2 {"g.s", gExp_14_7MeV_Ed};
-    comp2.Add("DA1p - data paper 14,7MeV", "./Inputs/gsDA1p/fort.201");
+    comp2.Add("DA1pcorr - data paper 14,7MeV", "./Inputs/gsDA1p_corr/fort.201");
     // comp2.Add("OMP paper - data paper 14,7MeV", "./Inputs/gsPaperJapones/fort.201");
     comp2.Fit();
     comp2.Draw("", true);
     // paper ruso 14,5 Ed
     TGraphErrors* gExp_14_5MeV_Ed_rus {new TGraphErrors("./re-ana_exp_7MeVEd/Inputs/14-5MeVEd.dat", "%lg %lg")};
     Angular::Comparator comp3 {"g.s", gExp_14_5MeV_Ed_rus};
-    comp3.Add("DA1p - data paper 14,5MeV", "./Inputs/gsDA1p/fort.201");
+    comp3.Add("DA1pcorr - data paper 14,5MeV", "./Inputs/gsDA1p_corr/fort.201");
     comp3.Fit();
     comp3.Draw("", true);
 
