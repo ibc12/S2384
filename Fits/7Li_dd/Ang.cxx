@@ -100,6 +100,7 @@ void Ang(bool isLab = false)
     comp.Add("Daehnick", "./Inputs/gsD/fort.201");
     comp.Add("DA1p", "./Inputs/gsDA1p/fort.201");
     comp.Add("DA1pcorr", "./Inputs/gsDA1p_corr/fort.201");
+    comp.Add("ADWA", "../7Li_dp/Inputs/gs_ADWA/fort.201");
     Angular::Comparator comp1 {"1st Ex", xs.Get("g1")};
     comp1.Add("DA1p BE2 deformation", "./Inputs/g1_DA1p/fort.202");
     comp1.Add("DA1pcorr BE2 deformation", "./Inputs/g1_DA1p_corr/fort.202");

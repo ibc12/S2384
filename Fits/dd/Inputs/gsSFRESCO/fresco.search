@@ -1,0 +1,25 @@
+'fresco.in' 'fresco.sout'
+6 1
+&variable kind=1 name='V'  kp=1 pline=2 col=1 potential=97.3435 valmin=10 valmax=500/
+&variable kind=1 name='rV' kp=1 pline=2 col=2 potential=1.03784 valmin=0.2 valmax=5/
+&variable kind=1 name='aV' kp=1 pline=2 col=3 potential=0.776 valmin=0.1 valmax=3/
+&variable kind=1 name='WD' kp=1 pline=2 col=4 potential=1.25758 valmin=0.5 valmax=500/
+&variable kind=1 name='rD' kp=1 pline=2 col=5 potential=1.93014 valmin=0.4 valmax=5/
+&variable kind=1 name='aD' kp=1 pline=2 col=6 potential=0.776 valmin=0.1 valmax=3/
+&data iscale=2 idir=0 lab=F abserr=T energy=14.74376 /
+31  35.4867  1.25793
+33  21.1947  0.950691
+35  8.54933  0.593023
+37  4.04247  0.403002
+39  2.19378  0.293459
+41  2.58994  0.315844
+43  4.10644  0.402537
+45  6.64084  0.516207
+47  5.77737  0.470788
+49  7.4628  0.533855
+51  8.35804  0.563102
+53  7.48594  0.531865
+55  5.59787  0.459449
+57  4.47462  0.411858
+59  3.55626  0.371262
+&

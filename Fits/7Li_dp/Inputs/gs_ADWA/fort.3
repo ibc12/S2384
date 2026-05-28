@@ -35,7 +35,7 @@
  NAMEP='PROTON  ',
  MASSP=  1.00730002    ,
  ZP=  1.00000000    ,
- NEX=2          ,
+ NEX=3          ,
  PWF=T,
  NAMET='Li8     ',
  MASST=  8.02083969    ,
@@ -78,6 +78,27 @@
  PTYT=1          ,
  BANDT=1          ,
  ET= 0.980000019    ,
+ KKT=  0.00000000    ,
+ TT=  0.00000000    ,
+ FEXCH=F,
+ IGNORE=F,
+ INFAM=0          ,
+ OUTFAM=0          ,
+ /
+&STATES
+ JP= 0.500000000    ,
+ COPYP=0          ,
+ PTYP=1          ,
+ BANDP=1          ,
+ EP=  0.00000000    ,
+ KKP=  0.00000000    ,
+ TP=  0.00000000    ,
+ CPOT=6          ,
+ JT=  1.00000000    ,
+ COPYT=0          ,
+ PTYT=1          ,
+ BANDT=1          ,
+ ET=  2.25500011    ,
  KKT=  0.00000000    ,
  TT=  0.00000000    ,
  FEXCH=F,
@@ -184,6 +205,58 @@
  NOSUB=F,
  SHAPEI=0          ,
  P=  0.00000000    ,  5.49579000    , 0.861899972    , 0.589999974    , -4.62208986E-02,
+  0.861899972    , 0.589999974    , 2*0.00000000      ,
+ LSHAPEI=0          ,
+ JL=' ',
+ XLVARY=  0.0000000000000000     ,
+ ALVARY=  0.0000000000000000     ,
+ /
+&POTL
+ KPI=6          ,
+ TYPEI=0          ,
+ ITT=F,
+ NOSUB=F,
+ SHAPEI=0          ,
+ P=  0.00000000    ,  8.00000000    ,  0.00000000    ,  1.77830994    , 5*0.00000000      ,
+ 
+ LSHAPEI=0          ,
+ JL=' ',
+ XLVARY=  0.0000000000000000     ,
+ ALVARY=  0.0000000000000000     ,
+ /
+&POTL
+ KPI=6          ,
+ TYPEI=1          ,
+ ITT=F,
+ NOSUB=F,
+ SHAPEI=0          ,
+ P=  0.00000000    ,  56.9967003    ,  1.10119998    , 0.676609993    , 0.841130972    ,
+   1.10119998    , 0.676609993    , 2*0.00000000      ,
+ LSHAPEI=0          ,
+ JL=' ',
+ XLVARY=  0.0000000000000000     ,
+ ALVARY=  0.0000000000000000     ,
+ /
+&POTL
+ KPI=6          ,
+ TYPEI=2          ,
+ ITT=F,
+ NOSUB=F,
+ SHAPEI=0          ,
+ P= 4*0.00000000      ,  9.61614037    ,  1.31070006    , 0.522863984    , 2*0.00000000      ,
+ 
+ LSHAPEI=0          ,
+ JL=' ',
+ XLVARY=  0.0000000000000000     ,
+ ALVARY=  0.0000000000000000     ,
+ /
+&POTL
+ KPI=6          ,
+ TYPEI=3          ,
+ ITT=F,
+ NOSUB=F,
+ SHAPEI=0          ,
+ P=  0.00000000    ,  5.52746010    , 0.861899972    , 0.589999974    , -3.98025997E-02,
   0.861899972    , 0.589999974    , 2*0.00000000      ,
  LSHAPEI=0          ,
  JL=' ',
@@ -411,7 +484,7 @@
  BE=  2.03270006    ,
  ISC=1          ,
  IPC=4          ,
- NFL=-22        ,
+ NFL=0          ,
  NAM=0          ,
  AMPL=  0.00000000    ,
  KEEP=F,
@@ -446,13 +519,48 @@
  BE=  1.05270004    ,
  ISC=1          ,
  IPC=4          ,
- NFL=-22        ,
+ NFL=0          ,
  NAM=0          ,
  AMPL=  0.00000000    ,
  KEEP=F,
  DM=  1.0064816474914551     ,
  NK=0          ,
  ER=  0.00000000    ,
+ E=  0.0000000000000000     ,
+ RSMIN=  0.0000000000000000     ,
+ RSMAX=  30.000000000000000     ,
+ RSALPHA=  0.0000000000000000     ,
+ NLAG=0          ,
+ PHASE=  0.0000000000000000     ,
+ AUTOWID=  0.00000000    ,
+ /
+&OVERLAP
+ KN1=5          ,
+ KN2=5          ,
+ IC1=1          ,
+ IC2=2          ,
+ IN=2          ,
+ KIND=0          ,
+ CH1=' ',
+ NN=1          ,
+ L=1          ,
+ LMAX=0          ,
+ SN= 0.500000000    ,
+ IA=0          ,
+ J=  1.50000000    ,
+ IB=0          ,
+ KBPOT=3          ,
+ KRPOT=0          ,
+ BE=-0.222299993    ,
+ ISC=4          ,
+ IPC=3          ,
+ NFL=0          ,
+ NAM=1          ,
+ AMPL=  1.00000000    ,
+ KEEP=F,
+ DM=  1.0064816474914551     ,
+ NK=100        ,
+ ER= -5.00000007E-02,
  E=  0.0000000000000000     ,
  RSMIN=  0.0000000000000000     ,
  RSMAX=  30.000000000000000     ,
@@ -497,10 +605,18 @@
  KEEP=F,
  /
 &CFP
- IN=-2         ,
+ IN=2          ,
  IB=2          ,
  IA=1          ,
  KN=4          ,
+ A=  1.00000000    ,
+ KEEP=F,
+ /
+&CFP
+ IN=-2         ,
+ IB=3          ,
+ IA=1          ,
+ KN=5          ,
  A=  1.00000000    ,
  KEEP=F,
  /
@@ -509,17 +625,17 @@
 
 
  parameters:    mxx    mxp  mxpex  maxit maxcpl maxnnu 
-   required:      2      2      4      0      1     48
+   required:      3      2      5      0      1     48
 
  parameters:   maxn  mint  maxnln maxnlo    msp  lmax1  mpair
-   required:    302    301    302     46      4     60      1
+   required:    302    301    302     46      5     90      1
 
  parameters:     mloc   mclist   maxqrn
-   required:       29        7        8
+   required:       37        7       12
 
 
  parameters:     mloc   mclist   maxqrn
-   required:       29        7        8
+   required:       37        7       12
 
 
 7Li(d,p) @ 7.5AMeV ADWA (d) + KD (p)                                            
@@ -544,7 +660,7 @@ NAMELIST
  SINJMAX=  0.0000000000000000     ,
  PLANE=0          ,
  JTMIN=  0.0000000000000000     ,
- JTMAX=  40.000000000000000     ,
+ JTMAX=  70.000000000000000     ,
  ABSEND=-0.10000000000000001     ,
  DRY=F,
  RELA=' ',
@@ -573,7 +689,7 @@ NAMELIST
  PSIREN=F,
  ISO=' ',
  NNU=48         ,
- MAXL=46         ,
+ MAXL=76         ,
  MINL=0          ,
  MTMIN=6          ,
  EPC= 0.39062500000000000     ,

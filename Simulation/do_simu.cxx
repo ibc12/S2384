@@ -91,7 +91,7 @@ void ApplyNaN(double& e, double t = 0, const std::string& comment = "stopped")
 
 void ApplyThetaRes(double& theta)
 {
-    double sigma {1.5 / 2.355}; // FWHM to sigma
+    double sigma {1.65 / 2.355}; // FWHM to sigma
     theta = gRandom->Gaus(theta, sigma * TMath::DegToRad());
 }
 
@@ -180,14 +180,24 @@ bool GetXS(const std::string& target, const std::string& light, const std::strin
         if(Ex == 0.)
         {
             isThereXS = true;
-            TString data_to_read {TString::Format("./Inputs/xs/%s/dd/elastic.dat", beam.c_str())};
+            TString data_to_read {TString::Format("./Inputs/xs/%s/dd/elastic_DA1pcorr.dat", beam.c_str())};
             xs->ReadFile(data_to_read.Data());
             std::cout << "Total xs: " << xs->GetTotalXSmbarn() << std::endl;
         }
         else if(Ex == 0.477)
         {
             isThereXS = true;
-            TString data_to_read {TString::Format("./Inputs/xs/%s/dd/g1.dat", beam.c_str())};
+            TString data_to_read {TString::Format("./Inputs/xs/%s/dd/inelatic_g1_DA1p_nocorr.dat", beam.c_str())};
+            xs->ReadFile(data_to_read.Data());
+            std::cout << "Total xs: " << xs->GetTotalXSmbarn() << std::endl;
+        }
+    }
+    else if(target == "2H" && light == "1H" && beam == "7Li")
+    {
+        if(Ex == 0.)
+        {
+            isThereXS = true;
+            TString data_to_read {TString::Format("./Inputs/xs/%s/dp/gs_ADWA.dat", beam.c_str())};
             xs->ReadFile(data_to_read.Data());
             std::cout << "Total xs: " << xs->GetTotalXSmbarn() << std::endl;
         }
@@ -228,7 +238,7 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     // Set whether is PS or not
     bool isPS {(neutronPS > 0) || (protonPS > 0)};
     // Set number of iterations
-    const int niter {static_cast<int>(inspect ? 1e5 : (isPS ? 3e7 : 1e8))};
+    const int niter {static_cast<int>(inspect ? 1e6 : (isPS ? 3e7 : 1e7))};
     gRandom->SetSeed(0);
     // Runner: contains utility functions to execute multiple actions as rotate directions
     ActSim::Runner runner(nullptr, nullptr, gRandom, 0);
@@ -484,7 +494,7 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         tag = "_" + std::to_string(thread);
 
     // File to save data
-    TString fileName {TString::Format("./Outputs/%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s.root", beam.c_str(),
+    TString fileName {TString::Format("./Outputs/%s/test_ang_straggling/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s_1-65AngStr.root", beam.c_str(),
                                       target.c_str(), light.c_str(), Ex, neutronPS, protonPS, tag.c_str())};
     auto outFile {new TFile(fileName, inspect ? "read" : "recreate")};
     auto* outTree {new TTree("SimulationTTree", "A TTree containing only our Eex obtained by simulation")};

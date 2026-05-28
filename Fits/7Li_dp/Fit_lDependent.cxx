@@ -35,7 +35,7 @@ void Fit_lDependent()
 
     // Interface to fit
     Fitters::Interface inter;
-    double sigma {0.14}; // common init sigma for all
+    double sigma {0.135}; // common init sigma for all
     double gamma {0.05}; // common init gamma for all voigts
     inter.AddState("g0", {100, 0, sigma});
     inter.AddState("g1", {30, 0.98, sigma});
@@ -45,11 +45,12 @@ void Fit_lDependent()
     inter.AddState("v2", {15, 5.4, sigma, 0.65});
     inter.AddState("v3", {15, 6.1, sigma, 1});
     inter.AddState("v4", {10, 6.5, sigma, 0.035});
-    inter.AddState("v5", {10, 7.1, sigma, 0.4});
+    inter.AddState("v5", {5, 7.1, sigma, 0.4});
     inter.AddState("ps0", {1e-6}, "ps0");
     inter.EndAddingStates();
     inter.EvalSigma(sigmas.GetGraph());
     inter.SetFixAll(2, true);    // fix all sigmas
+    // inter.SetBoundsAll(2, {0.01,0.3}); // sigma bounds
     inter.SetFix("v0", 3, true); // fix gamma of v0 to 1 (previous results)
     // inter.SetFixAll(3, true); // fix all gammas
     // inter.SetBoundsAll(2, {0.05, 0.3}); // sigma bounds
@@ -62,7 +63,7 @@ void Fit_lDependent()
     inter.SetBounds("v2", 3, {0.3, 1});
     inter.SetBounds("v3", 3, {0.5, 1.5});
     inter.SetBounds("v4", 3, {0.01, 0.1});
-    inter.SetBounds("v5", 3, {0.2, 0.8});
+    inter.SetBounds("v5", 3, {0.1, 0.8});
 
     // Save to be used later
     inter.Write("./Outputs/interface.root");
@@ -75,9 +76,9 @@ void Fit_lDependent()
     Fitters::Model model {inter.GetNGauss(), inter.GetNVoigt(), {*hPS}};
     double R {(std::pow(7, 1. / 3.) + std::pow(1, 1. / 3.)) * 1.25}; // interaction radius in fm, with r0 = 1.25 fm
     double mu {7 * 1. / (7 + 1) * 931.5};                            // reduced mass in MeV/c^2
-    model.AddBWL(0, 2, 2.03262, mu, R); 
-    model.AddBWL(1, 1, 2.03262, mu, R);
-    model.AddBWL(2, 1, 2.03262, mu, R);
+    model.AddBWL(0, 1, 2.03262, mu, R); 
+    // model.AddBWL(1, 1, 2.03262, mu, R);
+    // model.AddBWL(2, 1, 2.03262, mu, R);
 
     // Run!
     Fitters::RunFit(hEx.GetPtr(), exmin, exmax, model, inter.GetInitial(), inter.GetBounds(), inter.GetFixed(),

@@ -25,7 +25,7 @@
 
 void Ang()
 {
-    PrettyStyle(false);
+    PrettyStyle(false, false);
     ROOT::EnableImplicitMT();
 
     ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_11Li_d_d_filtered.root"};
@@ -60,7 +60,7 @@ void Ang()
 
     // Efficiency
     Interpolators::Efficiency eff;
-    eff.Add("g0", "../../Simulation/Outputs/11Li/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0.root", "effCM");
+    eff.Add("g0", "../../Simulation/Outputs/11Li/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0.root", "effCMside");
     // Draw to check is fine
     eff.Draw();
 
@@ -73,13 +73,14 @@ void Ang()
 
     // Plot
     Angular::Comparator comp {"g.s", xs.Get("g0")};
-    comp.Add("Haixia", "./Inputs/gsH/fort.201");
-    comp.Fit();
-    comp.Add("Daehnick", "./Inputs/gsD/fort.201");
-    comp.Fit();
+    comp.Add("SFRESCO", "./Inputs/gsSFRESCO/fort.201");
+    // comp.Add("Haixia", "./Inputs/gsH/fort.201");
+    // comp.Fit();
+    // comp.Add("Daehnick", "./Inputs/gsD/fort.201");
+    // comp.Fit();
     comp.Add("DA1p", "./Inputs/gsDA1p/fort.201");
     comp.Fit();
-    comp.Draw("", true);
+    comp.Draw("", true, false);
 
     auto* c0 {new TCanvas {"c0", "(d,d) canvas"}};
     c0->DivideSquare(2);

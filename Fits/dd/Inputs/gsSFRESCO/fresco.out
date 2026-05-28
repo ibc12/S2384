@@ -1,0 +1,11 @@
+ FRESCO - FRES 3.4: Coupled Reaction Channels
+
+ 'fresco.in' 'fresco.out'                                                        
+
+   0.041   0.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000
+
+ Centre-of-mass Range is      2 * 0.0410 fm., Maximum at   0.00 fm., Interpolating NL forms every  0.16 fm.
+ Non - locality width is      4 * 0.0410 fm., Maximum of   0.12 fm., Centred at  0.00 fm.
+ 2-Nucleon Separation of      0 * 0.1640 fm., Maximum of   0.00 fm., Minimum at  0.00 fm.
+ Maximum single particle bins of  0.0000 fm.
+               M,Mint =            1           1

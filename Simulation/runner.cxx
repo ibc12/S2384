@@ -7,20 +7,21 @@
 #include <unordered_map>
 #include <vector>
 
+#include "./GetSigma.cxx"
 #include "./do_simu.cxx"
 #include "./plotter.cxx"
 
 void runner(TString what = "simu", bool inspect = true)
 {
     // Neutron and Proton phase space
-    int neutronPS {3}; // number of neutrons in final state
+    int neutronPS {0}; // number of neutrons in final state
     int protonPS {0};  // number of protons in final state
     bool isPS {neutronPS > 0 || protonPS > 0};
     // Particles
-    std::string beam {"11Li"};
+    std::string beam {"7Li"};
     std::string target {"2H"};
-    std::string light {"1H"};
-    std::string heavy {"12Li"};
+    std::string light {"2H"};
+    std::string heavy {"7Li"};
     // Beam energy
     double Tbeam {};
     if(beam == "7Li")
@@ -45,7 +46,7 @@ void runner(TString what = "simu", bool inspect = true)
         if(beam == "11Li")
             Exs = {0};
         else if(beam == "7Li")
-            Exs = {0, 0.477};
+            Exs = {0, 0.477, 2.5, 5.0};
     }
     else if(target == "2H" && light == "3H") // dt (only g.s)
         Exs = {0, 1, 2, 3};
@@ -85,9 +86,9 @@ void runner(TString what = "simu", bool inspect = true)
                 for(int i = 1; i <= nthreads; i++)
                 {
                     auto str {TString::Format(
-                        "root -l -b -q -x 'do_simu.cxx(\"%s\",\"%s\",\"%s\",\"%s\",%d,%d,%f,%f,%d,%d)\'",
-                        beam.c_str(), target.c_str(), light.c_str(), heavy.c_str(), neutronPS, protonPS, Tbeam,
-                        Exs.front(), inspect, i)};
+                        "root -l -b -q -x 'do_simu.cxx(\"%s\",\"%s\",\"%s\",\"%s\",%d,%d,%f,%f,%d,%d)\'", beam.c_str(),
+                        target.c_str(), light.c_str(), heavy.c_str(), neutronPS, protonPS, Tbeam, Exs.front(), inspect,
+                        i)};
                     haddlist += TString::Format("./Outputs/%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_%s.root",
                                                 beam.c_str(), target.c_str(), light.c_str(), Exs.front(), neutronPS,
                                                 protonPS, std::to_string(i).c_str()) +
@@ -99,9 +100,9 @@ void runner(TString what = "simu", bool inspect = true)
             {
                 for(const auto& ex : Exs)
                 {
-                    auto str = TString::Format("root -l -b -q -x 'do_simu.cxx(\"%s\",\"%s\",\"%s\",\"%s\",%d,%d,%f,%f,%d)'",
-                                               beam.c_str(), target.c_str(), light.c_str(), heavy.c_str(), neutronPS,
-                                               protonPS, Tbeam, ex, inspect);
+                    auto str = TString::Format(
+                        "root -l -b -q -x 'do_simu.cxx(\"%s\",\"%s\",\"%s\",\"%s\",%d,%d,%f,%f,%d)'", beam.c_str(),
+                        target.c_str(), light.c_str(), heavy.c_str(), neutronPS, protonPS, Tbeam, ex, inspect);
                     threads.emplace_back(std::thread {worker, str});
                 }
             }
@@ -123,6 +124,10 @@ void runner(TString what = "simu", bool inspect = true)
     else if(what.Contains("plot"))
     {
         Plotter(Exs, beam, target, light, Tbeam, neutronPS, protonPS);
+    }
+    else if(what.Contains("sigma"))
+    {
+        GetSigma(beam, light, target, Exs, neutronPS, protonPS);
     }
     else
     {

@@ -42,7 +42,7 @@ void Ang_lDependent(bool isLab = false)
     // Init intervals
     double thetaMin {32};
     double thetaMax {80};
-    double thetaStep {5};
+    double thetaStep {7.5};
     Angular::Intervals ivs {thetaMin, thetaMax, S2384Fit::Exdp_7Li, thetaStep, 1};
     def.Foreach([&](double thetacm, double ex) { ivs.Fill(thetacm, ex); }, {"ThetaCM", "Ex"});
     phase.Foreach([&](double thetacm, double ex, double weight) { ivs.FillPS(0, thetacm, ex, weight); },
@@ -69,15 +69,24 @@ void Ang_lDependent(bool isLab = false)
 
     // Efficiency
     Interpolators::Efficiency eff;
-    eff.Add("g0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
-    eff.Add("g1", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.981_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
-    eff.Add("g2", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_2.255_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
-    eff.Add("v0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_3.210_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
-    eff.Add("v1", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_5.400_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
-    eff.Add("v2", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_6.100_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
-    eff.Add("v3", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_6.530_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
-    eff.Add("v4", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_7.100_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
-    eff.Add("v5", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_7.100_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
+    eff.Add("g0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0.root",
+            isLab ? "effLabside" : "effCMside");
+    eff.Add("g1", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.981_nPS_0_pPS_0.root",
+            isLab ? "effLabside" : "effCMside");
+    eff.Add("g2", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_2.255_nPS_0_pPS_0.root",
+            isLab ? "effLabside" : "effCMside");
+    eff.Add("v0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_3.210_nPS_0_pPS_0.root",
+            isLab ? "effLabside" : "effCMside");
+    eff.Add("v1", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_4.100_nPS_0_pPS_0.root",
+            isLab ? "effLabside" : "effCMside");
+    eff.Add("v2", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_5.400_nPS_0_pPS_0.root",
+            isLab ? "effLabside" : "effCMside");
+    eff.Add("v3", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_6.100_nPS_0_pPS_0.root",
+            isLab ? "effLabside" : "effCMside");
+    eff.Add("v4", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_6.530_nPS_0_pPS_0.root",
+            isLab ? "effLabside" : "effCMside");
+    eff.Add("v5", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_7.100_nPS_0_pPS_0.root",
+            isLab ? "effLabside" : "effCMside");
     // eff.Add("ps0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.000_nPS_1_pPS_0.root", isLab ? "effLab" :
     // "effCM");
     //  eff.Add("g1", "./Inputs/effs/g1_7Li_dp_sil.root", "effCM");
@@ -102,28 +111,29 @@ void Ang_lDependent(bool isLab = false)
     Angular::Comparator comp {"g.s", xs.Get("g0")};
     comp.Add("ADWA", "./Inputs/gs_ADWA/fort.202");
     comp.Add("ADWA twofnr", "./Inputs/gs_ADWA/21.gs");
-    comp.Add("ADWA finite range", "./Inputs/gs_ADWA_FiniteRange/fort.202");
+    // comp.Add("ADWA finite range", "./Inputs/gs_ADWA_FiniteRange/fort.202");
     // comp.Add("DA1p-Delaroche", "./Inputs/gs_DA1p_Delaroche/21.g0");
-    comp.Add("Daehnik-Delaroche", "./Inputs/gs_Daehnik_Delaroche/21.g0");
-    // comp.Add("DA1pcorr-Delaroche", "./Inputs/gs_DA1pcorr_Delaroche/21.g0");
+    // comp.Add("Daehnik-Delaroche", "./Inputs/gs_Daehnik_Delaroche/21.g0");
+    comp.Add("DA1pcorr-Delaroche", "./Inputs/gs_DA1pcorr_Delaroche/21.g0");
     Angular::Comparator comp1 {"1st Ex", xs.Get("g1")};
     comp1.Add("Daehnik-Delaroche 1st Ex", "./Inputs/g1_Daehnik_Delaroche/21.g1");
     comp1.Add("DA1pcorr-Delaroche 1st Ex", "./Inputs/g1_DA1pcorr_Delaroche/21.g1");
     comp1.Add("ADWA 1st Ex", "./Inputs/gs_ADWA/fort.203");
-    // Angular::Comparator comp2 {"2nd Ex", xs.Get("g2")};
-    // comp2.Add("Daehnik-Delaroche 2nd Ex", "./Inputs/g2_Daehnik_Delaroche/21.g2");
-    // comp2.Add("DA1pcorr-Delaroche 2nd Ex", "./Inputs/g2_DA1pcorr_Delaroche/21.g2");
-    // Angular::Comparator comp3 {"3rd Ex", xs.Get("v0")};
-    // comp3.Add("Daehnik-Delaroche 3rd Ex", "./Inputs/g3_Daehnik_Delaroche/21.g3");
-    // comp3.Add("DA1pcorr-Delaroche 3rd Ex", "./Inputs/g3_DA1pcorr_Delaroche/21.g3");
+    Angular::Comparator comp2 {"2nd Ex", xs.Get("g2")};
+    comp2.Add("Daehnik-Delaroche 2nd Ex", "./Inputs/g2_Daehnik_Delaroche/21.g2");
+    comp2.Add("DA1pcorr-Delaroche 2nd Ex", "./Inputs/g2_DA1pcorr_Delaroche/21.g2");
+    comp2.Add("ADWA 2nd Ex", "./Inputs/gs_ADWA/fort.204");
+    Angular::Comparator comp3 {"3rd Ex", xs.Get("v0")};
+    comp3.Add("Daehnik-Delaroche 3rd Ex", "./Inputs/g3_Daehnik_Delaroche/21.g3");
+    comp3.Add("DA1pcorr-Delaroche 3rd Ex", "./Inputs/g3_DA1pcorr_Delaroche/21.g3");
     comp.Fit();
     comp.Draw("gs", true);
     comp.DrawTheo();
     comp1.Fit();
     comp1.Draw("1st", true);
     // comp1.DrawTheo();
-    // comp2.Fit();
-    // comp2.Draw("2nd", true);
+    comp2.Fit();
+    comp2.Draw("2nd", true);
     // comp2.DrawTheo();
     // comp3.Fit();
     // comp3.Draw("3rd", true);
