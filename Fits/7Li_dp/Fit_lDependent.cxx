@@ -31,12 +31,18 @@ void Fit_lDependent()
 
     // Sigmas
     Interpolators::Sigmas sigmas;
-    sigmas.Read("../../Simulation/Outputs/7Li/sigmas_7Li_2H_1H.root");
+    // sigmas.Read("../../Simulation/Outputs/7Li/sigmas_7Li_2H_1H.root");
+    // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_1H_1-25AngStr.root");
+    // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_1H_1-3AngStr.root");
+    // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_1H_1-35AngStr.root");
+    sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_1H_1-4AngStr.root");
+    // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_1H_1-45AngStr.root");
+    // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_1H_1-5AngStr.root");
 
     // Interface to fit
     Fitters::Interface inter;
     double sigma {0.135}; // common init sigma for all
-    double gamma {0.05}; // common init gamma for all voigts
+    double gamma {0.05};  // common init gamma for all voigts
     inter.AddState("g0", {100, 0, sigma});
     inter.AddState("g1", {30, 0.98, sigma});
     inter.AddState("g2", {60, 2.2, sigma});
@@ -49,7 +55,7 @@ void Fit_lDependent()
     inter.AddState("ps0", {1e-6}, "ps0");
     inter.EndAddingStates();
     inter.EvalSigma(sigmas.GetGraph());
-    inter.SetFixAll(2, true);    // fix all sigmas
+    inter.SetFixAll(2, true); // fix all sigmas
     // inter.SetBoundsAll(2, {0.01,0.3}); // sigma bounds
     inter.SetFix("v0", 3, true); // fix gamma of v0 to 1 (previous results)
     // inter.SetFixAll(3, true); // fix all gammas
@@ -76,7 +82,7 @@ void Fit_lDependent()
     Fitters::Model model {inter.GetNGauss(), inter.GetNVoigt(), {*hPS}};
     double R {(std::pow(7, 1. / 3.) + std::pow(1, 1. / 3.)) * 1.25}; // interaction radius in fm, with r0 = 1.25 fm
     double mu {7 * 1. / (7 + 1) * 931.5};                            // reduced mass in MeV/c^2
-    model.AddBWL(0, 1, 2.03262, mu, R); 
+    model.AddBWL(0, 1, 2.03262, mu, R);
     // model.AddBWL(1, 1, 2.03262, mu, R);
     // model.AddBWL(2, 1, 2.03262, mu, R);
 

@@ -91,7 +91,7 @@ void ApplyNaN(double& e, double t = 0, const std::string& comment = "stopped")
 
 void ApplyThetaRes(double& theta)
 {
-    double sigma {1.65 / 2.355}; // FWHM to sigma
+    double sigma {1.4 / 2.355}; // FWHM to sigma
     theta = gRandom->Gaus(theta, sigma * TMath::DegToRad());
 }
 
@@ -198,6 +198,13 @@ bool GetXS(const std::string& target, const std::string& light, const std::strin
         {
             isThereXS = true;
             TString data_to_read {TString::Format("./Inputs/xs/%s/dp/gs_ADWA.dat", beam.c_str())};
+            xs->ReadFile(data_to_read.Data());
+            std::cout << "Total xs: " << xs->GetTotalXSmbarn() << std::endl;
+        }
+        else if(Ex == 0.981)
+        {
+            isThereXS = true;
+            TString data_to_read {TString::Format("./Inputs/xs/%s/dp/g1_ADWA.dat", beam.c_str())};
             xs->ReadFile(data_to_read.Data());
             std::cout << "Total xs: " << xs->GetTotalXSmbarn() << std::endl;
         }
@@ -494,7 +501,7 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         tag = "_" + std::to_string(thread);
 
     // File to save data
-    TString fileName {TString::Format("./Outputs/%s/test_ang_straggling/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s_1-65AngStr.root", beam.c_str(),
+    TString fileName {TString::Format("./Outputs/%s/test_ang_straggling/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s_1-4AngStr.root", beam.c_str(),
                                       target.c_str(), light.c_str(), Ex, neutronPS, protonPS, tag.c_str())};
     auto outFile {new TFile(fileName, inspect ? "read" : "recreate")};
     auto* outTree {new TTree("SimulationTTree", "A TTree containing only our Eex obtained by simulation")};

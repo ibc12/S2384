@@ -41,7 +41,7 @@ void Ang_lDependent(bool isLab = false)
 
     // Init intervals
     double thetaMin {32};
-    double thetaMax {80};
+    double thetaMax {80}; // It was 80
     double thetaStep {7.5};
     Angular::Intervals ivs {thetaMin, thetaMax, S2384Fit::Exdp_7Li, thetaStep, 1};
     def.Foreach([&](double thetacm, double ex) { ivs.Fill(thetacm, ex); }, {"ThetaCM", "Ex"});
@@ -115,6 +115,13 @@ void Ang_lDependent(bool isLab = false)
     // comp.Add("DA1p-Delaroche", "./Inputs/gs_DA1p_Delaroche/21.g0");
     // comp.Add("Daehnik-Delaroche", "./Inputs/gs_Daehnik_Delaroche/21.g0");
     comp.Add("DA1pcorr-Delaroche", "./Inputs/gs_DA1pcorr_Delaroche/21.g0");
+    // comp.Add("DA1pcorr-Delaroche tweakPar", "./Inputs/gs_DA1pcorr_Delaroche_tweakPar/21.g0");
+    // comp.Add("DA1pcorr-JLMmicroscopic (fermi)", "./Inputs/gs_DA1pcorr_JLMmicroscopic/21.g0");
+    // comp.Add("DA1pcorr-JLMmicroscopic (oscillator)", "./Inputs/gs_DA1pcorr_JLMmicroscopic_other/21.g0");
+    // comp.Add("DA1pcorr-Perey", "./Inputs/gs_DA1pcorr_Perey/21.g0");
+    // comp.Add("DA1pcorr-CH89", "./Inputs/gs_DA1pcorr_CH89/21.g0");
+    // comp.Add("DA1pcorr-Becheti", "./Inputs/gs_DA1pcorr_Bechetti/21.g0");
+    // comp.Add("DA1pcorr-Menet", "./Inputs/gs_DA1pcorr_Menet/21.g0");
     Angular::Comparator comp1 {"1st Ex", xs.Get("g1")};
     comp1.Add("Daehnik-Delaroche 1st Ex", "./Inputs/g1_Daehnik_Delaroche/21.g1");
     comp1.Add("DA1pcorr-Delaroche 1st Ex", "./Inputs/g1_DA1pcorr_Delaroche/21.g1");
@@ -145,4 +152,12 @@ void Ang_lDependent(bool isLab = false)
     hEx->DrawClone();
     c0->cd(2);
     hCM->DrawClone("colz");
+
+    double chi2Intervals {};
+    for(const auto& result : fitter.GetTFitResults())
+    {
+        // Process fit results
+        chi2Intervals += result.Chi2();
+    }
+    std::cout << "Total chi2: " << chi2Intervals / fitter.GetTFitResult(0).Ndf() << "\n";
 }

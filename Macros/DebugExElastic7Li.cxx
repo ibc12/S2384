@@ -13,19 +13,19 @@
 
 void DebugExElastic7Li()
 {
-    std::string beam {"11Li"};
+    std::string beam {"7Li"};
     std::string target {"d"};
-    std::string light {"p"};
+    std::string light {"d"};
 
     // Get file output from pipe2
-    TString filename {TString::Format("../PostAnalysis/Outputs/tree_ex_%s_%s_%s_filtered.root", beam.c_str(),
+    TString filename {TString::Format("../PostAnalysis/Outputs/tree_ex_F_%s_%s_%s_filtered.root", beam.c_str(),
                                       target.c_str(), light.c_str())};
     ROOT::RDataFrame df {"Final_Tree", filename};
 
     auto dfFiltered {df.Filter(
                            [](double& ex)
                            {
-                               if(ex < -1)
+                               if(ex > 1 && ex < 2)
                                    return true;
                                else
                                    return false;
@@ -33,7 +33,7 @@ void DebugExElastic7Li()
                            {"Ex"})
                          .Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})};
 
-    std::ofstream outFile("./Outputs/ExBellowNegative1_11Li_dp.dat");
+    std::ofstream outFile("./Outputs/ExBetween1And2_7Li_dd.dat");
     dfFiltered.Foreach([&](ActRoot::MergerData& m) { m.Stream(outFile); }, {"MergerData"});
     outFile.close();
 }

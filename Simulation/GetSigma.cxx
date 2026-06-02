@@ -31,7 +31,7 @@ void GetSigma(const std::string& beam, const std::string& light, const std::stri
     gStyle->SetOptFit(1111);
     gStyle->SetOptStat("emr");
 
-    std::string angStr {"_1AngStr"};
+    std::string angStr {"_1-5AngStr"};
 
     std::vector<TH1D*> hVec;
     std::vector<TF1*> fVec;
@@ -176,7 +176,7 @@ void GetSigma(const std::string& beam, const std::string& light, const std::stri
     //  Build TGraphErrors and save
     // ------------------------------------------------------------------ //
     TGraphErrors* grSigma = new TGraphErrors(N, vEx.data(), vSigma.data(), vExErr.data(), vSigmaErr.data());
-    grSigma->SetName("grSigma");
+    grSigma->SetName("gsigmas");
     grSigma->SetTitle(
         TString::Format("Gaussian #sigma vs E_{ex}  [%s + %s #rightarrow %s + X];E_{ex} (MeV);#sigma (MeV)",
                         beam.c_str(), target.c_str(), light.c_str()));
@@ -184,7 +184,7 @@ void GetSigma(const std::string& beam, const std::string& light, const std::stri
     grSigma->SetMarkerColor(kBlue + 1);
     grSigma->SetLineColor(kBlue + 1);
 
-    TString outName = TString::Format("./Outputs/%s/test_ang_straggling/sigmas_%s_%s_%s_%s.root", beam.c_str(),
+    TString outName = TString::Format("./Outputs/%s/test_ang_straggling/sigmas_%s_%s_%s%s.root", beam.c_str(),
                                       beam.c_str(), target.c_str(), light.c_str(), angStr.c_str());
 
     TFile* fout = TFile::Open(outName, "RECREATE");

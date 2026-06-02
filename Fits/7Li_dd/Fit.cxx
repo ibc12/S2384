@@ -32,7 +32,15 @@ void Fit()
 
     // Sigmas
     Interpolators::Sigmas sigmas;
-    sigmas.Read("../../Simulation/Outputs/7Li/sigmas_7Li_2H_2H_1AngStr.root");
+    // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_2H_1AngStr.root", "grSigma");
+    // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_2H_1-25AngStr.root", "grSigma");
+    // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_2H_1-3AngStr.root", "grsigmas");
+    // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_2H_1-35AngStr.root", "grsigmas");
+    sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_2H_1-4AngStr.root", "grsigmas");
+    // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_2H_1-45AngStr.root", "grsigmas");
+    // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_2H_1-5AngStr.root", "grSigma");
+    // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_2H_1-65AngStr.root", "grSigma");
+    // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_2H_1-75AngStr.root", "grSigma");
 
     // Interface to fit
     Fitters::Interface inter;
@@ -56,6 +64,8 @@ void Fit()
     // Fitting range
     double exmin {-2};
     double exmax {4};
+    // double exmin {-0.8};
+    // double exmax {1};
 
     // Run!
     Fitters::RunFit(hEx.GetPtr(), exmin, exmax, model, inter.GetInitial(), inter.GetBounds(), inter.GetFixed(),

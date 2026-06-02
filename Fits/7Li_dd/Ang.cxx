@@ -146,4 +146,12 @@ void Ang(bool isLab = false)
     hEx->DrawClone();
     c0->cd(2);
     hKin->DrawClone("colz");
+
+    double chi2Intervals {};
+    for(const auto& result : fitter.GetTFitResults())
+    {
+        // Process fit results
+        chi2Intervals += result.Chi2();
+    }
+    std::cout << "Total chi2: " << chi2Intervals / fitter.GetTFitResult(0).Ndf() << "\n";
 }
