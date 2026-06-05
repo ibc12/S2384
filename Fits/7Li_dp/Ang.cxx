@@ -36,14 +36,33 @@ void Ang(bool isLab = false)
                         {"MergerData"})}; // only silicons, == false is for L1 events
     // Book histograms
     auto hEx {def.Histo1D(S2384Fit::Exdp_7Li, "Ex")};
-    auto hCM {def.Histo2D({"hCM", "CM;#theta_{CM};E [MeV]", 300, 0, 120, 300, 0, 60}, "ThetaCM", "EVertex")};
+    ROOT::RDF::RResultPtr<TH2D> hKin {};
+    if(isLab)
+        hKin =
+            def.Histo2D({"hKin", "Lab;#theta_{Lab};E_{Lab} [MeV]", 300, 0, 120, 300, 0, 60}, "fThetaLight", "EVertex");
+    else
+        hKin = def.Histo2D({"hCM", "CM;#theta_{CM};E [MeV]", 300, 0, 120, 300, 0, 60}, "ThetaCM", "EVertex");
 
     // Init intervals
-    double thetaMin {32};
-    double thetaMax {63};
+    double thetaMin {};
+    double thetaMax {};
+    if(isLab)
+    {
+        thetaMin = 67.5;
+        thetaMax = 122.5;
+    }
+    else
+    {
+        thetaMin = 32.0;
+        thetaMax = 63; // It was 80
+    }
     double thetaStep {5};
     Angular::Intervals ivs {thetaMin, thetaMax, S2384Fit::Exdp_7Li, thetaStep, 0};
-    def.Foreach([&](double thetacm, double ex) { ivs.Fill(thetacm, ex); }, {"ThetaCM", "Ex"});
+    if(isLab)
+        def.Foreach([&](float thetalab, double ex) { ivs.Fill(thetalab, ex); }, {"fThetaLight", "Ex"});
+    else
+        def.Foreach([&](double thetacm, double ex) { ivs.Fill(thetacm, ex); }, {"ThetaCM", "Ex"});
+    ivs.Draw();
     ivs.Draw();
 
     // Init fitter
@@ -62,16 +81,16 @@ void Ang(bool isLab = false)
 
     // Efficiency
     Interpolators::Efficiency eff;
-    eff.Add("g0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0.root", isLab ? "effLab" : "effCM");
-    eff.Add("g1", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.981_nPS_0_pPS_0.root", isLab ? "effLab" : "effCM");
-    // eff.Add("g2", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_2.255_nPS_0_pPS_0.root", isLab ? "effLab" : "effCM");
-    // eff.Add("v0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_3.210_nPS_0_pPS_0.root", isLab ? "effLab" : "effCM");
-    // eff.Add("v1", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_5.400_nPS_0_pPS_0.root", isLab ? "effLab" : "effCM");
-    // eff.Add("v2", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_6.100_nPS_0_pPS_0.root", isLab ? "effLab" : "effCM");
-    // eff.Add("v3", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_6.530_nPS_0_pPS_0.root", isLab ? "effLab" : "effCM");
-    // eff.Add("v4", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_7.100_nPS_0_pPS_0.root", isLab ? "effLab" : "effCM");
-    // eff.Add("ps0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.000_nPS_1_pPS_0.root", isLab ? "effLab" : "effCM");
-    // eff.Add("g1", "./Inputs/effs/g1_7Li_dp_sil.root", "effCM");
+    eff.Add("g0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
+    eff.Add("g1", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.981_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
+    // eff.Add("g2", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_2.255_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
+    // eff.Add("v0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_3.210_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
+    // eff.Add("v1", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_5.400_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
+    // eff.Add("v2", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_6.100_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
+    // eff.Add("v3", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_6.530_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
+    // eff.Add("v4", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_7.100_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
+    // eff.Add("ps0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.000_nPS_1_pPS_0.root", isLab ? "effLabside" : "effCMside");
+    // eff.Add("g1", "./Inputs/effs/g1_7Li_dp_sil.root", "effCMside");
     //  Draw to check is fine
     eff.Draw();
 
@@ -100,17 +119,27 @@ void Ang(bool isLab = false)
     comp.Add("OMP paper 5.44 MeV/u", "./Inputs/gs_DWBA_paper/21.g0");
     comp.Add("ADWA-CH89", "./Inputs/gs_ADWA_CH89/21.g0");
     comp.Add("ADWA-Perey", "./Inputs/gs_ADWA_Perey/21.g0");
+    comp.Add("Bea calcs", "./Inputs/7Lidp_Bea/21.7Li_dp_gs");
+    Angular::Comparator comp1 {"1st Ex", xs.Get("g1")};
+    comp1.Add("Daehnik-Delaroche 1st Ex", "./Inputs/g1_Daehnik_Delaroche/21.g1");
+    comp1.Add("DA1pcorr-Delaroche 1st Ex", "./Inputs/g1_DA1pcorr_Delaroche/21.g1");
+    comp1.Add("Bea calcs 1st", "./Inputs/7Lidp_Bea/21.7Li_dp_1st");
+    comp1.Add("ADWA 1st Ex", "./Inputs/gs_ADWA/fort.203");
+    comp1.Add("ADWA 1st Ex", "./Inputs/g1_ADWA_twofnr/21.g1");
     comp.Fit();
     comp.Draw("", true);
     comp.DrawTheo();
     comp.DrawSFfromIntegral();
+    comp1.Fit();
+    comp1.Draw("", true);
+    comp1.DrawTheo();
 
     auto* c0 {new TCanvas {"c0", "(d,p) canvas"}};
     c0->DivideSquare(2);
     c0->cd(1);
     hEx->DrawClone();
     c0->cd(2);
-    hCM->DrawClone("colz");
+    hKin->DrawClone("colz");
 
     double chi2Intervals {};
     for(const auto& result : fitter.GetTFitResults())
