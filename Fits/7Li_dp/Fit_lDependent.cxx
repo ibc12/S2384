@@ -72,7 +72,7 @@ void Fit_lDependent()
     inter.SetBounds("v5", 3, {0.1, 0.8});
 
     // Save to be used later
-    inter.Write("./Outputs/interface.root");
+    inter.Write("./Outputs/interface_lDependent.root");
 
     // Fitting range
     double exmin {-2};

@@ -64,7 +64,7 @@ void Ang_lDependent(bool isLab = false)
 
     // Interface
     Fitters::Interface inter;
-    inter.Read("./Outputs/interface.root");
+    inter.Read("./Outputs/interface_lDependent.root");
     auto peaks {inter.GetKeys()};
 
     // Efficiency

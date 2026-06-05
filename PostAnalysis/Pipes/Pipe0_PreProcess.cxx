@@ -196,7 +196,7 @@ void Pipe0_PreProcess(const std::string& beam, const std::string& target, const 
             auto it = zDriftCuts.find(m.fRun);
             if(it == zDriftCuts.end())
                 return false; // run not in file → reject
-            return zDrift > it->second.zMin && zDrift < it->second.zMax && m.fLight.fQave > 600;
+            return zDrift > it->second.zMin && zDrift < it->second.zMax && m.fLight.fQave > 400;
         },
         {"zDrift", "MergerData", "ModularData"});
 

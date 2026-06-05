@@ -12,7 +12,7 @@ void Runner(TString what = "")
 {
     PrettyStyle(true, true);
 
-    std::string beam {"7Li"};
+    std::string beam {"11Li"};
     std::string target {"d"};
     std::string light {"d"};
 
