@@ -1,5 +1,6 @@
 #ifndef triumf_all_cxx
 #define triumf_all_cxx
+#include "ActCluster.h"
 #include "ActColors.h"
 #include "ActCrossSection.h"
 #include "ActCutsManager.h"
@@ -38,9 +39,9 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <string>
 #include <unordered_map>
-#include <map>
 
 #include "../PostAnalysis/HistConfig.h"
 
@@ -145,11 +146,12 @@ double PolyaGamma(double k, double beta)
     return gamma(gen);
 }
 
-double PolyaFast(double Gmean, double theta) {
+double PolyaFast(double Gmean, double theta)
+{
     static thread_local std::mt19937 gen(0);
-    static thread_local std::uniform_real_distribution<double> U(0.0,1.0);
+    static thread_local std::uniform_real_distribution<double> U(0.0, 1.0);
     double u = U(gen);
-    return Gmean * pow(u, -1.0/(theta+1));  // aproximación rápida de Polya
+    return Gmean * pow(u, -1.0 / (theta + 1)); // aproximación rápida de Polya
 }
 
 // Get XS files depending on the reaction in place
@@ -206,7 +208,7 @@ bool GetXS(const std::string& target, const std::string& light, const std::strin
         if(Ex == 0.)
         {
             isThereXS = true;
-            TString data_to_read {TString::Format("./Inputs/xs/%s/dd/elastic.dat", beam.c_str())};
+            TString data_to_read {TString::Format("./Inputs/xs/%s/dd/elastic_DA1pcorr.dat", beam.c_str())};
             xs->ReadFile(data_to_read.Data());
             std::cout << "Total xs: " << xs->GetTotalXSmbarn() << std::endl;
         }
@@ -541,6 +543,16 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
     outTree->Branch("theta3CM", &theta3CM_tree);
     double Eex_tree {};
     outTree->Branch("Eex", &Eex_tree);
+    double TL_tree {};
+    outTree->Branch("TL", &TL_tree);
+    double LastPosX_tree {};
+    outTree->Branch("LastPosX", &LastPosX_tree);
+    double LastPosY_tree {};
+    outTree->Branch("LastPosY", &LastPosY_tree);
+    double LastPosZ_tree {};
+    outTree->Branch("LastPosZ", &LastPosZ_tree);
+    double nPadsOut_tree {};
+    outTree->Branch("nPads", &nPadsOut_tree);
     double EVertex_tree {};
     outTree->Branch("EVertex", &EVertex_tree);
     double theta3Lab_tree {};
@@ -741,6 +753,35 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
         if(nPadsOutExclusionZone < 8) // I have to implement the threshold of charge
             continue;
 
+        // Create ActClusters from voxel maps
+        ActRoot::Cluster clusterLight = ActRoot::Cluster();
+        // Get vector of voxels from map
+        std::vector<ActRoot::Voxel> voxelsLight;
+        for(const auto& [key, voxel] : voxelMapLight)
+        {
+            auto voxelmm = voxel;
+            voxelmm.SetPosition(ActRoot::Voxel::XYZPointF(voxel.GetPosition().X() * voxelSize,
+                                                          voxel.GetPosition().Y() * voxelSize,
+                                                          voxel.GetPosition().Z() * voxelSize));
+            voxelsLight.push_back(voxelmm);
+        }
+        clusterLight.SetVoxels(voxelsLight);
+        clusterLight.ReFit();
+        // Create direction vector from vertex to GravityPoint of cluster
+        auto dirCluster = clusterLight.GetLine().GetPoint() - vertex;
+        clusterLight.SortAlongDir(dirCluster);
+        // Get last point of cluster
+        auto lastPoint = clusterLight.GetVoxels().back().GetPosition();
+        // To get the TL project to the line the last point and the vertex
+        auto lineCluster = clusterLight.GetLine();
+        auto vertexPointFloat = ROOT::Math::XYZPointF(vertex.X(), vertex.Y(), vertex.Z());
+        auto lastPointFloat = ROOT::Math::XYZPointF(lastPoint.X(), lastPoint.Y(), lastPoint.Z());
+        auto TL =
+            (lineCluster.ProjectionPointOnLine(lastPointFloat) - lineCluster.ProjectionPointOnLine(vertexPointFloat))
+                .R();
+        // std::cout << "Distance from vertex to vertex projection: "
+        //           << (vertexPointFloat - lineCluster.ProjectionPointOnLine(vertexPointFloat)).R() << std::endl;
+
         // Reconstruct Ex!
         bool isOk {true};      // no punchthrouhg
         bool cutELoss0 {true}; // for L1 not implemented yet the graphical cuts
@@ -761,6 +802,11 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
             Eex_tree = ExRec;
             theta3CM_tree = theta3CM * TMath::RadToDeg();
             EVertex_tree = T3Rec;
+            TL_tree = TL;
+            LastPosX_tree = lastPoint.X();
+            LastPosY_tree = lastPoint.Y();
+            LastPosZ_tree = lastPoint.Z();
+            nPadsOut_tree = nPadsOutExclusionZone;
             theta3Lab_tree = theta3Lab * TMath::RadToDeg();
             phi3CM_tree = phi3CM;
             weight_tree = weight;
