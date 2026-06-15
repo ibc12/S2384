@@ -386,7 +386,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
     // Set whether is PS or not
     bool isPS {(neutronPS > 0) || (protonPS > 0)};
     // Set number of iterations
-    const int niter {static_cast<int>(inspect ? 1e5 : (isPS ? 1e8 : 1e5))};
+    const int niter {static_cast<int>(inspect ? 1e5 : (isPS ? 1e8 : 1e6))};
     gRandom->SetSeed(0);
     // Runner: contains utility functions to execute multiple actions as rotate directions
     ActSim::Runner runner(nullptr, nullptr, gRandom, 0);
