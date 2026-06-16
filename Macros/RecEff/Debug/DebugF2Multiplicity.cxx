@@ -9,9 +9,13 @@
 
 void DebugF2Multiplicity()
 {
+    // This Macro do no work in this directory, but a directory up it does ?¿?¿?¿
+
+
+
     // Get the runs from the data manager reading the config file
     ActRoot::DataManager dataManager {};
-    dataManager.ReadDataFile("../../configs/data.conf");
+    dataManager.ReadDataFile("../../../configs/data.conf");
 
     // For L1 enough with 4 runs (64, 67). For lat sils put at least 10
     dataManager.SetRuns(60, 70);

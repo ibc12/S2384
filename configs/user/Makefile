@@ -168,6 +168,32 @@ Task0/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Task0.dir/build.make CMakeFiles/Task0.dir/build
 .PHONY : Task0/fast
 
+#=============================================================================
+# Target rules for targets named Task1
+
+# Build rule for target.
+Task1: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 Task1
+.PHONY : Task1
+
+# fast build rule for target.
+Task1/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Task1.dir/build.make CMakeFiles/Task1.dir/build
+.PHONY : Task1/fast
+
+#=============================================================================
+# Target rules for targets named Task2
+
+# Build rule for target.
+Task2: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 Task2
+.PHONY : Task2
+
+# fast build rule for target.
+Task2/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Task2.dir/build.make CMakeFiles/Task2.dir/build
+.PHONY : Task2/fast
+
 BrokenTracksZ.o: BrokenTracksZ.cxx.o
 .PHONY : BrokenTracksZ.o
 
@@ -264,6 +290,54 @@ Task0.cxx.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Task0.dir/build.make CMakeFiles/Task0.dir/Task0.cxx.s
 .PHONY : Task0.cxx.s
 
+Task1.o: Task1.cxx.o
+.PHONY : Task1.o
+
+# target to build an object file
+Task1.cxx.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Task1.dir/build.make CMakeFiles/Task1.dir/Task1.cxx.o
+.PHONY : Task1.cxx.o
+
+Task1.i: Task1.cxx.i
+.PHONY : Task1.i
+
+# target to preprocess a source file
+Task1.cxx.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Task1.dir/build.make CMakeFiles/Task1.dir/Task1.cxx.i
+.PHONY : Task1.cxx.i
+
+Task1.s: Task1.cxx.s
+.PHONY : Task1.s
+
+# target to generate assembly for a file
+Task1.cxx.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Task1.dir/build.make CMakeFiles/Task1.dir/Task1.cxx.s
+.PHONY : Task1.cxx.s
+
+Task2.o: Task2.cxx.o
+.PHONY : Task2.o
+
+# target to build an object file
+Task2.cxx.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Task2.dir/build.make CMakeFiles/Task2.dir/Task2.cxx.o
+.PHONY : Task2.cxx.o
+
+Task2.i: Task2.cxx.i
+.PHONY : Task2.i
+
+# target to preprocess a source file
+Task2.cxx.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Task2.dir/build.make CMakeFiles/Task2.dir/Task2.cxx.i
+.PHONY : Task2.cxx.i
+
+Task2.s: Task2.cxx.s
+.PHONY : Task2.s
+
+# target to generate assembly for a file
+Task2.cxx.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Task2.dir/build.make CMakeFiles/Task2.dir/Task2.cxx.s
+.PHONY : Task2.cxx.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -276,6 +350,8 @@ help:
 	@echo "... PrintAfterFindRP"
 	@echo "... RecRANSAC"
 	@echo "... Task0"
+	@echo "... Task1"
+	@echo "... Task2"
 	@echo "... BrokenTracksZ.o"
 	@echo "... BrokenTracksZ.i"
 	@echo "... BrokenTracksZ.s"
@@ -288,6 +364,12 @@ help:
 	@echo "... Task0.o"
 	@echo "... Task0.i"
 	@echo "... Task0.s"
+	@echo "... Task1.o"
+	@echo "... Task1.i"
+	@echo "... Task1.s"
+	@echo "... Task2.o"
+	@echo "... Task2.i"
+	@echo "... Task2.s"
 .PHONY : help
 
 

@@ -67,6 +67,8 @@ all: CMakeFiles/RecRANSAC.dir/all
 all: CMakeFiles/BrokenTracksZ.dir/all
 all: CMakeFiles/PrintAfterFindRP.dir/all
 all: CMakeFiles/Task0.dir/all
+all: CMakeFiles/Task1.dir/all
+all: CMakeFiles/Task2.dir/all
 .PHONY : all
 
 # The main recursive "preinstall" target.
@@ -78,6 +80,8 @@ clean: CMakeFiles/RecRANSAC.dir/clean
 clean: CMakeFiles/BrokenTracksZ.dir/clean
 clean: CMakeFiles/PrintAfterFindRP.dir/clean
 clean: CMakeFiles/Task0.dir/clean
+clean: CMakeFiles/Task1.dir/clean
+clean: CMakeFiles/Task2.dir/clean
 .PHONY : clean
 
 #=============================================================================
@@ -183,6 +187,58 @@ Task0: CMakeFiles/Task0.dir/rule
 CMakeFiles/Task0.dir/clean:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Task0.dir/build.make CMakeFiles/Task0.dir/clean
 .PHONY : CMakeFiles/Task0.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/Task1.dir
+
+# All Build rule for target.
+CMakeFiles/Task1.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Task1.dir/build.make CMakeFiles/Task1.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Task1.dir/build.make CMakeFiles/Task1.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/media/data/S2384/configs/user/CMakeFiles --progress-num=9,10 "Built target Task1"
+.PHONY : CMakeFiles/Task1.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/Task1.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /media/data/S2384/configs/user/CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/Task1.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /media/data/S2384/configs/user/CMakeFiles 0
+.PHONY : CMakeFiles/Task1.dir/rule
+
+# Convenience name for target.
+Task1: CMakeFiles/Task1.dir/rule
+.PHONY : Task1
+
+# clean rule for target.
+CMakeFiles/Task1.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Task1.dir/build.make CMakeFiles/Task1.dir/clean
+.PHONY : CMakeFiles/Task1.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/Task2.dir
+
+# All Build rule for target.
+CMakeFiles/Task2.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Task2.dir/build.make CMakeFiles/Task2.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Task2.dir/build.make CMakeFiles/Task2.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/media/data/S2384/configs/user/CMakeFiles --progress-num=11,12 "Built target Task2"
+.PHONY : CMakeFiles/Task2.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/Task2.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /media/data/S2384/configs/user/CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/Task2.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /media/data/S2384/configs/user/CMakeFiles 0
+.PHONY : CMakeFiles/Task2.dir/rule
+
+# Convenience name for target.
+Task2: CMakeFiles/Task2.dir/rule
+.PHONY : Task2
+
+# clean rule for target.
+CMakeFiles/Task2.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Task2.dir/build.make CMakeFiles/Task2.dir/clean
+.PHONY : CMakeFiles/Task2.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

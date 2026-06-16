@@ -26,4 +26,6 @@ add_userlibrary(
     LINK ActAlgorithm        # ActAlgorithm debe estar en $ACTROOT/install/lib
 )
 add_userlibrary(NAME Task0 SOURCES Task0.cxx LINK ActAlgorithm)
+add_userlibrary(NAME Task1 SOURCES Task1.cxx LINK ActAlgorithm)
+add_userlibrary(NAME Task2 SOURCES Task2.cxx LINK ActAlgorithm)
 

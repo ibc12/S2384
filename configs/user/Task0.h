@@ -7,6 +7,9 @@
 #include <string>
 #include <vector>
 
+// Task0: Erase events with a determined silicon number in a determined layer for a determined run. This is to avoid
+// silicon hits that are known to be bad.
+
 namespace ActAlgorithm
 {
 class Task0 : public VTask

@@ -11,6 +11,8 @@
 #include <string>
 #include <vector>
 
+// Task1: Do the fit to a spline to get the range
+
 namespace ActAlgorithm
 {
 class Task1 : public VTask
