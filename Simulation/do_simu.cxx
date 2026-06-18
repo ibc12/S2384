@@ -91,7 +91,7 @@ void ApplyNaN(double& e, double t = 0, const std::string& comment = "stopped")
 
 void ApplyThetaRes(double& theta)
 {
-    double sigma {1.4 / 2.355}; // FWHM to sigma
+    double sigma {2.1 / 2.355}; // FWHM to sigma
     theta = gRandom->Gaus(theta, sigma * TMath::DegToRad());
 }
 
@@ -501,7 +501,7 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         tag = "_" + std::to_string(thread);
 
     // File to save data
-    TString fileName {TString::Format("./Outputs/%s/test_ang_straggling/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s_1-4AngStr.root", beam.c_str(),
+    TString fileName {TString::Format("./Outputs/%s/test_ang_straggling/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s_2-1AngStr.root", beam.c_str(),
                                       target.c_str(), light.c_str(), Ex, neutronPS, protonPS, tag.c_str())};
     auto outFile {new TFile(fileName, inspect ? "read" : "recreate")};
     auto* outTree {new TTree("SimulationTTree", "A TTree containing only our Eex obtained by simulation")};

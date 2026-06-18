@@ -25,20 +25,25 @@
 
 void Ang()
 {
-    PrettyStyle(false, false);
+    PrettyStyle(true, false);
     ROOT::EnableImplicitMT();
 
     ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_11Li_d_d_filtered.root"};
-    auto def {df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; },
+    // auto def {df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; },
+    //                     {"MergerData"})}; // only silicons, == false is for L1 events
+    auto def {df.Filter([](ActRoot::MergerData& m)
+                        { return (m.fLight.IsFilled() && m.fHeavy.GetNLayers() == 2) == true; },
                         {"MergerData"})}; // only silicons, == false is for L1 events
+
 
     // Book histograms
     auto hEx {def.Histo1D(S2384Fit::Exdd, "Ex")};
     auto hCM {def.Histo2D({"hCM", "CM;#theta_{CM};E [MeV]", 300, 0, 120, 300, 0, 60}, "ThetaCM", "EVertex")};
 
     // Init intervals
-    double thetaMin {30};
-    double thetaMax {60};
+    double thetaMin {26};
+    double thetaMax {44};
+    // double thetaMax {60};
     double thetaStep {2};
     Angular::Intervals ivs {thetaMin, thetaMax, S2384Fit::Exdd, thetaStep, 0};
     def.Foreach([&](double thetacm, double ex) { ivs.Fill(thetacm, ex); }, {"ThetaCM", "Ex"});
@@ -60,7 +65,8 @@ void Ang()
 
     // Efficiency
     Interpolators::Efficiency eff;
-    eff.Add("g0", "../../Simulation/Outputs/11Li/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0.root", "effCMside");
+    // eff.Add("g0", "../../Simulation/Outputs/11Li/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0.root", "effCMside");
+    eff.Add("g0", "../../Simulation/Outputs/11Li/test_ang_straggling/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_1-4AngStr.root", "effCMgateHeavy");
     // Draw to check is fine
     eff.Draw();
 

@@ -36,7 +36,7 @@ using XYZVector = ROOT::Math::XYZVector;
 // ============================================================
 // Geometry
 // ============================================================
-constexpr double voxelSize = 2.0;               // mm
+constexpr float voxelSize = 2.0;               // mm
 ActRoot::TPCParameters tpc {"Actar"};           // TPC parameters
 constexpr double Gmean = 3000.0;                // Mean gain
 constexpr double theta = 0.7;                   // Polya parameter
@@ -252,8 +252,8 @@ std::pair<TGraph*, TH1D*> GetChargeProfile(const std::map<voxelKey, ActRoot::Vox
         if(!subdivideVoxels)
         {
             // Standard: one point per voxel, take the center
-            v.SetPosition({(pos.X() + 0.5) * voxelSize, (pos.Y() + 0.5) * voxelSize,
-                           (pos.Z() + 0.5) * voxelSize}); // Convert voxel center from units of voxels to mm
+            v.SetPosition({(pos.X() + 0.5f) * voxelSize, (pos.Y() + 0.5f) * voxelSize,
+                           (pos.Z() + 0.5f) * voxelSize}); // Convert voxel center from units of voxels to mm
             XYZVector d = XYZVector(v.GetPosition()) - XYZVector(p0);
             double s = d.Dot(u);
 
@@ -312,7 +312,7 @@ std::pair<TGraph*, TH1D*> GetChargeProfile(const std::map<voxelKey, ActRoot::Vox
 // Count pads outside exclusion zone (not taking into account angle or charge deposition)
 // ============================================================
 int PadsOutExclusionZone(const std::map<voxelKey, ActRoot::Voxel>& voxelMap1,
-                         const std::map<voxelKey, ActRoot::Voxel>& voxelMap2)
+                         const std::map<voxelKey, ActRoot::Voxel>& voxelMap2, float threshold = 0)
 {
     std::set<std::pair<int, int>> activePads;
 
@@ -323,7 +323,7 @@ int PadsOutExclusionZone(const std::map<voxelKey, ActRoot::Voxel>& voxelMap1,
             int ix = std::get<0>(key);
             int iy = std::get<1>(key);
 
-            if(iy < yMinExclusionZone || iy > yMaxExclusionZone)
+            if((iy < yMinExclusionZone || iy > yMaxExclusionZone) && v.GetCharge() > threshold)
                 activePads.insert({ix, iy});
         }
     };
@@ -364,7 +364,7 @@ void plotTPCevent(double range = 120, double thetaDeg = 30, double phiDeg = -90)
     gRandom->SetSeed(0);
 
     // double chargeThreshold = thresholdPadCharge; // Threshold in electrons
-    double chargeThreshold = 0; 
+    double chargeThreshold = 300e3; 
     // double chargeThreshold = 4500000 / 40;
 
     auto* srim = new ActPhysics::SRIM;
@@ -451,7 +451,7 @@ void plotTPCevent(double range = 120, double thetaDeg = 30, double phiDeg = -90)
     auto [graph, hist] = GetChargeProfile(voxelMapLight, true);
 
     // =============== Pads out of exclusion zone =================
-    int nPadsOutExclusionZone = PadsOutExclusionZone(voxelMapLight, voxelMapHeavy);
+    int nPadsOutExclusionZone = PadsOutExclusionZone(voxelMapLight, voxelMapHeavy, chargeThreshold);
     std::cout << "Number of pads out of exclusion zone: " << nPadsOutExclusionZone << std::endl;
 
     // ================= Electrons canvas =================

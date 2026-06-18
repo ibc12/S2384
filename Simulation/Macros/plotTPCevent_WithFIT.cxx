@@ -33,7 +33,7 @@ using XYZVector = ROOT::Math::XYZVector;
 // ============================================================
 // Geometry
 // ============================================================
-constexpr double voxelSize = 2.0;               // mm
+constexpr float voxelSize = 2.0;               // mm
 ActRoot::TPCParameters tpc {"Actar"};           // TPC parameters
 constexpr double Gmean = 3000.0;                // Mean gain
 constexpr double theta = 0.7;                   // Polya parameter
@@ -248,8 +248,8 @@ std::pair<TProfile*, TH1D*> GetChargeProfile(const std::map<voxelKey, ActRoot::V
         if(!subdivideVoxels)
         {
             // Standard: one point per voxel, take the center
-            v.SetPosition({(pos.X() + 0.5) * voxelSize, (pos.Y() + 0.5) * voxelSize,
-                           (pos.Z() + 0.5) * voxelSize}); // Convert voxel center from units of voxels to mm
+            v.SetPosition({(pos.X() + 0.5f) * voxelSize, (pos.Y() + 0.5f) * voxelSize,
+                           (pos.Z() + 0.5f) * voxelSize}); // Convert voxel center from units of voxels to mm
             XYZVector d = XYZVector(v.GetPosition()) - XYZVector(p0);
             double s = d.Dot(u);
 

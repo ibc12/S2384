@@ -53,7 +53,7 @@ void Fit()
     inter.EvalSigma(sigmas.GetGraph());
     inter.SetFix("g1", 2, true); // fix all sigmas
     inter.SetFix("g0", 2, true); // fix g.s. sigma
-    // inter.SetBounds("g1", 1, {0.4, 0.55});
+                                 // inter.SetBounds("g1", 1, {0., 1});
     //  Save to be used later
     //  inter.SetFix("g1", 1, true);
     inter.Write("./Outputs/interface.root");
@@ -62,8 +62,8 @@ void Fit()
     Fitters::Model model {inter.GetNGauss(), inter.GetNVoigt(), {}};
 
     // Fitting range
-    double exmin {-2};
-    double exmax {4};
+    double exmin {-1};
+    double exmax {1.5};
     // double exmin {-0.8};
     // double exmax {1};
 

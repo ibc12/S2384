@@ -63,7 +63,8 @@ constexpr double voxelSize = 2.0;               // mm
 ActRoot::TPCParameters tpc {"Actar"};           // TPC parameters
 constexpr double Gmean = 3000.0;                // Mean gain
 constexpr double theta = 0.7;                   // Polya parameter
-constexpr double thresholdPadCharge = 5.4857e6; // that n electrons corresponds to 0.8789 pC
+// constexpr double thresholdPadCharge = 5.4857e6; // that n electrons corresponds to 0.8789 pC
+constexpr float thresholdPadCharge = 2e6; // that n electrons corresponds to 0.8789 pC
 constexpr int yMinExclusionZone = 55;
 constexpr int yMaxExclusionZone = 70;
 using voxelKey = std::tuple<int, int, int>; // ix,iy,iz
@@ -355,7 +356,7 @@ void DivideTrackInSegments(ActPhysics::SRIM* srim, double range, const XYZVector
 // Count pads outside exclusion zone (not taking into account angle or charge deposition)
 // ============================================================
 int PadsOutExclusionZone(const std::map<voxelKey, ActRoot::Voxel>& voxelMap1,
-                         const std::map<voxelKey, ActRoot::Voxel>& voxelMap2)
+                         const std::map<voxelKey, ActRoot::Voxel>& voxelMap2, float thresholdCharge = 0)
 {
     std::set<std::pair<int, int>> activePads;
 
@@ -366,7 +367,7 @@ int PadsOutExclusionZone(const std::map<voxelKey, ActRoot::Voxel>& voxelMap1,
             int ix = std::get<0>(key);
             int iy = std::get<1>(key);
 
-            if(iy < yMinExclusionZone || iy > yMaxExclusionZone)
+            if((iy < yMinExclusionZone || iy > yMaxExclusionZone) && v.GetCharge() > thresholdCharge)
                 activePads.insert({ix, iy});
         }
     };
@@ -533,7 +534,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
         tag = "_" + std::to_string(thread);
 
     // File to save data
-    TString fileName {TString::Format("./Outputs/%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s_L1.root", beam.c_str(),
+    TString fileName {TString::Format("./Outputs/%s/test_charge_threshold/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s_L1_2e6Thresh.root", beam.c_str(),
                                       target.c_str(), light.c_str(), Ex, neutronPS, protonPS, tag.c_str())};
     auto outFile {new TFile(fileName, inspect ? "read" : "recreate")};
     auto* outTree {new TTree("SimulationTTree", "A TTree containing only our Eex obtained by simulation")};
@@ -748,7 +749,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
                               "light");
         DivideTrackInSegments(srim, 3000, heavyWorldFrame, vertex, 2.0, 5, voxelMapHeavy, electronsHeavy, tpc);
 
-        int nPadsOutExclusionZone = PadsOutExclusionZone(voxelMapLight, voxelMapHeavy);
+        int nPadsOutExclusionZone = PadsOutExclusionZone(voxelMapLight, voxelMapHeavy, thresholdPadCharge);
         hPads->Fill(nPadsOutExclusionZone);
         if(nPadsOutExclusionZone < 8) // I have to implement the threshold of charge
             continue;

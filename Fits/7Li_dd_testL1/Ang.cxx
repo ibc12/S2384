@@ -80,8 +80,10 @@ void Ang(bool isLab = false)
     //                                     : TString::Format("Inputs/effs/%s_7Li_dd_sil.root", peak.c_str());
     //     eff.Add(peak, inputPath.Data(), isLab ? "effLab" : "effCM");
     // }
-    eff.Add("g0", "../../Simulation/Outputs/7Li/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1.root", isLab ? "effLab" : "effCM");
-    eff.Add("g1", "../../Simulation/Outputs/7Li/2H_2H_TRIUMF_Eex_0.477_nPS_0_pPS_0_L1.root", isLab ? "effLab" : "effCM");
+    // eff.Add("g0", "../../Simulation/Outputs/7Li/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1.root", isLab ? "effLab" : "effCM");
+    // eff.Add("g1", "../../Simulation/Outputs/7Li/2H_2H_TRIUMF_Eex_0.477_nPS_0_pPS_0_L1.root", isLab ? "effLab" : "effCM");
+    eff.Add("g0", "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_2e6Thresh.root", isLab ? "effLab" : "effCM");
+    eff.Add("g1", "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.477_nPS_0_pPS_0_L1_2e6Thresh.root", isLab ? "effLab" : "effCM");
     // Draw to check is fine
     eff.Draw();
 

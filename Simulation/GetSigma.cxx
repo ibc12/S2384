@@ -31,7 +31,7 @@ void GetSigma(const std::string& beam, const std::string& light, const std::stri
     gStyle->SetOptFit(1111);
     gStyle->SetOptStat("emr");
 
-    std::string angStr {"_1-5AngStr"};
+    std::string angStr {"_2-1AngStr"};
 
     std::vector<TH1D*> hVec;
     std::vector<TF1*> fVec;

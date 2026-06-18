@@ -46,7 +46,7 @@ void runner(TString what = "simu", bool inspect = true)
     else if(neutronPS == 0 && protonPS == 0 && target == "2H" && light == "2H") // Elastic and Inelastic scattering
     {
         if(beam == "11Li")
-            Exs = {0};
+            Exs = {0, 0.7, 1.2, 2.4};
         else if(beam == "7Li")
             Exs = {0, 0.477, 2.5, 5.0};
     }

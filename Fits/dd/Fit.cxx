@@ -1,3 +1,5 @@
+#include "ActMergerData.h"
+
 #include "ROOT/RDataFrame.hxx"
 
 #include "TROOT.h"
@@ -9,8 +11,6 @@
 #include <string>
 #include <vector>
 
-#include "ActMergerData.h"
-
 #include "../Histos.h"
 void Fit()
 {
@@ -18,10 +18,14 @@ void Fit()
 
     // Analysis
     ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_11Li_d_d_filtered.root"};
-    auto def {df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})}; // only silicons, == false is for L1 events
+    // auto def {df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})}; // only
+    // silicons, == false is for L1 events
+    auto def {df.Filter([](ActRoot::MergerData& m)
+                        { return (m.fLight.IsFilled() && m.fHeavy.GetNLayers() == 2) == true; },
+                        {"MergerData"})}; // only silicons, == false is for L1 events
     // Ex
     auto hEx {def.Histo1D(S2384Fit::Exdd, "Ex")};
-    
+
 
     // Interface to fit
     Fitters::Interface inter;
