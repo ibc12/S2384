@@ -42,8 +42,8 @@ constexpr double Gmean = 3000.0;                // Mean gain
 constexpr double theta = 0.7;                   // Polya parameter
 //constexpr double thresholdPadCharge = 5.4857e6; // that n electrons corresponds to 0.8789 pC
 constexpr double thresholdPadCharge = 2e1; // that n electrons corresponds to 0.8789 pC
-constexpr int yMinExclusionZone = 55;
-constexpr int yMaxExclusionZone = 70;
+constexpr int yMinExclusionZone = 56;
+constexpr int yMaxExclusionZone = 71;
 using voxelKey = std::tuple<int, int, int>; // ix,iy,iz
 
 

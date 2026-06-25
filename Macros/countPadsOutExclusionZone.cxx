@@ -17,8 +17,8 @@
 
 bool IsOutsideBeamZone(ROOT::Math::XYZPointF point, ActRoot::TPCParameters& tpcPars)
 {
-    int nPadMin {55};
-    int nPadMax {70};
+    int nPadMin {56};
+    int nPadMax {71};
     bool isInY {point.Y() > (nPadMax) ||
                 point.Y() < (nPadMin)};
     return (isInY);

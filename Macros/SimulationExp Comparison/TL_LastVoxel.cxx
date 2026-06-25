@@ -13,8 +13,8 @@
 #include <string>
 #include <vector>
 
-constexpr int yMinExclusionZone = 55;
-constexpr int yMaxExclusionZone = 70;
+constexpr int yMinExclusionZone = 56;
+constexpr int yMaxExclusionZone = 71;
 
 void TL_LastVoxel()
 {
