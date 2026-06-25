@@ -59,12 +59,12 @@ using BeamOffsetMap = std::map<std::string, std::vector<BeamOffset>>;
 // ============================================================
 // Geometry
 // ============================================================
-constexpr double voxelSize = 2.0;               // mm
-ActRoot::TPCParameters tpc {"Actar"};           // TPC parameters
-constexpr double Gmean = 3000.0;                // Mean gain
-constexpr double theta = 0.7;                   // Polya parameter
+constexpr double voxelSize = 2.0;     // mm
+ActRoot::TPCParameters tpc {"Actar"}; // TPC parameters
+constexpr double Gmean = 3000.0;      // Mean gain
+constexpr double theta = 0.7;         // Polya parameter
 // constexpr double thresholdPadCharge = 5.4857e6; // that n electrons corresponds to 0.8789 pC
-constexpr float thresholdPadCharge = 2e6; // that n electrons corresponds to 0.8789 pC
+constexpr float thresholdPadCharge = 1e6; // that n electrons corresponds to 0.8789 pC
 constexpr int yMinExclusionZone = 55;
 constexpr int yMaxExclusionZone = 70;
 using voxelKey = std::tuple<int, int, int>; // ix,iy,iz
@@ -221,6 +221,23 @@ bool GetXS(const std::string& target, const std::string& light, const std::strin
             std::cout << "Total xs: " << xs->GetTotalXSmbarn() << std::endl;
         }
     }
+    else if(target == "2H" && light == "1H" && beam == "7Li")
+    {
+        if(Ex == 0.)
+        {
+            isThereXS = true;
+            TString data_to_read {TString::Format("./Inputs/xs/%s/dp/gs_ADWA.dat", beam.c_str())};
+            xs->ReadFile(data_to_read.Data());
+            std::cout << "Total xs: " << xs->GetTotalXSmbarn() << std::endl;
+        }
+        else if(Ex == 0.981)
+        {
+            isThereXS = true;
+            TString data_to_read {TString::Format("./Inputs/xs/%s/dp/g1_ADWA.dat", beam.c_str())};
+            xs->ReadFile(data_to_read.Data());
+            std::cout << "Total xs: " << xs->GetTotalXSmbarn() << std::endl;
+        }
+    }
     return isThereXS;
 }
 
@@ -358,24 +375,30 @@ void DivideTrackInSegments(ActPhysics::SRIM* srim, double range, const XYZVector
 int PadsOutExclusionZone(const std::map<voxelKey, ActRoot::Voxel>& voxelMap1,
                          const std::map<voxelKey, ActRoot::Voxel>& voxelMap2, float thresholdCharge = 0)
 {
-    std::set<std::pair<int, int>> activePads;
+    // First add all the charge of the pads (ix, iy) over all the existing iz
+    std::map<std::pair<int, int>, double> padCharge;
 
-    auto addPads = [&](const std::map<voxelKey, ActRoot::Voxel>& voxelMap)
+    auto accumulate = [&](const std::map<voxelKey, ActRoot::Voxel>& voxelMap)
     {
         for(const auto& [key, v] : voxelMap)
         {
             int ix = std::get<0>(key);
             int iy = std::get<1>(key);
-
-            if((iy < yMinExclusionZone || iy > yMaxExclusionZone) && v.GetCharge() > thresholdCharge)
-                activePads.insert({ix, iy});
+            if(iy < yMinExclusionZone || iy > yMaxExclusionZone)
+                padCharge[{ix, iy}] += v.GetCharge(); // suma sobre todos los iz
         }
     };
 
-    addPads(voxelMap1);
-    addPads(voxelMap2);
+    accumulate(voxelMap1);
+    accumulate(voxelMap2);
 
-    return activePads.size();
+    // Then apply the threshold and count the pads
+    int count = 0;
+    for(const auto& [pad, charge] : padCharge)
+        if(charge > thresholdCharge)
+            count++;
+
+    return count;
 }
 
 void do_simuL1(const std::string& beam, const std::string& target, const std::string& light, const std::string& heavy,
@@ -387,7 +410,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
     // Set whether is PS or not
     bool isPS {(neutronPS > 0) || (protonPS > 0)};
     // Set number of iterations
-    const int niter {static_cast<int>(inspect ? 1e5 : (isPS ? 1e8 : 1e6))};
+    const int niter {static_cast<int>(inspect ? 1e5 : (isPS ? 1e8 : 1e5))};
     gRandom->SetSeed(0);
     // Runner: contains utility functions to execute multiple actions as rotate directions
     ActSim::Runner runner(nullptr, nullptr, gRandom, 0);
@@ -534,8 +557,9 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
         tag = "_" + std::to_string(thread);
 
     // File to save data
-    TString fileName {TString::Format("./Outputs/%s/test_charge_threshold/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s_L1_2e6Thresh.root", beam.c_str(),
-                                      target.c_str(), light.c_str(), Ex, neutronPS, protonPS, tag.c_str())};
+    TString fileName {
+        TString::Format("./Outputs/%s/test_charge_threshold/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s_L1_1e6Thresh.root",
+                        beam.c_str(), target.c_str(), light.c_str(), Ex, neutronPS, protonPS, tag.c_str())};
     auto outFile {new TFile(fileName, inspect ? "read" : "recreate")};
     auto* outTree {new TTree("SimulationTTree", "A TTree containing only our Eex obtained by simulation")};
     if(inspect)
