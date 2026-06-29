@@ -21,9 +21,8 @@
 #include <string>
 #include <vector>
 
-#include "../Histos.h"
-
 #include "../../PrettyStyle.C"
+#include "../Histos.h"
 
 void Ang(bool isLab = false)
 {
@@ -34,8 +33,8 @@ void Ang(bool isLab = false)
     ROOT::EnableImplicitMT();
 
     ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_7Li_d_d_filtered.root"};
-    auto def {
-        df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; }, {"MergerData"})}; // only silicons
+    auto def {df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; },
+                        {"MergerData"})}; // only silicons
 
     // Book histograms
     auto hEx {def.Histo1D(S2384Fit::Exdd_7Li, "Ex")};
@@ -80,10 +79,20 @@ void Ang(bool isLab = false)
     //                                     : TString::Format("Inputs/effs/%s_7Li_dd_sil.root", peak.c_str());
     //     eff.Add(peak, inputPath.Data(), isLab ? "effLab" : "effCM");
     // }
-    // eff.Add("g0", "../../Simulation/Outputs/7Li/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1.root", isLab ? "effLab" : "effCM");
-    // eff.Add("g1", "../../Simulation/Outputs/7Li/2H_2H_TRIUMF_Eex_0.477_nPS_0_pPS_0_L1.root", isLab ? "effLab" : "effCM");
-    eff.Add("g0", "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e6Thresh.root", isLab ? "effLab" : "effCM");
-    eff.Add("g1", "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.477_nPS_0_pPS_0_L1_1e6Thresh.root", isLab ? "effLab" : "effCM");
+    // eff.Add("g0", "../../Simulation/Outputs/7Li/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1.root", isLab ? "effLab" :
+    // "effCM"); eff.Add("g1", "../../Simulation/Outputs/7Li/2H_2H_TRIUMF_Eex_0.477_nPS_0_pPS_0_L1.root", isLab ?
+    // "effLab" : "effCM");
+    // eff.Add("g0",
+    // "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e6Thresh.root", isLab
+    // ? "effLab" : "effCM"); eff.Add("g1",
+    // "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.477_nPS_0_pPS_0_L1_1e6Thresh.root", isLab
+    // ? "effLab" : "effCM");
+    eff.Add("g0",
+            "../../Simulation/Outputs/7Li/test_nPads_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_8Thresh.root",
+            isLab ? "effLab" : "effCM");
+    eff.Add("g1",
+            "../../Simulation/Outputs/7Li/test_nPads_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_8Thresh.root",
+            isLab ? "effLab" : "effCM");
     // Draw to check is fine
     eff.Draw();
 
@@ -102,7 +111,7 @@ void Ang(bool isLab = false)
     comp.Add("Daehnick", "./Inputs/gsD/fort.201");
     comp.Add("DA1p", "./Inputs/gsDA1p/fort.201");
     comp.Add("DA1pcorr", "./Inputs/gsDA1p_corr/fort.201");
-    comp.Add("ADWA", "../7Li_dp/Inputs/gs_ADWA/fort.201");
+    // comp.Add("ADWA", "../7Li_dp/Inputs/gs_ADWA/fort.201");
     Angular::Comparator comp1 {"1st Ex", xs.Get("g1")};
     comp1.Add("DA1p BE2 deformation", "./Inputs/g1_DA1p/fort.202");
     comp1.Add("DA1pcorr BE2 deformation", "./Inputs/g1_DA1p_corr/fort.202");
@@ -141,6 +150,9 @@ void Ang(bool isLab = false)
     comp3.Add("DA1pcorr - data paper 14,5MeV", "./Inputs/gsDA1p_corr/fort.201");
     comp3.Fit();
     comp3.Draw("", true);
+
+    // comp.ScaleToExp("DA1pcorr", &exp, xs.Get("g0"), eff.GetTEfficiency("g0"), 0.080);
+    comp.QuotientPerPoint();
 
     auto* c0 {new TCanvas {"c0", "(d,d) canvas"}};
     c0->DivideSquare(2);

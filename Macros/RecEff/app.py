@@ -151,7 +151,7 @@ class App:
 
 
 def main() -> None:
-    file = "./events_L1.csv"
+    file = "./events_L1_7Li.csv"
     print(f"Labelling {file} file...")
 
     ## Dataframe

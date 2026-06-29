@@ -14,17 +14,30 @@
 
 void CompareEfficienciiesL1()
 {
+    // std::vector<std::string> files = {
+    //     "../Outputs/7Li/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1.root",
+    //     "../Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e2Thresh.root",
+    //     "../Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e3Thresh.root",
+    //     "../Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e4Thresh.root",
+    //     "../Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e5Thresh.root",
+    //     "../Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e6Thresh.root",
+    //     "../Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_2e6Thresh.root",
+    //     "../Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_4e6Thresh.root",
+    //     "../Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_7e6Thresh.root",
+    //     "../Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e7Thresh.root"};
+
+    // std::vector<std::string> files = {
+    //     "../Outputs/7Li/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1.root",
+    //     "../Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e6Thresh.root",
+    //     "../Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_2e6Thresh.root",
+    // };
+
     std::vector<std::string> files = {
-        "../Outputs/7Li/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1.root",
-        "../Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e2Thresh.root",
-        "../Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e3Thresh.root",
-        "../Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e4Thresh.root",
-        "../Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e5Thresh.root",
-        "../Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e6Thresh.root",
-        "../Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_2e6Thresh.root",
-        "../Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_4e6Thresh.root",
-        "../Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_7e6Thresh.root",
-        "../Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e7Thresh.root"};
+        "../Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e6Thresh.root",
+        "../Outputs/7Li/test_nPads_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_8Thresh.root",
+        "../Outputs/7Li/test_nPads_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_10Thresh.root",
+        "../Outputs/7Li/test_nPads_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_12Thresh.root",
+        "../Outputs/7Li/test_nPads_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_14Thresh.root"};
 
     std::vector<TEfficiency*> efficiencies;
     std::vector<TFile*> openedFiles;
@@ -63,19 +76,14 @@ void CompareEfficienciiesL1()
         efficiencies[i]->SetMarkerColor(colors[i % colors.size()]);
         efficiencies[i]->SetMarkerStyle(20 + i);
 
+        // Get the labels by the last word between .root and the last _
         TString label;
-        switch(i)
+        TString fileName = files[i];
+        Ssiz_t posRoot = fileName.Last('.');
+        Ssiz_t posUnderscore = fileName.Last('_');
+        if(posUnderscore != kNPOS && posRoot != kNPOS)
         {
-        case 0: label = "default"; break;
-        case 1: label = "1e2"; break;
-        case 2: label = "1e3"; break;
-        case 3: label = "1e4"; break;
-        case 4: label = "1e5"; break;
-        case 5: label = "1e6"; break;
-        case 6: label = "2e6"; break;
-        case 7: label = "4e6"; break;
-        case 8: label = "7e6"; break;
-        case 9: label = "1e7"; break;
+            label = fileName(posUnderscore + 1, posRoot - posUnderscore - 1);
         }
 
         if(i == 0)

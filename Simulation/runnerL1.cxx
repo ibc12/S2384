@@ -17,10 +17,10 @@ void runnerL1(TString what = "simu", bool inspect = true)
     int protonPS {0};  // number of protons in final state
     bool isPS {neutronPS > 0 || protonPS > 0};
     // Particles
-    std::string beam {"11Li"};
+    std::string beam {"7Li"};
     std::string target {"2H"};
-    std::string light {"1H"};
-    std::string heavy {"12Li"};
+    std::string light {"2H"};
+    std::string heavy {"7Li"};
     // Beam energy
     double Tbeam {};
     if(beam == "7Li")
@@ -37,15 +37,17 @@ void runnerL1(TString what = "simu", bool inspect = true)
             // Exs = {0,  0.981, 2.255, 3.210};
             // Exs = {5.400, 6.100, 6.530, 7.100};
             Exs = {0, 0.981, 2.255};
-            // Exs = {0, 0.981, 2.255, 3.210, 5.400, 6.100, 6.530, 7.100};
+        // Exs = {0, 0.981, 2.255, 3.210, 5.400, 6.100, 6.530, 7.100};
     }
 
     else if(neutronPS == 0 && protonPS == 0 && target == "2H" && light == "2H") // Elastic and Inelastic scattering
     {
         if(beam == "11Li")
-            Exs = {0, 1.266, 2.474};
+            // Exs = {0, 1.266, 2.474};
+            Exs = {0};
         else if(beam == "7Li")
-            Exs = {0, 0.477};
+            // Exs = {0, 0.477};
+            Exs = {0}; // Only g.s.
     }
     else if(target == "2H" && light == "3H") // dt (only g.s)
         Exs = {0, 1, 2, 3};
@@ -99,9 +101,9 @@ void runnerL1(TString what = "simu", bool inspect = true)
             {
                 for(const auto& ex : Exs)
                 {
-                    auto str = TString::Format("root -l -b -q -x 'do_simuL1.cxx(\"%s\",\"%s\",\"%s\",\"%s\",%d,%d,%f,%f,%d)'",
-                                               beam.c_str(), target.c_str(), light.c_str(), heavy.c_str(), neutronPS,
-                                               protonPS, Tbeam, ex, inspect);
+                    auto str = TString::Format(
+                        "root -l -b -q -x 'do_simuL1.cxx(\"%s\",\"%s\",\"%s\",\"%s\",%d,%d,%f,%f,%d)'", beam.c_str(),
+                        target.c_str(), light.c_str(), heavy.c_str(), neutronPS, protonPS, Tbeam, ex, inspect);
                     threads.emplace_back(std::thread {worker, str});
                 }
             }

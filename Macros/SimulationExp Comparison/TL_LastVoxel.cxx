@@ -19,7 +19,7 @@ constexpr int yMaxExclusionZone = 71;
 void TL_LastVoxel()
 {
     // Get data for 7Li (d,d) elastic scattering
-    std::string beam {"11Li"};
+    std::string beam {"7Li"};
     std::string target {"2H"};
     std::string targetExp {"d"};
     std::string light {"2H"};
@@ -41,7 +41,7 @@ void TL_LastVoxel()
 
     // Filter exp data to get only L1 events
     auto dfExpL1 = dfExp.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; }, {"MergerData"})
-                       .Filter([](ActRoot::MergerData& m) { return m.fRun ; }, {"MergerData"});
+                       .Filter([](ActRoot::MergerData& m) { return m.fThetaLight > 74; }, {"MergerData"});
     // auto dfExpL1 = dfExpL1.Filter([](double & ex) { return ex < 1; }, {"Ex"});
 
     // Get drift parameter from config file

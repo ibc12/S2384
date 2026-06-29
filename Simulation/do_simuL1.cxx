@@ -67,6 +67,8 @@ constexpr double theta = 0.7;         // Polya parameter
 constexpr float thresholdPadCharge = 1e6; // that n electrons corresponds to 0.8789 pC
 constexpr int yMinExclusionZone = 56;
 constexpr int yMaxExclusionZone = 71;
+constexpr int nPadsThreshold = 8; // Minimum number of pads outside the exclusion zone to consider an event valid
+constexpr int validationZone = 8;  // Minimum distance from the last voxel to the TPC borders in mm (from detector.conf)
 using voxelKey = std::tuple<int, int, int>; // ix,iy,iz
 
 std::pair<XYZPoint, XYZPoint> SampleVertex(double meanZ, double sigmaZ, TH3D* h, double lengthX)
@@ -401,6 +403,12 @@ int PadsOutExclusionZone(const std::map<voxelKey, ActRoot::Voxel>& voxelMap1,
     return count;
 }
 
+bool IsLastVoxelFarFromBorders(const ActRoot::Voxel::XYZPointF& lastPoint, const ActRoot::TPCParameters& tpc)
+{
+    return (lastPoint.X() > validationZone && lastPoint.X() < tpc.X() - validationZone &&
+            lastPoint.Y() > validationZone && lastPoint.Y() < tpc.Y() - validationZone);
+}
+
 void do_simuL1(const std::string& beam, const std::string& target, const std::string& light, const std::string& heavy,
                int neutronPS, int protonPS, double Tbeam, double Ex, bool inspect, int thread = -1)
 {
@@ -558,7 +566,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
 
     // File to save data
     TString fileName {
-        TString::Format("./Outputs/%s/test_charge_threshold/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s_L1_1e6Thresh.root",
+        TString::Format("./Outputs/%s/test_nPads_threshold/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s_L1_8Thresh.root",
                         beam.c_str(), target.c_str(), light.c_str(), Ex, neutronPS, protonPS, tag.c_str())};
     auto outFile {new TFile(fileName, inspect ? "read" : "recreate")};
     auto* outTree {new TTree("SimulationTTree", "A TTree containing only our Eex obtained by simulation")};
@@ -775,7 +783,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
 
         int nPadsOutExclusionZone = PadsOutExclusionZone(voxelMapLight, voxelMapHeavy, thresholdPadCharge);
         hPads->Fill(nPadsOutExclusionZone);
-        if(nPadsOutExclusionZone < 8) // I have to implement the threshold of charge
+        if(nPadsOutExclusionZone < nPadsThreshold)
             continue;
 
         // Create ActClusters from voxel maps
@@ -797,6 +805,9 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
         clusterLight.SortAlongDir(dirCluster);
         // Get last point of cluster
         auto lastPoint = clusterLight.GetVoxels().back().GetPosition();
+        // Ensure is far from borders (validation zone)
+        if(!IsLastVoxelFarFromBorders(lastPoint, tpc))
+            continue;
         // To get the TL project to the line the last point and the vertex
         auto lineCluster = clusterLight.GetLine();
         auto vertexPointFloat = ROOT::Math::XYZPointF(vertex.X(), vertex.Y(), vertex.Z());
