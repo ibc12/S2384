@@ -206,6 +206,21 @@ void Pipe0_PreProcess(const std::string& beam, const std::string& target, const 
         std::cout << "Saving PreProcessed_Tree in file : " << name << '\n';
         dfFilterZandQ.Snapshot("PreProcessed_Tree", name.Data());
     }
+    // auto dfL1 = dfFilterZandQ.Filter(
+    //     [](ActRoot::MergerData& mer, ActRoot::ModularData& mod)
+    //     {
+    //         if(mod.Get("GATCONF") == 8 && (mer.fLightIdx != -1))
+    //         {
+    //             return true;
+    //         }
+    //         else
+    //             return false;
+    //     },
+    //     {"MergerData", "ModularData"});
+    // auto hQaveLight = dfL1.Histo1D({"hQaveLight", "Average charge of light particle clusters;# Clusters;Counts", 100, 0, 10000},
+    //                                      "MergerData.fLight.fQave");
+    // auto* c1 {new TCanvas {"c1", "Average charge of light particle clusters"}};
+    // hQaveLight->DrawClone();
 }
 
 #endif
