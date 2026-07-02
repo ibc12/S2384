@@ -22,7 +22,7 @@ void BrokenTracksZL1()
     // ActRoot::DataManager dataman {"../../configs/data_7Li.conf", ActRoot::ModeType::EMerge};
     // auto chain {dataman.GetChain()};
     // Add friends if necessary
-    // auto friend1 {dataman.GetChain(ActRoot::ModeType::EReadTPC)};
+    // auto friend1 {dataman.GetChain(ActRoot::ModeType::EFilter)};
     // chain->AddFriend(friend1.get());
     // auto friend2 {dataman.GetChain(ActRoot::ModeType::EReadSilMod)};
     // chain->AddFriend(friend2.get());
