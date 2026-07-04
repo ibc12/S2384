@@ -1,7 +1,7 @@
 #include "ActContinuity.h"
 #include "ActDataManager.h"
-#include "ActModularData.h"
 #include "ActMergerData.h"
+#include "ActModularData.h"
 #include "ActTPCData.h"
 #include "ActTPCParameters.h"
 
@@ -92,9 +92,13 @@ void BrokenTracksZL1()
         {"hSizeVoxelsLight", "Size of light particle clusters after continuity;# Clusters;Counts", 10, 0, 10},
         "nClustersInLight");
 
-        auto hQaveLight = defClusters.Histo1D(
+    auto hQaveLight = defClusters.Histo1D(
         {"hQaveLight", "Average charge of light particle clusters after continuity;# Clusters;Counts", 100, 0, 10000},
         "fLight.fQave");
+
+    // Plotthe PID of those particles to see where they lay:
+    auto hPID = defClustersFiltered.Histo2D(
+        {"hPID", "PID distribution of uncontinuous tracks;TL;Qtot", 200, 0, 120, 2000, 0, 3e5}, "fLight.fRawTL", "fLight.fQtotal");
 
     // Get some events to inspect
     std::ofstream outEvent("./Outputs/events0Cluster.dat");
@@ -115,4 +119,6 @@ void BrokenTracksZL1()
     hSizeVoxelsLight->DrawClone();
     auto* c2 {new TCanvas {"c2", "Average charge of light particle clusters after continuity"}};
     hQaveLight->DrawClone();
+    auto* c3 {new TCanvas {"c3", "PID distribution of uncontinuous tracks"}};
+    hPID->DrawClone("colz");
 }

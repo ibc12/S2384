@@ -34,9 +34,10 @@ struct ProjectedPoint
 std::vector<ProjectedPoint>
 GetProjectedPositions(ActRoot::Cluster lightCl, const ROOT::Math::XYZPointF& ref, double driftFactor = 1.)
 {
-    auto voxels = lightCl.GetRefToVoxels();
+    // auto voxels = lightCl.GetRefToVoxels();
     lightCl.ScaleVoxels(2, driftFactor); // This function already puts 0.5 offset
     lightCl.ReFit();
+    auto voxels = lightCl.GetRefToVoxels();
     auto line = lightCl.GetRefToLine();
     auto dir = line.GetDirection().Unit();
     lightCl.SortAlongDir(dir); // ordenamos los voxeles a lo largo de la dirección del cluster

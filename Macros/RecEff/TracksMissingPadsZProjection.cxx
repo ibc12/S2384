@@ -10,6 +10,7 @@
 #include "ROOT/RDataFrame.hxx"
 
 #include "TCanvas.h"
+#include "TF1.h"
 #include "TGraph.h"
 #include "TH1.h"
 #include "TH2.h"
@@ -19,7 +20,10 @@
 #include "Math/Vector3D.h"
 
 #include <algorithm>
+#include <fstream>
 #include <iostream>
+#include <set>
+#include <utility>
 #include <vector>
 
 struct ProjectedPoint
@@ -28,14 +32,15 @@ struct ProjectedPoint
     ROOT::Math::XYZPointF pos3D;
 };
 
-// Igual que antes: proyecta los voxeles sobre la línea del cluster, ordenados por s.
+// Same as before: project the voxels onto the cluster line and sort them by s.
 std::vector<ProjectedPoint>
 GetProjectedPositions(ActRoot::Cluster lightCl, const ROOT::Math::XYZPointF& ref, double driftFactor = 1.)
 {
-    auto voxels = lightCl.GetRefToVoxels();
+    // auto voxels = lightCl.GetRefToVoxels();
+    auto line = lightCl.GetLine();
+    line.Scale(2, driftFactor);
     lightCl.ScaleVoxels(2, driftFactor);
-    lightCl.ReFit();
-    auto line = lightCl.GetRefToLine();
+    auto voxels = lightCl.GetRefToVoxels();
     auto dir = line.GetDirection().Unit();
     lightCl.SortAlongDir(dir);
 
@@ -53,17 +58,19 @@ GetProjectedPositions(ActRoot::Cluster lightCl, const ROOT::Math::XYZPointF& ref
     return points;
 }
 
-// Resumen de gaps de un evento: gap máximo (absoluto y normalizado),
-// número de voxeles, y rango total en s.
-// La normalización es importante: un gap de 5mm puede ser enorme en una
-// traza corta y densa, o insignificante en una traza larga y dispersa.
-// Por eso dividimos por el gap "típico" (mediana de los gaps del propio
-// evento) para tener una métrica adimensional comparable entre eventos.
+// Summary of the gaps in a single event: maximum gap (absolute and normalized),
+// number of voxels, and total track length in s.
+//
+// The normalization is important: a 5 mm gap can be huge in a short, dense
+// track but completely negligible in a long, sparse one. Therefore, we divide
+// by the "typical" gap (the median of the event's own gaps) to obtain a
+// dimensionless quantity that can be compared across events.
 struct GapSummary
 {
     double maxGap = -1;
-    double maxGapNorm = -1; // maxGap / mediana(gaps)
+    double maxGapNorm = -1; // maxGap / median(gaps)
     double medianGap = -1;
+    double meanGap = -1;
     double sRange = -1;
     int nVoxels = 0;
     bool valid = false;
@@ -73,7 +80,7 @@ GapSummary ComputeGapSummary(const std::vector<ProjectedPoint>& points)
 {
     GapSummary res;
     res.nVoxels = (int)points.size();
-    if(points.size() < 3) // con <3 puntos no hay "gap típico" fiable
+    if(points.size() < 3) // With fewer than 3 points there is no reliable "typical" gap.
         return res;
 
     std::vector<double> gaps;
@@ -87,87 +94,275 @@ GapSummary ComputeGapSummary(const std::vector<ProjectedPoint>& points)
     std::vector<double> sortedGaps = gaps;
     std::sort(sortedGaps.begin(), sortedGaps.end());
     res.medianGap = sortedGaps[sortedGaps.size() / 2];
+    res.meanGap = std::accumulate(sortedGaps.begin(), sortedGaps.end(), 0.0) / sortedGaps.size();
 
-    if(res.medianGap > 0)
-        res.maxGapNorm = res.maxGap / res.medianGap;
+    // if(res.medianGap > 0)
+    res.maxGapNorm = res.maxGap / res.medianGap;
 
     res.sRange = points.back().s - points.front().s;
     res.valid = true;
     return res;
 }
 
+// --- New: pad counts in the XZ and YZ projections -------------------------
+//
+// Idea: a voxel is really "pad (X,Y) fired at drift time Z". If pads are being
+// lost specifically in Z (e.g. dead time buckets, saturation, thresholding in
+// the drift coordinate) that loss should show up as gaps when you look at the
+// (X,Z) and (Y,Z) occupancy separately, and it may be asymmetric between the
+// two projections if one pad plane/readout is behaving differently from the
+// other. Counting the number of *distinct occupied cells* (rather than raw
+// voxel counts) tells you how much of the XZ / YZ footprint is actually
+// filled versus how sparse/gappy it is once you collapse the third dimension.
+struct PadProjectionSummary
+{
+    int nPadsXZ = 0;
+    int nPadsYZ = 0;
+    int nPadsXY = 0; // occupancy in the "real" pad plane, useful as a reference
+    double ratioXZoverYZ = -1;
+    bool valid = false;
+};
+
+// padPitch: bin size (mm) used to group nearby positions into the same "pad
+// cell" in the projection. Set it to your actual pad pitch (commonly 2 mm for
+// ACTAR TPC); if voxel positions are already discretized to pad centers, any
+// pitch <= that spacing works fine as a binning tolerance.
+PadProjectionSummary ComputePadProjectionCounts(const std::vector<ActRoot::Voxel>& voxels, double padPitch = 2.0)
+{
+    PadProjectionSummary res;
+    if(voxels.empty() || padPitch <= 0)
+        return res;
+
+    std::set<std::pair<int, int>> xz;
+    std::set<std::pair<int, int>> yz;
+    std::set<std::pair<int, int>> xy;
+
+    for(const auto& v : voxels)
+    {
+        auto pos = v.GetPosition();
+        int ix = (int)std::round(pos.X() / padPitch);
+        int iy = (int)std::round(pos.Y() / padPitch);
+        int iz = (int)std::round(pos.Z() / padPitch);
+
+        xz.insert({ix, iz});
+        yz.insert({iy, iz});
+        xy.insert({ix, iy});
+    }
+
+    res.nPadsXZ = (int)xz.size();
+    res.nPadsYZ = (int)yz.size();
+    res.nPadsXY = (int)xy.size();
+    if(res.nPadsYZ > 0)
+        res.ratioXZoverYZ = (double)res.nPadsXZ / (double)res.nPadsYZ;
+    res.valid = true;
+    return res;
+}
+
 void TracksMissingPadsZProjection()
 {
-    ROOT::EnableImplicitMT(); // ahora sí, al recorrer todos los eventos conviene multithreadear
+    ROOT::EnableImplicitMT(); // Multithreading is worthwhile since we process the full dataset.
 
-    ActRoot::DataManager dataman {"../../configs/data_7Li.conf", ActRoot::ModeType::EMerge};
-    dataman.SetRuns(69, 69);
-    auto chain {dataman.GetChain()};
-    auto friend1 {dataman.GetChain(ActRoot::ModeType::EFilter)};
-    chain->AddFriend(friend1.get());
-    auto friend2 {dataman.GetChain(ActRoot::ModeType::EReadSilMod)};
-    chain->AddFriend(friend2.get());
+    // ActRoot::DataManager dataman {"../../configs/data_7Li.conf", ActRoot::ModeType::EMerge};
+    // dataman.SetRuns(69, 69);
+    // auto chain {dataman.GetChain()};
+    // auto friend1 {dataman.GetChain(ActRoot::ModeType::EFilter)};
+    // chain->AddFriend(friend1.get());
+    // auto friend2 {dataman.GetChain(ActRoot::ModeType::EReadSilMod)};
+    // chain->AddFriend(friend2.get());
 
     ActRoot::InputParser parser {};
     parser.ReadFile("../../configs/detector.conf");
     auto driftBlock = parser.GetBlock("Merger");
     auto driftFactor = driftBlock->GetDouble("DriftFactor");
 
-    ROOT::RDataFrame df {*chain};
+    // Pad pitch used for the XZ/YZ/XY occupancy counting below.
 
-    // Sin filtro de evento: recorremos todo el chain.
-    // Si quieres mantener algún filtro físico (p.ej. solo L1), déjalo aquí.
-    auto defSummary = df.Define("gapSummary",
-                                [&driftFactor](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
-                                {
-                                    GapSummary empty;
-                                    auto lightIdx = m.fLightIdx;
-                                    if(lightIdx < 0 || lightIdx >= (int)tpc.fClusters.size())
-                                        return empty;
-                                    auto lightCl = tpc.fClusters[lightIdx];
-                                    auto rp = m.fRP;
-                                    auto points = GetProjectedPositions(lightCl, rp, driftFactor);
-                                    return ComputeGapSummary(points);
-                                },
-                                {"MergerData", "TPCData"})
-                          .Define("maxGap", [](const GapSummary& g) { return g.maxGap; }, {"gapSummary"})
-                          .Define("maxGapNorm", [](const GapSummary& g) { return g.maxGapNorm; }, {"gapSummary"})
-                          .Define("medianGap", [](const GapSummary& g) { return g.medianGap; }, {"gapSummary"})
-                          .Define("nVoxelsG", [](const GapSummary& g) { return g.nVoxels; }, {"gapSummary"})
-                          .Define("sRange", [](const GapSummary& g) { return g.sRange; }, {"gapSummary"})
-                          .Filter([](const GapSummary& g) { return g.valid; }, {"gapSummary"}); // descarta eventos con <3 voxeles
+    // ROOT::RDataFrame df {*chain};
 
-    // --- Distribución del gap máximo absoluto (mm) ---
-    auto hMaxGap = defSummary.Histo1D({"hMaxGap", "Max gap per event;max gap [mm];Events", 200, 0, 50}, "maxGap");
+    ROOT::RDataFrame df {"PreProcessed_Tree", "../../PostAnalysis/Outputs/tree_preprocess_F_7Li.root"};
 
-    // --- Distribución del gap máximo normalizado (adimensional) ---
-    // Esta es probablemente la más útil para fijar un umbral: un maxGapNorm ~1-2
-    // es "espaciado normal", mientras que valores >>1 indican un salto sospechoso
-    // independientemente de la longitud/orientación/densidad de la traza.
+    auto dfFiltered =
+        df.Filter([](ActRoot::ModularData& m, ActRoot::MergerData& merger)
+                  { return m.Get("GATCONF") == 8 && merger.fRun == 69; }, {"ModularData", "MergerData"}); // only L1
+
+    // No event selection: process the entire chain.
+    // If needed, any physics selection (e.g. only L1 events) can be added here.
+    auto defSummary =
+        dfFiltered
+            .Define("gapSummary",
+                    [&driftFactor](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+                    {
+                        GapSummary empty;
+                        auto lightIdx = m.fLightIdx;
+                        if(lightIdx < 0 || lightIdx >= (int)tpc.fClusters.size())
+                            return empty;
+                        auto lightCl = tpc.fClusters[lightIdx];
+                        auto rp = m.fRP;
+                        auto points = GetProjectedPositions(lightCl, rp, driftFactor);
+                        return ComputeGapSummary(points);
+                    },
+                    {"MergerData", "TPCData"})
+            .Define("maxGap", [](const GapSummary& g) { return g.maxGap; }, {"gapSummary"})
+            .Define("maxGapNorm", [](const GapSummary& g) { return g.maxGapNorm; }, {"gapSummary"})
+            .Define("medianGap", [](const GapSummary& g) { return g.medianGap; }, {"gapSummary"})
+            .Define("meanGap", [](const GapSummary& g) { return g.meanGap; }, {"gapSummary"})
+            .Define("nVoxelsG", [](const GapSummary& g) { return g.nVoxels; }, {"gapSummary"})
+            .Define("sRange", [](const GapSummary& g) { return g.sRange; }, {"gapSummary"})
+            .Filter([](const GapSummary& g) { return g.valid; },
+                    {"gapSummary"}) // Discard events with fewer than 3 voxels.
+            // --- New: XZ / YZ pad-projection counts -----------------------
+            .Define("padSummary",
+                    [&driftFactor](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+                    {
+                        PadProjectionSummary empty;
+                        auto lightIdx = m.fLightIdx;
+                        if(lightIdx < 0 || lightIdx >= (int)tpc.fClusters.size())
+                            return empty;
+                        auto lightCl = tpc.fClusters[lightIdx];
+                        // Apply the same Z scaling as GetProjectedPositions so the
+                        // pad pitch is meaningful in the same units.
+                        // lightCl.ScaleVoxels(2, driftFactor);
+                        return ComputePadProjectionCounts(lightCl.GetVoxels(), 1);
+                    },
+                    {"MergerData", "TPCData"})
+            .Define("nPadsXZ", [](const PadProjectionSummary& p) { return p.nPadsXZ; }, {"padSummary"})
+            .Define("nPadsYZ", [](const PadProjectionSummary& p) { return p.nPadsYZ; }, {"padSummary"})
+            .Define("nPadsXY", [](const PadProjectionSummary& p) { return p.nPadsXY; }, {"padSummary"})
+            .Define("nPadsXZnorm", [](const PadProjectionSummary& p, const GapSummary& g)
+                    { return (double)p.nPadsXZ / (double)g.sRange; }, {"padSummary", "gapSummary"})
+            .Define("nPadsYZnorm", [](const PadProjectionSummary& p, const GapSummary& g)
+                    { return (double)p.nPadsYZ / (double)g.sRange; }, {"padSummary", "gapSummary"})
+            .Define("nPadsXYnorm", [](const PadProjectionSummary& p, const GapSummary& g)
+                    { return (double)p.nPadsXY / (double)g.sRange; }, {"padSummary", "gapSummary"})
+            .Define("ratioXZoverYZ", [](const PadProjectionSummary& p) { return p.ratioXZoverYZ; }, {"padSummary"})
+            .Filter([](const PadProjectionSummary& p) { return p.valid; }, {"padSummary"});
+
+    // Get the data in the two branches of phi
+    auto defSummaryPhiPositive =
+        defSummary.Filter([](ActRoot::MergerData& m) { return m.fPhiLight > 0; }, {"MergerData"});
+    auto defSummaryPhiNegative =
+        defSummary.Filter([](ActRoot::MergerData& m) { return m.fPhiLight < 0; }, {"MergerData"});
+
+    // --- Distribution of the absolute maximum gap (mm) ---
+    auto hMaxGap = defSummary.Histo1D({"hMaxGap", "Max gap per event;max gap [mm];Events", 200, 0, 10}, "maxGap");
+    auto hMaxGapPhiPositive = defSummaryPhiPositive.Histo1D(
+        {"hMaxGapPhiPositive", "Max gap per event (phi>0);max gap [mm];Events", 200, 0, 10}, "maxGap");
+    auto hMaxGapPhiNegative = defSummaryPhiNegative.Histo1D(
+        {"hMaxGapPhiNegative", "Max gap per event (phi<0);max gap [mm];Events", 200, 0, 10}, "maxGap");
+
+    // --- Distribution of the mean gap (mm) ---
+    auto hMeanGap = defSummary.Histo1D({"hMeanGap", "Mean gap per event;mean gap [mm];Events", 200, 0, 10}, "meanGap");
+    auto hMeanGapPhiPositive = defSummaryPhiPositive.Histo1D(
+        {"hMeanGapPhiPositive", "Mean gap per event (phi>0);mean gap [mm];Events", 200, 0, 10}, "meanGap");
+    auto hMeanGapPhiNegative = defSummaryPhiNegative.Histo1D(
+        {"hMeanGapPhiNegative", "Mean gap per event (phi<0);mean gap [mm];Events", 200, 0, 10}, "meanGap");
+    auto hMeanGapVSMaxGap = defSummary.Histo2D(
+        {"hMeanGapVSMaxGap", "Mean gap vs max gap;max gap [mm];mean gap [mm]", 200, 0, 10, 200, 0, 10}, "maxGap",
+        "meanGap");
+
+
+    // --- Distribution of the normalized maximum gap (dimensionless) ---
+    // This is likely the most useful observable for defining a threshold.
+    // A maxGapNorm around 1–2 corresponds to the expected spacing, whereas
+    // values much larger than 1 indicate a suspicious discontinuity,
+    // regardless of track length, orientation, or voxel density.
     auto hMaxGapNorm =
         defSummary.Histo1D({"hMaxGapNorm", "Max gap / median gap;maxGap / medianGap;Events", 200, 0, 50}, "maxGapNorm");
 
-    // --- Correlación: ¿el maxGap depende del número de voxeles (trazas cortas vs largas)? ---
-    // Importante para saber si necesitas normalizar por longitud/densidad
-    // antes de fijar un umbral global, o si el umbral debe depender de nVoxels.
-    auto hGapVsNVoxels = defSummary.Histo2D({"hGapVsNVoxels", "Max gap vs nVoxels;nVoxels;max gap [mm]", 100, 0, 500,
-                                             100, 0, 50},
-                                            "nVoxelsG", "maxGap");
+    // --- Correlation: does the maximum gap depend on the number of voxels? ---
+    // This helps determine whether a global threshold is sufficient or whether
+    // it should depend on the track size.
+    auto hGapVsNVoxels = defSummary.Histo2D(
+        {"hGapVsNVoxels", "Max gap vs nVoxels;nVoxels;max gap [mm]", 100, 0, 500, 100, 0, 50}, "nVoxelsG", "maxGap");
 
-    auto hGapNormVsNVoxels = defSummary.Histo2D({"hGapNormVsNVoxels", "Max gap norm vs nVoxels;nVoxels;maxGap/medianGap",
-                                                 100, 0, 500, 100, 0, 50},
-                                                "nVoxelsG", "maxGapNorm");
+    auto hGapNormVsNVoxels = defSummary.Histo2D(
+        {"hGapNormVsNVoxels", "Max gap norm vs nVoxels;nVoxels;maxGap/medianGap", 100, 0, 500, 100, 0, 50}, "nVoxelsG",
+        "maxGapNorm");
 
-    // --- Correlación con el rango total de la traza (sRange) ---
-    // Traza larga = más oportunidades de tener un gap grande por azar.
-    auto hGapVsSRange = defSummary.Histo2D({"hGapVsSRange", "Max gap vs track length;s range [mm];max gap [mm]", 100,
-                                            0, 300, 100, 0, 50},
-                                           "sRange", "maxGap");
+    // --- Correlation with the total projected track length (sRange) ---
+    // Longer tracks naturally have more opportunities to contain a large gap
+    // purely by chance.
+    auto hGapVsSRange = defSummary.Histo2D(
+        {"hGapVsSRange", "Max gap vs track length;s range [mm];max gap [mm]", 100, 0, 300, 100, 0, 50}, "sRange",
+        "maxGap");
+
+    // --- New: XZ / YZ pad-projection occupancy ---------------------------
+    auto hNPadsXZ =
+        defSummary.Histo1D({"hNPadsXZ", "Occupied cells in XZ projection;nPadsXZ;Events", 200, 0, 400}, "nPadsXZ");
+    auto hNPadsYZ =
+        defSummary.Histo1D({"hNPadsYZ", "Occupied cells in YZ projection;nPadsYZ;Events", 200, 0, 400}, "nPadsYZ");
+
+    // Direct XZ-vs-YZ comparison: if pads are lost symmetrically this should
+    // sit close to the diagonal; systematic deviation from y=x points to one
+    // plane/readout losing more pads in Z than the other.
+    auto hNPadsXZvsYZ = defSummary.Histo2D(
+        {"hNPadsXZvsYZ", "nPadsXZ vs nPadsYZ;nPadsYZ;nPadsXZ", 200, 0, 400, 200, 0, 400}, "nPadsYZ", "nPadsXZ");
+
+    auto hRatioXZoverYZ =
+        defSummary.Histo1D({"hRatioXZoverYZ", "nPadsXZ / nPadsYZ;ratio;Events", 200, 0, 5}, "ratioXZoverYZ");
+
+    // Does the XZ/YZ occupancy correlate with the gap you already found along
+    // the track direction? If large maxGapNorm events also show a depleted
+    // nPadsXZ or nPadsYZ (relative to nVoxelsG), that's strong evidence the
+    // gap really is a missing-pads-in-Z effect rather than just a sparse but
+    // healthy track.
+    auto hGapVsNPadsXZ = defSummary.Histo2D(
+        {"hGapVsNPadsXZ", "maxGap vs nPadsXZ;nPadsXZ;maxGap", 200, 0, 400, 100, 0, 10}, "nPadsXZ", "maxGap");
+    auto hGapVsNPadsXZnorm = defSummary.Histo2D(
+        {"hGapVsNPadsXZnorm", "maxGap vs nPadsXZ/nVoxelsG;nPadsXZ/nVoxelsG;maxGap", 200, 0, 1.5, 100, 0, 10},
+        "nPadsXZnorm", "maxGap");
+    auto hGapVsNPadsYZ = defSummary.Histo2D(
+        {"hGapVsNPadsYZ", "maxGap vs nPadsYZ;nPadsYZ;maxGap", 200, 0, 400, 100, 0, 10}, "nPadsYZ", "maxGap");
+    auto hGapVsNPadsYZnorm = defSummary.Histo2D(
+        {"hGapVsNPadsYZnorm", "maxGap vs nPadsYZ/nVoxelsG;nPadsYZ/nVoxelsG;maxGap", 200, 0, 1.5, 100, 0, 10},
+        "nPadsYZnorm", "maxGap");
+
+    // Occupancy relative to raw voxel count: nPadsXZ (or YZ) / nVoxelsG close
+    // to 1 means almost every voxel sits in its own XZ cell (sparse, likely
+    // gappy); much less than 1 means many voxels share XZ cells (dense,
+    // well-sampled track).
+    auto defWithFillFrac =
+        defSummary
+            .Define("fillFracXZ", [](int nPadsXZ, int nVoxels)
+                    { return nVoxels > 0 ? (double)nPadsXZ / nVoxels : -1.; }, {"nPadsXZ", "nVoxelsG"})
+            .Define("fillFracYZ", [](int nPadsYZ, int nVoxels)
+                    { return nVoxels > 0 ? (double)nPadsYZ / nVoxels : -1.; }, {"nPadsYZ", "nVoxelsG"});
+
+    auto hFillFracXZ =
+        defWithFillFrac.Histo1D({"hFillFracXZ", "nPadsXZ / nVoxelsG;fill fraction;Events", 100, 0, 1.5}, "fillFracXZ");
+    auto hFillFracYZ =
+        defWithFillFrac.Histo1D({"hFillFracYZ", "nPadsYZ / nVoxelsG;fill fraction;Events", 100, 0, 1.5}, "fillFracYZ");
 
     auto* c1 = new TCanvas("c1", "Max gap distributions", 1200, 800);
     c1->Divide(2, 2);
     c1->cd(1);
+    // Fit to two gausians to see if there is a clear separation between the "normal" and "suspicious" populations.
+    // auto gaus1 = new TF1("gaus1", "gaus", 0, 4);
+    // auto gaus2 = new TF1("gaus2", "gaus", 0, 4);
+    // auto gaus3 = new TF1("gaus", "gaus", 4, 10);
+    // // Give initial parameters to the fits based on the histogram content
+    // gaus1->SetParameters(150, 1.7, 0.5); // amplitude, mean, sigma
+    // gaus2->SetParameters(400, 3, 0.5);
+    // gaus3->SetParameters(20, 5.6, 0.5);
+    // // Put bounds to the parameters
+    // gaus1->SetParLimits(0, 100, 1e6); // amplitude between 0 and 1e6
+    // gaus2->SetParLimits(0, 200, 1e6);
+    // gaus1->SetParLimits(1, 1.5, 2); // mean between 0 and 10
+    // gaus2->SetParLimits(1, 2.6, 3.4); // mean between 10 and 50
+    // gaus3->SetParLimits(1, 5.3, 6);   // mean between 0 and 50
+    // gaus1->SetParLimits(2, 0.1, 1); // sigma between 0 and 5
+    // gaus2->SetParLimits(2, 0.1, 1);
+    // gaus3->SetParLimits(2, 0.1, 1);
+
+    // gaus1->FixParameter(1, 2.4);
+    // gaus2->FixParameter(1, 3);
+    // Fit the histogram with the three gaussians
+    // hMaxGap->Fit(gaus1, "R");
+    // hMaxGap->Fit(gaus2, "R+");
+    // hMaxGap->Fit(gaus3, "R+");
     hMaxGap->DrawClone();
+
+
     c1->cd(2);
     hMaxGapNorm->DrawClone();
     c1->cd(3);
@@ -178,5 +373,59 @@ void TracksMissingPadsZProjection()
     auto* c2 = new TCanvas("c2", "Max gap vs track length", 800, 600);
     hGapVsSRange->DrawClone("colz");
 
+    auto* c3 = new TCanvas("c3", "Max gap distributions by phi", 1200, 400);
+    c3->Divide(2, 1);
+    c3->cd(1);
+    hMaxGapPhiPositive->DrawClone();
+    c3->cd(2);
+    hMaxGapPhiNegative->DrawClone();
+
+    auto* c33 = new TCanvas("c33", "Mean gap distributions", 1200, 400);
+    c33->Divide(2, 2);
+    c33->cd(1);
+    hMeanGap->DrawClone();
+    c33->cd(2);
+    hMeanGapVSMaxGap->DrawClone("colz");
+    c33->cd(3);
+    hMeanGapPhiPositive->DrawClone();
+    c33->cd(4);
+    hMeanGapPhiNegative->DrawClone();
+
+    // --- New canvases for XZ / YZ pad projections -------------------------
+    auto* c4 = new TCanvas("c4", "XZ / YZ pad occupancy", 1200, 800);
+    c4->Divide(2, 2);
+    c4->cd(1);
+    hNPadsXZ->DrawClone();
+    c4->cd(2);
+    hNPadsYZ->DrawClone();
+    c4->cd(3);
+    hNPadsXZvsYZ->DrawClone("colz");
+    c4->cd(4);
+    hRatioXZoverYZ->DrawClone();
+
+    auto* c5 = new TCanvas("c5", "Max Gap vs XZ/YZ occupancy", 1200, 400);
+    c5->Divide(2, 2);
+    c5->cd(1);
+    hGapVsNPadsXZ->DrawClone("colz");
+    c5->cd(2);
+    hGapVsNPadsYZ->DrawClone("colz");
+    c5->cd(3);
+    hGapVsNPadsXZnorm->DrawClone("colz");
+    c5->cd(4);
+    hGapVsNPadsYZnorm->DrawClone("colz");
+
+    auto* c6 = new TCanvas("c6", "XZ / YZ fill fraction", 800, 400);
+    c6->Divide(2, 1);
+    c6->cd(1);
+    hFillFracXZ->DrawClone();
+    c6->cd(2);
+    hFillFracYZ->DrawClone();
+
     std::cout << "Total events processed: " << *defSummary.Count() << std::endl;
+
+    // Save some events if needed
+    // std::ofstream outFile("./Outputs/eventsMaxGap_Less2.dat");
+    // defSummary.Filter([](double maxGap) { return maxGap < 2.0; }, {"maxGap"})
+    //     .Foreach([&outFile](ActRoot::MergerData& m, ActRoot::TPCData& tpc) { m.Stream(outFile); },
+    //              {"MergerData", "TPCData"});
 }
