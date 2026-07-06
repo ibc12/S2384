@@ -1,4 +1,5 @@
 #include "ActContinuity.h"
+#include "ActCutsManager.h"
 #include "ActDataManager.h"
 #include "ActLine.h"
 #include "ActMergerData.h"
@@ -15,16 +16,21 @@
 #include "TH1.h"
 #include "TH2.h"
 #include "TMath.h"
+#include "TROOT.h"
 
 #include "Math/Point3Dfwd.h"
 #include "Math/Vector3D.h"
 
 #include <algorithm>
+#include <cmath>
 #include <fstream>
 #include <iostream>
+#include <numeric>
 #include <set>
+#include <string>
 #include <utility>
 #include <vector>
+
 
 struct ProjectedPoint
 {
@@ -71,6 +77,7 @@ struct GapSummary
     double maxGapNorm = -1; // maxGap / median(gaps)
     double medianGap = -1;
     double meanGap = -1;
+    double stdGap = -1;
     double sRange = -1;
     int nVoxels = 0;
     bool valid = false;
@@ -98,6 +105,15 @@ GapSummary ComputeGapSummary(const std::vector<ProjectedPoint>& points)
 
     // if(res.medianGap > 0)
     res.maxGapNorm = res.maxGap / res.medianGap;
+
+    // Calculate standard deviation of gaps
+    double sumSquaredDiffs = 0;
+    for(const auto& gap : gaps)
+    {
+        double diff = gap - res.meanGap;
+        sumSquaredDiffs += diff * diff;
+    }
+    res.stdGap = std::sqrt(sumSquaredDiffs / gaps.size());
 
     res.sRange = points.back().s - points.front().s;
     res.valid = true;
@@ -179,11 +195,12 @@ void TracksMissingPadsZProjection()
 
     // ROOT::RDataFrame df {*chain};
 
-    ROOT::RDataFrame df {"PreProcessed_Tree", "../../PostAnalysis/Outputs/tree_preprocess_F_7Li.root"};
+    ROOT::RDataFrame df {"PreProcessed_Tree", "../../PostAnalysis/Outputs/tree_preprocess_F_11Li.root"};
 
-    auto dfFiltered =
-        df.Filter([](ActRoot::ModularData& m, ActRoot::MergerData& merger)
-                  { return m.Get("GATCONF") == 8 && merger.fRun == 69; }, {"ModularData", "MergerData"}); // only L1
+    auto dfFiltered = df.Filter([](ActRoot::ModularData& m, ActRoot::MergerData& merger)
+                                { return m.Get("GATCONF") == 8; }, {"ModularData", "MergerData"}); // only L1
+
+    // Previously done with && merger.fRun == 69
 
     // No event selection: process the entire chain.
     // If needed, any physics selection (e.g. only L1 events) can be added here.
@@ -208,6 +225,7 @@ void TracksMissingPadsZProjection()
             .Define("meanGap", [](const GapSummary& g) { return g.meanGap; }, {"gapSummary"})
             .Define("nVoxelsG", [](const GapSummary& g) { return g.nVoxels; }, {"gapSummary"})
             .Define("sRange", [](const GapSummary& g) { return g.sRange; }, {"gapSummary"})
+            .Define("stdGap", [](const GapSummary& g) { return g.stdGap; }, {"gapSummary"})
             .Filter([](const GapSummary& g) { return g.valid; },
                     {"gapSummary"}) // Discard events with fewer than 3 voxels.
             // --- New: XZ / YZ pad-projection counts -----------------------
@@ -251,14 +269,37 @@ void TracksMissingPadsZProjection()
         {"hMaxGapPhiNegative", "Max gap per event (phi<0);max gap [mm];Events", 200, 0, 10}, "maxGap");
 
     // --- Distribution of the mean gap (mm) ---
-    auto hMeanGap = defSummary.Histo1D({"hMeanGap", "Mean gap per event;mean gap [mm];Events", 200, 0, 10}, "meanGap");
+    auto hMeanGap = defSummary.Histo1D({"hMeanGap", "Mean gap per event;mean gap [mm];Events", 200, 0, 3.5}, "meanGap");
     auto hMeanGapPhiPositive = defSummaryPhiPositive.Histo1D(
-        {"hMeanGapPhiPositive", "Mean gap per event (phi>0);mean gap [mm];Events", 200, 0, 10}, "meanGap");
+        {"hMeanGapPhiPositive", "Mean gap per event (phi>0);mean gap [mm];Events", 200, 0, 3.5}, "meanGap");
     auto hMeanGapPhiNegative = defSummaryPhiNegative.Histo1D(
-        {"hMeanGapPhiNegative", "Mean gap per event (phi<0);mean gap [mm];Events", 200, 0, 10}, "meanGap");
+        {"hMeanGapPhiNegative", "Mean gap per event (phi<0);mean gap [mm];Events", 200, 0, 3.5}, "meanGap");
     auto hMeanGapVSMaxGap = defSummary.Histo2D(
-        {"hMeanGapVSMaxGap", "Mean gap vs max gap;max gap [mm];mean gap [mm]", 200, 0, 10, 200, 0, 10}, "maxGap",
+        {"hMeanGapVSMaxGap", "Mean gap vs max gap;max gap [mm];mean gap [mm]", 200, 0, 10, 200, 0, 3.5}, "maxGap",
         "meanGap");
+    auto hMeanGapVSMaxGapPhiPositive = defSummaryPhiPositive.Histo2D(
+        {"hMeanGapVSMaxGapPhiPositive", "Mean gap vs max gap (phi>0);max gap [mm];mean gap [mm]", 200, 0, 10, 200, 0,
+         3.5},
+        "maxGap", "meanGap");
+    auto hMeanGapVSMaxGapPhiNegative = defSummaryPhiNegative.Histo2D(
+        {"hMeanGapVSMaxGapPhiNegative", "Mean gap vs max gap (phi<0);max gap [mm];mean gap [mm]", 200, 0, 10, 200, 0,
+         3.5},
+        "maxGap", "meanGap");
+
+    // --- Distribution of the standard deviation of gaps (mm) ---
+    auto hStdGap =
+        defSummary.Histo1D({"hStdGap", "Standard deviation of gaps;std gap [mm];Events", 200, 0, 3.5}, "stdGap");
+    auto hStdGapMaxGap = defSummary.Histo2D(
+        {"hStdGapMaxGap", "Standard deviation of gaps vs max gap;max gap [mm];std gap [mm]", 200, 0, 10, 200, 0, 3.5},
+        "maxGap", "stdGap");
+    auto hStdGapMeanGap =
+        defSummary.Histo2D({"hStdGapMeanGap", "Standard deviation of gaps vs mean gap;mean gap [mm];std gap [mm]", 200,
+                            0, 3.5, 200, 0, 3.5},
+                           "meanGap", "stdGap");
+    auto hStdGapMedianGap =
+        defSummary.Histo2D({"hStdGapMedianGap", "Standard deviation of gaps vs median gap;median gap [mm];std gap [mm]",
+                            200, 0, 3.5, 200, 0, 3.5},
+                           "medianGap", "stdGap");
 
 
     // --- Distribution of the normalized maximum gap (dimensionless) ---
@@ -387,9 +428,20 @@ void TracksMissingPadsZProjection()
     c33->cd(2);
     hMeanGapVSMaxGap->DrawClone("colz");
     c33->cd(3);
-    hMeanGapPhiPositive->DrawClone();
+    hMeanGapVSMaxGapPhiPositive->DrawClone("colz");
     c33->cd(4);
-    hMeanGapPhiNegative->DrawClone();
+    hMeanGapVSMaxGapPhiNegative->DrawClone("colz");
+
+    auto* c34 = new TCanvas("c34", "Standard deviation of gaps", 1200, 400);
+    c34->Divide(2, 2);
+    c34->cd(1);
+    hStdGap->DrawClone();
+    c34->cd(2);
+    hStdGapMaxGap->DrawClone("colz");
+    c34->cd(3);
+    hStdGapMeanGap->DrawClone("colz");
+    c34->cd(4);
+    hStdGapMedianGap->DrawClone("colz");
 
     // --- New canvases for XZ / YZ pad projections -------------------------
     auto* c4 = new TCanvas("c4", "XZ / YZ pad occupancy", 1200, 800);
@@ -423,9 +475,131 @@ void TracksMissingPadsZProjection()
 
     std::cout << "Total events processed: " << *defSummary.Count() << std::endl;
 
+    // Create cuts and save events inside
+    ActRoot::CutsManager<std::string> cuts {};
+    cuts.ReadCut("cut", "./Cuts/cut_LimitTest_maxGap_meanGap.root");
+    c33->cd(2);
+    cuts.DrawCut("cut");
+    std::ofstream outFile("./Outputs/eventsMaxGapMeanGap_LimitTestEvents.dat");
+    // defSummary.Foreach(
+    //     [&outFile, &cuts](ActRoot::MergerData& m, double meanGap, double maxGap)
+    //     {
+    //         if(cuts.IsInside("cut", maxGap, meanGap))
+    //         {
+    //             m.Stream(outFile);
+    //         }
+    //     },
+    //     {"MergerData", "meanGap", "maxGap"});
+
     // Save some events if needed
-    // std::ofstream outFile("./Outputs/eventsMaxGap_Less2.dat");
-    // defSummary.Filter([](double maxGap) { return maxGap < 2.0; }, {"maxGap"})
+    // std::ofstream outFile("./Outputs/eventsMaxGap_More8.dat");
+    // defSummary.Filter([](double maxGap) { return maxGap > 8.0; }, {"maxGap"})
     //     .Foreach([&outFile](ActRoot::MergerData& m, ActRoot::TPCData& tpc) { m.Stream(outFile); },
     //              {"MergerData", "TPCData"});
+
+    // Do PID for the good events in cut
+    cuts.ReadCut("goodEvents", "./Cuts/cut_goodEvents_maxGap_meanGap.root");
+    cuts.ReadCut("goodEventsWider", "./Cuts/cut_goodEventsWider_maxGap_meanGap.root");
+    cuts.ReadCut("notGoodEvents", "./Cuts/cut_NotGoodEvents_maxGap_meanGap.root");
+    cuts.ReadCut("notAtAllGoodEvents", "./Cuts/cut_NotAtAllGoodEvents_maxGap_meanGap.root");
+    cuts.DrawCut("goodEventsWider");
+    cuts.DrawCut("goodEvents");
+    cuts.DrawCut("notGoodEvents");
+    cuts.DrawCut("notAtAllGoodEvents");
+    auto dfGoodEvents =
+        defSummary.Filter([&cuts](double meanGap, double maxGap)
+                          { return cuts.IsInside("goodEvents", maxGap, meanGap); }, {"meanGap", "maxGap"});
+    auto dfGoodEventsWider =
+        defSummary.Filter([&cuts](double meanGap, double maxGap)
+                          { return cuts.IsInside("goodEventsWider", maxGap, meanGap); }, {"meanGap", "maxGap"});
+    auto dfNotGoodEvents =
+        defSummary.Filter([&cuts](double meanGap, double maxGap)
+                          { return cuts.IsInside("notGoodEvents", maxGap, meanGap); }, {"meanGap", "maxGap"});
+    auto dfNotAtAllGoodEvents =
+        defSummary.Filter([&cuts](double meanGap, double maxGap)
+                          { return cuts.IsInside("notAtAllGoodEvents", maxGap, meanGap); }, {"meanGap", "maxGap"});
+
+    // PID in Qtot vs TLraw
+    auto hPIDgoodEvents = dfGoodEvents.Histo2D({"hPID", "PID for good events;TL;Qtot", 200, 0, 120, 2000, 0, 3e5},
+                                               "fLight.fRawTL", "fLight.fQtotal");
+    auto hPIDgoodEventsWider =
+        dfGoodEventsWider.Histo2D({"hPIDwider", "PID for good events (wider cut);TL;Qtot", 200, 0, 120, 2000, 0, 3e5},
+                                  "fLight.fRawTL", "fLight.fQtotal");
+    auto hPIDnotGoodEvents =
+        dfNotGoodEvents.Histo2D({"hPIDnotGood", "PID for not good events;TL;Qtot", 200, 0, 120, 2000, 0, 3e5},
+                                "fLight.fRawTL", "fLight.fQtotal");
+    auto hPIDnotAtAllGoodEvents = dfNotAtAllGoodEvents.Histo2D(
+        {"hPIDnotAtAllGood", "PID for not at all good events;TL;Qtot", 200, 0, 120, 2000, 0, 3e5}, "fLight.fRawTL",
+        "fLight.fQtotal");
+    auto hPIDgoodEventsPhiPositive =
+        dfGoodEvents.Filter([](ActRoot::MergerData& m) { return m.fPhiLight > 0; }, {"MergerData"})
+            .Histo2D({"hPIDgoodEventsPhiPositive", "PID for good events (phi>0);TL;Qtot", 200, 0, 120, 2000, 0, 3e5},
+                     "fLight.fRawTL", "fLight.fQtotal");
+    auto hPIDgoodEventsPhiNegative =
+        dfGoodEvents.Filter([](ActRoot::MergerData& m) { return m.fPhiLight < 0; }, {"MergerData"})
+            .Histo2D({"hPIDgoodEventsPhiNegative", "PID for good events (phi<0);TL;Qtot", 200, 0, 120, 2000, 0, 3e5},
+                     "fLight.fRawTL", "fLight.fQtotal");
+    auto hPIDall = defSummary.Histo2D({"hPIDall", "PID for all events;TL;Qtot", 200, 0, 120, 2000, 0, 3e5},
+                                      "fLight.fRawTL", "fLight.fQtotal");
+    auto hPIDallPhiPositive =
+        defSummary.Filter([](ActRoot::MergerData& m) { return m.fPhiLight > 0; }, {"MergerData"})
+            .Histo2D({"h    PIDallPhiPositive", "PID for all events (phi>0);TL;Qtot", 200, 0, 120, 2000, 0, 3e5},
+                     "fLight.fRawTL", "fLight.fQtotal");
+    auto hPIDallPhiNegative =
+        defSummary.Filter([](ActRoot::MergerData& m) { return m.fPhiLight < 0; }, {"MergerData"})
+            .Histo2D({"hPIDallPhiNegative", "PID for all events (phi<0);TL;Qtot", 200, 0, 120, 2000, 0, 3e5},
+                     "fLight.fRawTL", "fLight.fQtotal");
+
+    // PIDs in Qave vs TL
+    auto hPIDgoodEventsQave = dfGoodEvents.Histo2D(
+        {"hPIDQave", "PID for good events;TL;Qave", 500, 0, 300, 2000, 0, 3e3}, "fLight.fTL", "fLight.fQave");
+    auto hPIDgoodEventsWiderQave = dfGoodEventsWider.Histo2D(
+        {"hPIDwiderQave", "PID for good events (wider cut);TL;Qave", 500, 0, 300, 2000, 0, 3e3}, "fLight.fTL",
+        "fLight.fQave");
+    auto hPIDnotGoodEventsQave =
+        dfNotGoodEvents.Histo2D({"hPIDnotGoodQave", "PID for not good events;TL;Qave", 500, 0, 300, 2000, 0, 3e3},
+                                "fLight.fTL", "fLight.fQave");
+    auto hPIDnotAtAllGoodEventsQave = dfNotAtAllGoodEvents.Histo2D(
+        {"hPIDnotAtAllGoodQave", "PID for not at all good events;TL;Qave", 500, 0, 300, 2000, 0, 3e3}, "fLight.fTL",
+        "fLight.fQave");
+
+    auto* cPIDgoodAndAll = new TCanvas("cPID", "PID for good events", 800, 600);
+    cPIDgoodAndAll->Divide(2, 1);
+    cPIDgoodAndAll->cd(1);
+    hPIDgoodEvents->DrawClone("colz");
+    cPIDgoodAndAll->cd(2);
+    hPIDall->DrawClone("colz");
+
+    auto* cPIDphi = new TCanvas("cPIDphi", "PID for all events", 800, 600);
+    cPIDphi->Divide(2, 2);
+    cPIDphi->cd(1);
+    hPIDgoodEventsPhiPositive->DrawClone("colz");
+    cPIDphi->cd(2);
+    hPIDgoodEventsPhiNegative->DrawClone("colz");
+    cPIDphi->cd(3);
+    hPIDallPhiPositive->DrawClone("colz");
+    cPIDphi->cd(4);
+    hPIDallPhiNegative->DrawClone("colz");
+
+    auto* cPIDWiderComparison = new TCanvas("cPIDwider", "PID for good events (wider cut)", 800, 600);
+    cPIDWiderComparison->Divide(2, 2);
+    cPIDWiderComparison->cd(1);
+    hPIDgoodEventsWider->DrawClone("colz");
+    cPIDWiderComparison->cd(2);
+    hPIDgoodEvents->DrawClone();
+    cPIDWiderComparison->cd(3);
+    hPIDnotGoodEvents->DrawClone("colz");
+    cPIDWiderComparison->cd(4);
+    hPIDnotAtAllGoodEvents->DrawClone("colz");
+
+    auto* cPIDsPhysicalUnits = new TCanvas("cPIDsPhysicalUnits", "PID for good events (physical units)", 800, 600);
+    cPIDsPhysicalUnits->Divide(2, 2);
+    cPIDsPhysicalUnits->cd(1);
+    hPIDgoodEventsQave->DrawClone("colz");
+    cPIDsPhysicalUnits->cd(2);
+    hPIDgoodEventsWiderQave->DrawClone("colz");
+    cPIDsPhysicalUnits->cd(3);
+    hPIDnotGoodEventsQave->DrawClone("colz");
+    cPIDsPhysicalUnits->cd(4);
+    hPIDnotAtAllGoodEventsQave->DrawClone("colz");
 }
