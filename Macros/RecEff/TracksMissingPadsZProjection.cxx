@@ -78,6 +78,9 @@ struct GapSummary
     double medianGap = -1;
     double meanGap = -1;
     double stdGap = -1;
+    double mad = -1;      // median absolute deviation of gaps
+    double maxGapZ = -1;  // (maxGap - medianGap) / (1.4826 * mad) -> robust z-score
+    double skewness = -1; // third standardized moment of the gaps
     double sRange = -1;
     int nVoxels = 0;
     bool valid = false;
@@ -114,6 +117,29 @@ GapSummary ComputeGapSummary(const std::vector<ProjectedPoint>& points)
         sumSquaredDiffs += diff * diff;
     }
     res.stdGap = std::sqrt(sumSquaredDiffs / gaps.size());
+
+    // --- Robust z-score of maxGap using the MAD ---------------------------
+    // MAD barely moves even if maxGap itself is a huge outlier, unlike stdGap.
+    std::vector<double> absDev;
+    absDev.reserve(gaps.size());
+    for(const auto& gap : gaps)
+        absDev.push_back(std::abs(gap - res.medianGap));
+    std::sort(absDev.begin(), absDev.end());
+    res.mad = absDev[absDev.size() / 2];
+
+    double robustSigma = 1.4826 * res.mad; // consistency factor for a Gaussian
+    res.maxGapZ = (robustSigma > 0) ? (res.maxGap - res.medianGap) / robustSigma : -1;
+
+    // --- Skewness of the gap distribution ----------------------------------
+    // Third moment: much more sensitive to a single extreme gap than stdGap.
+    double sumCubedDiffs = 0;
+    for(const auto& gap : gaps)
+    {
+        double diff = gap - res.meanGap;
+        sumCubedDiffs += diff * diff * diff;
+    }
+    double m3 = sumCubedDiffs / gaps.size();
+    res.skewness = (res.stdGap > 0) ? m3 / (res.stdGap * res.stdGap * res.stdGap) : -1;
 
     res.sRange = points.back().s - points.front().s;
     res.valid = true;
@@ -226,6 +252,9 @@ void TracksMissingPadsZProjection()
             .Define("nVoxelsG", [](const GapSummary& g) { return g.nVoxels; }, {"gapSummary"})
             .Define("sRange", [](const GapSummary& g) { return g.sRange; }, {"gapSummary"})
             .Define("stdGap", [](const GapSummary& g) { return g.stdGap; }, {"gapSummary"})
+            .Define("mad", [](const GapSummary& g) { return g.mad; }, {"gapSummary"})
+            .Define("maxGapZ", [](const GapSummary& g) { return g.maxGapZ; }, {"gapSummary"})
+            .Define("skewness", [](const GapSummary& g) { return g.skewness; }, {"gapSummary"})
             .Filter([](const GapSummary& g) { return g.valid; },
                     {"gapSummary"}) // Discard events with fewer than 3 voxels.
             // --- New: XZ / YZ pad-projection counts -----------------------
@@ -300,6 +329,29 @@ void TracksMissingPadsZProjection()
         defSummary.Histo2D({"hStdGapMedianGap", "Standard deviation of gaps vs median gap;median gap [mm];std gap [mm]",
                             200, 0, 3.5, 200, 0, 3.5},
                            "medianGap", "stdGap");
+
+    // --- Distribution of the robust z-score of maxGap (MAD-based) ---
+    auto hMaxGapZ = defSummary.Histo1D({"hMaxGapZ", "Robust z-score of max gap;maxGapZ;Events", 200, 0, 50}, "maxGapZ");
+    auto hMaxGapZvsMaxGap = defSummary.Histo2D(
+        {"hMaxGapZvsMaxGap", "maxGapZ vs max gap;max gap [mm];maxGapZ", 200, 0, 10, 800, 0, 200}, "maxGap", "maxGapZ");
+    auto hMaxGapZvsMeanGap =
+        defSummary.Histo2D({"hMaxGapZvsMeanGap", "maxGapZ vs mean gap;mean gap [mm];maxGapZ", 200, 0, 3.5, 200, 0, 50},
+                           "meanGap", "maxGapZ");
+    auto hMaxGapZvsMedianGap = defSummary.Histo2D(
+        {"hMaxGapZvsMedianGap", "maxGapZ vs median gap;median gap [mm];maxGapZ", 200, 0, 3.5, 200, 0, 50}, "medianGap",
+        "maxGapZ");
+
+    // --- Distribution of the skewness of gaps ---
+    auto hSkewness = defSummary.Histo1D({"hSkewness", "Skewness of gaps;skewness;Events", 200, -5, 30}, "skewness");
+    auto hSkewnessVsMaxGap =
+        defSummary.Histo2D({"hSkewnessVsMaxGap", "Skewness vs max gap;max gap [mm];skewness", 200, 0, 10, 200, -5, 30},
+                           "maxGap", "skewness");
+    auto hSkewnessVsMeanGap = defSummary.Histo2D(
+        {"hSkewnessVsMeanGap", "Skewness vs mean gap;mean gap [mm];skewness", 200, 0, 3.5, 200, -5, 30}, "meanGap",
+        "skewness");
+    auto hSkewnessVsMedianGap = defSummary.Histo2D(
+        {"hSkewnessVsMedianGap", "Skewness vs median gap;median gap [mm];skewness", 200, 0, 3.5, 200, -5, 30},
+        "medianGap", "skewness");
 
 
     // --- Distribution of the normalized maximum gap (dimensionless) ---
@@ -442,6 +494,28 @@ void TracksMissingPadsZProjection()
     hStdGapMeanGap->DrawClone("colz");
     c34->cd(4);
     hStdGapMedianGap->DrawClone("colz");
+
+    auto* c35 = new TCanvas("c35", "Robust z-score of max gap (MAD-based)", 1200, 400);
+    c35->Divide(2, 2);
+    c35->cd(1);
+    hMaxGapZ->DrawClone();
+    c35->cd(2);
+    hMaxGapZvsMaxGap->DrawClone("colz");
+    c35->cd(3);
+    hMaxGapZvsMeanGap->DrawClone("colz");
+    c35->cd(4);
+    hMaxGapZvsMedianGap->DrawClone("colz");
+
+    auto* c36 = new TCanvas("c36", "Skewness of gaps", 1200, 400);
+    c36->Divide(2, 2);
+    c36->cd(1);
+    hSkewness->DrawClone();
+    c36->cd(2);
+    hSkewnessVsMaxGap->DrawClone("colz");
+    c36->cd(3);
+    hSkewnessVsMeanGap->DrawClone("colz");
+    c36->cd(4);
+    hSkewnessVsMedianGap->DrawClone("colz");
 
     // --- New canvases for XZ / YZ pad projections -------------------------
     auto* c4 = new TCanvas("c4", "XZ / YZ pad occupancy", 1200, 800);

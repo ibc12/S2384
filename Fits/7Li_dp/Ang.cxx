@@ -125,14 +125,20 @@ void Ang(bool isLab = false)
     comp1.Add("DA1pcorr-Delaroche 1st Ex", "./Inputs/g1_DA1pcorr_Delaroche/21.g1");
     comp1.Add("Bea calcs 1st", "./Inputs/7Lidp_Bea/21.7Li_dp_1st");
     comp1.Add("ADWA 1st Ex", "./Inputs/gs_ADWA/fort.203");
-    comp1.Add("ADWA 1st Ex", "./Inputs/g1_ADWA_twofnr/21.g1");
-    comp.Fit();
-    comp.Draw("", true);
-    comp.DrawTheo();
-    comp.DrawSFfromIntegral();
-    comp1.Fit();
-    comp1.Draw("", true);
-    comp1.DrawTheo();
+    comp1.Add("ADWA 1st Ex", "./Inputs/g1_ADWA_twofnr/21.g1");   
+    // Angular::Comparator comp2 {"2nd Ex", xs.Get("g2")};
+    // comp2.Add("ADWA", "./Inputs/gs_ADWA/fort.203");
+    // comp.Fit();
+    // comp.Draw("", true);
+    // comp.DrawTheo();
+    // comp.DrawSFfromIntegral();
+    // comp1.Fit();
+    // comp1.Draw("", true);
+    // comp1.DrawTheo();
+    // comp2.Fit();
+    // comp2.Draw("", true);
+    // comp2.DrawTheo();
+    
 
     auto* c0 {new TCanvas {"c0", "(d,p) canvas"}};
     c0->DivideSquare(2);
