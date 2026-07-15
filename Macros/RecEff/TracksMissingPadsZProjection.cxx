@@ -24,7 +24,9 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#include <functional>
 #include <iostream>
+#include <map>
 #include <numeric>
 #include <set>
 #include <string>
@@ -83,7 +85,7 @@ struct GapSummary
     double skewness = -1; // third standardized moment of the gaps
     double sRange = -1;
     int nVoxels = 0;
-    bool valid = false;
+    bool valid = true;
 };
 
 GapSummary ComputeGapSummary(const std::vector<ProjectedPoint>& points)
@@ -162,7 +164,7 @@ struct PadProjectionSummary
     int nPadsYZ = 0;
     int nPadsXY = 0; // occupancy in the "real" pad plane, useful as a reference
     double ratioXZoverYZ = -1;
-    bool valid = false;
+    bool valid = true;
 };
 
 // padPitch: bin size (mm) used to group nearby positions into the same "pad
@@ -200,6 +202,245 @@ PadProjectionSummary ComputePadProjectionCounts(const std::vector<ActRoot::Voxel
     return res;
 }
 
+// --- Gaps in a "row" coordinate per Z-slice, restricted to a window at the
+// END of the track (largest s), where the Bragg peak deposits most of the
+// charge. -------------------------------------------------------------------
+//
+// This is now GENERIC: it doesn't hardcode X or Y. You pass in a lambda
+// (getRow) that extracts whichever coordinate you want to use as the "row"
+// grouped by Z (either pos.X() for the XZ projection or pos.Y() for the YZ
+// projection). For each fixed z (a "row" of pads at a given drift time)
+// *within that window*, take the sorted, distinct row-coordinate values that
+// are occupied. Any place where two consecutive occupied values are not
+// adjacent (diff > 1 pad unit) counts as ONE hole, no matter how many pads
+// are missing in between.
+// Example: at z=120, occupied row = {63, 64, 67} -> exactly one hole, since
+// 65 and 66 are both missing between the 64 and 67 hits.
+// Summing these holes over every z slice inside the window gives nGaps.
+//
+// We also report how much of the z-range in that window is actually covered
+// by at least one hit (zCoverageFrac), since a handful of gaps in a densely
+// sampled window means something very different than the same number of
+// gaps in a window that's mostly empty in z.
+struct ProjGapResult
+{
+    int nGaps = 0;
+
+    int nZSlicesCovered = 0;
+    int nZSlicesExpected = 0;
+    double zCoverageFrac = 0.;
+
+    double meanPadsPerSlice = 0.;
+    double medianPadsPerSlice = 0.;
+    double stdPadsPerSlice = 0.;
+
+    int nSinglePadSlices = 0;
+    double fracSinglePadSlices = 0.;
+
+    bool valid = true;
+};
+
+ProjGapResult ComputeGapsProjectionInRange(const std::vector<ActRoot::Voxel>& voxels,
+                                            const std::function<int(const ROOT::Math::XYZPointF&)>& getRow,
+                                            double fracFromEnd = 1., int minDeltaZ = 0, int maxHoleSize = 2)
+{
+    ProjGapResult res;
+
+    if(voxels.size() < 2)
+        return res;
+
+    if(fracFromEnd <= 0. || fracFromEnd > 1.)
+        return res;
+
+    //------------------------------------------------------------
+    // Determine Z range
+    //------------------------------------------------------------
+
+    int zMin = std::numeric_limits<int>::max();
+    int zMax = std::numeric_limits<int>::lowest();
+
+    for(const auto& voxel : voxels)
+    {
+        auto pos = voxel.GetPosition();
+
+        int iz = std::lround(pos.Z());
+
+        zMin = std::min(zMin, iz);
+        zMax = std::max(zMax, iz);
+    }
+
+    int deltaZ = zMax - zMin;
+
+    if(deltaZ < minDeltaZ)
+        return res;
+
+    //------------------------------------------------------------
+    // Keep only the last fracFromEnd of the Z range
+    //------------------------------------------------------------
+
+    int zThreshold = std::lround(zMax - fracFromEnd * deltaZ);
+
+    std::map<int, std::set<int>> zToRow;
+
+    for(const auto& voxel : voxels)
+    {
+        auto pos = voxel.GetPosition();
+
+        int iz = std::lround(pos.Z());
+
+        if(iz < zThreshold)
+            continue;
+
+        zToRow[iz].insert(getRow(pos));
+    }
+
+    if(zToRow.empty())
+        return res;
+
+    //------------------------------------------------------------
+    // Count row gaps
+    //------------------------------------------------------------
+
+    std::vector<int> occupancies;
+    occupancies.reserve(zToRow.size());
+    int nGaps = 0;
+
+    for(const auto& [z, rows] : zToRow)
+    {
+        occupancies.push_back((int)rows.size());
+
+        if(rows.size() == 1)
+            ++res.nSinglePadSlices;
+
+        if(rows.size() < 2)
+            continue;
+
+        auto it = rows.begin();
+        int previous = *it;
+        ++it;
+
+        for(; it != rows.end(); ++it)
+        {
+            int holeSize = *it - previous - 1;
+
+            if(holeSize >= 1 && holeSize <= maxHoleSize)
+                ++nGaps;
+
+            previous = *it;
+        }
+    }
+
+    //------------------------------------------------------------
+    // Z coverage
+    //------------------------------------------------------------
+
+    int firstZ = zToRow.begin()->first;
+    int lastZ = zToRow.rbegin()->first;
+
+    res.nZSlicesExpected = lastZ - firstZ + 1;
+    res.nZSlicesCovered = (int)zToRow.size();
+
+    if(res.nZSlicesExpected > 0)
+        res.zCoverageFrac = (double)res.nZSlicesCovered / res.nZSlicesExpected;
+
+    res.nGaps = nGaps;
+    res.valid = true;
+
+    //------------------------------------------------------------
+    // Occupancy statistics
+    //------------------------------------------------------------
+
+    if(!occupancies.empty())
+    {
+        // Mean
+        double sum = std::accumulate(occupancies.begin(), occupancies.end(), 0.0);
+        res.meanPadsPerSlice = sum / occupancies.size();
+
+        // Median
+        auto occSorted = occupancies;
+        std::sort(occSorted.begin(), occSorted.end());
+
+        if(occSorted.size() % 2 == 0)
+            res.medianPadsPerSlice = 0.5 * (occSorted[occSorted.size() / 2 - 1] + occSorted[occSorted.size() / 2]);
+        else
+            res.medianPadsPerSlice = occSorted[occSorted.size() / 2];
+
+        // Standard deviation
+        double var = 0.0;
+
+        for(auto n : occupancies)
+            var += (n - res.meanPadsPerSlice) * (n - res.meanPadsPerSlice);
+
+        res.stdPadsPerSlice = std::sqrt(var / occupancies.size());
+
+        // Fraction of slices with only one pad
+        res.fracSinglePadSlices = static_cast<double>(res.nSinglePadSlices) / occupancies.size();
+    }
+
+    return res;
+}
+
+// --- New: choose, per event, whichever projection (XZ or YZ) is "wide" ----
+//
+// A track that is thin in YZ but wide in XZ (or vice versa) should NOT
+// always be analyzed in XZ: fixing the projection a priori mixes up "real
+// missing pads in Z" with "the track is just narrow in this projection by
+// geometry". Instead, compute the gap analysis in BOTH projections and keep
+// the one with the larger mean pads/slice (i.e. the direction in which the
+// track actually has width to lose pads from). usedX tells you which one
+// was picked, so you can cross-check it against e.g. phi.
+struct ChosenProjectionResult
+{
+    ProjGapResult result;
+    bool usedX = true; // true -> XZ projection chosen, false -> YZ projection chosen
+};
+
+ChosenProjectionResult ComputeGapsDenserProjection(const std::vector<ActRoot::Voxel>& voxels, double fracFromEnd = 0.5,
+                                                    int minDeltaZ = 30, int maxHoleSize = 2)
+{
+    auto getX = [](const ROOT::Math::XYZPointF& pos) { return (int)std::lround(pos.X()); };
+    auto getY = [](const ROOT::Math::XYZPointF& pos) { return (int)std::lround(pos.Y()); };
+
+    auto resX = ComputeGapsProjectionInRange(voxels, getX, fracFromEnd, minDeltaZ, maxHoleSize);
+    auto resY = ComputeGapsProjectionInRange(voxels, getY, fracFromEnd, minDeltaZ, maxHoleSize);
+
+    ChosenProjectionResult chosen;
+
+    if(!resX.valid && !resY.valid)
+    {
+        chosen.result = resX; // invalid, valid == false
+        return chosen;
+    }
+    if(resX.valid && !resY.valid)
+    {
+        chosen.result = resX;
+        chosen.usedX = true;
+        return chosen;
+    }
+    if(!resX.valid && resY.valid)
+    {
+        chosen.result = resY;
+        chosen.usedX = false;
+        return chosen;
+    }
+
+    // Both valid: pick the projection with the larger mean pads/slice, i.e.
+    // the "wide" direction, since that's the one where a real gap in Z shows
+    // up cleanly instead of being an artifact of the track just being thin
+    // in that projection.
+    if(resX.meanPadsPerSlice >= resY.meanPadsPerSlice)
+    {
+        chosen.result = resX;
+        chosen.usedX = true;
+    }
+    else
+    {
+        chosen.result = resY;
+        chosen.usedX = false;
+    }
+    return chosen;
+}
+
 void TracksMissingPadsZProjection()
 {
     ROOT::EnableImplicitMT(); // Multithreading is worthwhile since we process the full dataset.
@@ -217,6 +458,12 @@ void TracksMissingPadsZProjection()
     auto driftBlock = parser.GetBlock("Merger");
     auto driftFactor = driftBlock->GetDouble("DriftFactor");
 
+    // Fraction of the track (counted backwards from the end, i.e. from max s)
+    // used for the row-vs-Z gap-counting restricted to the Bragg-peak region.
+    // Adjust this to whatever window makes physical sense; 0.3 keeps the
+    // last 30% of the projected track length.
+    double fracFromEndProj = 0.5;
+
     // Pad pitch used for the XZ/YZ/XY occupancy counting below.
 
     // ROOT::RDataFrame df {*chain};
@@ -232,19 +479,22 @@ void TracksMissingPadsZProjection()
     // If needed, any physics selection (e.g. only L1 events) can be added here.
     auto defSummary =
         dfFiltered
-            .Define("gapSummary",
-                    [&driftFactor](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+            // Compute the projected/sorted points ONCE and reuse them both for
+            // gapSummary and for the row-vs-Z gap-in-Bragg-peak-region calculation.
+            .Define("projPoints",
+                    [&driftFactor](ActRoot::MergerData& m, ActRoot::TPCData tpc)
                     {
-                        GapSummary empty;
+                        std::vector<ProjectedPoint> empty;
                         auto lightIdx = m.fLightIdx;
                         if(lightIdx < 0 || lightIdx >= (int)tpc.fClusters.size())
                             return empty;
                         auto lightCl = tpc.fClusters[lightIdx];
                         auto rp = m.fRP;
-                        auto points = GetProjectedPositions(lightCl, rp, driftFactor);
-                        return ComputeGapSummary(points);
+                        return GetProjectedPositions(lightCl, rp, driftFactor);
                     },
                     {"MergerData", "TPCData"})
+            .Define("gapSummary", [](const std::vector<ProjectedPoint>& points) { return ComputeGapSummary(points); },
+                    {"projPoints"})
             .Define("maxGap", [](const GapSummary& g) { return g.maxGap; }, {"gapSummary"})
             .Define("maxGapNorm", [](const GapSummary& g) { return g.maxGapNorm; }, {"gapSummary"})
             .Define("medianGap", [](const GapSummary& g) { return g.medianGap; }, {"gapSummary"})
@@ -257,7 +507,7 @@ void TracksMissingPadsZProjection()
             .Define("skewness", [](const GapSummary& g) { return g.skewness; }, {"gapSummary"})
             .Filter([](const GapSummary& g) { return g.valid; },
                     {"gapSummary"}) // Discard events with fewer than 3 voxels.
-            // --- New: XZ / YZ pad-projection counts -----------------------
+            // --- XZ / YZ pad-projection counts (global occupancy reference) -
             .Define("padSummary",
                     [&driftFactor](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
                     {
@@ -282,13 +532,61 @@ void TracksMissingPadsZProjection()
             .Define("nPadsXYnorm", [](const PadProjectionSummary& p, const GapSummary& g)
                     { return (double)p.nPadsXY / (double)g.sRange; }, {"padSummary", "gapSummary"})
             .Define("ratioXZoverYZ", [](const PadProjectionSummary& p) { return p.ratioXZoverYZ; }, {"padSummary"})
+            // --- New: gaps restricted to the Bragg-peak region, computed on --
+            // --- whichever projection (XZ or YZ) is wider for this event -----
+            .Define("chosenGapResult",
+                    [fracFromEndProj](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+                    {
+                        ChosenProjectionResult empty;
+
+                        auto lightIdx = m.fLightIdx;
+
+                        if(lightIdx < 0 || lightIdx >= (int)tpc.fClusters.size())
+                            return empty;
+
+                        const auto& lightCl = tpc.fClusters[lightIdx];
+
+                        return ComputeGapsDenserProjection(lightCl.GetVoxels(), fracFromEndProj);
+                    },
+                    {"MergerData", "TPCData"})
+            .Define("projGapResult", [](const ChosenProjectionResult& c) { return c.result; }, {"chosenGapResult"})
+            .Define("usedXprojection", [](const ChosenProjectionResult& c) { return c.usedX; }, {"chosenGapResult"})
+            .Define("nGapsProjection", [](const ProjGapResult& r) { return r.nGaps; }, {"projGapResult"})
+            .Define("zCoverageFracProj", [](const ProjGapResult& r) { return r.zCoverageFrac; }, {"projGapResult"})
+            .Define("nZSlicesCoveredProj", [](const ProjGapResult& r) { return r.nZSlicesCovered; }, {"projGapResult"})
+            .Define("nZSlicesExpectedProj", [](const ProjGapResult& r) { return r.nZSlicesExpected; },
+                    {"projGapResult"})
+            .Define("meanPadsPerSliceProj", [](const ProjGapResult& r) { return r.meanPadsPerSlice; },
+                    {"projGapResult"})
+
+            .Define("medianPadsPerSliceProj", [](const ProjGapResult& r) { return r.medianPadsPerSlice; },
+                    {"projGapResult"})
+
+            .Define("stdPadsPerSliceProj", [](const ProjGapResult& r) { return r.stdPadsPerSlice; }, {"projGapResult"})
+
+            .Define("nSinglePadSlicesProj", [](const ProjGapResult& r) { return r.nSinglePadSlices; },
+                    {"projGapResult"})
+
+            .Define("fracSinglePadSlicesProj", [](const ProjGapResult& r) { return r.fracSinglePadSlices; },
+                    {"projGapResult"})
+            .Filter([](const ProjGapResult& r) { return r.valid; }, {"projGapResult"})
             .Filter([](const PadProjectionSummary& p) { return p.valid; }, {"padSummary"});
+
+    auto minFrac = *defSummary.Min("fracSinglePadSlicesProj");
+
+    auto maxFrac = *defSummary.Max("fracSinglePadSlicesProj");
+
+    std::cout << minFrac << " " << maxFrac << std::endl;
 
     // Get the data in the two branches of phi
     auto defSummaryPhiPositive =
         defSummary.Filter([](ActRoot::MergerData& m) { return m.fPhiLight > 0; }, {"MergerData"});
     auto defSummaryPhiNegative =
         defSummary.Filter([](ActRoot::MergerData& m) { return m.fPhiLight < 0; }, {"MergerData"});
+    auto defSummaryPhiSmaller90 =
+        defSummary.Filter([](ActRoot::MergerData& m) { return std::abs(m.fPhiLight) < 90; }, {"MergerData"});
+    auto defSummaryPhiLarger90 =
+        defSummary.Filter([](ActRoot::MergerData& m) { return std::abs(m.fPhiLight) > 90; }, {"MergerData"});
 
     // --- Distribution of the absolute maximum gap (mm) ---
     auto hMaxGap = defSummary.Histo1D({"hMaxGap", "Max gap per event;max gap [mm];Events", 200, 0, 10}, "maxGap");
@@ -312,6 +610,14 @@ void TracksMissingPadsZProjection()
         "maxGap", "meanGap");
     auto hMeanGapVSMaxGapPhiNegative = defSummaryPhiNegative.Histo2D(
         {"hMeanGapVSMaxGapPhiNegative", "Mean gap vs max gap (phi<0);max gap [mm];mean gap [mm]", 200, 0, 10, 200, 0,
+         3.5},
+        "maxGap", "meanGap");
+    auto hMeanGapVSMaxGapPhiSmaller90 = defSummaryPhiSmaller90.Histo2D(
+        {"hMeanGapVSMaxGapPhiSmaller90", "Mean gap vs max gap (|phi|<90);max gap [mm];mean gap [mm]", 200, 0, 10, 200,
+         0, 3.5},
+        "maxGap", "meanGap");
+    auto hMeanGapVSMaxGapPhiLarger90 = defSummaryPhiLarger90.Histo2D(
+        {"hMeanGapVSMaxGapPhiLarger90", "Mean gap vs max gap (|phi|>90);max gap [mm];mean gap [mm]", 200, 0, 10, 200, 0,
          3.5},
         "maxGap", "meanGap");
 
@@ -379,7 +685,7 @@ void TracksMissingPadsZProjection()
         {"hGapVsSRange", "Max gap vs track length;s range [mm];max gap [mm]", 100, 0, 300, 100, 0, 50}, "sRange",
         "maxGap");
 
-    // --- New: XZ / YZ pad-projection occupancy ---------------------------
+    // --- XZ / YZ pad-projection occupancy (global reference, both kept) ----
     auto hNPadsXZ =
         defSummary.Histo1D({"hNPadsXZ", "Occupied cells in XZ projection;nPadsXZ;Events", 200, 0, 400}, "nPadsXZ");
     auto hNPadsYZ =
@@ -426,36 +732,71 @@ void TracksMissingPadsZProjection()
     auto hFillFracYZ =
         defWithFillFrac.Histo1D({"hFillFracYZ", "nPadsYZ / nVoxelsG;fill fraction;Events", 100, 0, 1.5}, "fillFracYZ");
 
+    // --- New: which projection (XZ or YZ) was chosen for the gap analysis --
+    // usedXprojection == true -> XZ was wider (denser) and got used;
+    // usedXprojection == false -> YZ was wider and got used.
+    // This lets you check whether the choice is roughly 50/50 or strongly
+    // tied to phi (as you'd expect if the track's "width" direction rotates
+    // with the emission angle).
+    auto hUsedProjection = defSummary.Histo1D(
+        {"hUsedProjection", "Projection chosen for gap analysis;0 = YZ chosen, 1 = XZ chosen;Events", 2, -0.5, 1.5},
+        "usedXprojection");
+    auto hUsedProjectionVsPhi = defSummary.Histo2D(
+        {"hUsedProjectionVsPhi", "Chosen projection vs phi;phi [deg];0 = YZ, 1 = XZ", 360, -180, 180, 2, -0.5, 1.5},
+        "fPhiLight", "usedXprojection");
+    auto hUsedProjectionVsTheta = defSummary.Histo2D(
+        {"hUsedProjectionVsTheta", "Chosen projection vs theta;theta [deg];0 = YZ, 1 = XZ", 180, 0, 180, 2, -0.5, 1.5},
+        "fThetaLight", "usedXprojection");
+
+    // --- Pads per Z slice, on the chosen (denser) projection ----------------
+
+    auto hMeanPadsPerSliceProj = defSummary.Histo1D(
+        {"hMeanPadsPerSliceProj", "Mean pads per Z slice (chosen projection);Mean pads/slice;Events", 50, 0, 10},
+        "meanPadsPerSliceProj");
+
+    auto hMedianPadsPerSliceProj = defSummary.Histo1D(
+        {"hMedianPadsPerSliceProj", "Median pads per Z slice (chosen projection);Median pads/slice;Events", 20, 0, 10},
+        "medianPadsPerSliceProj");
+
+    auto hStdPadsPerSliceProj = defSummary.Histo1D(
+        {"hStdPadsPerSliceProj", "Std. dev. of pads per Z slice (chosen projection);#sigma(pads/slice);Events", 100, 0,
+         3},
+        "stdPadsPerSliceProj");
+
+    auto hNSinglePadSlicesProj = defSummary.Histo1D(
+        {"hNSinglePadSlicesProj", "Slices with one pad (chosen projection);N slices;Events", 20, 0, 20},
+        "nSinglePadSlicesProj");
+
+    auto hFracSinglePadSlicesProj = defSummary.Histo1D(
+        {"hFracSinglePadSlicesProj", "Fraction of one-pad slices (chosen projection);Fraction;Events", 100, 0, 1},
+        "fracSinglePadSlicesProj");
+
+    auto hFracSingleVsMaxGap = defSummary.Histo2D(
+        {"hFracSingleVsMaxGap", "Fraction of one-pad slices vs max gap;Max gap [mm];Fraction", 100, 0, 10, 100, 0, 1},
+        "maxGap", "fracSinglePadSlicesProj");
+
+    auto hFracSingleVsMeanGap =
+        defSummary.Histo2D({"hFracSingleVsMeanGap", "Fraction of one-pad slices vs mean gap;Mean gap [mm];Fraction",
+                            100, 0, 3.5, 100, 0, 1},
+                           "meanGap", "fracSinglePadSlicesProj");
+
+    auto hFracSingleVsNGapsProj = defSummary.Histo2D(
+        {"hFracSingleVsNGapsProj", "Fraction of one-pad slices vs gaps (chosen proj.);N gaps;Fraction", 20, 0, 20,
+         100, 0, 1},
+        "nGapsProjection", "fracSinglePadSlicesProj");
+
+    auto hMeanPadsVsMaxGap = defSummary.Histo2D(
+        {"hMeanPadsVsMaxGap", "Mean pads/slice vs max gap;Max gap [mm];Mean pads/slice", 100, 0, 10, 60, 0, 6},
+        "maxGap", "meanPadsPerSliceProj");
+
+    auto hStdPadsVsMaxGap = defSummary.Histo2D(
+        {"hStdPadsVsMaxGap", "Std pads/slice vs max gap;Max gap [mm];Std pads/slice", 100, 0, 10, 60, 0, 3}, "maxGap",
+        "stdPadsPerSliceProj");
+
     auto* c1 = new TCanvas("c1", "Max gap distributions", 1200, 800);
     c1->Divide(2, 2);
     c1->cd(1);
-    // Fit to two gausians to see if there is a clear separation between the "normal" and "suspicious" populations.
-    // auto gaus1 = new TF1("gaus1", "gaus", 0, 4);
-    // auto gaus2 = new TF1("gaus2", "gaus", 0, 4);
-    // auto gaus3 = new TF1("gaus", "gaus", 4, 10);
-    // // Give initial parameters to the fits based on the histogram content
-    // gaus1->SetParameters(150, 1.7, 0.5); // amplitude, mean, sigma
-    // gaus2->SetParameters(400, 3, 0.5);
-    // gaus3->SetParameters(20, 5.6, 0.5);
-    // // Put bounds to the parameters
-    // gaus1->SetParLimits(0, 100, 1e6); // amplitude between 0 and 1e6
-    // gaus2->SetParLimits(0, 200, 1e6);
-    // gaus1->SetParLimits(1, 1.5, 2); // mean between 0 and 10
-    // gaus2->SetParLimits(1, 2.6, 3.4); // mean between 10 and 50
-    // gaus3->SetParLimits(1, 5.3, 6);   // mean between 0 and 50
-    // gaus1->SetParLimits(2, 0.1, 1); // sigma between 0 and 5
-    // gaus2->SetParLimits(2, 0.1, 1);
-    // gaus3->SetParLimits(2, 0.1, 1);
-
-    // gaus1->FixParameter(1, 2.4);
-    // gaus2->FixParameter(1, 3);
-    // Fit the histogram with the three gaussians
-    // hMaxGap->Fit(gaus1, "R");
-    // hMaxGap->Fit(gaus2, "R+");
-    // hMaxGap->Fit(gaus3, "R+");
     hMaxGap->DrawClone();
-
-
     c1->cd(2);
     hMaxGapNorm->DrawClone();
     c1->cd(3);
@@ -474,7 +815,7 @@ void TracksMissingPadsZProjection()
     hMaxGapPhiNegative->DrawClone();
 
     auto* c33 = new TCanvas("c33", "Mean gap distributions", 1200, 400);
-    c33->Divide(2, 2);
+    c33->Divide(3, 2);
     c33->cd(1);
     hMeanGap->DrawClone();
     c33->cd(2);
@@ -483,6 +824,10 @@ void TracksMissingPadsZProjection()
     hMeanGapVSMaxGapPhiPositive->DrawClone("colz");
     c33->cd(4);
     hMeanGapVSMaxGapPhiNegative->DrawClone("colz");
+    c33->cd(5);
+    hMeanGapVSMaxGapPhiSmaller90->DrawClone("colz");
+    c33->cd(6);
+    hMeanGapVSMaxGapPhiLarger90->DrawClone("colz");
 
     auto* c34 = new TCanvas("c34", "Standard deviation of gaps", 1200, 400);
     c34->Divide(2, 2);
@@ -517,7 +862,7 @@ void TracksMissingPadsZProjection()
     c36->cd(4);
     hSkewnessVsMedianGap->DrawClone("colz");
 
-    // --- New canvases for XZ / YZ pad projections -------------------------
+    // --- Canvases for XZ / YZ pad projections (global occupancy) ----------
     auto* c4 = new TCanvas("c4", "XZ / YZ pad occupancy", 1200, 800);
     c4->Divide(2, 2);
     c4->cd(1);
@@ -546,6 +891,43 @@ void TracksMissingPadsZProjection()
     hFillFracXZ->DrawClone();
     c6->cd(2);
     hFillFracYZ->DrawClone();
+
+    // --- New canvas: which projection got picked for the gap analysis -----
+    auto* cUsedProjection = new TCanvas("cUsedProjection", "Chosen projection (XZ vs YZ) for gap analysis", 1500, 500);
+    cUsedProjection->Divide(3, 1);
+    cUsedProjection->cd(1);
+    hUsedProjection->DrawClone();
+    cUsedProjection->cd(2);
+    hUsedProjectionVsPhi->DrawClone("colz");
+    cUsedProjection->cd(3);
+    hUsedProjectionVsTheta->DrawClone("colz");
+
+    auto* cPadsPerSlice = new TCanvas("cPadsPerSlice", "Pads per Z slice (chosen projection)", 1500, 800);
+    cPadsPerSlice->Divide(3, 2);
+    cPadsPerSlice->cd(1);
+    hMeanPadsPerSliceProj->DrawClone();
+    cPadsPerSlice->cd(2);
+    hMedianPadsPerSliceProj->DrawClone();
+    cPadsPerSlice->cd(3);
+    hStdPadsPerSliceProj->DrawClone();
+    cPadsPerSlice->cd(4);
+    hNSinglePadSlicesProj->DrawClone();
+    cPadsPerSlice->cd(5);
+    hFracSinglePadSlicesProj->DrawClone();
+
+    auto* cPadsPerSliceCorr = new TCanvas("cPadsPerSliceCorr", "Pads per slice correlations (chosen projection)", 1500,
+                                          800);
+    cPadsPerSliceCorr->Divide(3, 2);
+    cPadsPerSliceCorr->cd(1);
+    hFracSingleVsMaxGap->DrawClone("colz");
+    cPadsPerSliceCorr->cd(2);
+    hFracSingleVsMeanGap->DrawClone("colz");
+    cPadsPerSliceCorr->cd(3);
+    hFracSingleVsNGapsProj->DrawClone("colz");
+    cPadsPerSliceCorr->cd(4);
+    hMeanPadsVsMaxGap->DrawClone("colz");
+    cPadsPerSliceCorr->cd(5);
+    hStdPadsVsMaxGap->DrawClone("colz");
 
     std::cout << "Total events processed: " << *defSummary.Count() << std::endl;
 
@@ -637,6 +1019,58 @@ void TracksMissingPadsZProjection()
         {"hPIDnotAtAllGoodQave", "PID for not at all good events;TL;Qave", 500, 0, 300, 2000, 0, 3e3}, "fLight.fTL",
         "fLight.fQave");
 
+    // Plots for the nGaps in the chosen (denser) projection (Bragg-peak region only)
+    auto hNGapsProjGoodEvents = dfGoodEvents.Histo1D(
+        {"hNGapsProjGoodEvents", "Number of gaps (chosen projection, Bragg region) for good events;nGaps;Events", 20,
+         0, 20},
+        "nGapsProjection");
+    auto hNGapsProjAll = defSummary.Histo1D(
+        {"hNGapsProjAll", "Number of gaps (chosen projection, Bragg region) for all events;nGaps;Events", 20, 0, 20},
+        "nGapsProjection");
+    auto hMaxGapVSMeanGapNGapsProj =
+        defSummary.Filter([](int& nGapsProj) { return nGapsProj > 0; }, {"nGapsProjection"})
+            .Histo2D({"hMaxGapVSMeanGapNGapsProj", "Max gap vs mean gap for nGaps > 0;max gap [mm];mean gap [mm]", 200,
+                      0, 10, 200, 0, 3.5},
+                     "maxGap", "meanGap");
+    auto hMaxGapVSMeanNoGapNGapsProj =
+        defSummary.Filter([](int& nGapsProj) { return nGapsProj == 0; }, {"nGapsProjection"})
+            .Histo2D({"hMaxGapVSMeanNoGapNGapsProj", "Max gap vs mean gap for nGaps == 0;max gap [mm];mean gap [mm]",
+                      200, 0, 10, 200, 0, 3.5},
+                     "maxGap", "meanGap");
+
+    // --- z-coverage of the Bragg-peak window, on the chosen projection -----
+    // Tells you what fraction of the z-slices spanned by the last
+    // fracFromEndProj of the track are actually populated. A low value plus a
+    // high nGapsProjection points to a genuinely depleted region, not just
+    // one or two isolated missing pads.
+    auto hZCoverageFracProj = defSummary.Histo1D(
+        {"hZCoverageFracProj", "Z-slice coverage in Bragg-peak region (chosen proj.);covered/expected;Events", 100, 0,
+         1},
+        "zCoverageFracProj");
+    auto hGapsVsCoverageProj = defSummary.Histo2D(
+        {"hGapsVsCoverageProj", "nGaps vs z-coverage (chosen proj.);covered/expected;nGaps", 100, 0, 1, 20, 0, 20},
+        "zCoverageFracProj", "nGapsProjection");
+
+    // Theta and phi dstribution for good bad and all events
+    auto hThetaGoodEvents = dfGoodEvents.Histo1D(
+        {"hThetaGoodEvents", "Theta distribution for good events;theta [deg];Events", 180, 0, 180}, "fThetaLight");
+    auto hThetaAll = defSummary.Histo1D(
+        {"hThetaAll", "Theta distribution for all events;theta [deg];Events", 180, 0, 180}, "fThetaLight");
+    auto hThetaBad =
+        defSummary
+            .Filter([&cuts](ActRoot::MergerData& m, double maxGap, double meanGap)
+                    { return !cuts.IsInside("goodEvents", maxGap, meanGap); }, {"MergerData", "maxGap", "meanGap"})
+            .Histo1D({"hThetaBad", "Theta distribution for bad events;theta [deg];Events", 180, 0, 180}, "fThetaLight");
+    auto hPhiGoodEvents = dfGoodEvents.Histo1D(
+        {"hPhiGoodEvents", "Phi distribution for good events;phi [deg];Events", 360, -180, 180}, "fPhiLight");
+    auto hPhiAll = defSummary.Histo1D({"hPhiAll", "Phi distribution for all events;phi [deg];Events", 360, -180, 180},
+                                      "fPhiLight");
+    auto hPhiBad =
+        defSummary
+            .Filter([&cuts](ActRoot::MergerData& m, double maxGap, double meanGap)
+                    { return !cuts.IsInside("goodEvents", maxGap, meanGap); }, {"MergerData", "maxGap", "meanGap"})
+            .Histo1D({"hPhiBad", "Phi distribution for bad events;phi [deg];Events", 360, -180, 180}, "fPhiLight");
+
     auto* cPIDgoodAndAll = new TCanvas("cPID", "PID for good events", 800, 600);
     cPIDgoodAndAll->Divide(2, 1);
     cPIDgoodAndAll->cd(1);
@@ -676,4 +1110,61 @@ void TracksMissingPadsZProjection()
     hPIDnotGoodEventsQave->DrawClone("colz");
     cPIDsPhysicalUnits->cd(4);
     hPIDnotAtAllGoodEventsQave->DrawClone("colz");
+
+    auto* cNGapsProj = new TCanvas("cNGapsProj", "Number of gaps (chosen projection, Bragg region)", 800, 600);
+    cNGapsProj->Divide(2, 2);
+    cNGapsProj->cd(1);
+    hNGapsProjGoodEvents->DrawClone();
+    cNGapsProj->cd(2);
+    hNGapsProjAll->DrawClone();
+    cNGapsProj->cd(3);
+    hMaxGapVSMeanGapNGapsProj->DrawClone("colz");
+    cNGapsProj->cd(4);
+    hMaxGapVSMeanNoGapNGapsProj->DrawClone("colz");
+
+    auto* cZCoverageProj = new TCanvas("cZCoverageProj", "Z coverage in Bragg-peak region (chosen proj.)", 800, 400);
+    cZCoverageProj->Divide(2, 1);
+    cZCoverageProj->cd(1);
+    hZCoverageFracProj->DrawClone();
+    cZCoverageProj->cd(2);
+    hGapsVsCoverageProj->DrawClone("colz");
+
+    auto* cThetaPhi = new TCanvas("cThetaPhi", "Theta and Phi distributions", 1200, 800);
+    cThetaPhi->Divide(2, 3);
+    cThetaPhi->cd(1);
+    hThetaGoodEvents->DrawClone();
+    cThetaPhi->cd(2);
+    hThetaAll->DrawClone();
+    cThetaPhi->cd(3);
+    hThetaBad->DrawClone();
+    cThetaPhi->cd(4);
+    hPhiGoodEvents->DrawClone();
+    cThetaPhi->cd(5);
+    hPhiAll->DrawClone();
+    cThetaPhi->cd(6);
+    hPhiBad->DrawClone();
+
+    // Save some events if needed
+    // std::ofstream outFileNGapsProj_NoGapsBad("./Outputs/eventsNGapsProj_NoGapsBad.dat");
+    // std::ofstream outFileNGapsProj_GapsGood("./Outputs/eventsNGapsProj_GapsGood.dat");
+    std::ofstream outFilePhi_130_135_BadEvents("./Outputs/eventsPhi_130_135_BadEvents.dat");
+    defSummary.Foreach(
+        [&outFilePhi_130_135_BadEvents, &cuts](ActRoot::MergerData& m, double maxGap, double meanGap)
+        {
+            if(m.fPhiLight > 130 && m.fPhiLight < 135 && !cuts.IsInside("goodEvents", maxGap, meanGap))
+            {
+                m.Stream(outFilePhi_130_135_BadEvents);
+            }
+        },
+        {"MergerData", "maxGap", "meanGap"});
+    // std::ofstream outFileNGapsProj_Events1PadSlicesProj("./Outputs/eventsNGapsProj_Events1PadSlicesProj.dat");
+    // defSummary.Foreach(
+    //     [&outFileNGapsProj_Events1PadSlicesProj](ActRoot::MergerData& m, double fracSinglePadSlices)
+    //     {
+    //         if(fracSinglePadSlices > 0)
+    //         {
+    //             m.Stream(outFileNGapsProj_Events1PadSlicesProj);
+    //         }
+    //     },
+    //     {"MergerData", "fracSinglePadSlicesProj"});
 }

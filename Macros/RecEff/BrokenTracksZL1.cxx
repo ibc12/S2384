@@ -68,6 +68,15 @@ void BrokenTracksZL1()
                 return false; // continuous track
         },
         {"nClustersInLight"});
+    auto defClusters1Filtered = defClusters.Filter(
+        [&](int nClustersInLight)
+        {
+            if(nClustersInLight == 1)
+                return true; // continuous track
+            else
+                return false; // uncontinuous track
+        },
+        {"nClustersInLight"});
 
     auto defClusters0Filtered = defClusters.Filter(
         [&](int nClustersInLight)
@@ -97,8 +106,14 @@ void BrokenTracksZL1()
         "fLight.fQave");
 
     // Plotthe PID of those particles to see where they lay:
-    auto hPID = defClustersFiltered.Histo2D(
-        {"hPID", "PID distribution of uncontinuous tracks;TL;Qtot", 200, 0, 120, 2000, 0, 3e5}, "fLight.fRawTL", "fLight.fQtotal");
+    auto hPIDMoreThan1Cluster = defClustersFiltered.Histo2D(
+        {"hPID", "PID distribution of uncontinuous tracks;TL;Qtot", 200, 0, 120, 2000, 0, 3e5}, "fLight.fRawTL",
+        "fLight.fQtotal");
+    auto hPIDAll = defClusters.Histo2D({"hPIDAll", "PID distribution of all tracks;TL;Qtot", 200, 0, 120, 2000, 0, 3e5},
+                                       "fLight.fRawTL", "fLight.fQtotal");
+    auto hPID1Clusters = defClusters1Filtered.Histo2D(
+        {"hPID1Clusters", "PID distribution of continuous tracks;TL;Qtot", 200, 0, 120, 2000, 0, 3e5}, "fLight.fRawTL",
+        "fLight.fQtotal");
 
     // Get some events to inspect
     std::ofstream outEvent("./Outputs/events0Cluster.dat");
@@ -120,5 +135,11 @@ void BrokenTracksZL1()
     auto* c2 {new TCanvas {"c2", "Average charge of light particle clusters after continuity"}};
     hQaveLight->DrawClone();
     auto* c3 {new TCanvas {"c3", "PID distribution of uncontinuous tracks"}};
-    hPID->DrawClone("colz");
+    c3->Divide(2, 2);
+    c3->cd(1);
+    hPIDAll->DrawClone("colz");
+    c3->cd(2);
+    hPIDMoreThan1Cluster->DrawClone("colz");
+    c3->cd(3);
+    hPID1Clusters->DrawClone("colz");
 }

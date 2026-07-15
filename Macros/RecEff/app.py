@@ -11,7 +11,7 @@ class App:
         self.root = root
         self.df = df
         self.file = file
-        self.types = ["Binary", "Multi", "Other"]
+        self.types = ["Binary", "Multi", "Broken", "Other"]
         self.status = [True, False]
 
         # First unlabelled entry
@@ -127,19 +127,37 @@ class App:
             self.index -= 1
             self._update_ui()
 
+    @staticmethod
+    def _efficiency(subset: pd.DataFrame) -> un.core.AffineScalarFunc | int:
+        """Reconstruction efficiency (in %) with binomial-like error, for a
+        given subset of the dataframe (already filtered by type)."""
+        if len(subset) == 0:
+            return -1  # type: ignore
+        ok = subset[subset["status"] == True]
+        n = un.ufloat(len(ok), math.sqrt(len(ok)))
+        return n / len(subset) * 100
+
     def _stats(self) -> None:
-        # Binary events
+        # Binary events only
         binary = self.df[self.df["type"] == "Binary"]
         ok_binary = binary[binary["status"] == True]
-        n = un.ufloat(len(ok_binary), math.sqrt(len(ok_binary)))
-        ratio_ok = n / len(binary) if len(binary) > 0 else -1  # type: ignore
-        ratio_ok *= 100
-        ratio_bin = len(binary) / len(self.df)
-        ratio_bin *= 100
+        eff_binary = self._efficiency(binary)
+
+        # Broken events only
+        broken = self.df[self.df["type"] == "Broken"]
+
+        # Binary + Broken combined
+        bin_broken = pd.concat([binary, broken])
+        ok_bin_broken = bin_broken[bin_broken["status"] == True]
+        eff_bin_broken = self._efficiency(bin_broken)
+
         # Set stats
         try:
             self.stats_val.set(
-                f"OK binaries {len(ok_binary)},  eff : {ratio_ok:.2uS} %\nProcessed {self.index}\nTotal {len(self.df)},  {self.index / len(self.df) * 100:.2f} %"
+                f"OK binaries {len(ok_binary)},  eff (Binary) : {eff_binary:.2uS} %\n"
+                f"OK binary+broken {len(ok_bin_broken)},  eff (Binary+Broken) : {eff_bin_broken:.2uS} %\n"
+                f"Processed {self.index}\n"
+                f"Total {len(self.df)},  {self.index / len(self.df) * 100:.2f} %"
             )
         except:
             return
