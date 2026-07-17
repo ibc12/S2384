@@ -16,7 +16,7 @@ run,entry,type,status
 69,27,Other,False
 69,28,Other,False
 69,30,Other,False
-69,31,Other,False
+69,31,Multi,True
 69,36,Other,False
 69,37,Other,False
 69,39,Other,False
@@ -29,10 +29,10 @@ run,entry,type,status
 69,56,Other,False
 69,58,Other,False
 69,59,Other,False
-69,60,Other,False
+69,60,Multi,True
 69,63,Other,False
 69,66,Other,False
-69,67,Broken,True
+69,67,Binary,True
 69,70,Other,False
 69,71,Other,False
 69,77,Other,False
@@ -58,7 +58,7 @@ run,entry,type,status
 69,124,Other,False
 69,125,Other,False
 69,128,Other,False
-69,131,Other,False
+69,131,Multi,False
 69,132,Other,False
 69,134,Other,False
 69,137,Other,False
@@ -99,7 +99,7 @@ run,entry,type,status
 69,211,Other,False
 69,215,Other,False
 69,221,Other,False
-69,225,Holes,True
+69,225,Binary,True
 69,231,Other,False
 69,233,Other,False
 69,234,Other,False
@@ -136,7 +136,7 @@ run,entry,type,status
 69,303,Other,False
 69,304,Other,False
 69,306,Other,False
-69,307,Other,False
+69,307,Multi,True
 69,308,Other,False
 69,309,Other,False
 69,310,Other,False
@@ -162,7 +162,7 @@ run,entry,type,status
 69,356,Other,False
 69,359,Other,False
 69,360,Other,False
-69,361,Other,False
+69,361,Multi,True
 69,364,Binary,True
 69,366,Other,False
 69,368,Other,False
@@ -195,7 +195,7 @@ run,entry,type,status
 69,432,Other,False
 69,435,Other,False
 69,437,Binary,True
-69,440,Other,True
+69,440,Other,False
 69,444,Other,False
 69,446,Other,False
 69,449,Other,False
@@ -205,12 +205,12 @@ run,entry,type,status
 69,457,Other,False
 69,458,Other,False
 69,459,Other,False
-69,462,Holes,True
+69,462,Binary,True
 69,463,Other,False
 69,465,Other,False
 69,466,Other,False
 69,469,Other,False
-69,471,Holes,True
+69,471,Binary,True
 69,473,Other,False
 69,474,Other,False
 69,476,Other,False
@@ -381,7 +381,7 @@ run,entry,type,status
 69,824,Other,False
 69,826,Other,False
 69,827,Other,False
-69,828,Broken,True
+69,828,Binary,False
 69,830,Other,False
 69,832,Other,False
 69,836,Other,False
@@ -413,7 +413,7 @@ run,entry,type,status
 69,891,Other,False
 69,896,Other,False
 69,901,Other,False
-69,903,Broken,True
+69,903,Binary,False
 69,905,Other,False
 69,911,Other,False
 69,912,Other,False
@@ -435,7 +435,7 @@ run,entry,type,status
 69,939,Other,False
 69,940,Other,False
 69,942,Other,False
-69,943,Broken,False
+69,943,Binary,False
 69,947,Other,False
 69,948,Other,False
 69,949,Other,False
@@ -568,8 +568,8 @@ run,entry,type,status
 69,1229,Other,False
 69,1231,Other,False
 69,1235,Other,False
-69,1236,Holes,True
-69,1238,Broken,False
+69,1236,Binary,True
+69,1238,Binary,False
 69,1241,Other,False
 69,1243,Other,False
 69,1245,Other,False
@@ -688,7 +688,7 @@ run,entry,type,status
 69,1486,Other,False
 69,1488,Other,False
 69,1489,Other,False
-69,1490,Broken,True
+69,1490,Binary,True
 69,1491,Binary,True
 69,1492,Other,False
 69,1494,Other,False
@@ -715,7 +715,7 @@ run,entry,type,status
 69,1541,Other,False
 69,1543,Other,False
 69,1547,Other,False
-69,1548,Holes,True
+69,1548,Binary,True
 69,1549,Other,False
 69,1551,Other,False
 69,1555,Other,False
@@ -749,7 +749,7 @@ run,entry,type,status
 69,1611,Other,False
 69,1613,Other,False
 69,1614,Other,False
-69,1616,Holes,True
+69,1616,Binary,True
 69,1621,Other,False
 69,1624,Other,False
 69,1625,Other,False
@@ -789,7 +789,7 @@ run,entry,type,status
 69,1696,Other,False
 69,1697,Other,False
 69,1698,Other,False
-69,1700,Broken,False
+69,1700,Binary,False
 69,1701,Other,False
 69,1702,Other,False
 69,1708,Other,False
@@ -926,7 +926,7 @@ run,entry,type,status
 69,1993,Other,False
 69,1995,Other,False
 69,1997,Other,False
-69,1999,Broken,False
+69,1999,Binary,False
 69,2003,Other,False
 69,2006,Other,False
 69,2007,Other,False
@@ -969,7 +969,7 @@ run,entry,type,status
 69,2115,Other,False
 69,2117,Other,False
 69,2119,Other,False
-69,2124,Holes,True
+69,2124,Binary,True
 69,2126,Other,False
 69,2129,Other,False
 69,2132,Other,False
@@ -995,7 +995,7 @@ run,entry,type,status
 69,2174,Other,False
 69,2178,Other,False
 69,2179,Other,False
-69,2180,Broken,False
+69,2180,Binary,False
 69,2181,Other,False
 69,2183,Other,False
 69,2187,Other,False
@@ -1032,7 +1032,7 @@ run,entry,type,status
 69,2267,Other,False
 69,2268,Other,False
 69,2270,Other,False
-69,2272,Holes,True
+69,2272,Binary,True
 69,2273,Other,False
 69,2275,Other,False
 69,2276,Other,False
@@ -1058,14 +1058,14 @@ run,entry,type,status
 69,2316,Binary,True
 69,2317,Other,False
 69,2318,Other,False
-69,2321,Other,False
+69,2321,Binary,True
 69,2323,Other,False
 69,2326,Other,False
 69,2327,Other,False
 69,2328,Other,False
 69,2331,Other,False
 69,2336,Other,False
-69,2337,Holes,True
+69,2337,Binary,True
 69,2340,Other,False
 69,2341,Other,False
 69,2342,Other,False
@@ -1139,7 +1139,7 @@ run,entry,type,status
 69,2470,Other,False
 69,2473,Other,False
 69,2474,Other,False
-69,2478,Holes,True
+69,2478,Binary,True
 69,2479,Other,False
 69,2480,Other,False
 69,2482,Other,False
@@ -1173,7 +1173,7 @@ run,entry,type,status
 69,2546,Other,False
 69,2547,Other,False
 69,2548,Other,False
-69,2549,Holes,True
+69,2549,Binary,True
 69,2556,Other,False
 69,2557,Other,False
 69,2560,Binary,True
@@ -1320,7 +1320,7 @@ run,entry,type,status
 69,2852,Other,False
 69,2853,Other,False
 69,2855,Other,False
-69,2856,Holes,True
+69,2856,Binary,True
 69,2857,Other,False
 69,2860,Other,False
 69,2861,Other,False
@@ -1341,7 +1341,7 @@ run,entry,type,status
 69,2890,Other,False
 69,2892,Other,False
 69,2893,Other,False
-69,2895,Holes,True
+69,2895,Binary,True
 69,2898,Other,False
 69,2901,Other,False
 69,2902,Other,False
@@ -1350,7 +1350,7 @@ run,entry,type,status
 69,2914,Other,False
 69,2915,Other,False
 69,2916,Other,False
-69,2919,Holes,True
+69,2919,Binary,True
 69,2920,Other,False
 69,2923,Other,False
 69,2924,Other,False
@@ -1376,7 +1376,7 @@ run,entry,type,status
 69,2968,Other,False
 69,2969,Other,False
 69,2970,Other,False
-69,2974,Other,False
+69,2974,Binary,True
 69,2975,Binary,True
 69,2977,Other,False
 69,2979,Other,False
@@ -1441,7 +1441,7 @@ run,entry,type,status
 69,3108,Other,False
 69,3109,Other,False
 69,3110,Other,False
-69,3113,Holes,True
+69,3113,Binary,True
 69,3115,Other,False
 69,3117,Other,False
 69,3123,Other,False
@@ -1545,7 +1545,7 @@ run,entry,type,status
 69,3348,Other,False
 69,3351,Other,False
 69,3352,Other,False
-69,3355,Holes,True
+69,3355,Binary,True
 69,3356,Other,False
 69,3358,Other,False
 69,3361,Other,False
@@ -1567,7 +1567,7 @@ run,entry,type,status
 69,3399,Other,False
 69,3405,Other,False
 69,3407,Other,False
-69,3408,Broken,True
+69,3408,Binary,True
 69,3410,Binary,True
 69,3412,Other,False
 69,3415,Other,False
@@ -1587,7 +1587,7 @@ run,entry,type,status
 69,3446,Other,False
 69,3449,Other,False
 69,3450,Other,False
-69,3452,Broken,False
+69,3452,Binary,True
 69,3455,Other,False
 69,3457,Other,False
 69,3459,Other,False
@@ -1616,7 +1616,7 @@ run,entry,type,status
 69,3505,Binary,True
 69,3506,Other,False
 69,3509,Other,False
-69,3510,Broken,False
+69,3510,Binary,False
 69,3512,Other,False
 69,3515,Other,False
 69,3517,Other,False
@@ -1639,7 +1639,7 @@ run,entry,type,status
 69,3557,Other,False
 69,3559,Other,False
 69,3561,Other,False
-69,3562,Other,False
+69,3562,Binary,True
 69,3568,Other,False
 69,3571,Other,False
 69,3572,Binary,True
@@ -1700,7 +1700,7 @@ run,entry,type,status
 69,3685,Other,False
 69,3686,Other,False
 69,3689,Other,False
-69,3691,Holes,True
+69,3691,Binary,True
 69,3693,Other,False
 69,3695,Other,False
 69,3697,Other,False
@@ -1760,7 +1760,7 @@ run,entry,type,status
 69,3794,Other,False
 69,3796,Other,False
 69,3797,Other,False
-69,3799,Holes,True
+69,3799,Binary,True
 69,3802,Other,False
 69,3803,Other,False
 69,3804,Other,False
@@ -1810,7 +1810,7 @@ run,entry,type,status
 69,3886,Other,False
 69,3888,Other,False
 69,3890,Other,False
-69,3892,Holes,True
+69,3892,Binary,True
 69,3893,Other,False
 69,3894,Binary,True
 69,3896,Other,False
@@ -1900,7 +1900,7 @@ run,entry,type,status
 69,4063,Other,False
 69,4065,Other,False
 69,4066,Other,False
-69,4067,Holes,True
+69,4067,Binary,True
 69,4069,Other,False
 69,4072,Other,False
 69,4077,Other,False
@@ -1939,7 +1939,7 @@ run,entry,type,status
 69,4153,Other,False
 69,4155,Other,False
 69,4159,Other,False
-69,4161,Holes,True
+69,4161,Binary,True
 69,4163,Other,False
 69,4165,Other,False
 69,4168,Other,False
@@ -2041,7 +2041,7 @@ run,entry,type,status
 69,4379,Other,False
 69,4381,Other,False
 69,4382,Other,False
-69,4383,Holes,True
+69,4383,Binary,True
 69,4385,Other,False
 69,4391,Other,False
 69,4393,Other,False
@@ -2055,9 +2055,9 @@ run,entry,type,status
 69,4413,Other,False
 69,4415,Other,False
 69,4417,Other,False
-69,4418,Broken,False
+69,4418,Other,False
 69,4421,Other,False
-69,4426,Broken,True
+69,4426,Binary,True
 69,4429,Binary,False
 69,4430,Other,False
 69,4431,Other,False
@@ -2105,7 +2105,7 @@ run,entry,type,status
 69,4516,Other,False
 69,4517,Other,False
 69,4520,Other,False
-69,4528,Broken,False
+69,4528,Binary,False
 69,4529,Other,False
 69,4533,Other,False
 69,4534,Other,False
@@ -2120,7 +2120,7 @@ run,entry,type,status
 69,4567,Other,False
 69,4568,Other,False
 69,4569,Other,False
-69,4572,Holes,True
+69,4572,Binary,True
 69,4573,Other,False
 69,4574,Other,False
 69,4578,Other,False
@@ -2175,7 +2175,7 @@ run,entry,type,status
 69,4688,Other,False
 69,4691,Other,False
 69,4693,Other,False
-69,4694,Holes,True
+69,4694,Binary,True
 69,4696,Other,False
 69,4697,Other,False
 69,4700,Other,False
@@ -2225,7 +2225,7 @@ run,entry,type,status
 69,4793,Binary,True
 69,4795,Other,False
 69,4796,Other,False
-69,4801,Holes,True
+69,4801,Binary,True
 69,4807,Other,False
 69,4808,Other,False
 69,4810,Other,False
@@ -2415,7 +2415,7 @@ run,entry,type,status
 69,5205,Other,False
 69,5206,Other,False
 69,5208,Other,False
-69,5209,Holes,True
+69,5209,Binary,True
 69,5213,Other,False
 69,5216,Other,False
 69,5219,Other,False
@@ -2675,7 +2675,7 @@ run,entry,type,status
 69,5793,Binary,True
 69,5798,Other,False
 69,5799,Binary,True
-69,5800,Other,False
+69,5800,Other,True
 69,5802,Other,False
 69,5804,Other,False
 69,5806,Other,False
@@ -2697,7 +2697,7 @@ run,entry,type,status
 69,5847,Other,False
 69,5850,Other,False
 69,5851,Other,False
-69,5853,Holes,True
+69,5853,Binary,True
 69,5854,Other,False
 69,5856,Other,False
 69,5857,Other,False
@@ -2717,7 +2717,7 @@ run,entry,type,status
 69,5886,Other,False
 69,5887,Other,False
 69,5888,Other,False
-69,5889,Holes,True
+69,5889,Binary,True
 69,5890,Other,False
 69,5892,Other,False
 69,5895,Other,False
@@ -2735,7 +2735,7 @@ run,entry,type,status
 69,5913,Other,False
 69,5914,Other,False
 69,5915,Other,False
-69,5916,Holes,True
+69,5916,Other,True
 69,5922,Other,False
 69,5924,Other,False
 69,5926,Other,False
@@ -2806,7 +2806,7 @@ run,entry,type,status
 69,6068,Other,False
 69,6069,Other,False
 69,6075,Other,False
-69,6077,Broken,True
+69,6077,Other,True
 69,6078,Other,False
 69,6079,Other,False
 69,6083,Other,False
@@ -2864,7 +2864,7 @@ run,entry,type,status
 69,6184,Other,False
 69,6185,Other,False
 69,6187,Other,False
-69,6190,Holes,True
+69,6190,Other,True
 69,6192,Other,False
 69,6194,Other,False
 69,6195,Other,False
@@ -2918,7 +2918,7 @@ run,entry,type,status
 69,6294,Binary,True
 69,6295,Other,False
 69,6297,Binary,True
-69,6298,Other,False
+69,6298,Other,True
 69,6301,Other,False
 69,6303,Other,False
 69,6304,Other,False
@@ -2928,7 +2928,7 @@ run,entry,type,status
 69,6313,Other,False
 69,6316,Other,False
 69,6317,Other,False
-69,6320,Holes,True
+69,6320,Other,False
 69,6329,Other,False
 69,6331,Binary,True
 69,6334,Other,False
@@ -2966,7 +2966,7 @@ run,entry,type,status
 69,6401,Other,False
 69,6403,Other,False
 69,6406,Other,False
-69,6407,Broken,True
+69,6407,Other,True
 69,6409,Other,False
 69,6412,Other,False
 69,6414,Other,False
@@ -3009,7 +3009,7 @@ run,entry,type,status
 69,6498,Other,False
 69,6499,Other,False
 69,6502,Other,False
-69,6503,Holes,True
+69,6503,Binary,True
 69,6506,Other,False
 69,6509,Other,False
 69,6510,Other,False
@@ -3034,7 +3034,7 @@ run,entry,type,status
 69,6549,Other,False
 69,6552,Other,False
 69,6553,Other,False
-69,6555,Holes,True
+69,6555,Binary,True
 69,6558,Other,False
 69,6560,Other,False
 69,6562,Other,False
@@ -3056,7 +3056,7 @@ run,entry,type,status
 69,6593,Other,False
 69,6594,Other,False
 69,6595,Other,False
-69,6597,Other,False
+69,6597,Binary,True
 69,6599,Other,False
 69,6601,Other,False
 69,6602,Other,False
@@ -3208,7 +3208,7 @@ run,entry,type,status
 69,6930,Other,False
 69,6932,Other,False
 69,6933,Other,False
-69,6936,Holes,True
+69,6936,Binary,True
 69,6938,Other,False
 69,6944,Other,False
 69,6946,Other,False
@@ -3318,7 +3318,7 @@ run,entry,type,status
 69,7177,Other,False
 69,7178,Other,False
 69,7180,Other,False
-69,7183,Holes,True
+69,7183,Other,True
 69,7187,Other,False
 69,7188,Other,False
 69,7191,Binary,False
@@ -3344,7 +3344,7 @@ run,entry,type,status
 69,7234,Other,False
 69,7241,Other,False
 69,7242,Other,False
-69,7244,Holes,True
+69,7244,Other,True
 69,7245,Other,False
 69,7247,Other,False
 69,7248,Other,False
@@ -3373,7 +3373,7 @@ run,entry,type,status
 69,7308,Other,False
 69,7312,Other,False
 69,7313,Other,False
-69,7314,Holes,True
+69,7314,Other,True
 69,7315,Other,False
 69,7318,Binary,True
 69,7319,Other,False
@@ -3382,7 +3382,7 @@ run,entry,type,status
 69,7325,Other,False
 69,7330,Other,False
 69,7331,Other,False
-69,7333,Holes,True
+69,7333,Binary,True
 69,7334,Other,False
 69,7338,Other,False
 69,7339,Other,False
@@ -3417,14 +3417,14 @@ run,entry,type,status
 69,7391,Other,False
 69,7394,Other,False
 69,7396,Other,False
-69,7397,Holes,True
+69,7397,Binary,True
 69,7398,Other,False
 69,7400,Other,False
 69,7402,Other,False
 69,7407,Other,False
 69,7409,Other,False
 69,7410,Other,False
-69,7411,Holes,True
+69,7411,Other,True
 69,7413,Other,False
 69,7416,Other,False
 69,7418,Other,False
@@ -3432,7 +3432,7 @@ run,entry,type,status
 69,7423,Other,False
 69,7426,Other,False
 69,7427,Other,False
-69,7431,Holes,True
+69,7431,Binary,True
 69,7433,Other,False
 69,7436,Other,False
 69,7441,Binary,True
@@ -3582,7 +3582,7 @@ run,entry,type,status
 69,7708,Other,False
 69,7709,Other,False
 69,7710,Other,False
-69,7711,Holes,True
+69,7711,Binary,True
 69,7714,Other,False
 69,7718,Other,False
 69,7719,Other,False
@@ -3711,7 +3711,7 @@ run,entry,type,status
 69,7987,Binary,True
 69,7990,Other,False
 69,7991,Other,False
-69,7993,Other,False
+69,7993,Binary,False
 69,7995,Other,False
 69,7998,Other,False
 69,8001,Other,False
@@ -3740,7 +3740,7 @@ run,entry,type,status
 69,8048,Other,False
 69,8050,Other,False
 69,8051,Other,False
-69,8052,Holes,True
+69,8052,Binary,True
 69,8055,Other,False
 69,8056,Other,False
 69,8059,Other,False
@@ -3760,7 +3760,7 @@ run,entry,type,status
 69,8084,Other,False
 69,8086,Other,False
 69,8087,Other,False
-69,8089,Holes,True
+69,8089,Other,True
 69,8092,Other,False
 69,8093,Other,False
 69,8096,Other,False
@@ -3790,7 +3790,7 @@ run,entry,type,status
 69,8145,Other,False
 69,8146,Other,False
 69,8148,Other,False
-69,8149,Holes,False
+69,8149,Other,True
 69,8152,Other,False
 69,8153,Other,False
 69,8154,Other,False
@@ -3887,7 +3887,7 @@ run,entry,type,status
 69,8343,Other,False
 69,8346,Other,False
 69,8349,Other,False
-69,8351,Holes,True
+69,8351,Binary,True
 69,8352,Other,False
 69,8353,Other,False
 69,8354,Other,False
@@ -3940,7 +3940,7 @@ run,entry,type,status
 69,8448,Other,False
 69,8451,Other,False
 69,8452,Other,False
-69,8453,Holes,True
+69,8453,Binary,True
 69,8455,Other,False
 69,8458,Other,False
 69,8459,Other,False
@@ -4038,8 +4038,8 @@ run,entry,type,status
 69,8668,Other,False
 69,8670,Other,False
 69,8671,Other,False
-69,8674,Binary,True
-69,8675,Other,False
+69,8674,Other,False
+69,8675,Binary,True
 69,8678,Other,False
 69,8679,Other,False
 69,8681,Other,False

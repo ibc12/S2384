@@ -1,6 +1,6 @@
 import pandas as pd
 
-name = "events_L1"
+name = "events_L1_7Li"
 
 file = f"./Inputs/{name}.dat"
 

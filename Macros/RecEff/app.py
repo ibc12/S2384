@@ -11,7 +11,7 @@ class App:
         self.root = root
         self.df = df
         self.file = file
-        self.types = ["Binary", "Multi", "Broken", "Other"]
+        self.types = ["Binary", "Multi", "Broken", "Holes", "Other"]
         self.status = [True, False]
 
         # First unlabelled entry
@@ -146,8 +146,16 @@ class App:
         # Broken events only
         broken = self.df[self.df["type"] == "Broken"]
 
-        # Binary + Broken combined
-        bin_broken = pd.concat([binary, broken])
+        # Holes events only
+        holes = self.df[self.df["type"] == "Holes"]
+
+        # Binary + Holes combined
+        bin_holes = pd.concat([binary, holes])
+        ok_bin_holes = bin_holes[bin_holes["status"] == True]
+        eff_bin_holes = self._efficiency(bin_holes)
+
+        # Binary + Broken + Holes combined
+        bin_broken = pd.concat([binary, broken, holes])
         ok_bin_broken = bin_broken[bin_broken["status"] == True]
         eff_bin_broken = self._efficiency(bin_broken)
 
@@ -155,7 +163,8 @@ class App:
         try:
             self.stats_val.set(
                 f"OK binaries {len(ok_binary)},  eff (Binary) : {eff_binary:.2uS} %\n"
-                f"OK binary+broken {len(ok_bin_broken)},  eff (Binary+Broken) : {eff_bin_broken:.2uS} %\n"
+                f"OK binary+holes {len(ok_bin_holes)},  eff (Binary+Holes) : {eff_bin_holes:.2uS} %\n"
+                f"OK binary+broken+holes {len(ok_bin_broken)},  eff (Binary+Broken+Holes) : {eff_bin_broken:.2uS} %\n"
                 f"Processed {self.index}\n"
                 f"Total {len(self.df)},  {self.index / len(self.df) * 100:.2f} %"
             )

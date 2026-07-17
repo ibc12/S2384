@@ -73,7 +73,7 @@ void TracksMissingPadsProjectionsAnalysis()
                             return empty;
                         auto lightCl = tpc.fClusters[lightIdx];
                         auto rp = m.fRP;
-                        return GetProjectedPositionsMM(lightCl, rp);
+                        return GetProjectedPositionsMM(lightCl, rp, driftFactor);
                     },
                     {"MergerData", "TPCData"})
             .Define("gapSummary", [](const std::vector<ProjectedPoint>& points) { return ComputeGapSummary(points); },
@@ -139,11 +139,66 @@ void TracksMissingPadsProjectionsAnalysis()
                     {"projGapResult"})
             .Define("fracSinglePadSlicesProj", [](const ProjGapResult& r) { return r.fracSinglePadSlices; },
                     {"projGapResult"})
+            // --- same Bragg-peak gap analysis, but forced onto the axis that
+            // --- was NOT chosen above (the "narrow"/sparser direction), so it
+            // --- can be compared side by side with the chosen projection ----
+            .Define("otherGapResult",
+                    [fracFromEndProj](const ChosenProjectionResult& c, ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+                    {
+                        ProjGapResult empty;
+
+                        auto lightIdx = m.fLightIdx;
+                        if(lightIdx < 0 || lightIdx >= (int)tpc.fClusters.size())
+                            return empty;
+
+                        const auto& lightCl = tpc.fClusters[lightIdx];
+
+                        auto getX = [](const ROOT::Math::XYZPointF& pos) { return (int)std::lround(pos.X()); };
+                        auto getY = [](const ROOT::Math::XYZPointF& pos) { return (int)std::lround(pos.Y()); };
+
+                        // force the axis opposite to the one that was chosen
+                        if(c.usedX)
+                            return ComputeGapsProjectionInRange(lightCl.GetVoxels(), getY, fracFromEndProj);
+                        else
+                            return ComputeGapsProjectionInRange(lightCl.GetVoxels(), getX, fracFromEndProj);
+                    },
+                    {"chosenGapResult", "MergerData", "TPCData"})
+            .Define("nGapsProjectionOther", [](const ProjGapResult& r) { return r.nGaps; }, {"otherGapResult"})
+            .Define("zCoverageFracProjOther", [](const ProjGapResult& r) { return r.zCoverageFrac; },
+                    {"otherGapResult"})
+            .Define("meanPadsPerSliceProjOther", [](const ProjGapResult& r) { return r.meanPadsPerSlice; },
+                    {"otherGapResult"})
+            .Define("medianPadsPerSliceProjOther", [](const ProjGapResult& r) { return r.medianPadsPerSlice; },
+                    {"otherGapResult"})
+            .Define("stdPadsPerSliceProjOther", [](const ProjGapResult& r) { return r.stdPadsPerSlice; },
+                    {"otherGapResult"})
+            .Define("nSinglePadSlicesProjOther", [](const ProjGapResult& r) { return r.nSinglePadSlices; },
+                    {"otherGapResult"})
+            .Define("fracSinglePadSlicesProjOther", [](const ProjGapResult& r) { return r.fracSinglePadSlices; },
+                    {"otherGapResult"})
             .Filter([](const ProjGapResult& r) { return r.valid; }, {"projGapResult"})
+            .Filter([](const ProjGapResult& r) { return r.valid; }, {"otherGapResult"})
             .Filter([](const PadProjectionSummary& p) { return p.valid; }, {"padSummary"});
 
     auto dfSummary1PadSlices =
+        defSummary.Filter([](const ProjGapResult& r) { return r.nSinglePadSlices > 0; }, {"projGapResult"});
+    auto dfSummary2PadSlices =
         defSummary.Filter([](const ProjGapResult& r) { return r.nSinglePadSlices > 1; }, {"projGapResult"});
+    auto dfSummary3PadSlices =
+        defSummary.Filter([](const ProjGapResult& r) { return r.nSinglePadSlices > 2; }, {"projGapResult"});
+    auto dfSummary4PadSlices =
+        defSummary.Filter([](const ProjGapResult& r) { return r.nSinglePadSlices > 3; }, {"projGapResult"});
+
+    // --- Complementary sets: events that do NOT reach each threshold of ------
+    // --- single-pad slices, i.e. the "clean" events for that cut -------------
+    auto dfSummaryNo1PadSlices =
+        defSummary.Filter([](const ProjGapResult& r) { return r.nSinglePadSlices <= 0; }, {"projGapResult"});
+    auto dfSummaryNo2PadSlices =
+        defSummary.Filter([](const ProjGapResult& r) { return r.nSinglePadSlices <= 1; }, {"projGapResult"});
+    auto dfSummaryNo3PadSlices =
+        defSummary.Filter([](const ProjGapResult& r) { return r.nSinglePadSlices <= 2; }, {"projGapResult"});
+    auto dfSummaryNo4PadSlices =
+        defSummary.Filter([](const ProjGapResult& r) { return r.nSinglePadSlices <= 3; }, {"projGapResult"});
 
     // --- XZ / YZ pad-projection occupancy (global reference, both kept) ----
     auto hNPadsXZ =
@@ -252,6 +307,60 @@ void TracksMissingPadsProjectionsAnalysis()
         {"hStdPadsVsMaxGap", "Std pads/slice vs max gap;Max gap [mm];Std pads/slice", 100, 0, 10, 60, 0, 3}, "maxGap",
         "stdPadsPerSliceProj");
 
+    auto hMaxGapVSMeanGap =
+        defSummary.Histo2D({"hMaxGapVSMeanGap", "maxGap vs meanGap;meanGap [mm];maxGap [mm]", 200, 0, 10, 200, 0, 3.5},
+                           "maxGap", "meanGap");
+
+    // --- Pads per Z slice, on the projection that was NOT chosen -----------
+    // (i.e. the axis judged "narrower"/sparser for this event). Comparing
+    // these to the chosen-projection histograms above tells you whether the
+    // denser-projection choice is actually doing something: the "other" set
+    // should systematically show more single-pad slices, more gaps and a
+    // lower mean pads/slice if the choice is meaningful.
+    auto hMeanPadsPerSliceProjOther =
+        defSummary.Histo1D({"hMeanPadsPerSliceProjOther",
+                            "Mean pads per Z slice (NOT chosen projection);Mean pads/slice;Events", 50, 0, 10},
+                           "meanPadsPerSliceProjOther");
+
+    auto hMedianPadsPerSliceProjOther =
+        defSummary.Histo1D({"hMedianPadsPerSliceProjOther",
+                            "Median pads per Z slice (NOT chosen projection);Median pads/slice;Events", 20, 0, 10},
+                           "medianPadsPerSliceProjOther");
+
+    auto hStdPadsPerSliceProjOther = defSummary.Histo1D(
+        {"hStdPadsPerSliceProjOther", "Std. dev. of pads per Z slice (NOT chosen projection);#sigma(pads/slice);Events",
+         100, 0, 3},
+        "stdPadsPerSliceProjOther");
+
+    auto hNSinglePadSlicesProjOther = defSummary.Histo1D(
+        {"hNSinglePadSlicesProjOther", "Slices with one pad (NOT chosen projection);N slices;Events", 20, 0, 20},
+        "nSinglePadSlicesProjOther");
+
+    auto hFracSinglePadSlicesProjOther =
+        defSummary.Histo1D({"hFracSinglePadSlicesProjOther",
+                            "Fraction of one-pad slices (NOT chosen projection);Fraction;Events", 100, 0, 1},
+                           "fracSinglePadSlicesProjOther");
+
+    // --- Chosen vs NOT-chosen projection, side by side ----------------------
+    auto hMeanPadsChosenVsOther = defSummary.Histo2D(
+        {"hMeanPadsChosenVsOther",
+         "Mean pads/slice: chosen vs NOT chosen;Mean pads/slice (other);Mean pads/slice (chosen)", 60, 0, 6, 60, 0, 6},
+        "meanPadsPerSliceProjOther", "meanPadsPerSliceProj");
+
+    auto hNSinglePadChosenVsOther = defSummary.Histo2D(
+        {"hNSinglePadChosenVsOther", "N slices with 1 pad: chosen vs NOT chosen;N slices (other);N slices (chosen)", 20,
+         0, 20, 20, 0, 20},
+        "nSinglePadSlicesProjOther", "nSinglePadSlicesProj");
+
+    auto hNGapsChosenVsOther = defSummary.Histo2D(
+        {"hNGapsChosenVsOther", "nGaps: chosen vs NOT chosen;nGaps (other);nGaps (chosen)", 20, 0, 20, 20, 0, 20},
+        "nGapsProjectionOther", "nGapsProjection");
+
+    auto hZCoverageChosenVsOther = defSummary.Histo2D(
+        {"hZCoverageChosenVsOther", "z-coverage: chosen vs NOT chosen;coverage (other);coverage (chosen)", 100, 0, 1,
+         100, 0, 1},
+        "zCoverageFracProjOther", "zCoverageFracProj");
+
     auto hDeltaZ = dfFiltered
                        .Define("deltaZ",
                                [](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
@@ -278,11 +387,96 @@ void TracksMissingPadsProjectionsAnalysis()
          0, 10, 100, 0, 3.5},
         "maxGap", "meanGap");
     auto hPhi1PadSlicesProj = dfSummary1PadSlices.Histo1D(
-        {"hPhi1PadSlicesProj", "Phi of events with 1-pad slices;phi [deg];Events", 360, -180, 180}, "fPhiLight");
+        {"hPhi1PadSlicesProj", "Phi of events with more than 0 single-pad slices;phi [deg];Events", 360, -180, 180},
+        "fPhiLight");
     auto hStdPads1PadSlicesProj = dfSummary1PadSlices.Histo1D(
-        {"hStdPads1PadSlicesProj", "Std. dev. of pads/slice (events with 1-pad slices);#sigma(pads/slice);Events", 100,
-         0, 10},
+        {"hStdPads1PadSlicesProj",
+         "Std. dev. of pads/slice (events with more than 0 single-pad slices);#sigma(pads/slice);Events", 100, 0, 10},
         "stdPadsPerSliceProj");
+
+    auto hMaxGapVSMeanGap2PadSlicesProj = dfSummary2PadSlices.Histo2D(
+        {"hMaxGapVSMeanGap2PadSlicesProj",
+         "maxGap vs meanGap (events with more than 1 single-pad slices);meanGap [mm];maxGap [mm]", 100, 0, 10, 100, 0,
+         3.5},
+        "maxGap", "meanGap");
+    auto hPhi2PadSlicesProj = dfSummary2PadSlices.Histo1D(
+        {"hPhi2PadSlicesProj", "Phi of events with more than 1 single-pad slices;phi [deg];Events", 360, -180, 180},
+        "fPhiLight");
+    auto hStdPads2PadSlicesProj = dfSummary2PadSlices.Histo1D(
+        {"hStdPads2PadSlicesProj",
+         "Std. dev. of pads/slice (events with more than 1 single-pad slices);#sigma(pads/slice);Events", 100, 0, 10},
+        "stdPadsPerSliceProj");
+
+    auto hMaxGapVSMeanGap3PadSlicesProj = dfSummary3PadSlices.Histo2D(
+        {"hMaxGapVSMeanGap3PadSlicesProj",
+         "maxGap vs meanGap (events with more than 2 single-pad slices);meanGap [mm];maxGap [mm]", 100, 0, 10, 100, 0,
+         3.5},
+        "maxGap", "meanGap");
+    auto hPhi3PadSlicesProj = dfSummary3PadSlices.Histo1D(
+        {"hPhi3PadSlicesProj", "Phi of events with more than 2 single-pad slices;phi [deg];Events", 360, -180, 180},
+        "fPhiLight");
+    auto hStdPads3PadSlicesProj = dfSummary3PadSlices.Histo1D(
+        {"hStdPads3PadSlicesProj",
+         "Std. dev. of pads/slice (events with more than 2 single-pad slices);#sigma(pads/slice);Events", 100, 0, 10},
+        "stdPadsPerSliceProj");
+
+    auto hMaxGapVSMeanGap4PadSlicesProj = dfSummary4PadSlices.Histo2D(
+        {"hMaxGapVSMeanGap4PadSlicesProj",
+         "maxGap vs meanGap (events with more than 3 single-pad slices);meanGap [mm];maxGap [mm]", 100, 0, 10, 100, 0,
+         3.5},
+        "maxGap", "meanGap");
+    auto hPhi4PadSlicesProj = dfSummary4PadSlices.Histo1D(
+        {"hPhi4PadSlicesProj", "Phi of events with more than 3 single-pad slices;phi [deg];Events", 360, -180, 180},
+        "fPhiLight");
+    auto hStdPads4PadSlicesProj = dfSummary4PadSlices.Histo1D(
+        {"hStdPads4PadSlicesProj",
+         "Std. dev. of pads/slice (events with more than 3 single-pad slices);#sigma(pads/slice);Events", 100, 0, 10},
+        "stdPadsPerSliceProj");
+
+    // PID for the events with 1, 2, 3 and 4 (or more) single-pad slices, to see if the gap effect is tied to a
+    // particular particle type.
+    auto hPID1PadSlicesProj = dfSummaryNo1PadSlices.Histo2D(
+        {"hPID1PadSlicesProj", "PID of events without the events with more than 0 single-pad slices;TL;Qtot", 200, 0, 120, 2000, 0, 3e5},
+        "fLight.fRawTL", "fLight.fQtotal");
+    auto hPID2PadSlicesProj = dfSummaryNo2PadSlices.Histo2D(
+        {"hPID2PadSlicesProj", "PID of events without the events with more than 1 single-pad slices;TL;Qtot", 200, 0, 120, 2000, 0, 3e5},
+        "fLight.fRawTL", "fLight.fQtotal");
+    auto hPID3PadSlicesProj = dfSummaryNo3PadSlices.Histo2D(
+        {"hPID3PadSlicesProj", "PID of events without the events with more than 2 single-pad slices;TL;Qtot", 200, 0, 120, 2000, 0, 3e5},
+        "fLight.fRawTL", "fLight.fQtotal");
+    auto hPID4PadSlicesProj = dfSummaryNo4PadSlices.Histo2D(
+        {"hPID4PadSlicesProj", "PID of events without the events with more than 3 single-pad slices;TL;Qtot", 200, 0, 120, 2000, 0, 3e5},
+        "fLight.fRawTL", "fLight.fQtotal");
+
+    auto hPhi1PadSlices = dfSummary1PadSlices.Histo1D(
+        {"hPhi1PadSlices", "Phi of events with more than 0 single-pad slices;phi [deg];Events", 360, -180, 180},
+        "fPhiLight");
+    auto hPhi2PadSlices = dfSummary2PadSlices.Histo1D(
+        {"hPhi2PadSlices", "Phi of events with more than 1 single-pad slices;phi [deg];Events", 360, -180, 180},
+        "fPhiLight");
+    auto hPhi3PadSlices = dfSummary3PadSlices.Histo1D(
+        {"hPhi3PadSlices", "Phi of events with more than 2 single-pad slices;phi [deg];Events", 360, -180, 180},
+        "fPhiLight");
+    auto hPhi4PadSlices = dfSummary4PadSlices.Histo1D(
+        {"hPhi4PadSlices", "Phi of events with more than 3 single-pad slices;phi [deg];Events", 360, -180, 180},
+        "fPhiLight");
+
+    auto hMeanPadsZ_1PadSlices = dfSummary1PadSlices.Histo1D(
+        {"hMeanPadsZ_1PadSlices", "Mean pads/slice (events with more than 0 single-pad slices);Mean pads/slice;Events",
+         50, 0, 10},
+        "meanPadsPerSliceProj");
+    auto hMeanPadsZ_2PadSlices = dfSummary2PadSlices.Histo1D(
+        {"hMeanPadsZ_2PadSlices", "Mean pads/slice (events with more than 1 single-pad slices);Mean pads/slice;Events",
+         50, 0, 10},
+        "meanPadsPerSliceProj");
+    auto hMeanPadsZ_3PadSlices = dfSummary3PadSlices.Histo1D(
+        {"hMeanPadsZ_3PadSlices", "Mean pads/slice (events with more than 2 single-pad slices);Mean pads/slice;Events",
+         50, 0, 10},
+        "meanPadsPerSliceProj");
+    auto hMeanPadsZ_4PadSlices = dfSummary4PadSlices.Histo1D(
+        {"hMeanPadsZ_4PadSlices", "Mean pads/slice (events with more than 3 single-pad slices);Mean pads/slice;Events",
+         50, 0, 10},
+        "meanPadsPerSliceProj");
 
     // --- Canvases for XZ / YZ pad projections (global occupancy) ----------
     auto* c4 = new TCanvas("c4", "XZ / YZ pad occupancy", 1200, 800);
@@ -351,6 +545,32 @@ void TracksMissingPadsProjectionsAnalysis()
     cPadsPerSliceCorr->cd(5);
     hStdPadsVsMaxGap->DrawClone("colz");
 
+    // --- pads per slice on the NOT-chosen projection ------------------------
+    auto* cPadsPerSliceOther = new TCanvas("cPadsPerSliceOther", "Pads per Z slice (NOT chosen projection)", 1500, 800);
+    cPadsPerSliceOther->Divide(3, 2);
+    cPadsPerSliceOther->cd(1);
+    hMeanPadsPerSliceProjOther->DrawClone();
+    cPadsPerSliceOther->cd(2);
+    hMedianPadsPerSliceProjOther->DrawClone();
+    cPadsPerSliceOther->cd(3);
+    hStdPadsPerSliceProjOther->DrawClone();
+    cPadsPerSliceOther->cd(4);
+    hNSinglePadSlicesProjOther->DrawClone();
+    cPadsPerSliceOther->cd(5);
+    hFracSinglePadSlicesProjOther->DrawClone();
+
+    // --- chosen vs NOT-chosen, side by side ---------------------------------
+    auto* cChosenVsOther = new TCanvas("cChosenVsOther", "Chosen vs NOT chosen projection", 1500, 400);
+    cChosenVsOther->Divide(4, 1);
+    cChosenVsOther->cd(1);
+    hMeanPadsChosenVsOther->DrawClone("colz");
+    cChosenVsOther->cd(2);
+    hNSinglePadChosenVsOther->DrawClone("colz");
+    cChosenVsOther->cd(3);
+    hNGapsChosenVsOther->DrawClone("colz");
+    cChosenVsOther->cd(4);
+    hZCoverageChosenVsOther->DrawClone("colz");
+
     auto* cDeltaZ = new TCanvas("cDeltaZ", "Z extent of the light cluster", 800, 600);
     hDeltaZ->DrawClone();
 
@@ -362,6 +582,82 @@ void TracksMissingPadsProjectionsAnalysis()
     hPhi1PadSlicesProj->DrawClone();
     c1PadSlicesProj->cd(3);
     hStdPads1PadSlicesProj->DrawClone();
+
+    auto* c2PadSlicesProj = new TCanvas("c2PadSlicesProj", "Events with 2-pad slices (chosen projection)", 1200, 400);
+    c2PadSlicesProj->Divide(3, 1);
+    c2PadSlicesProj->cd(1);
+    hMaxGapVSMeanGap2PadSlicesProj->DrawClone("colz");
+    c2PadSlicesProj->cd(2);
+    hPhi2PadSlicesProj->DrawClone();
+    c2PadSlicesProj->cd(3);
+    hStdPads2PadSlicesProj->DrawClone();
+
+    auto* c3PadSlicesProj = new TCanvas("c3PadSlicesProj", "Events with 3-pad slices (chosen projection)", 1200, 400);
+    c3PadSlicesProj->Divide(3, 1);
+    c3PadSlicesProj->cd(1);
+    hMaxGapVSMeanGap3PadSlicesProj->DrawClone("colz");
+    c3PadSlicesProj->cd(2);
+    hPhi3PadSlicesProj->DrawClone();
+    c3PadSlicesProj->cd(3);
+    hStdPads3PadSlicesProj->DrawClone();
+
+    auto* c4PadSlicesProj = new TCanvas("c4PadSlicesProj", "Events with 4-pad slices (chosen projection)", 1200, 400);
+    c4PadSlicesProj->Divide(3, 1);
+    c4PadSlicesProj->cd(1);
+    hMaxGapVSMeanGap4PadSlicesProj->DrawClone("colz");
+    c4PadSlicesProj->cd(2);
+    hPhi4PadSlicesProj->DrawClone();
+    c4PadSlicesProj->cd(3);
+    hStdPads4PadSlicesProj->DrawClone();
+
+    auto* cPIDSlicesProj = new TCanvas("cPIDSlicesProj", "PID of events with more than 4 single-pad slices", 1200, 800);
+    cPIDSlicesProj->Divide(2, 2);
+    cPIDSlicesProj->cd(1);
+    hPID1PadSlicesProj->DrawClone("colz");
+    cPIDSlicesProj->cd(2);
+    hPID2PadSlicesProj->DrawClone("colz");
+    cPIDSlicesProj->cd(3);
+    hPID3PadSlicesProj->DrawClone("colz");
+    cPIDSlicesProj->cd(4);
+    hPID4PadSlicesProj->DrawClone("colz");
+
+    auto* cPhiNoPadSlices =
+        new TCanvas("cPhiNoPadSlices", "Phi of events with 0, 1, 2 or 3 single-pad slices", 1200, 400);
+    cPhiNoPadSlices->Divide(2, 2);
+    cPhiNoPadSlices->cd(1);
+    hPhi1PadSlices->DrawClone();
+    cPhiNoPadSlices->cd(2);
+    hPhi2PadSlices->DrawClone();
+    cPhiNoPadSlices->cd(3);
+    hPhi3PadSlices->DrawClone();
+    cPhiNoPadSlices->cd(4);
+    hPhi4PadSlices->DrawClone();
+
+    auto* cMeanPadsZPadSlices =
+        new TCanvas("cMeanPadsZPadSlices", "Mean pads/slice for events with 0, 1, 2 or 3 single-pad slices", 1200, 400);
+    cMeanPadsZPadSlices->Divide(2, 2);
+    cMeanPadsZPadSlices->cd(1);
+    hMeanPadsZ_1PadSlices->DrawClone();
+    cMeanPadsZPadSlices->cd(2);
+    hMeanPadsZ_2PadSlices->DrawClone();
+    cMeanPadsZPadSlices->cd(3);
+    hMeanPadsZ_3PadSlices->DrawClone();
+    cMeanPadsZPadSlices->cd(4);
+    hMeanPadsZ_4PadSlices->DrawClone();
+
+    // --- maxGap vs meanGap (all events) -------------------------------------
+    auto* cMaxGapVsMeanGap = new TCanvas("cMaxGapVsMeanGap", "maxGap vs meanGap (all events)", 700, 600);
+    cMaxGapVsMeanGap->Divide(3, 2);
+    cMaxGapVsMeanGap->cd(1);
+    hMaxGapVSMeanGap1PadSlicesProj->DrawClone("colz");
+    cMaxGapVsMeanGap->cd(2);
+    hMaxGapVSMeanGap2PadSlicesProj->DrawClone("colz");
+    cMaxGapVsMeanGap->cd(3);
+    hMaxGapVSMeanGap3PadSlicesProj->DrawClone("colz");
+    cMaxGapVsMeanGap->cd(4);
+    hMaxGapVSMeanGap4PadSlicesProj->DrawClone("colz");
+    cMaxGapVsMeanGap->cd(5);
+    hMaxGapVSMeanGap->DrawClone("colz");
 
     std::cout << "Total events processed: " << *defSummary.Count() << std::endl;
 
