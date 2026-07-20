@@ -23,6 +23,7 @@ void Fit_lDependent()
     // Analysis
     ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_F_7Li_d_p_filtered.root"};
     auto def {df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})};
+    // auto def {df.Filter([](ActRoot::MergerData& m) { return (m.fLight.IsFilled() && m.fHeavy.GetNLayers() == 2) == true; }, {"MergerData"})};
     // Ex
     auto hEx {def.Histo1D(S2384Fit::Exdp_7Li, "Ex")};
     // Phase space

@@ -19,14 +19,16 @@
 #include "Interpolators.h"
 #include "PhysExperiment.h"
 
+#include <fstream>
 #include <string>
 #include <vector>
-#include <fstream>
 
+#include "../../PrettyStyle.C"
 #include "../Histos.h"
 
 void MergeSilL1()
 {
+    PrettyStyle();
     // Sil xs
     TGraphErrors* g_sil_xs {new TGraphErrors()};
     {
@@ -145,7 +147,7 @@ void MergeSilL1()
     Angular::Comparator comp_1stEx {"Merged 1st Ex", g_merged_1stEx};
     comp_1stEx.Add("DA1pcorr BE2 deformation", "./Inputs/g1_DA1p_corr/fort.202");
     comp_1stEx.Fit();
-    comp_1stEx.Draw("", true);  
+    comp_1stEx.Draw("", true);
     Angular::Comparator compSil_1stEx {"Sil 1st Ex", g_sil_xs_1stEx};
     compSil_1stEx.Add("DA1pcorr BE2 deformation", "./Inputs/g1_DA1p_corr/fort.202");
     compSil_1stEx.Fit();

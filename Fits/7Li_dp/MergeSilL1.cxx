@@ -24,9 +24,11 @@
 #include <vector>
 
 #include "../Histos.h"
+#include "../../PrettyStyle.C"
 
 void MergeSilL1()
 {
+    PrettyStyle();
     // Sil xs
     TGraphErrors* g_sil_xs {new TGraphErrors()};
     {

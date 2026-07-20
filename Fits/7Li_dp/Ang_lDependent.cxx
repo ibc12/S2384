@@ -133,8 +133,8 @@ void Ang_lDependent(bool isLab = false)
     comp2.Add("ADWA 2nd Ex - bound 100keV", "./Inputs/gs_ADWA/fort.205");
     comp2.Add("ADWA 2nd Ex - unbound", "./Inputs/gs_ADWA/fort.206");
     Angular::Comparator comp3 {"3rd Ex", xs.Get("v0")};
-    // comp3.Add("Daehnik-Delaroche 3rd Ex", "./Inputs/g3_Daehnik_Delaroche/21.g3");
-    // comp3.Add("DA1pcorr-Delaroche 3rd Ex", "./Inputs/g3_DA1pcorr_Delaroche/21.g3");
+    comp3.Add("Daehnik-Delaroche 3rd Ex", "./Inputs/g3_Daehnik_Delaroche/21.g3");
+    comp3.Add("DA1pcorr-Delaroche 3rd Ex", "./Inputs/g3_DA1pcorr_Delaroche/21.g3");
     comp.Fit();
     comp.Draw("gs", true);
     // comp.DrawTheo();
@@ -144,9 +144,9 @@ void Ang_lDependent(bool isLab = false)
     comp2.Fit();
     comp2.Draw("2nd", true);
     comp2.DrawTheo();
-    // comp3.Fit();
-    // comp3.Draw("3rd", true);
-    // comp3.DrawTheo();
+    comp3.Fit();
+    comp3.Draw("3rd", true);
+    comp3.DrawTheo();
 
     auto* c0 {new TCanvas {"c0", "(d,p) canvas"}};
     c0->DivideSquare(2);
