@@ -127,21 +127,66 @@ class App:
             self.index -= 1
             self._update_ui()
 
+    # Uncoment this if you want to compute efficiency for each type separately, with different denominators
+    #@staticmethod
+    #def _efficiency(subset: pd.DataFrame) -> un.core.AffineScalarFunc | int:
+    #    """Reconstruction efficiency (in %) with binomial-like error, for a
+    #    given subset of the dataframe (already filtered by type)."""
+    #    if len(subset) == 0:
+    #        return -1  # type: ignore
+    #    ok = subset[subset["status"] == True]
+    #    n = un.ufloat(len(ok), math.sqrt(len(ok)))
+    #    return n / len(subset) * 100
+    #
+    #def _stats(self) -> None:
+    #    # Binary events only
+    #    binary = self.df[self.df["type"] == "Binary"]
+    #    ok_binary = binary[binary["status"] == True]
+    #    eff_binary = self._efficiency(binary)
+    #
+    #    # Broken events only
+    #    broken = self.df[self.df["type"] == "Broken"]
+    #
+    #    # Holes events only
+    #    holes = self.df[self.df["type"] == "Holes"]
+    #
+    #    # Binary + Holes combined
+    #    bin_holes = pd.concat([binary, holes])
+    #    ok_bin_holes = bin_holes[bin_holes["status"] == True]
+    #    eff_bin_holes = self._efficiency(bin_holes)
+    #
+    #    # Binary + Broken + Holes combined
+    #    bin_broken = pd.concat([binary, broken, holes])
+    #    ok_bin_broken = bin_broken[bin_broken["status"] == True]
+    #    eff_bin_broken = self._efficiency(bin_broken)
+    #
+    #    # Set stats
+    #    try:
+    #        self.stats_val.set(
+    #            f"OK binaries {len(ok_binary)},  eff (Binary) : {eff_binary:.2uS} %\n"
+    #            f"OK binary+holes {len(ok_bin_holes)},  eff (Binary+Holes) : {eff_bin_holes:.2uS} %\n"
+    #            f"OK binary+broken+holes {len(ok_bin_broken)},  eff (Binary+Broken+Holes) : {eff_bin_broken:.2uS} %\n"
+    #            f"Processed {self.index}\n"
+    #            f"Total {len(self.df)},  {self.index / len(self.df) * 100:.2f} %"
+    #        )
+    #    except:
+    #        return
+
+    #This effieicency is computed with the same denominator (Binary+Broken+Holes) for all types, as it is the common denominator for all of them
     @staticmethod
-    def _efficiency(subset: pd.DataFrame) -> un.core.AffineScalarFunc | int:
-        """Reconstruction efficiency (in %) with binomial-like error, for a
-        given subset of the dataframe (already filtered by type)."""
-        if len(subset) == 0:
+    def _efficiency(ok: pd.DataFrame, total: pd.DataFrame) -> un.core.AffineScalarFunc | int:
+        """Reconstruction efficiency (in %) with binomial-like error.
+        'ok' is the subset of reconstructed events (status == True),
+        'total' is the denominator (binary + broken + holes)."""
+        if len(total) == 0:
             return -1  # type: ignore
-        ok = subset[subset["status"] == True]
         n = un.ufloat(len(ok), math.sqrt(len(ok)))
-        return n / len(subset) * 100
+        return n / len(total) * 100
 
     def _stats(self) -> None:
         # Binary events only
         binary = self.df[self.df["type"] == "Binary"]
         ok_binary = binary[binary["status"] == True]
-        eff_binary = self._efficiency(binary)
 
         # Broken events only
         broken = self.df[self.df["type"] == "Broken"]
@@ -152,19 +197,22 @@ class App:
         # Binary + Holes combined
         bin_holes = pd.concat([binary, holes])
         ok_bin_holes = bin_holes[bin_holes["status"] == True]
-        eff_bin_holes = self._efficiency(bin_holes)
 
-        # Binary + Broken + Holes combined
-        bin_broken = pd.concat([binary, broken, holes])
-        ok_bin_broken = bin_broken[bin_broken["status"] == True]
-        eff_bin_broken = self._efficiency(bin_broken)
+        # Binary + Broken + Holes combined -> this is the common denominator
+        bin_broken_holes = pd.concat([binary, broken, holes])
+        ok_bin_broken_holes = bin_broken_holes[bin_broken_holes["status"] == True]
+
+        # Efficiencies, all with the same denominator (Binary+Broken+Holes)
+        eff_binary = self._efficiency(ok_binary, bin_broken_holes)
+        eff_bin_holes = self._efficiency(ok_bin_holes, bin_broken_holes)
+        eff_bin_broken = self._efficiency(ok_bin_broken_holes, bin_broken_holes)
 
         # Set stats
         try:
             self.stats_val.set(
                 f"OK binaries {len(ok_binary)},  eff (Binary) : {eff_binary:.2uS} %\n"
                 f"OK binary+holes {len(ok_bin_holes)},  eff (Binary+Holes) : {eff_bin_holes:.2uS} %\n"
-                f"OK binary+broken+holes {len(ok_bin_broken)},  eff (Binary+Broken+Holes) : {eff_bin_broken:.2uS} %\n"
+                f"OK binary+broken+holes {len(ok_bin_broken_holes)},  eff (Binary+Broken+Holes) : {eff_bin_broken:.2uS} %\n"
                 f"Processed {self.index}\n"
                 f"Total {len(self.df)},  {self.index / len(self.df) * 100:.2f} %"
             )
