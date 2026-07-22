@@ -84,9 +84,9 @@ void MergeSilL1()
     }
 
     Angular::Comparator comp {"Merged g.s", g_merged};
-    // comp.Add("DA1pcorr", "./Inputs/gsDA1p_corr/fort.201");
-    // comp.Fit();
-    comp.Draw("", true);
+    comp.Add("DA1pcorr", "./Inputs/gsDA1p/fort.201");
+    comp.Fit();
+    comp.Draw("", true, false);
     Angular::Comparator compSil {"Sil g.s", g_sil_xs};
     // compSil.Add("DA1pcorr", "./Inputs/gsDA1p_corr/fort.201");
     // compSil.Fit();

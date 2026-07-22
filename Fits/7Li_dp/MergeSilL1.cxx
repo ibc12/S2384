@@ -134,7 +134,7 @@ void MergeSilL1()
     }
 
     Angular::Comparator comp {"Merged g.s", g_merged};
-    comp.Add("DA1pcorr", "./Inputs/gs_DA1pcorr_Delaroche/21.g0");
+    // comp.Add("DA1pcorr", "./Inputs/gs_DA1pcorr_Delaroche/21.g0");
     comp.Add("ADWA", "../7Li_dp/Inputs/gs_ADWA/fort.202");
     comp.Fit();
     comp.Draw("", true);

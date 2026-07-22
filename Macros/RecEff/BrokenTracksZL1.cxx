@@ -19,18 +19,20 @@ void BrokenTracksZL1()
     // ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_7Li_d_d_filtered.root"};
     ROOT::RDataFrame df {"PreProcessed_Tree", "../../PostAnalysis/Outputs/tree_preprocess_F_11Li.root"};
 
-    // ActRoot::DataManager dataman {"../../configs/data_7Li.conf", ActRoot::ModeType::EMerge};
+    // ActRoot::DataManager dataman {"../../configs/data.conf", ActRoot::ModeType::EMerge};
     // auto chain {dataman.GetChain()};
-    // Add friends if necessary
+    // // Add friends if necessary
     // auto friend1 {dataman.GetChain(ActRoot::ModeType::EFilter)};
     // chain->AddFriend(friend1.get());
     // auto friend2 {dataman.GetChain(ActRoot::ModeType::EReadSilMod)};
     // chain->AddFriend(friend2.get());
-    //
+    // //
     // ROOT::RDataFrame df {*chain};
     // auto def {
     //     df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; }, {"MergerData"})}; // only L1
-    auto def {df.Filter([](ActRoot::ModularData& m) { return m.Get("GATCONF") == 8; }, {"ModularData"})}; // only L1
+    auto def {df.Filter([](ActRoot::ModularData& m, ActRoot::MergerData& mer)
+                        { return m.Get("GATCONF") == 8; },
+                        {"ModularData", "MergerData"})}; // only L1
 
     // Print the number of entries in the dataframe
     auto nEntries = static_cast<int>(def.Count().GetValue());
@@ -93,10 +95,14 @@ void BrokenTracksZL1()
         {"hPhi", "#phi distribution of uncontinuous tracks;#phi [rad];Counts", 100, -180, 180}, "fPhiLight");
     auto hTheta = defClustersFiltered.Histo1D(
         {"hTheta", "#theta distribution of uncontinuous tracks;#theta [rad];Counts", 100, 0, 180}, "fThetaLight");
+    auto hThetaCM = defClustersFiltered.Histo1D(
+        {"hThetaCM", "#theta distribution of uncontinuous tracks;#theta [rad];Counts", 100, 0, 180}, "fThetaCMLight");
     auto hPhiAll = defClusters.Histo1D({"hPhiAll", "#phi distribution of all tracks;#phi [rad];Counts", 100, -180, 180},
                                        "fPhiLight");
     auto hThetaAll = defClusters.Histo1D(
         {"hThetaAll", "#theta distribution of all tracks;#theta [rad];Counts", 100, 0, 180}, "fThetaLight");
+    auto hThetaCMAll = defClusters.Histo1D(
+        {"hThetaCMAll", "#theta distribution of all tracks;#theta [rad];Counts", 100, 0, 180}, "fThetaCMLight");
     auto hSizeVoxelsLight = defClusters.Histo1D(
         {"hSizeVoxelsLight", "Size of light particle clusters after continuity;# Clusters;Counts", 10, 0, 10},
         "nClustersInLight");

@@ -38,8 +38,8 @@ void WriteRejectedEvents(const std::string& infile)
         {
             auto TL = m.fHeavy.fTL;
             auto theta = m.fThetaHeavy * TMath::DegToRad();
-            auto z_end = m.fRP.X() + TL * TMath::Cos(theta);
-            return z_end < 240.;
+            auto x_end = m.fRP.X() + TL * TMath::Cos(theta);
+            return x_end < 240.;
         },
         {"MergerData"});
 
@@ -118,8 +118,8 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
                             {
                                 auto TL {m.fHeavy.fTL};
                                 auto theta {m.fThetaHeavy * TMath::DegToRad()};
-                                auto z_end {m.fRP.X() + TL * TMath::Cos(theta)};
-                                if(z_end < 240)
+                                auto x_end {m.fRP.X() + TL * TMath::Cos(theta)};
+                                if(x_end < 240)
                                     return false;
                                 return true;
                             },
@@ -247,7 +247,7 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
     hkinL1->DrawClone("colz");
 
     // Opcional: guardar eventos rechazados
-    // WriteRejectedEvents(infile.Data());
+    WriteRejectedEvents(infile.Data());
     // std::ofstream out("./Outputs/good_pipe3_4multiplicity_sil.dat");
     // df.Foreach([&](ActRoot::MergerData& m) { m.Stream(out); }, {"MergerData"});
     // out.close();
