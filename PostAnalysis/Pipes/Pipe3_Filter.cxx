@@ -48,6 +48,7 @@ void WriteRejectedEvents(const std::string& infile)
         [&](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
         {
             auto rp {m.fRP};
+            auto rp_x {rp.X() / 2};
             auto rp_y {rp.Y() / 2};
             // Run for all clusters
             int counter {};
@@ -56,12 +57,37 @@ void WriteRejectedEvents(const std::string& infile)
                 auto voxels {cluster.GetRefToVoxels()};
                 for(auto& v : voxels)
                 {
-                    if(v.GetPosition().Y() > rp_y - 3 && v.GetPosition().Y() < rp_y + 3) // aprox L1 exclusion zone
+                    if(v.GetPosition().Y() > rp_y - 3 && v.GetPosition().Y() < rp_y + 3 &&
+                       v.GetPosition().X() > rp_x - 10 && v.GetPosition().X() < rp_x + 10) // aprox L1 exclusion zone
                         if(v.GetCharge() > 3000.)
                             counter++;
                 }
             }
-            return counter > 4;
+            return counter > 1;
+        },
+        {"MergerData", "GETTree_TPCData"});
+
+    auto dfFilterAll = df.Filter(
+        [&](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
+        {
+            bool highQave = m.fHeavy.fQave > 2000.;
+
+            auto TL = m.fHeavy.fTL;
+            auto theta = m.fThetaHeavy * TMath::DegToRad();
+            auto x_end = m.fRP.X() + TL * TMath::Cos(theta);
+            bool shortTrack = x_end < 240.;
+
+            auto rp = m.fRP;
+            auto rp_y = rp.Y() / 2;
+            int counter {};
+            for(auto& cluster : tpc.fClusters)
+                for(auto& v : cluster.GetRefToVoxels())
+                    if(v.GetPosition().Y() > rp_y - 3 && v.GetPosition().Y() < rp_y + 3)
+                        if(v.GetCharge() > 3000.)
+                            counter++;
+            bool highVoxRPBeam = counter > 4;
+
+            return highQave || shortTrack || highVoxRPBeam;
         },
         {"MergerData", "GETTree_TPCData"});
 
@@ -77,6 +103,10 @@ void WriteRejectedEvents(const std::string& infile)
     std::ofstream out4("./Outputs/rejected_highVoxelRPBeam.dat");
     rejectedHighVoxRPBeam.Foreach([&](ActRoot::MergerData& m) { m.Stream(out4); }, {"MergerData"});
     out4.close();
+
+    std::ofstream outAll("./Outputs/rejected_all.dat");
+    dfFilterAll.Foreach([&](ActRoot::MergerData& m) { m.Stream(outAll); }, {"MergerData"});
+    outAll.close();
 }
 
 
@@ -86,7 +116,8 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
     bool savePlots {false};
     bool onlySil {true};
 
-    auto infile {TString::Format("./Outputs/tree_ex%s_%s_%s_%s.root", isFiltered ? "_F" : "", beam.c_str(), target.c_str(), light.c_str())};
+    auto infile {TString::Format("./Outputs/tree_ex%s_%s_%s_%s.root", isFiltered ? "_F" : "", beam.c_str(),
+                                 target.c_str(), light.c_str())};
 
     ROOT::DisableImplicitMT();
     ROOT::RDataFrame df {"Final_Tree", infile.Data()};
@@ -129,6 +160,7 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
                             [&](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
                             {
                                 auto rp {m.fRP};
+                                auto rp_x {rp.X() / 2};
                                 auto rp_y {rp.Y() / 2};
                                 // Run for all clusters
                                 int counter {};
@@ -137,13 +169,14 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
                                     auto voxels {cluster.GetRefToVoxels()};
                                     for(auto& v : voxels)
                                     {
-                                        if(v.GetPosition().Y() > rp_y - 3 &&
-                                           v.GetPosition().Y() < rp_y + 3) // aprox L1 exclusion zone
+                                        if(v.GetPosition().Y() > rp_y - 3 && v.GetPosition().Y() < rp_y + 3 &&
+                                           v.GetPosition().X() > rp_x - 10 &&
+                                           v.GetPosition().X() < rp_x + 10) // aprox L1 exclusion zone
                                             if(v.GetCharge() > 3000.)
                                                 counter++;
                                     }
                                 }
-                                if(counter > 4)
+                                if(counter > 1)
                                     return false;
                                 return true;
                             },

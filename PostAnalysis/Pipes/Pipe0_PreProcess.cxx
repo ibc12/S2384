@@ -155,8 +155,8 @@ void Pipe0_PreProcess(const std::string& beam, const std::string& target, const 
                                   {
                                       auto TL {m.fHeavy.fTL};
                                       auto theta {m.fThetaHeavy * TMath::DegToRad()};
-                                      auto z_end {m.fRP.X() + TL * TMath::Cos(theta)};
-                                      if(z_end < 240)
+                                      auto x_end {m.fRP.X() + TL * TMath::Cos(theta)};
+                                      if(x_end < 240)
                                           return false;
                                       return true;
                                   },
