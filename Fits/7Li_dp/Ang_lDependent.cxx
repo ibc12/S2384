@@ -57,7 +57,17 @@ void Ang_lDependent(bool isLab = false)
     fitter.Configure("./Outputs/fit_lDependent.root");
     double R {(std::pow(7, 1. / 3.) + std::pow(1, 1. / 3.)) * 1.25}; // interaction radius in fm, with r0 = 1.25 fm
     double mu {7 * 1. / (7 + 1) * 931.5};                            // reduced mass in MeV/c^2
-    fitter.ApplyLambdaToModels([mu, R](Fitters::Model& m) { m.AddBWL(0, 2, 2.03262, mu, R); });
+    fitter.ApplyLambdaToModels(
+        [mu, R](Fitters::Model& m)
+        {
+            m.AddBWL(0, 1, 2.03262, mu, R);
+            m.AddBWL(1, 1, 2.03262, mu, R);
+            m.AddBWL(2, 1, 2.03262, mu, R);
+            m.AddBWL(3, 2, 2.03262, mu, R);
+            m.AddBWL(4, 2, 2.03262, mu, R);
+            m.AddBWL(5, 1, 2.03262, mu, R);
+            m.AddBWL(6, 2, 2.03262, mu, R);
+        });
     fitter.Run();
     fitter.Draw();
     fitter.DrawCounts();
@@ -73,19 +83,19 @@ void Ang_lDependent(bool isLab = false)
             isLab ? "effLabside" : "effCMside");
     eff.Add("g1", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.981_nPS_0_pPS_0.root",
             isLab ? "effLabside" : "effCMside");
-    eff.Add("g2", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_2.255_nPS_0_pPS_0.root",
+    eff.Add("v0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_2.255_nPS_0_pPS_0.root",
             isLab ? "effLabside" : "effCMside");
-    eff.Add("v0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_3.210_nPS_0_pPS_0.root",
+    eff.Add("v1", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_3.210_nPS_0_pPS_0.root",
             isLab ? "effLabside" : "effCMside");
-    eff.Add("v1", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_4.100_nPS_0_pPS_0.root",
+    eff.Add("v2", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_4.100_nPS_0_pPS_0.root",
             isLab ? "effLabside" : "effCMside");
-    eff.Add("v2", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_5.400_nPS_0_pPS_0.root",
+    eff.Add("v3", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_5.400_nPS_0_pPS_0.root",
             isLab ? "effLabside" : "effCMside");
-    eff.Add("v3", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_6.100_nPS_0_pPS_0.root",
+    eff.Add("v4", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_6.100_nPS_0_pPS_0.root",
             isLab ? "effLabside" : "effCMside");
-    eff.Add("v4", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_6.530_nPS_0_pPS_0.root",
+    eff.Add("v5", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_6.530_nPS_0_pPS_0.root",
             isLab ? "effLabside" : "effCMside");
-    eff.Add("v5", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_7.100_nPS_0_pPS_0.root",
+    eff.Add("v6", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_7.100_nPS_0_pPS_0.root",
             isLab ? "effLabside" : "effCMside");
     // eff.Add("ps0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.000_nPS_1_pPS_0.root", isLab ? "effLab" :
     // "effCM");
@@ -126,13 +136,13 @@ void Ang_lDependent(bool isLab = false)
     // comp1.Add("Daehnik-Delaroche 1st Ex", "./Inputs/g1_Daehnik_Delaroche/21.g1");
     // comp1.Add("DA1pcorr-Delaroche 1st Ex", "./Inputs/g1_DA1pcorr_Delaroche/21.g1");
     comp1.Add("ADWA 1st Ex", "./Inputs/gs_ADWA/fort.203");
-    Angular::Comparator comp2 {"2nd Ex", xs.Get("g2")};
+    Angular::Comparator comp2 {"2nd Ex", xs.Get("v0")};
     // comp2.Add("Daehnik-Delaroche 2nd Ex", "./Inputs/g2_Daehnik_Delaroche/21.g2");
     // comp2.Add("DA1pcorr-Delaroche 2nd Ex", "./Inputs/g2_DA1pcorr_Delaroche/21.g2");
     comp2.Add("ADWA 2nd Ex - bound 200keV", "./Inputs/gs_ADWA/fort.204");
     comp2.Add("ADWA 2nd Ex - bound 100keV", "./Inputs/gs_ADWA/fort.205");
     comp2.Add("ADWA 2nd Ex - unbound", "./Inputs/gs_ADWA/fort.206");
-    Angular::Comparator comp3 {"3rd Ex", xs.Get("v0")};
+    Angular::Comparator comp3 {"3rd Ex", xs.Get("v1")};
     comp3.Add("Daehnik-Delaroche 3rd Ex", "./Inputs/g3_Daehnik_Delaroche/21.g3");
     comp3.Add("DA1pcorr-Delaroche 3rd Ex", "./Inputs/g3_DA1pcorr_Delaroche/21.g3");
     comp.Fit();

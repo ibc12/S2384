@@ -13,7 +13,7 @@ void GetEvents()
     dataManager.ReadDataFile("../../configs/data.conf");
 
     // For L1 enough with 4 runs (64, 67). For lat sils put at least 10
-    dataManager.SetRuns(50, 51);
+    dataManager.SetRuns(69, 70);
 
     // Get df for the runs
     auto chain {dataManager.GetChain(ActRoot::ModeType::EReadSilMod)};
@@ -26,13 +26,13 @@ void GetEvents()
     auto dfFilterGATCONF = df.Filter(
         [](ActRoot::ModularData& mod)
         {
-            if(mod.Get("GATCONF") == 8)
+            if(mod.Get("GATCONF") == 4)
                 return true;
             return false;
         },
         {"ModularData"});
 
-    std::ofstream outFile("./Inputs/events_L1_11Li_preChange.dat");
+    std::ofstream outFile("./Inputs/events_f0_7Li.dat");
     // Save events
     dfFilterGATCONF.Foreach([&outFile](ActRoot::MergerData& m) { m.Stream(outFile); }, {"MergerData"});
 }

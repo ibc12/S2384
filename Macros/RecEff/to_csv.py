@@ -1,6 +1,6 @@
 import pandas as pd
 
-name = "events_L1_11Li_preChange"
+name = "events_f0_7Li_ppp"
 
 file = f"./Inputs/{name}.dat"
 

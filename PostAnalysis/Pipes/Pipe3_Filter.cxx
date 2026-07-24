@@ -280,7 +280,7 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
     hkinL1->DrawClone("colz");
 
     // Opcional: guardar eventos rechazados
-    WriteRejectedEvents(infile.Data());
+    // WriteRejectedEvents(infile.Data());
     // std::ofstream out("./Outputs/good_pipe3_4multiplicity_sil.dat");
     // df.Foreach([&](ActRoot::MergerData& m) { m.Stream(out); }, {"MergerData"});
     // out.close();

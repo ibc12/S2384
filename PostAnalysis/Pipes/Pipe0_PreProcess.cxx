@@ -166,6 +166,7 @@ void Pipe0_PreProcess(const std::string& beam, const std::string& target, const 
                                   [](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
                                   {
                                       auto rp {m.fRP};
+                                      auto rp_x {rp.X() / 2};
                                       auto rp_y {rp.Y() / 2};
                                       // Run for all clusters
                                       int counter {};
@@ -174,13 +175,14 @@ void Pipe0_PreProcess(const std::string& beam, const std::string& target, const 
                                           auto voxels {cluster.GetRefToVoxels()};
                                           for(auto& v : voxels)
                                           {
-                                              if(v.GetPosition().Y() > rp_y - 3 &&
-                                                 v.GetPosition().Y() < rp_y + 3) // aprox L1 exclusion zone
+                                              if(v.GetPosition().Y() > rp_y - 3 && v.GetPosition().Y() < rp_y + 3 &&
+                                                 v.GetPosition().X() > rp_x - 10 &&
+                                                 v.GetPosition().X() < rp_x + 10) // aprox L1 exclusion zone
                                                   if(v.GetCharge() > 3000.)
                                                       counter++;
                                           }
                                       }
-                                      if(counter > 4)
+                                      if(counter > 1)
                                           return false;
                                       return true;
                                   },
@@ -217,7 +219,8 @@ void Pipe0_PreProcess(const std::string& beam, const std::string& target, const 
     //             return false;
     //     },
     //     {"MergerData", "ModularData"});
-    // auto hQaveLight = dfL1.Histo1D({"hQaveLight", "Average charge of light particle clusters;# Clusters;Counts", 100, 0, 10000},
+    // auto hQaveLight = dfL1.Histo1D({"hQaveLight", "Average charge of light particle clusters;# Clusters;Counts", 100,
+    // 0, 10000},
     //                                      "MergerData.fLight.fQave");
     // auto* c1 {new TCanvas {"c1", "Average charge of light particle clusters"}};
     // hQaveLight->DrawClone();
