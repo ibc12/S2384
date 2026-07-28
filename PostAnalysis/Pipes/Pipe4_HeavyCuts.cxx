@@ -25,12 +25,12 @@ void Pipe4_HeavyCuts(const std::string& beam, const std::string& target, const s
     PrettyStyle(false);
     // gStyle->SetPalette(kViridis);
 
-    auto infile {
-        TString::Format("./Outputs/tree_ex%s_%s_%s_%s_filtered.root", isFiltered ? "_F" : "", beam.c_str(), target.c_str(), light.c_str())};
+    auto infile {TString::Format("./Outputs/tree_ex%s_%s_%s_%s_filtered.root", isFiltered ? "_F" : "", beam.c_str(),
+                                 target.c_str(), light.c_str())};
     // ROOT::EnableImplicitMT();
     ROOT::RDataFrame df {"Final_Tree", infile.Data()};
 
-    std::vector<std::string> listOfCuts {"7Li"};
+    std::vector<std::string> listOfCuts {"9Li", "11Li"};
 
     // Apply cuts on
     // 1-> Impose light hits the silicon (otherwise L1 trigger doesnt have Heavy hit either)
@@ -204,6 +204,24 @@ void Pipe4_HeavyCuts(const std::string& beam, const std::string& target, const s
     cKin->cd();
     auto hKinClone = (TH2D*)hKin.GetPtr()->Clone("hKinClone");
     hKinClone->Draw("colz");
+
+    // ================
+    // Save histograms to ROOT files if needed
+    // ================
+    // File 1: total ("All") histogram
+    // auto* fTot {new TFile(TString::Format("../Macros/Scattering Length/Inputs/Ex_total_heavyGate_%s_%s_%s.root",
+    // beam.c_str(), target.c_str(), light.c_str()), "RECREATE")}; fTot->cd(); auto* hTotSave
+    // {(TH1D*)hsEx[0].GetPtr()->Clone("hEx_Total")}; hTotSave->Write(); fTot->Close();
+    //
+    // // File 2: one histogram per heavy cut, all in the same file
+    // auto* fCuts {new TFile(TString::Format("../Macros/Scattering Length/Inputs/Ex_cuts_heavyGate_%s_%s_%s.root",
+    // beam.c_str(), target.c_str(), light.c_str()), "RECREATE")}; fCuts->cd(); for(size_t i = 1; i < hsEx.size(); ++i)
+    // // skip index 0 = "All"
+    // {
+    //     auto* hCutSave {(TH1D*)hsEx[i].GetPtr()->Clone(TString::Format("hEx_%s", labels[i].c_str()))};
+    //     hCutSave->Write();
+    // }
+    // fCuts->Close();
 }
 
 #endif
