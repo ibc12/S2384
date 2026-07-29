@@ -1,5 +1,5 @@
-#ifndef triumf_all_cxx
-#define triumf_all_cxx
+#ifndef do_simu_decay_cxx
+#define do_simu_decay_cxx
 #include "ActColors.h"
 #include "ActCrossSection.h"
 #include "ActCutsManager.h"
@@ -685,6 +685,12 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
             theta4Lab = LorenztVector4->Theta();
             phi4Lab = LorenztVector4->Phi();
             T4Lab = LorenztVector4->E() - LorenztVector4->M();
+        }
+        bool setDecay {true};
+        if(setDecay)
+        {
+            // Decay heavy to desire products
+
         }
         // Fill kinematics and angles
         hKin->Fill(theta3LabSampled * TMath::RadToDeg(), T3Lab);
