@@ -6,6 +6,20 @@
 //   (b) a Phase Space (PS) shape taken from a simulated histogram,
 //       added with its own free amplitude.
 //
+// NOTE: The data histogram (and the PS histogram) are expressed in Ex
+// (excitation energy of 12Li), NOT in Enf (relative energy of the
+// 11Li+n decay). The physical s-wave lineshape, however, is naturally a
+// function of Enf = Ex - Sn, where Sn is the one-neutron separation
+// energy of 12Li relative to 11Li(g.s.)+n.
+//
+// To keep everything consistent, Sn is now an explicit parameter of the
+// s-wave function: the function receives x = Ex, and internally computes
+// Enf = Ex - Sn before evaluating Eqs. 1-2. Because convolution commutes
+// with translation, convolving this Ex-shifted lineshape with the
+// (zero-mean) Gaussian resolution automatically produces the correctly
+// shifted & smeared shape in Ex space -- no extra bookkeeping needed
+// after the convolution.
+//
 // Fit parameters:
 //   [0] Amplitude_sig -> FREE  (normalization of the s-wave component)
 //   [1] as (fm)       -> FREE  (the scattering length to be extracted)
@@ -13,10 +27,8 @@
 //   [3] eps (MeV)     -> FIXED
 //   [4] sigma_res     -> FIXED (experimental resolution, MeV)
 //   [5] Amplitude_PS  -> FREE  (normalization of the phase-space component)
+//   [6] Sn (MeV)      -> FIXED (Ex -> Enf shift; set to your measured/adopted value)
 //
-// Usage in ROOT:
-//   root -l fit_spectra_12Li_sWave.C
-// (or wrap it as a function call with arguments if you prefer)
 // ---------------------------------------------------------------------
 
 #include "ROOT/RDataFrame.hxx"
@@ -53,17 +65,21 @@ double WaveNumber(double E)
     return TMath::Sqrt(2.0 * MU_C2 * E) / HBAR_C;
 }
 
-// Physical function (Eqs. 1-2), returns 0 for Enf <= 0.
-// Parameters: [0]=as, [1]=r0, [2]=eps
+// Physical function (Eqs. 1-2), now evaluated as a function of Ex.
+// Internally converts to Enf = Ex - Sn and returns 0 for Enf <= 0.
+// Parameters: [0]=as, [1]=r0, [2]=eps, [3]=Sn
 double SWaveSpectrum(double* x, double* par)
 {
-    double Enf = x[0];
-    if(Enf <= 0.0)
-        return 0.0;
+    double Ex = x[0];
 
     double a_s = par[0];
     double r0 = par[1];
     double eps = par[2];
+    double Sn = par[3];
+
+    double Enf = Ex - Sn;
+    if(Enf <= 0.0)
+        return 0.0;
 
     double knf = WaveNumber(Enf);
     if(knf < 1e-8)
@@ -99,8 +115,8 @@ double PSShape(double x)
     return g_hPS->Interpolate(x);
 }
 
-// Total fit function: Amplitude_sig * convolution(as,r0,eps,sigma_res) + Amplitude_PS * PS(x)
-// par: [0]=Amp_sig, [1]=as, [2]=r0, [3]=eps, [4]=sigma_res, [5]=Amp_PS
+// Total fit function: Amplitude_sig * convolution(as,r0,eps,Sn,sigma_res) + Amplitude_PS * PS(x)
+// par: [0]=Amp_sig, [1]=as, [2]=r0, [3]=eps, [4]=sigma_res, [5]=Amp_PS, [6]=Sn
 double FitFunction(double* x, double* par)
 {
     double amp_sig = par[0];
@@ -109,10 +125,12 @@ double FitFunction(double* x, double* par)
     double eps = par[3];
     double sigma_res = par[4];
     double amp_ps = par[5];
+    double Sn = par[6];
 
-    double p_conv[5] = {a_s, r0, eps, 0.0, sigma_res}; // {as, r0, eps} + {mean=0, sigma}
+    // g_f_conv parameter order = {as, r0, eps, Sn} (SWaveSpectrum) + {mean=0, sigma} (Gaussian)
+    double p_conv[6] = {a_s, r0, eps, Sn, 0.0, sigma_res};
     g_f_conv->SetParameters(p_conv);
-    double sig = amp_sig * g_f_conv->Eval(x[0]);
+    double sig = amp_sig * g_f_conv->Eval(x[0]); // x[0] is Ex, exactly as g_f_conv now expects
 
     double ps = amp_ps * PSShape(x[0]);
 
@@ -121,6 +139,7 @@ double FitFunction(double* x, double* par)
 
 void fit_spectra_12Li_sWave()
 {
+    // Fit range in Ex (excitation energy), same units/frame as the data histogram
     double fitmin = -1.0;
     double fitmax = 8.0;
 
@@ -149,8 +168,9 @@ void fit_spectra_12Li_sWave()
     h->SetDirectory(nullptr); // Detach from the file so it can be closed
     file->Close();
 
-    // Phase space
+    // Phase space (already in Ex, same frame as the data histogram -- no shift needed here)
     ROOT::RDataFrame phase {"SimulationTTree", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.000_nPS_1_pPS_0.root"};
+    auto phaseFilter = phase.Filter("EexGateHeavy_side > -10", "Select valid events");
     // Copy exactly the same binning as the experimental histogram
     auto model =
         ROOT::RDF::TH1DModel("hPS", "Phase Space", h->GetNbinsX(), h->GetXaxis()->GetXmin(), h->GetXaxis()->GetXmax());
@@ -178,25 +198,26 @@ void fit_spectra_12Li_sWave()
     g_hPS->SetLineColor(kBlue + 1);
     g_hPS->SetLineWidth(2);
     g_hPS->SetFillStyle(0);
-    g_hPS->SetTitle("Phase Space;E_{nf} (MeV);Arbitrary units");
+    g_hPS->SetTitle("Phase Space;E_{x} (MeV);Arbitrary units");
 
     hPS->DrawClone("hist");
 
     // --- Build the s-wave convolution (wider internal range than the fit
-    //     range, to avoid truncating the Gaussian resolution tails) ---
+    //     range, to avoid truncating the Gaussian resolution tails).
+    //     Both bounds are in Ex now, consistent with SWaveSpectrum's new x. ---
     const double conv_min = fitmin - 0.6;
     const double conv_max = fitmax + 0.6;
 
-    g_f_orig = new TF1("g_f_orig", SWaveSpectrum, conv_min, conv_max, 3);
+    g_f_orig = new TF1("g_f_orig", SWaveSpectrum, conv_min, conv_max, 4); // as, r0, eps, Sn
     g_f_gaus = new TF1("g_f_gaus", "TMath::Gaus(x,[0],[1],true)", conv_min, conv_max);
     g_conv = new TF1Convolution(g_f_orig, g_f_gaus, conv_min, conv_max, true);
     g_conv->SetNofPointsFFT(1000);
     g_f_conv = new TF1("g_f_conv", *g_conv, conv_min, conv_max, g_conv->GetNpar());
 
     // --- Fit function ---
-    TF1* fit_func = new TF1("fit_func", FitFunction, fitmin, fitmax, 6);
+    TF1* fit_func = new TF1("fit_func", FitFunction, fitmin, fitmax, 7);
     fit_func->SetParNames("Amplitude_{sig}", "a_{s} (fm)", "r0 (fm)", "#varepsilon (MeV)", "#sigma_{res} (MeV)",
-                          "Amplitude_{PS}");
+                          "Amplitude_{PS}", "S_{n} (MeV)");
 
     // Initial values -- adjust the amplitude guesses to the scale of your histogram
     double amp_guess = h->GetMaximum() > 0 ? h->GetMaximum() : 1.0;
@@ -206,16 +227,18 @@ void fit_spectra_12Li_sWave()
     fit_func->SetParameter(3, 0.370);           // eps, fixed later
     fit_func->SetParameter(4, 0.24);            // sigma_res, fixed later
     fit_func->SetParameter(5, 0.5 * amp_guess); // Amplitude_PS, free (rough starting guess)
+    fit_func->SetParameter(6, 0.0);             // Sn, fixed later -- SET THIS TO YOUR ADOPTED VALUE (MeV)
 
     // Reasonable limits for the free parameters (adjust if needed)
     fit_func->SetParLimits(0, 0.0, 1e6 * amp_guess);
     fit_func->SetParLimits(1, -500, -0.5); // Scattering length is typically negative
-    fit_func->FixParameter(5, 0.0);
+    fit_func->SetParLimits(5, 0.0, 100.0 * amp_guess);
 
     // Fix all parameters except Amplitude_sig, as, and Amplitude_PS
     fit_func->FixParameter(2, 3.0);   // r0
-    fit_func->FixParameter(3, 0.370); // eps (approximately the 2n separation energy of 11Li)
-    fit_func->FixParameter(4, 0.24);  // sigma_res
+    fit_func->FixParameter(3, 0.370); // eps (S2n of prejectile, 11Li)
+    fit_func->FixParameter(4, 0.14);  // sigma_res
+    fit_func->FixParameter(6, -0.120);   // Sn  Sn(12Li -> 11Li+n) value in MeV
 
     // --- Perform the fit ---
     // "R" = use the function range, "S" = return a TFitResultPtr.
@@ -227,11 +250,12 @@ void fit_spectra_12Li_sWave()
     std::cout << "a_s = " << fit_func->GetParameter(1) << " +/- " << fit_func->GetParError(1) << " fm\n";
     std::cout << "Amplitude_sig = " << fit_func->GetParameter(0) << " +/- " << fit_func->GetParError(0) << "\n";
     std::cout << "Amplitude_PS  = " << fit_func->GetParameter(5) << " +/- " << fit_func->GetParError(5) << "\n";
+    std::cout << "Sn (fixed)    = " << fit_func->GetParameter(6) << " MeV\n";
     std::cout << "chi2/ndf = " << fit_func->GetChisquare() << " / " << fit_func->GetNDF() << "\n";
 
     // --- Draw the results: data, total fit, and the two components separately ---
     TCanvas* c1 = new TCanvas("c", "Fit s-wave + PS", 800, 600);
-    h->SetTitle("s-wave + Phase Space fit;E_{nf} (MeV);Counts");
+    h->SetTitle("s-wave + Phase Space fit;E_{x} (MeV);Counts");
     h->Draw("E");
 
     fit_func->SetLineColor(kRed + 1);
@@ -243,11 +267,11 @@ void fit_spectra_12Li_sWave()
         "f_sig_only",
         [](double* xx, double* pp)
         {
-            double p_conv[5] = {pp[1], pp[2], pp[3], 0.0, pp[4]};
+            double p_conv[6] = {pp[1], pp[2], pp[3], pp[6], 0.0, pp[4]};
             g_f_conv->SetParameters(p_conv);
             return pp[0] * g_f_conv->Eval(xx[0]);
         },
-        fitmin, fitmax, 6);
+        fitmin, fitmax, 7);
     f_sig_only->SetParameters(fit_func->GetParameters());
     f_sig_only->SetLineColor(kBlue + 1);
     f_sig_only->SetLineStyle(2);
@@ -256,7 +280,7 @@ void fit_spectra_12Li_sWave()
 
     // PS-only component, using the fitted amplitude
     TF1* f_ps_only =
-        new TF1("f_ps_only", [](double* xx, double* pp) { return pp[5] * PSShape(xx[0]); }, fitmin, fitmax, 6);
+        new TF1("f_ps_only", [](double* xx, double* pp) { return pp[5] * PSShape(xx[0]); }, fitmin, fitmax, 7);
     f_ps_only->SetParameters(fit_func->GetParameters());
     f_ps_only->SetLineColor(kGreen + 2);
     f_ps_only->SetLineStyle(2);
@@ -270,6 +294,6 @@ void fit_spectra_12Li_sWave()
     leg->AddEntry(f_ps_only, "Phase Space component", "l");
     leg->Draw();
 
-    c1->SaveAs("fit_s_wave_histogram.png");
-    c1->SaveAs("fit_s_wave_histogram.pdf");
+    c1->SaveAs("fit_s_wave_histogram_Ex.png");
+    c1->SaveAs("fit_s_wave_histogram_Ex.pdf");
 }

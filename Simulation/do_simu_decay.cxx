@@ -411,6 +411,7 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     srim->ReadTable("heavy", path + heavy + "_" + gas + ".txt");
     srim->ReadTable("lightInSil", path + light + "_" + silicon + ".txt");
     srim->ReadTable("heavyInSil", path + heavy + "_" + silicon + ".txt");
+    
     // srim->SetStragglingLISE("heavyInSil", "../Calibrations/LISE files/" + heavy + "_silicon" + ".txt");
     // srim->SetStragglingLISE("heavy", "../Calibrations/LISE files/" + heavy + "_gas_95-5" + ".txt");
     // srim->SetStragglingLISE("lightInSil", "../Calibrations/LISE files/" + light + "_silicon" + ".txt");
