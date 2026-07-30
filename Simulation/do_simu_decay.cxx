@@ -618,12 +618,35 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
     // Combined gate: alfa and triton detected (each one in any of its 2 telescopes)
     bool gateAlfaTriton_tree {};
     outTree->Branch("gateAlfaTriton", &gateAlfaTriton_tree);
+
     // Events stoped inside ACTAR (L1)
-    long long nProtonStoppedInGas {0};
-    double protonEnergyAtVertexL1_tree {};
-    outTree->Branch("protonEnergyAtVertex", &protonEnergyAtVertexL1_tree);
-    double protonAngleL1_tree {};
-    outTree->Branch("protonAngle", &protonAngleL1_tree);
+    auto* stoppedTree {new TTree("LightMissTree", "Eventos donde el 'light' no llega a reconstruirse")};
+    if(inspect)
+        stoppedTree->SetDirectory(nullptr);
+    int lightStatus_treeStop {}; // 0 = ningun silicio en la trayectoria, 1 = se para en el gas antes de llegar
+    stoppedTree->Branch("lightStatus", &lightStatus_treeStop);
+    double lightTheta3Lab_treeStop {};
+    stoppedTree->Branch("theta3Lab", &lightTheta3Lab_treeStop);
+    double lightT3Lab_treeStop {};
+    stoppedTree->Branch("T3Lab", &lightT3Lab_treeStop);
+    double lightRangeInGas_treeStop {};
+    stoppedTree->Branch("rangeInGas", &lightRangeInGas_treeStop);
+    // reutiliza las variables de alfa/triton (ya calculadas arriba, antes de estos continues)
+    stoppedTree->Branch("alfaLayerCode", &alfaLayerCode_tree);
+    stoppedTree->Branch("alfaEnergy", &alfaEnergy_tree);
+    stoppedTree->Branch("alfaAngle", &alfaAngle_tree);
+    double alfaEnergyTruth_treeStop {};
+    stoppedTree->Branch("alfaEnergyTruth", &alfaEnergyTruth_treeStop);
+    double alfaThetaLabTruth_treeStop {};
+    stoppedTree->Branch("alfaAngleTruth", &alfaThetaLabTruth_treeStop);
+    stoppedTree->Branch("tritonLayerCode", &tritonLayerCode_tree);
+    stoppedTree->Branch("tritonEnergy", &tritonEnergy_tree);
+    stoppedTree->Branch("tritonAngle", &tritonAngle_tree);
+    double tritonEnergyTruth_treeStop {};
+    stoppedTree->Branch("tritonEnergyTruth", &tritonEnergyTruth_treeStop);
+    double tritonThetaLabTruth_treeStop {};
+    stoppedTree->Branch("tritonAngleTruth", &tritonThetaLabTruth_treeStop);
+    stoppedTree->Branch("gateAlfaTriton", &gateAlfaTriton_tree);
 
     // Counter of events in which the proton did not have enough energy to exit the ACTAR gas volume
 
@@ -880,6 +903,10 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
                 haveAlphaTriton = true;
             }
         }
+        double alfaThetaLabTruth {alfaLV.Theta() * TMath::RadToDeg()};
+        double alfaEnergyTruth {alfaLV.E() - alfaLV.M()};
+        double tritonThetaLabTruth {tritonLV.Theta() * TMath::RadToDeg()};
+        double tritonEnergyTruth {tritonLV.E() - tritonLV.M()};
         // Fill debug alfa energy
         hAlfaEnergyInitialAll->Fill(alfaLV.Theta() * TMath::RadToDeg(), alfaLV.E() - alfaLV.M());
         // Fill kinematics and angles
@@ -906,14 +933,60 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
         if(0 <= finalPointGas.X() && finalPointGas.X() <= 256 && 0 <= finalPointGas.Y() && finalPointGas.Y() <= 256 &&
            std::abs(vertex.Z() - finalPointGas.Z()) < (235. / 2.))
         {
-            // The end point of the proton range is still inside the ACTAR gas volume: it did not have enough energy to
-            // exit and reach any silicon. It is only counted here (no 'continue' is done: the rest of the loop already
-            // does its own "continue" if it does not reach any silicon, so this counter is purely informative).
-            nProtonStoppedInGas++;
-            // For the moment this events do not enter the Fill od the outPut file
-            protonEnergyAtVertexL1_tree = T3Lab;
-            protonAngleL1_tree = theta3Lab;
+
         } // the z axis is referred to experimental values, it is not used for L1
+
+        // ---- Tracking del alfa y del triton (adelantado antes de los 'continue' del light) ----
+        // Se calcula aqui, independientemente de lo que le pase al 'light', para
+        // no perder esta informacion en los eventos en los que el 'light' no
+        // llega a ningun silicio o se para en el gas.
+        alfaLayerCode_tree = 0;
+        alfaEnergy_tree = -1000;
+        alfaAngle_tree = -1000;
+        tritonLayerCode_tree = 0;
+        tritonEnergy_tree = -1000;
+        tritonAngle_tree = -1000;
+        gateAlfaTriton_tree = false;
+        bool silIndexHeavy_equivalent {false}; // true si pasa el gate combinado
+        // Info "verdad" (Lorentz vector), independiente de si detectan en el Si o no
+        double alfaEnergyTruth_tree {-1000};
+        double alfaAngleTruth_tree {-1000};
+        double tritonEnergyTruth_tree {-1000};
+        double tritonAngleTruth_tree {-1000};
+        if(doAlphaTritonBreakup && haveAlphaTriton)
+        {
+            alfaEnergyTruth_tree = alfaLV.E() - alfaLV.M();
+            alfaAngleTruth_tree = alfaLV.Theta() * TMath::RadToDeg();
+            tritonEnergyTruth_tree = tritonLV.E() - tritonLV.M();
+            tritonAngleTruth_tree = tritonLV.Theta() * TMath::RadToDeg();
+
+            ROOT::Math::XYZVector alfaBeamFrame {TMath::Cos(alfaLV.Theta()),
+                                                 TMath::Sin(alfaLV.Theta()) * TMath::Sin(alfaLV.Phi()),
+                                                 TMath::Sin(alfaLV.Theta()) * TMath::Cos(alfaLV.Phi())};
+            ROOT::Math::XYZVector tritonBeamFrame {TMath::Cos(tritonLV.Theta()),
+                                                   TMath::Sin(tritonLV.Theta()) * TMath::Sin(tritonLV.Phi()),
+                                                   TMath::Sin(tritonLV.Theta()) * TMath::Cos(tritonLV.Phi())};
+            auto alfaWorldFrame {runner.RotateToWorldFrame(alfaBeamFrame, beamDir)};
+            auto tritonWorldFrame {runner.RotateToWorldFrame(tritonBeamFrame, beamDir)};
+
+            double TalfaLab {alfaLV.E() - alfaLV.M()};
+            double TtritonLab {tritonLV.E() - tritonLV.M()};
+
+            auto alfaHit {TrackFrontWall("alfa", TalfaLab, alfaWorldFrame, vertex, sils, srim, silRes.get(),
+                                         sigmaSilFront, silEfficiencies)};
+            auto tritonHit {TrackFrontWall("triton", TtritonLab, tritonWorldFrame, vertex, sils, srim, silRes.get(),
+                                           sigmaSilFront, silEfficiencies)};
+
+            alfaLayerCode_tree = alfaHit.telescopeCode;
+            alfaEnergy_tree = alfaHit.detected ? alfaHit.energy : -1000;
+            alfaAngle_tree = alfaHit.detected ? alfaHit.angle : -1000;
+            tritonLayerCode_tree = tritonHit.telescopeCode;
+            tritonEnergy_tree = tritonHit.detected ? tritonHit.energy : -1000;
+            tritonAngle_tree = tritonHit.detected ? tritonHit.angle : -1000;
+            gateAlfaTriton_tree = alfaHit.detected && tritonHit.detected;
+            silIndexHeavy_equivalent = gateAlfaTriton_tree;
+        }
+
         // How to check whether tracks would read the silicons with new class:
         int silIndex0 = -1;
         ROOT::Math::XYZPoint silPoint0;
@@ -931,6 +1004,21 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
         silRes->SetParameter(0, layer0 == "f0" ? sigmaSilFront : sigmaSilLat);
         if(silIndex0 == -1)
         {
+            if(0 <= finalPointGas.X() && finalPointGas.X() <= 256 && 0 <= finalPointGas.Y() &&
+               finalPointGas.Y() <= 256 && std::abs(vertex.Z() - finalPointGas.Z()) < (235. / 2.))
+            {
+                // El 'light' no apunta a ningun silicio: se guarda en el arbol de
+                // eventos "perdidos" con la info de alfa/triton ya calculada arriba.
+                lightStatus_treeStop = 0;
+                lightTheta3Lab_treeStop = theta3Lab * TMath::RadToDeg();
+                lightT3Lab_treeStop = T3Lab;
+                lightRangeInGas_treeStop = rangeInGas;
+                alfaEnergyTruth_treeStop = alfaEnergyTruth_tree;
+                alfaThetaLabTruth_treeStop = alfaAngleTruth_tree;
+                tritonEnergyTruth_treeStop = tritonEnergyTruth_tree;
+                tritonThetaLabTruth_treeStop = tritonAngleTruth_tree;
+                stoppedTree->Fill();
+            }
             continue;
         }
         // Slow down light in gas
@@ -939,6 +1027,21 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
         ApplyNaN(T3AtSil);
         if(std::isnan(T3AtSil))
         {
+            if(0 <= finalPointGas.X() && finalPointGas.X() <= 256 && 0 <= finalPointGas.Y() &&
+               finalPointGas.Y() <= 256 && std::abs(vertex.Z() - finalPointGas.Z()) < (235. / 2.))
+            {
+                // El 'light' se para en el gas: se guarda en el arbol de eventos
+                // "perdidos" con la info de alfa/triton ya calculada arriba.
+                lightStatus_treeStop = 1;
+                lightTheta3Lab_treeStop = theta3Lab * TMath::RadToDeg();
+                lightT3Lab_treeStop = T3Lab;
+                lightRangeInGas_treeStop = rangeInGas;
+                alfaEnergyTruth_treeStop = alfaEnergyTruth_tree;
+                alfaThetaLabTruth_treeStop = alfaAngleTruth_tree;
+                tritonEnergyTruth_treeStop = tritonEnergyTruth_tree;
+                tritonThetaLabTruth_treeStop = tritonAngleTruth_tree;
+                stoppedTree->Fill();
+            }
             continue;
         }
         // Slow down in silicon
@@ -984,45 +1087,6 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
                         eLoss1 = 0;
                 }
             }
-        }
-        // Convined gate for alpha and triton detection, each in any of their 2 front telescopes (f0/f1 or f2/f3).
-        // Replaces the old check of a single 'heavy' hitting f3 (there is no longer a single detectable heavy particle:
-        // it breaks up into alpha+t before reaching any detector).
-        bool silIndexHeavy_equivalent {false}; // true si pasa el gate combinado
-        alfaLayerCode_tree = 0;
-        alfaEnergy_tree = -1000;
-        alfaAngle_tree = -1000;
-        tritonLayerCode_tree = 0;
-        tritonEnergy_tree = -1000;
-        tritonAngle_tree = -1000;
-        gateAlfaTriton_tree = false;
-        if(doAlphaTritonBreakup && haveAlphaTriton)
-        {
-            ROOT::Math::XYZVector alfaBeamFrame {TMath::Cos(alfaLV.Theta()),
-                                                 TMath::Sin(alfaLV.Theta()) * TMath::Sin(alfaLV.Phi()),
-                                                 TMath::Sin(alfaLV.Theta()) * TMath::Cos(alfaLV.Phi())};
-            ROOT::Math::XYZVector tritonBeamFrame {TMath::Cos(tritonLV.Theta()),
-                                                   TMath::Sin(tritonLV.Theta()) * TMath::Sin(tritonLV.Phi()),
-                                                   TMath::Sin(tritonLV.Theta()) * TMath::Cos(tritonLV.Phi())};
-            auto alfaWorldFrame {runner.RotateToWorldFrame(alfaBeamFrame, beamDir)};
-            auto tritonWorldFrame {runner.RotateToWorldFrame(tritonBeamFrame, beamDir)};
-
-            double TalfaLab {alfaLV.E() - alfaLV.M()};
-            double TtritonLab {tritonLV.E() - tritonLV.M()};
-
-            auto alfaHit {TrackFrontWall("alfa", TalfaLab, alfaWorldFrame, vertex, sils, srim, silRes.get(),
-                                         sigmaSilFront, silEfficiencies)};
-            auto tritonHit {TrackFrontWall("triton", TtritonLab, tritonWorldFrame, vertex, sils, srim, silRes.get(),
-                                           sigmaSilFront, silEfficiencies)};
-
-            alfaLayerCode_tree = alfaHit.telescopeCode;
-            alfaEnergy_tree = alfaHit.detected ? alfaHit.energy : -1000;
-            alfaAngle_tree = alfaHit.detected ? alfaHit.angle : -1000;
-            tritonLayerCode_tree = tritonHit.telescopeCode;
-            tritonEnergy_tree = tritonHit.detected ? tritonHit.energy : -1000;
-            tritonAngle_tree = tritonHit.detected ? tritonHit.angle : -1000;
-            gateAlfaTriton_tree = alfaHit.detected && tritonHit.detected;
-            silIndexHeavy_equivalent = gateAlfaTriton_tree;
         }
         if(silIndexHeavy_equivalent)
         {
@@ -1163,14 +1227,13 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
 
     // Reportar (siempre) el numero de protones que se quedaron sin energia
     // suficiente para salir del volumen de gas de ACTAR
-    std::cout << BOLDYELLOW << "Protones parados en gas (no alcanzan ningun silicio): " << nProtonStoppedInGas << " / "
-              << niter << RESET << '\n';
 
     // SAVING
     if(!inspect)
     {
         outFile->cd();
         outTree->Write();
+        stoppedTree->Write();
         effCM->Write();
         effLab->Write();
         effCMside->Write();
@@ -1180,9 +1243,6 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
         effCMgateHeavy->Write();
         effLabgateHeavy->Write();
         hRP->Write("hRP");
-        TParameter<Long64_t> nProtonStoppedInGasParam("nProtonStoppedInGas",
-                                                      static_cast<Long64_t>(nProtonStoppedInGas));
-        nProtonStoppedInGasParam.Write();
         outFile->Close();
         delete outFile;
         outFile = nullptr;
