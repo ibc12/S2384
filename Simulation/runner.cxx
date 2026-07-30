@@ -1,3 +1,5 @@
+#ifndef runner_cxx
+#define runner_cxx
 #include "TROOT.h"
 #include "TString.h"
 #include "TSystem.h"
@@ -9,6 +11,7 @@
 
 #include "./GetSigma.cxx"
 #include "./do_simu.cxx"
+#include "./do_simu_decay.cxx"
 #include "./plotter.cxx"
 
 void runner(TString what = "simu", bool inspect = true)
@@ -40,7 +43,7 @@ void runner(TString what = "simu", bool inspect = true)
             // Exs = {0, 0.981, 2.255};
             // Exs = {0, 0.981, 2.255, 3.210, 4.100, 5.400, 6.100, 6.530, 7.100};
             Exs = {0, 0.981, 2.255, 3.210, 4.100, 6.100, 7.100};
-            // Exs = {0.981}; 
+        // Exs = {0.981};
     }
 
     else if(neutronPS == 0 && protonPS == 0 && target == "2H" && light == "2H") // Elastic and Inelastic scattering
@@ -123,6 +126,19 @@ void runner(TString what = "simu", bool inspect = true)
             }
         }
     }
+    else if(what.Contains("decay"))
+    {
+        beam = "7Li"; // Only 7Li(d,p) decay to alfa+t implemented for now
+        target = "2H";
+        light = "1H";
+        heavy = "8Li";
+        Exs = {7.1};                  // Ex of the reaction for 8Li
+        bool useResonance8Li = false; // Use 8Li* resonance
+        bool useResonance7Li = false; // Use 7Li* resonance
+        double ExSecondary = 4.63;    // Ex of the 7Li* resonance
+        do_simu_decay(beam, target, light, heavy, neutronPS, protonPS, Tbeam, Exs.front(), inspect, true,
+                      useResonance8Li, useResonance7Li, ExSecondary);
+    }
     else if(what.Contains("plot"))
     {
         Plotter(Exs, beam, target, light, Tbeam, neutronPS, protonPS);
@@ -136,3 +152,4 @@ void runner(TString what = "simu", bool inspect = true)
         std::cout << "That method was not implemented yet" << '\n';
     }
 }
+#endif

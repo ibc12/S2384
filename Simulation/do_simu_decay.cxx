@@ -1,6 +1,7 @@
 #ifndef do_simu_decay_cxx
 #define do_simu_decay_cxx
 #include "ActColors.h"
+#include "ActConstants.h"
 #include "ActCrossSection.h"
 #include "ActCutsManager.h"
 #include "ActDecayGenerator.h"
@@ -25,6 +26,7 @@
 #include "TH2.h"
 #include "TH3.h"
 #include "TMath.h"
+#include "TParameter.h"
 #include "TPolyLine3D.h"
 #include "TROOT.h"
 #include "TRandom.h"
@@ -39,211 +41,142 @@
 #include <unordered_map>
 
 #include "../PostAnalysis/HistConfig.h"
+#include "./do_simu.cxx"
 
 using XYZPoint = ROOT::Math::XYZPoint;
 using XYZVector = ROOT::Math::XYZVector;
 
-struct BeamOffset
-{
-    double offset;   // mm
-    double fraction; // must sum to 1
-};
-
 using BeamOffsetMap = std::map<std::string, std::vector<BeamOffset>>;
 
-std::pair<XYZPoint, XYZPoint> SampleVertex(double meanZ, double sigmaZ, TH3D* h, double lengthX)
-{
 
-    // X is always common for both manners
-    double Xstart {0};
-    double Xrp {gRandom->Uniform() * lengthX};
-    // Y depends completely on the method of calculation
-    double Ystart {-1};
-    double Yrp {-1};
-    // Z of beam at entrance
-    double Zstart {gRandom->Gaus(meanZ, sigmaZ)};
-    double Zrp {-1};
-    // Ystart in this case is sampled from the histogram itself!
-    double thetaXY {};
-    double thetaXZ {};
-    h->GetRandom3(Ystart, thetaXY, thetaXZ);
-    // Mind that Y is not centred in the histogram value!
-    // Rp values are computed as follows:
-    Yrp = Ystart - Xrp * TMath::Tan(thetaXY * TMath::DegToRad());
-    Zrp = Zstart - Xrp * TMath::Tan(thetaXZ * TMath::DegToRad());
-    XYZPoint start {Xstart, Ystart, Zstart};
-    XYZPoint vertex {Xrp, Yrp, Zrp};
-    return {std::move(start), std::move(vertex)};
-}
-
-std::pair<double, double> SampleCM()
+// ==========================================================================
+// Result of propagating a charge particle (alfa or triton) through one of the two front dE-E telescopes: (f0,f1) or
+// (f2,f3).
+// ==========================================================================
+struct FrontHitResult
 {
-    auto theta {TMath::ACos(gRandom->Uniform(-1, 1))};
-    auto phi {gRandom->Uniform(0, TMath::TwoPi())};
-    return {theta, phi};
-}
+    bool detected {false};
+    int telescopeCode {0}; // 0 = no detected, 1 = f0/f1, 2 = f2/f3
+    std::string layerThin {};
+    std::string layerThick {};
+    int silIndexThin {-1};
+    bool punchthrough {false};
+    double energy {}; // eLoss total reconstructed (thin [+ thick if punchthrough])
+    double angle {};  // thetaLab (in deg)
+    ROOT::Math::XYZPoint point {};
+};
 
-void ApplyNaN(double& e, double t = 0, const std::string& comment = "stopped")
+// Check first the f0/f1 telescope and then the f2/f3; return the first one that gives a valid hit (passes threshold and
+// efficiency). Replicate the same pattern of SlowWithStraggling + resolution + ApplyNaN that is already used for
+// 'light', generalized to two dE-E pairs instead of just f0->f1.
+FrontHitResult TrackFrontWall(const std::string& srimKey, double Tinit, const ROOT::Math::XYZVector& dirWorldFrame,
+                              const ROOT::Math::XYZPoint& vertex, ActPhysics::SilSpecs* sils, ActPhysics::SRIM* srim,
+                              TF1* silRes, double sigmaFront, std::map<std::string, double>& silEfficiencies)
 {
-    if(e <= t)
-        e = std::nan(comment.c_str());
-}
-
-void ApplyThetaRes(double& theta)
-{
-    double sigma {1.4 / 2.355}; // FWHM to sigma
-    theta = gRandom->Gaus(theta, sigma * TMath::DegToRad());
-}
-
-double RandomizeBeamEnergy(double Tini, double sigma)
-{
-    return gRandom->Gaus(Tini, sigma);
-}
-
-std::map<std::string, double> LoadEfficiencies(const std::string& filename)
-{
-    std::map<std::string, double> efficiencies;
-    std::ifstream fin(filename);
-    std::string key;
-    double value;
-    while(fin >> key >> value)
+    FrontHitResult res;
+    static const std::vector<std::pair<std::string, std::string>> telescopes {{"f0", "f1"}, {"f2", "f3"}};
+    for(int t = 0; t < (int)telescopes.size(); t++)
     {
-        efficiencies[key] = value;
+        const auto& [thin, thick] = telescopes[t];
+        int silIndexThin {-1};
+        ROOT::Math::XYZPoint pointThin;
+        std::tie(silIndexThin, pointThin) = sils->FindSPInLayer(thin, vertex, dirWorldFrame);
+        if(silIndexThin == -1)
+            continue;
+        if(!AcceptHit(silEfficiencies, thin, silIndexThin))
+            continue;
+
+        // Energia al llegar a la lamina fina (tras frenar en el gas)
+        auto Tat {srim->SlowWithStraggling(srimKey, Tinit, (pointThin - vertex).R())};
+        ApplyNaN(Tat);
+        if(std::isnan(Tat))
+            continue; // se paro en el gas antes de llegar
+
+        auto normal {sils->GetLayer(thin).GetNormal()};
+        auto angleWithNormal {TMath::ACos(dirWorldFrame.Unit().Dot(normal.Unit()))};
+        silRes->SetParameter(0, sigmaFront);
+        auto Tafter {srim->SlowWithStraggling(srimKey + "InSil", Tat, sils->GetLayer(thin).GetUnit().GetThickness(),
+                                              angleWithNormal)};
+        auto eLossPre {Tat - Tafter};
+        auto eLoss {gRandom->Gaus(eLossPre, silRes->Eval(eLossPre))};
+        ApplyNaN(eLoss, sils->GetLayer(thin).GetThresholds().at(silIndexThin));
+        if(std::isnan(eLoss))
+            continue; // no supero el umbral de esta lamina
+
+        res.detected = true;
+        res.telescopeCode = t + 1;
+        res.layerThin = thin;
+        res.silIndexThin = silIndexThin;
+        res.point = pointThin;
+        res.angle = TMath::ACos(dirWorldFrame.Unit().Dot(normal.Unit())) * TMath::RadToDeg();
+
+        if(Tafter <= 0.)
+        {
+            // se paro en la lamina fina: energia total = eLoss
+            res.punchthrough = false;
+            res.energy = eLoss;
+        }
+        else
+        {
+            // Punchthrough: busca la lamina gruesa del mismo telescopio
+            int silIndexThick {-1};
+            ROOT::Math::XYZPoint pointThick;
+            std::tie(silIndexThick, pointThick) = sils->FindSPInLayer(thick, vertex, dirWorldFrame);
+            res.punchthrough = true;
+            res.layerThick = thick;
+            if(silIndexThick == -1)
+            {
+                // atraveso la fina pero no golpea la gruesa: solo se conoce eLoss(fina)
+                res.energy = eLoss;
+            }
+            else
+            {
+                auto TafterInterGas {srim->SlowWithStraggling(srimKey, Tafter, (pointThin - pointThick).R())};
+                auto TafterThick {srim->SlowWithStraggling(srimKey + "InSil", TafterInterGas,
+                                                           sils->GetLayer(thick).GetUnit().GetThickness(),
+                                                           angleWithNormal)};
+                auto eLossBackPre {TafterInterGas - TafterThick};
+                auto eLossBack {gRandom->Gaus(eLossBackPre, silRes->Eval(eLossBackPre))};
+                ApplyNaN(eLossBack, sils->GetLayer(thick).GetThresholds().at(silIndexThick));
+                res.energy = eLoss + (std::isnan(eLossBack) ? 0. : eLossBack);
+            }
+        }
+        return res; // primer telescopio con hit valido
     }
-    fin.close();
-    return efficiencies;
+    return res; // detected = false
 }
 
-// Some silicons malfunctioned in some of the experimental runs, this takes into account the ammount of time they were
-// not working
-bool AcceptHit(std::map<std::string, double> efficiencies, const std::string& layer, int detID)
+void do_simu_decay(const std::string& beam, const std::string& target, const std::string& light,
+                   const std::string& heavy, int neutronPS, int protonPS, double Tbeam, double Ex, bool inspect,
+                   bool doAlphaTritonBreakup = false, bool useResonance8Li = true, bool useResonance7Li = true,
+                   double ExSecondary = 4.63)
 {
-    TString key = Form("%s_%d", layer.c_str(), detID);
-    auto it = efficiencies.find(key.Data());
-    if(it == efficiencies.end())
-        return true; // si no está definido → aceptar
-    double eff = it->second;
-    return (gRandom->Rndm() < eff);
-}
-
-// Get XS files depending on the reaction in place
-bool GetXS(const std::string& target, const std::string& light, const std::string& beam, double Ex,
-           ActSim::CrossSection* xs)
-{
-    bool isThereXS {};
-    if(target == "2H" && light == "1H" && beam == "11Li")
-    {
-        isThereXS = true;
-        if(Ex == 0.)
-        {
-            TString data_to_read {TString::Format("./Inputs/xs/%s/dp/angs12nospin.dat", beam.c_str())};
-            xs->ReadFile(data_to_read.Data());
-            std::cout << "Total xs: " << xs->GetTotalXSmbarn() << std::endl;
-        }
-        else if(Ex == 0.130)
-        {
-            TString data_to_read {TString::Format("./Inputs/xs/%s/dp/angp12nospin.dat", beam.c_str())};
-            xs->ReadFile(data_to_read.Data());
-            std::cout << "Total xs: " << xs->GetTotalXSmbarn() << std::endl;
-        }
-        else if(Ex == 0.435)
-        {
-            TString data_to_read {TString::Format("./Inputs/xs/%s/dp/angp32nospin.dat", beam.c_str())};
-            xs->ReadFile(data_to_read.Data());
-            std::cout << "Total xs: " << xs->GetTotalXSmbarn() << std::endl;
-        }
-        else if(Ex == 2.)
-        {
-            TString data_to_read {TString::Format("./Inputs/xs/%s/dp/angd52nospin.dat", beam.c_str())};
-            xs->ReadFile(data_to_read.Data());
-            std::cout << "Total xs: " << xs->GetTotalXSmbarn() << std::endl;
-        }
-        else if(Ex == 5.)
-        {
-            TString data_to_read {TString::Format("./Inputs/xs/%s/dp/angd52nospin.dat", beam.c_str())};
-            xs->ReadFile(data_to_read.Data());
-            std::cout << "Total xs: " << xs->GetTotalXSmbarn() << std::endl;
-        }
-    }
-    else if(target == "2H" && light == "2H" && beam == "11Li")
-    {
-        if(Ex == 0.)
-        {
-            isThereXS = true;
-            TString data_to_read {TString::Format("./Inputs/xs/%s/dd/elastic.dat", beam.c_str())};
-            xs->ReadFile(data_to_read.Data());
-            std::cout << "Total xs: " << xs->GetTotalXSmbarn() << std::endl;
-        }
-    }
-    else if(target == "2H" && light == "2H" && beam == "7Li")
-    {
-        if(Ex == 0.)
-        {
-            isThereXS = true;
-            TString data_to_read {TString::Format("./Inputs/xs/%s/dd/elastic_DA1pcorr.dat", beam.c_str())};
-            xs->ReadFile(data_to_read.Data());
-            std::cout << "Total xs: " << xs->GetTotalXSmbarn() << std::endl;
-        }
-        else if(Ex == 0.477)
-        {
-            isThereXS = true;
-            TString data_to_read {TString::Format("./Inputs/xs/%s/dd/inelatic_g1_DA1p_nocorr.dat", beam.c_str())};
-            xs->ReadFile(data_to_read.Data());
-            std::cout << "Total xs: " << xs->GetTotalXSmbarn() << std::endl;
-        }
-    }
-    else if(target == "2H" && light == "1H" && beam == "7Li")
-    {
-        if(Ex == 0.)
-        {
-            isThereXS = true;
-            TString data_to_read {TString::Format("./Inputs/xs/%s/dp/gs_ADWA.dat", beam.c_str())};
-            xs->ReadFile(data_to_read.Data());
-            std::cout << "Total xs: " << xs->GetTotalXSmbarn() << std::endl;
-        }
-        else if(Ex == 0.981)
-        {
-            isThereXS = true;
-            TString data_to_read {TString::Format("./Inputs/xs/%s/dp/g1_ADWA.dat", beam.c_str())};
-            xs->ReadFile(data_to_read.Data());
-            std::cout << "Total xs: " << xs->GetTotalXSmbarn() << std::endl;
-        }
-    }
-    return isThereXS;
-}
-
-double PickBeamOffset(const std::string& beam, const BeamOffsetMap& offsets)
-{
-    const auto& vec = offsets.at(beam);
-
-    double r = gRandom->Uniform(); // [0,1)
-    double acc = 0.0;
-
-    for(const auto& entry : vec)
-    {
-        acc += entry.fraction;
-        if(r < acc)
-            return entry.offset;
-    }
-
-    // fallback por precisión numérica
-    return vec.back().offset;
-}
-
-void CheckL1Acceptance(XYZVector direction, XYZPoint vertex, XYZPoint finalPointgas, double minPads,
-                       double halfWidthExclusionZone)
-{
-    int a = 1;
-}
-
-void do_simu(const std::string& beam, const std::string& target, const std::string& light, const std::string& heavy,
-             int neutronPS, int protonPS, double Tbeam, double Ex, bool inspect, int thread = -1)
-{
+    // ==================================================================
+    // doAlphaTritonBreakup: interruptor maestro. Si es false, el resto de
+    //   esta funcion se comporta EXACTAMENTE como antes (otras reacciones:
+    //   dd, dt, etc. no se ven afectadas).
+    // Si es true, heavy/neutronPS/protonPS pasados por el caller se IGNORAN
+    //   para la generacion (se sustituyen por la logica de mas abajo), pero
+    //   Ex/heavy se siguen usando tal cual para kinTheo/kin/el umbral, como
+    //   ya hacia el codigo original.
+    //   useResonance8Li : true  -> se genera primero p + 8Li*(Ex)
+    //                     false -> el neutron sale ya en el vertice de
+    //                              entrada (nPS=1), heredando Ex como la
+    //                              excitacion directa del 7Li*
+    //   useResonance7Li : true  -> hay un 7Li* real intermedio antes de
+    //                              romper a alfa+t (con excitacion
+    //                              ExSecondary si useResonance8Li=true, o
+    //                              Ex si useResonance8Li=false)
+    //                     false -> alfa+t (+n si useResonance8Li=true) se
+    //                              generan democraticamente en el mismo paso
+    // ==================================================================
     // set batch mode if inspect is false
     if(!inspect)
         gROOT->SetBatch(true);
     // Set whether is PS or not
     bool isPS {(neutronPS > 0) || (protonPS > 0)};
+    // Set decayString for files names
+    std::string decayStr;
     // Set number of iterations
     const int niter {static_cast<int>(inspect ? 1e6 : (isPS ? 3e7 : 1e7))};
     gRandom->SetSeed(0);
@@ -342,7 +275,8 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         if(name == "f0" || name == "f1")
             layer.MoveZTo(silCentreFront, {5});
         if(name == "f2")
-            layer.MoveZTo(silCentreFront + 12.5, {0}); // Manually substract 12.5 to get the f2 in the same height as the f3
+            layer.MoveZTo(silCentreFront + 12.5,
+                          {0}); // Manually substract 12.5 to get the f2 in the same height as the f3
         if(name == "f3")
             layer.MoveZTo(silCentreFront, {0});
         if(name == "l0" || name == "r0")
@@ -411,7 +345,17 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     srim->ReadTable("heavy", path + heavy + "_" + gas + ".txt");
     srim->ReadTable("lightInSil", path + light + "_" + silicon + ".txt");
     srim->ReadTable("heavyInSil", path + heavy + "_" + silicon + ".txt");
-    
+    // Tablas SRIM adicionales para el breakup a alfa+triton (nombres fijos,
+    // independientes de los strings beam/target/light/heavy pasados)
+    std::string alfaName {"4He"};
+    std::string tritonName {"3H"};
+    if(doAlphaTritonBreakup)
+    {
+        srim->ReadTable("alfa", path + alfaName + "_" + gas + ".txt");
+        srim->ReadTable("alfaInSil", path + alfaName + "_" + silicon + ".txt");
+        srim->ReadTable("triton", path + tritonName + "_" + gas + ".txt");
+        srim->ReadTable("tritonInSil", path + tritonName + "_" + silicon + ".txt");
+    }
     // srim->SetStragglingLISE("heavyInSil", "../Calibrations/LISE files/" + heavy + "_silicon" + ".txt");
     // srim->SetStragglingLISE("heavy", "../Calibrations/LISE files/" + heavy + "_gas_95-5" + ".txt");
     // srim->SetStragglingLISE("lightInSil", "../Calibrations/LISE files/" + light + "_silicon" + ".txt");
@@ -423,12 +367,86 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     // Kinematics
     auto* kinTheo {new ActPhysics::Kinematics {beam, target, light, heavy, Tbeam, Ex}};
     auto* kin {new ActPhysics::Kinematics {beam, target, light, heavy, Tbeam, Ex}};
-    auto* kinGen {new ActSim::KinematicGenerator {beam, target, light, heavy, protonPS, neutronPS}};
+
+    // ---- Cnstruction of the kinematic generator and, if applicable, the DecayGenerators for the cascade. This is done
+    //      ONCE here outside, not in each iteration of the loop. ----
+    ActSim::KinematicGenerator* kinGen {nullptr};
+    ActSim::DecayGenerator* decayStep2 {nullptr}; // 8Li*->n+7Li* / 8Li*->n+alfa+t / 7Li*->alfa+t
+    ActSim::DecayGenerator* decayStep3 {nullptr}; // 7Li*->alfa+t (solo si useResonance8Li && useResonance7Li)
+    TGenPhaseSpace* directGen4Body {nullptr};     // solo si !useResonance8Li && !useResonance7Li
+    TLorentzVector initialLV4Body;
+
+    if(!doAlphaTritonBreakup)
+    {
+        // Original behaviour
+        kinGen = new ActSim::KinematicGenerator {beam, target, light, heavy, protonPS, neutronPS};
+    }
+    else if(useResonance8Li && useResonance7Li)
+    {
+        // p + 8Li*(Ex) -> p + n + 7Li*(ExSecondary) -> p + n + alfa + t
+        kinGen = new ActSim::KinematicGenerator {beam, target, light, "8Li", 0, 0};
+        auto li8P {ActPhysics::Particle("8Li")};
+        li8P.SetEx(Ex);
+        auto nP {ActPhysics::Particle("1n")};
+        auto li7P {ActPhysics::Particle("7Li")};
+        li7P.SetEx(ExSecondary);
+        auto d1P {ActPhysics::Particle("4He")};
+        auto d2P {ActPhysics::Particle("3H")};
+        decayStep2 = new ActSim::DecayGenerator {li8P, nP, li7P};
+        decayStep3 = new ActSim::DecayGenerator {li7P, d1P, d2P};
+
+        decayStr = Form("8LiEx%.2f_7LiEx%.2f", Ex, ExSecondary);
+    }
+    else if(useResonance8Li && !useResonance7Li)
+    {
+        // p + 8Li*(Ex) -> p + n + alfa + t (breakup democratico del 8Li*)
+        kinGen = new ActSim::KinematicGenerator {beam, target, light, "8Li", 0, 0};
+        auto li8P {ActPhysics::Particle("8Li")};
+        li8P.SetEx(Ex);
+        auto nP {ActPhysics::Particle("1n")};
+        auto d1P {ActPhysics::Particle("4He")};
+        auto d2P {ActPhysics::Particle("3H")};
+        decayStep2 = new ActSim::DecayGenerator {li8P, nP, d1P, d2P};
+
+        decayStr = Form("8LiEx%.2f", Ex);
+    }
+    else if(!useResonance8Li && useResonance7Li)
+    {
+        // p + n + 7Li*(Ex) -> p + n + alfa + t (n sale ya en el vertice de entrada)
+        // OJO: ComputeHeavyMass() resta neutronPS del A del nombre pasado, asi
+        // que hay que pasar "8Li" para que, tras restar 1 neutron, el nodo
+        // generado sea realmente 7Li. Pasar "7Li" aqui generaria un 6Li.
+        kinGen = new ActSim::KinematicGenerator {beam, target, light, "8Li", 0, 1};
+        auto li7P {ActPhysics::Particle("7Li")};
+        li7P.SetEx(Ex);
+        auto d1P {ActPhysics::Particle("4He")};
+        auto d2P {ActPhysics::Particle("3H")};
+        decayStep2 = new ActSim::DecayGenerator {li7P, d1P, d2P};
+
+        decayStr = Form("7LiEx%.2f", Ex);
+    }
+    else // !useResonance8Li && !useResonance7Li
+    {
+        // p + n + alfa + t, breakup democratico a 4 cuerpos, sin resonancias
+        // reales. No usa KinematicGenerator: TGenPhaseSpace local directo.
+        auto* kinAux {new ActPhysics::Kinematics {beam, target, light, "8Li", Tbeam, 0.}};
+        auto initLab {kinAux->GetPInitialLab()};
+        initialLV4Body = TLorentzVector {initLab.Z(), initLab.Y(), initLab.X(), initLab.E()};
+        initialLV4Body *= ActPhysics::Constants::kMeVToGeV;
+        double masses4[4] = {ActPhysics::Particle("1H").GetMass() * ActPhysics::Constants::kMeVToGeV,
+                             ActPhysics::Particle("1n").GetMass() * ActPhysics::Constants::kMeVToGeV,
+                             ActPhysics::Particle("4He").GetMass() * ActPhysics::Constants::kMeVToGeV,
+                             ActPhysics::Particle("3H").GetMass() * ActPhysics::Constants::kMeVToGeV};
+        directGen4Body = new TGenPhaseSpace {};
+        directGen4Body->SetDecay(initialLV4Body, 4, masses4);
+
+        decayStr = "democratic4Body";
+    }
 
     // cross section sampler
     auto* xs {new ActSim::CrossSection()};
     bool isThereXS {};
-    if(neutronPS == 0 && protonPS == 0)
+    if(neutronPS == 0 && protonPS == 0 && !doAlphaTritonBreakup)
     {
         isThereXS = GetXS(target, light, beam, Ex, xs);
     }
@@ -495,15 +513,22 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     // Debug
     auto hKinDebug {HistConfig::Kin.GetHistogram()};
     hKinDebug->SetTitle("Debug Kinematic Punshthrough;#theta_{Lab} [#circ];E_{Vertex} [MeV]");
+    auto* hAlfaEnergyInitial = new TH2D(
+        "hAlfaEnergyInitial", "Alfa initial energy;#theta_{Lab} [#circ];E_{Vertex} [MeV]", 180, 0, 180, 150, 0, 50);
+    auto* hAlfaEnergyPost =
+        new TH2D("hAlfaEnergyPostSil", "Alfa energy after silicon;#theta_{Lab} [#circ];E_{Vertex} [MeV]", 180, 0, 180,
+                 150, 0, 50);
 
     // Allow multiple theads
-    std::string tag {""};
-    if(thread > 0)
-        tag = "_" + std::to_string(thread);
+    // std::string tag {""};
+    // if(thread > 0)
+    //     tag = "_" + std::to_string(thread);
 
     // File to save data
-    TString fileName {TString::Format("./Outputs/%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s.root", beam.c_str(),
-                                      target.c_str(), light.c_str(), Ex, neutronPS, protonPS, tag.c_str())};
+    TString fileName {TString::Format("./Outputs/%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_decay_%s.root", beam.c_str(),
+                                      target.c_str(), light.c_str(), Ex, neutronPS, protonPS, decayStr.c_str())};
+    // TString fileName {TString::Format("./Outputs/%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s.root", beam.c_str(),
+    //                                   target.c_str(), light.c_str(), Ex, neutronPS, protonPS, tag.c_str())};
     auto outFile {new TFile(fileName, inspect ? "read" : "recreate")};
     auto* outTree {new TTree("SimulationTTree", "A TTree containing only our Eex obtained by simulation")};
     if(inspect)
@@ -532,6 +557,32 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     outTree->Branch("weight_gateHeavy", &weight_tree_gateHeavy);
     double weight_tree_gateHeavy_side {};
     outTree->Branch("weight_gateHeavy_side", &weight_tree_gateHeavy_side);
+    // New branches: individual info of detection of alfa and triton (only relevant if doAlphaTritonBreakup=true; remain
+    // 0 in other reactions) layerCode: 0 = not detected, 1 = telescope f0/f1, 2 = telescope f2/f3
+    int alfaLayerCode_tree {};
+    outTree->Branch("alfaLayerCode", &alfaLayerCode_tree);
+    double alfaEnergy_tree {};
+    outTree->Branch("alfaEnergy", &alfaEnergy_tree);
+    double alfaAngle_tree {};
+    outTree->Branch("alfaAngle", &alfaAngle_tree);
+    int tritonLayerCode_tree {};
+    outTree->Branch("tritonLayerCode", &tritonLayerCode_tree);
+    double tritonEnergy_tree {};
+    outTree->Branch("tritonEnergy", &tritonEnergy_tree);
+    double tritonAngle_tree {};
+    outTree->Branch("tritonAngle", &tritonAngle_tree);
+    // Combined gate: alfa and triton detected (each one in any of its 2 telescopes)
+    bool gateAlfaTriton_tree {};
+    outTree->Branch("gateAlfaTriton", &gateAlfaTriton_tree);
+    // Events stoped inside ACTAR (L1)
+    long long nProtonStoppedInGas {0};
+    double protonEnergyAtVertexL1_tree {};
+    outTree->Branch("protonEnergyAtVertex", &protonEnergyAtVertexL1_tree);
+    double protonAngleL1_tree {};
+    outTree->Branch("protonAngle", &protonAngleL1_tree);
+
+    // Counter of events in which the proton did not have enough energy to exit the ACTAR gas volume
+
 
     // ---- SIMU STARTS HERE ----
     ROOT::EnableImplicitMT();
@@ -621,6 +672,10 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         double phi3CM {};
         double theta3CMBefore {-1};
         double weight {1.};
+        // Productos del breakup alfa+triton (y neutron, invisible en Si).
+        // Se rellenan mas abajo solo si doAlphaTritonBreakup=true.
+        TLorentzVector alfaLV {}, tritonLV {}, neutronLV {};
+        bool haveAlphaTriton {false};
         // Sample kinematics, diferent method depending on existance of xs and particles in ps
         if(isThereXS)
         {
@@ -654,12 +709,48 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
             phi4Lab = kin->GetPhi4Lab();
             T4Lab = kin->GetT4Lab();
         }
+        else if(directGen4Body)
+        {
+            // Breakup democratico a 4 cuerpos (p+n+alfa+t), sin resonancias
+            // reales: T3Lab/theta3Lab/phi3Lab TAMBIEN salen de aqui, no hay
+            // kinGen en absoluto en este modo.
+            weight = directGen4Body->Generate();
+            TLorentzVector pLV {*directGen4Body->GetDecay(0)};
+            neutronLV = *directGen4Body->GetDecay(1);
+            alfaLV = *directGen4Body->GetDecay(2);
+            tritonLV = *directGen4Body->GetDecay(3);
+            // TGenPhaseSpace trabaja en GeV con las masas que le dimos; reescalar a MeV
+            pLV *= 1. / ActPhysics::Constants::kMeVToGeV;
+            neutronLV *= 1. / ActPhysics::Constants::kMeVToGeV;
+            alfaLV *= 1. / ActPhysics::Constants::kMeVToGeV;
+            tritonLV *= 1. / ActPhysics::Constants::kMeVToGeV;
+            haveAlphaTriton = true;
+
+            theta3Lab = pLV.Theta();
+            phi3Lab = pLV.Phi();
+            T3Lab = pLV.E() - pLV.M();
+            theta3LabSampled = theta3Lab;
+            ApplyThetaRes(theta3Lab);
+
+            // OJO: 'kin' aqui es el binario original (heavy/Ex pasados a la
+            // funcion), que no describe exactamente este breakup a 4 cuerpos
+            // (no hay 2-cuerpos real). Se usa igualmente como referencia
+            // aproximada para theta3CM, igual que el resto del pipeline.
+            theta3CMBefore = kin->ReconstructTheta3CMFromLab(T3Lab, theta3LabSampled) * TMath::RadToDeg();
+            theta3CM = kin->ReconstructTheta3CMFromLab(T3Lab, theta3Lab);
+            phi3CM = phi3Lab;
+
+            // Ya no existe un unico "heavy": se deja a 0, no se usa mas abajo
+            theta4Lab = 0.;
+            phi4Lab = 0.;
+            T4Lab = 0.;
+        }
         else
         {
             // Sample kinematics generator
             kinGen->SetBeamAndExEnergies(TbeamCorr, randEx);
             weight = kinGen->Generate();
-            if(neutronPS == 0 && protonPS == 0)
+            if(neutronPS == 0 && protonPS == 0 && !doAlphaTritonBreakup)
             {
                 weight = 1;
             }
@@ -681,16 +772,52 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
             theta3CM = kin->ReconstructTheta3CMFromLab(T3Lab, theta3Lab);
             phi3CM = phi3Lab;
 
-            // Heavy
+            // Heavy (nodo intermedio: 8Li*, 7Li*, o "heavy" original si no hay breakup)
             theta4Lab = LorenztVector4->Theta();
             phi4Lab = LorenztVector4->Phi();
             T4Lab = LorenztVector4->E() - LorenztVector4->M();
-        }
-        bool setDecay {true};
-        if(setDecay)
-        {
-            // Decay heavy to desire products
 
+            // ---- Cascada de decaimiento del nodo "heavy" a productos detectables ----
+            if(doAlphaTritonBreakup)
+            {
+                if(useResonance8Li && useResonance7Li)
+                {
+                    // 8Li* -> n + 7Li*
+                    decayStep2->SetDecay(T4Lab, theta4Lab, phi4Lab);
+                    double w2 {decayStep2->Generate()};
+                    neutronLV = *decayStep2->GetLorentzVector(0);
+                    auto* li7starLV {decayStep2->GetLorentzVector(1)};
+                    // 7Li* -> alfa + t
+                    double T7 {li7starLV->E() - li7starLV->M()};
+                    decayStep3->SetDecay(T7, li7starLV->Theta(), li7starLV->Phi());
+                    double w3 {decayStep3->Generate()};
+                    alfaLV = *decayStep3->GetLorentzVector(0);
+                    tritonLV = *decayStep3->GetLorentzVector(1);
+                    weight *= w2 * w3;
+                }
+                else if(useResonance8Li && !useResonance7Li)
+                {
+                    // 8Li* -> n + alfa + t (breakup democratico de 3 cuerpos)
+                    decayStep2->SetDecay(T4Lab, theta4Lab, phi4Lab);
+                    double w2 {decayStep2->Generate()};
+                    neutronLV = *decayStep2->GetLorentzVector(0);
+                    alfaLV = *decayStep2->GetLorentzVector(1);
+                    tritonLV = *decayStep2->GetLorentzVector(2);
+                    weight *= w2;
+                }
+                else // !useResonance8Li && useResonance7Li
+                {
+                    // el neutron ya salio directo de kinGen (3 cuerpos: p,n,7Li*)
+                    neutronLV = *kinGen->GetLorentzVector(2);
+                    // 7Li* -> alfa + t
+                    decayStep2->SetDecay(T4Lab, theta4Lab, phi4Lab);
+                    double w2 {decayStep2->Generate()};
+                    alfaLV = *decayStep2->GetLorentzVector(0);
+                    tritonLV = *decayStep2->GetLorentzVector(1);
+                    weight *= w2;
+                }
+                haveAlphaTriton = true;
+            }
         }
         // Fill kinematics and angles
         hKin->Fill(theta3LabSampled * TMath::RadToDeg(), T3Lab);
@@ -713,10 +840,16 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         // Threshold L1, particles that stop in actar. Check before doing the continues
         double rangeInGas {srim->EvalRange("light", T3Lab)};
         ROOT::Math::XYZPoint finalPointGas {vertex + rangeInGas * dirWorldFrame.Unit()};
-        if(0 <= finalPointGas.X() && finalPointGas.X() <= 256 && 0 <= finalPointGas.Y() && finalPointGas.Y() <= 256 &&
-           0 <= finalPointGas.Z() && finalPointGas.Z() <= 256)
+        if(0 <= finalPointGas.X() && finalPointGas.X() <= 256 && 0 <= finalPointGas.Y() && finalPointGas.Y() <= 256)
         {
-        } // do nothing, the z coordinate is refered to experimental values so do not use it to addres L1 events
+            // The end point of the proton range is still inside the ACTAR gas volume: it did not have enough energy to
+            // exit and reach any silicon. It is only counted here (no 'continue' is done: the rest of the loop already
+            // does its own "continue" if it does not reach any silicon, so this counter is purely informative).
+            nProtonStoppedInGas++;
+            // For the moment this events do not enter the Fill od the outPut file
+            protonEnergyAtVertexL1_tree = T3Lab;
+            protonAngleL1_tree = theta3Lab;
+        } // the z axis is referred to experimental values, it is not used for L1
         // How to check whether tracks would read the silicons with new class:
         int silIndex0 = -1;
         ROOT::Math::XYZPoint silPoint0;
@@ -793,11 +926,46 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
                 }
             }
         }
-        // Check if heavy particle hit f3
-        int silIndexHeavy {};
-        ROOT::Math::XYZPoint silPointHeavy {};
-        std::tie(silIndexHeavy, silPointHeavy) = sils->FindSPInLayer("f3", vertex, heavyWorldFrame);
-        if(silIndexHeavy != -1)
+        // Convined gate for alpha and triton detection, each in any of their 2 front telescopes (f0/f1 or f2/f3).
+        // Replaces the old check of a single 'heavy' hitting f3 (there is no longer a single detectable heavy particle:
+        // it breaks up into alpha+t before reaching any detector).
+        bool silIndexHeavy_equivalent {false}; // true si pasa el gate combinado
+        alfaLayerCode_tree = 0;
+        alfaEnergy_tree = -1000;
+        alfaAngle_tree = -1000;
+        tritonLayerCode_tree = 0;
+        tritonEnergy_tree = -1000;
+        tritonAngle_tree = -1000;
+        gateAlfaTriton_tree = false;
+        if(doAlphaTritonBreakup && haveAlphaTriton)
+        {
+            ROOT::Math::XYZVector alfaBeamFrame {TMath::Cos(alfaLV.Theta()),
+                                                 TMath::Sin(alfaLV.Theta()) * TMath::Sin(alfaLV.Phi()),
+                                                 TMath::Sin(alfaLV.Theta()) * TMath::Cos(alfaLV.Phi())};
+            ROOT::Math::XYZVector tritonBeamFrame {TMath::Cos(tritonLV.Theta()),
+                                                   TMath::Sin(tritonLV.Theta()) * TMath::Sin(tritonLV.Phi()),
+                                                   TMath::Sin(tritonLV.Theta()) * TMath::Cos(tritonLV.Phi())};
+            auto alfaWorldFrame {runner.RotateToWorldFrame(alfaBeamFrame, beamDir)};
+            auto tritonWorldFrame {runner.RotateToWorldFrame(tritonBeamFrame, beamDir)};
+
+            double TalfaLab {alfaLV.E() - alfaLV.M()};
+            double TtritonLab {tritonLV.E() - tritonLV.M()};
+
+            auto alfaHit {TrackFrontWall("alfa", TalfaLab, alfaWorldFrame, vertex, sils, srim, silRes.get(),
+                                         sigmaSilFront, silEfficiencies)};
+            auto tritonHit {TrackFrontWall("triton", TtritonLab, tritonWorldFrame, vertex, sils, srim, silRes.get(),
+                                           sigmaSilFront, silEfficiencies)};
+
+            alfaLayerCode_tree = alfaHit.telescopeCode;
+            alfaEnergy_tree = alfaHit.detected ? alfaHit.energy : -1000;
+            alfaAngle_tree = alfaHit.detected ? alfaHit.angle : -1000;
+            tritonLayerCode_tree = tritonHit.telescopeCode;
+            tritonEnergy_tree = tritonHit.detected ? tritonHit.energy : -1000;
+            tritonAngle_tree = tritonHit.detected ? tritonHit.angle : -1000;
+            gateAlfaTriton_tree = alfaHit.detected && tritonHit.detected;
+            silIndexHeavy_equivalent = gateAlfaTriton_tree;
+        }
+        if(silIndexHeavy_equivalent)
         {
             hTheta3CMGateHeavy->Fill(theta3CMBefore);
             hTheta3LabGateHeavy->Fill(theta3Lab * TMath::RadToDeg());
@@ -809,7 +977,7 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         }
         else
         {
-            EexGateHeavy_tree = -1000; // if heavy does not hit f3, fill with -1000 to be able to do gate in analysis
+            EexGateHeavy_tree = -1000; // if gate not passed, fill with -1000 to be able to do gate in analysis
             EexGateHeavy_tree_side = -1000;
             weight_tree_gateHeavy = -1000;
             weight_tree_gateHeavy_side = -1000;
@@ -876,7 +1044,7 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
             {
                 Eex_tree_side = ExRec;
                 weight_tree_side = weight;
-                if(silIndexHeavy != -1)
+                if(silIndexHeavy_equivalent)
                 {
                     EexGateHeavy_tree_side = ExRec;
                     weight_tree_gateHeavy_side = weight;
@@ -889,13 +1057,15 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
                 EexGateHeavy_tree_side = -1000;
                 weight_tree_gateHeavy_side = -1000;
             }
-            if(silIndexHeavy != -1)
+            if(silIndexHeavy_equivalent)
             {
                 EexGateHeavy_tree = ExRec;
                 weight_tree_gateHeavy = weight;
             }
             outTree->Fill();
         }
+        hAlfaEnergyInitial->Fill(alfaAngle_tree, alfaLV.E() - alfaLV.M());
+        hAlfaEnergyPost->Fill(alfaAngle_tree, alfaEnergy_tree);
     }
 
 
@@ -927,6 +1097,11 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     effLabsideGateHeavy->SetNameTitle("effLabsideGateHeavy",
                                       "#epsilon_{side} (#theta_{Lab});#epsilon;#theta_{Lab} [#circ]");
 
+    // Reportar (siempre) el numero de protones que se quedaron sin energia
+    // suficiente para salir del volumen de gas de ACTAR
+    std::cout << BOLDYELLOW << "Protones parados en gas (no alcanzan ningun silicio): " << nProtonStoppedInGas << " / "
+              << niter << RESET << '\n';
+
     // SAVING
     if(!inspect)
     {
@@ -941,6 +1116,9 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         effCMgateHeavy->Write();
         effLabgateHeavy->Write();
         hRP->Write("hRP");
+        TParameter<Long64_t> nProtonStoppedInGasParam("nProtonStoppedInGas",
+                                                      static_cast<Long64_t>(nProtonStoppedInGas));
+        nProtonStoppedInGasParam.Write();
         outFile->Close();
         delete outFile;
         outFile = nullptr;
@@ -1007,6 +1185,13 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         hThetaLabAll->DrawClone();
         cEff->cd(7);
         hTheta3Lab->DrawClone();
+
+        auto* cDebugAlfa {new TCanvas {"cDebugAlfa", "Debug Alfa"}};
+        cDebugAlfa->DivideSquare(2);
+        cDebugAlfa->cd(1);
+        hAlfaEnergyInitial->DrawClone("colz");
+        cDebugAlfa->cd(2);
+        hAlfaEnergyPost->DrawClone("colz");
     }
 
     // deleting news

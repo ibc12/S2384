@@ -1,5 +1,5 @@
-#ifndef triumf_all_cxx
-#define triumf_all_cxx
+#ifndef do_simu_cxx
+#define do_simu_cxx
 #include "ActColors.h"
 #include "ActCrossSection.h"
 #include "ActCutsManager.h"

@@ -1,40 +1,16 @@
-#include "ActColors.h"
-#include "ActCrossSection.h"
-#include "ActCutsManager.h"
+
 #include "ActDecayGenerator.h"
 #include "ActKinematicGenerator.h"
 #include "ActKinematics.h"
-#include "ActLine.h"
 #include "ActParticle.h"
-#include "ActRunner.h"
-#include "ActSRIM.h"
-#include "ActSilData.h"
-#include "ActSilSpecs.h"
-#include "ActTPCParameters.h"
-#include "ActUtils.h"
 
 #include "TCanvas.h"
-#include "TEfficiency.h"
-#include "TF1.h"
-#include "TFile.h"
-#include "TGenPhaseSpace.h"
-#include "TGraphErrors.h"
 #include "TH1.h"
-#include "TH2.h"
-#include "TH3.h"
 #include "TMath.h"
-#include "TPolyLine3D.h"
 #include "TROOT.h"
-#include "TRandom.h"
-#include "TString.h"
-#include "TSystem.h"
-#include "TTree.h"
 
 #include <cmath>
-#include <fstream>
-#include <iostream>
 #include <string>
-#include <unordered_map>
 
 void testDecayAlfaTriton()
 {

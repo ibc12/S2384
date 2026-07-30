@@ -8,14 +8,13 @@
 #include "TCanvas.h"
 #include "TGenPhaseSpace.h"
 #include "TH1.h"
+#include "TH2.h"
 #include "TLorentzVector.h"
 #include "TMath.h"
-#include "TString.h"
 
 #include <iostream>
 #include <map>
 #include <string>
-#include <vector>
 
 // ======================================================================
 // Los 4 escenarios fisicos posibles se derivan de 2 preguntas binarias
@@ -46,17 +45,21 @@ struct ParticleHistos
 {
     TH1D* theta;
     TH1D* energy;
+    TH2D* kin;
     ParticleHistos(const std::string& name, double emax)
     {
-        theta = new TH1D(("hTheta_" + name).c_str(), (name + " Lab Angle;#theta_{Lab} [#circ];Counts").c_str(), 100,
-                          0, 180);
-        energy = new TH1D(("hEnergy_" + name).c_str(), (name + " Lab Energy;E_{Lab} [MeV];Counts").c_str(), 100, 0,
-                           emax);
+        theta = new TH1D(("hTheta_" + name).c_str(), (name + " Lab Angle;#theta_{Lab} [#circ];Counts").c_str(), 100, 0,
+                         180);
+        energy =
+            new TH1D(("hEnergy_" + name).c_str(), (name + " Lab Energy;E_{Lab} [MeV];Counts").c_str(), 100, 0, emax);
+        kin = new TH2D(("hKin_" + name).c_str(), (name + " Lab Kinematics;#theta_{Lab} [#circ];E_{Lab} [MeV]").c_str(),
+                       100, 0, 180, 100, 0, emax);
     }
     void Fill(const TLorentzVector& lv, double weight)
     {
         theta->Fill(lv.Theta() * TMath::RadToDeg(), weight);
         energy->Fill(lv.E() - lv.M(), weight);
+        kin->Fill(lv.Theta() * TMath::RadToDeg(), lv.E() - lv.M(), weight);
     }
 };
 
@@ -77,9 +80,9 @@ void testDecayAlfaTriton_generalized()
     // ---- CONFIGURACION: edita aqui, no hace falta pasar argumentos ----
     // ==================================================================
     bool kUseResonance8Li {false}; // true: 8Li real (p+8Li*, 2 cuerpos) primero
-                                  // false: el neutron sale ya en el vertice de entrada (nPS=1)
-    bool kUseResonance7Li {false}; // true: 7Li* real intermedio antes de romper a alfa+t
-                                  // false: alfa+t se generan junto con n en el mismo breakup
+                                   // false: el neutron sale ya en el vertice de entrada (nPS=1)
+    bool kUseResonance7Li {true}; // true: 7Li* real intermedio antes de romper a alfa+t
+                                   // false: alfa+t se generan junto con n en el mismo breakup
 
     double Ex8Li {7.1};  // Energia de excitacion del 8Li (solo se usa si kUseResonance8Li=true)
     double Ex7Li {4.63}; // Energia de excitacion del 7Li (solo se usa si kUseResonance7Li=true)
@@ -102,8 +105,7 @@ void testDecayAlfaTriton_generalized()
     // Chequeo universal de conservacion de energia total: debe dar 0 en LOS 4 MODOS.
     // A diferencia de "EnergyDifference" (que solo mide el Q-valor de un paso concreto),
     // este balance valida la cadena COMPLETA de generacion.
-    auto* hBalance =
-        new TH1D("hBalance", "Balance E_{inicial} - #sum E_{final};#Delta E [MeV];Counts", 200, -1, 1);
+    auto* hBalance = new TH1D("hBalance", "Balance E_{inicial} - #sum E_{final};#Delta E [MeV];Counts", 200, -1, 1);
 
     double Einitial {TBeam + ActPhysics::Particle(beam).GetMass() + ActPhysics::Particle(target).GetMass()};
 
@@ -125,7 +127,7 @@ void testDecayAlfaTriton_generalized()
         li7P.SetEx(Ex7Li);
         auto d1P {ActPhysics::Particle("4He")};
         auto d2P {ActPhysics::Particle("3H")};
-        decayStep2 = new ActSim::DecayGenerator {li8P, nP, li7P};  // 8Li* -> n + 7Li*
+        decayStep2 = new ActSim::DecayGenerator {li8P, nP, li7P}; // 8Li* -> n + 7Li*
         decayStep3 = new ActSim::DecayGenerator {li7P, d1P, d2P}; // 7Li* -> alfa + t
     }
     else if(kUseResonance8Li && !kUseResonance7Li)
@@ -267,6 +269,15 @@ void testDecayAlfaTriton_generalized()
     {
         cEnergy->cd(pad++);
         h[name]->energy->DrawClone("hist");
+    }
+
+    auto* cKin = new TCanvas("cKin", "Cinematica Lab", 1200, 800);
+    cKin->Divide(2, 2);
+    pad = 1;
+    for(const auto& name : {"p", "n", "alfa", "t"})
+    {
+        cKin->cd(pad++);
+        h[name]->kin->DrawClone("colz");
     }
 
     auto* cBalance = new TCanvas("cBalance", "Balance de energia", 800, 600);
