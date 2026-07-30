@@ -91,6 +91,7 @@ FrontHitResult TrackFrontWall(const std::string& srimKey, double Tinit, const RO
         ApplyNaN(Tat);
         if(std::isnan(Tat))
             continue; // se paro en el gas antes de llegar
+        double eLossGas {Tinit - Tat};
 
         auto normal {sils->GetLayer(thin).GetNormal()};
         auto angleWithNormal {TMath::ACos(dirWorldFrame.Unit().Dot(normal.Unit()))};
@@ -114,7 +115,7 @@ FrontHitResult TrackFrontWall(const std::string& srimKey, double Tinit, const RO
         {
             // se paro en la lamina fina: energia total = eLoss
             res.punchthrough = false;
-            res.energy = eLoss;
+            res.energy = eLoss + eLossGas;
         }
         else
         {
@@ -127,7 +128,7 @@ FrontHitResult TrackFrontWall(const std::string& srimKey, double Tinit, const RO
             if(silIndexThick == -1)
             {
                 // atraveso la fina pero no golpea la gruesa: solo se conoce eLoss(fina)
-                res.energy = eLoss;
+                res.energy = eLoss + eLossGas;
             }
             else
             {
@@ -138,7 +139,7 @@ FrontHitResult TrackFrontWall(const std::string& srimKey, double Tinit, const RO
                 auto eLossBackPre {TafterInterGas - TafterThick};
                 auto eLossBack {gRandom->Gaus(eLossBackPre, silRes->Eval(eLossBackPre))};
                 ApplyNaN(eLossBack, sils->GetLayer(thick).GetThresholds().at(silIndexThick));
-                res.energy = eLoss + (std::isnan(eLossBack) ? 0. : eLossBack);
+                res.energy = eLoss + eLossGas + (std::isnan(eLossBack) ? 0. : eLossBack);
             }
         }
         return res; // primer telescopio con hit valido
@@ -148,8 +149,8 @@ FrontHitResult TrackFrontWall(const std::string& srimKey, double Tinit, const RO
 
 void do_simu_decay(const std::string& beam, const std::string& target, const std::string& light,
                    const std::string& heavy, int neutronPS, int protonPS, double Tbeam, double Ex, bool inspect,
-                   bool doAlphaTritonBreakup = false, bool useResonance8Li = true, bool useResonance7Li = true,
-                   double ExSecondary = 4.63)
+                   bool doAlphaTritonBreakup = false, bool emitNeutron = true, bool useResonance8Li = true,
+                   bool useResonance7Li = true, double ExSecondary = 4.63)
 {
     // ==================================================================
     // doAlphaTritonBreakup: interruptor maestro. Si es false, el resto de
@@ -159,14 +160,24 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
     //   para la generacion (se sustituyen por la logica de mas abajo), pero
     //   Ex/heavy se siguen usando tal cual para kinTheo/kin/el umbral, como
     //   ya hacia el codigo original.
+    //   emitNeutron     : true  -> canal (d,p): p + 8Li*/7Li* -> ... -> p + n
+    //                              (+7Li*) + alfa + t. Usa useResonance8Li
+    //                              tal y como antes.
+    //                     false -> canal (d,d'): d + 7Li -> d' + 7Li*(Ex) ->
+    //                              d' + alfa + t, SIN neutron. En este caso
+    //                              useResonance8Li se ignora (no existe nodo
+    //                              8Li* posible sin neutron) y solo importa
+    //                              useResonance7Li.
     //   useResonance8Li : true  -> se genera primero p + 8Li*(Ex)
     //                     false -> el neutron sale ya en el vertice de
     //                              entrada (nPS=1), heredando Ex como la
     //                              excitacion directa del 7Li*
+    //                     (solo aplica si emitNeutron = true)
     //   useResonance7Li : true  -> hay un 7Li* real intermedio antes de
     //                              romper a alfa+t (con excitacion
     //                              ExSecondary si useResonance8Li=true, o
-    //                              Ex si useResonance8Li=false)
+    //                              Ex si useResonance8Li=false o
+    //                              emitNeutron=false)
     //                     false -> alfa+t (+n si useResonance8Li=true) se
     //                              generan democraticamente en el mismo paso
     // ==================================================================
@@ -373,13 +384,42 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
     ActSim::KinematicGenerator* kinGen {nullptr};
     ActSim::DecayGenerator* decayStep2 {nullptr}; // 8Li*->n+7Li* / 8Li*->n+alfa+t / 7Li*->alfa+t
     ActSim::DecayGenerator* decayStep3 {nullptr}; // 7Li*->alfa+t (solo si useResonance8Li && useResonance7Li)
-    TGenPhaseSpace* directGen4Body {nullptr};     // solo si !useResonance8Li && !useResonance7Li
-    TLorentzVector initialLV4Body;
+    TGenPhaseSpace* directGenNBody {nullptr};     // solo en los canales democraticos (4 cuerpos con n, 3 sin n)
+    int directGenNBodyMult {0};                   // 4 (p,n,alfa,t) o 3 (d',alfa,t)
+    TLorentzVector initialLVNBody;
 
     if(!doAlphaTritonBreakup)
     {
         // Original behaviour
         kinGen = new ActSim::KinematicGenerator {beam, target, light, heavy, protonPS, neutronPS};
+    }
+    else if(!emitNeutron && useResonance7Li)
+    {
+        // Canal (d,d'): d + 7Li -> d' + 7Li*(Ex) -> d' + alfa + t (sin neutron)
+        kinGen = new ActSim::KinematicGenerator {beam, target, light, "7Li", 0, 0};
+        auto li7P {ActPhysics::Particle("7Li")};
+        li7P.SetEx(Ex);
+        auto d1P {ActPhysics::Particle("4He")};
+        auto d2P {ActPhysics::Particle("3H")};
+        decayStep2 = new ActSim::DecayGenerator {li7P, d1P, d2P};
+
+        decayStr = Form("dd_7LiEx%.2f", Ex);
+    }
+    else if(!emitNeutron && !useResonance7Li)
+    {
+        // Canal (d,d'): d + 7Li -> d' + alfa + t, breakup democratico de 3 cuerpos (sin resonancia real, sin neutron)
+        auto* kinAux {new ActPhysics::Kinematics {beam, target, light, "7Li", Tbeam, 0.}};
+        auto initLab {kinAux->GetPInitialLab()};
+        initialLVNBody = TLorentzVector {initLab.Z(), initLab.Y(), initLab.X(), initLab.E()};
+        initialLVNBody *= ActPhysics::Constants::kMeVToGeV;
+        double masses3[3] = {ActPhysics::Particle(light).GetMass() * ActPhysics::Constants::kMeVToGeV,
+                             ActPhysics::Particle("4He").GetMass() * ActPhysics::Constants::kMeVToGeV,
+                             ActPhysics::Particle("3H").GetMass() * ActPhysics::Constants::kMeVToGeV};
+        directGenNBody = new TGenPhaseSpace {};
+        directGenNBody->SetDecay(initialLVNBody, 3, masses3);
+        directGenNBodyMult = 3;
+
+        decayStr = "democratic3Body_dd";
     }
     else if(useResonance8Li && useResonance7Li)
     {
@@ -425,20 +465,21 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
 
         decayStr = Form("7LiEx%.2f", Ex);
     }
-    else // !useResonance8Li && !useResonance7Li
+    else // !useResonance8Li && !useResonance7Li (con neutron, emitNeutron = true)
     {
         // p + n + alfa + t, breakup democratico a 4 cuerpos, sin resonancias
         // reales. No usa KinematicGenerator: TGenPhaseSpace local directo.
         auto* kinAux {new ActPhysics::Kinematics {beam, target, light, "8Li", Tbeam, 0.}};
         auto initLab {kinAux->GetPInitialLab()};
-        initialLV4Body = TLorentzVector {initLab.Z(), initLab.Y(), initLab.X(), initLab.E()};
-        initialLV4Body *= ActPhysics::Constants::kMeVToGeV;
+        initialLVNBody = TLorentzVector {initLab.Z(), initLab.Y(), initLab.X(), initLab.E()};
+        initialLVNBody *= ActPhysics::Constants::kMeVToGeV;
         double masses4[4] = {ActPhysics::Particle("1H").GetMass() * ActPhysics::Constants::kMeVToGeV,
                              ActPhysics::Particle("1n").GetMass() * ActPhysics::Constants::kMeVToGeV,
                              ActPhysics::Particle("4He").GetMass() * ActPhysics::Constants::kMeVToGeV,
                              ActPhysics::Particle("3H").GetMass() * ActPhysics::Constants::kMeVToGeV};
-        directGen4Body = new TGenPhaseSpace {};
-        directGen4Body->SetDecay(initialLV4Body, 4, masses4);
+        directGenNBody = new TGenPhaseSpace {};
+        directGenNBody->SetDecay(initialLVNBody, 4, masses4);
+        directGenNBodyMult = 4;
 
         decayStr = "democratic4Body";
     }
@@ -515,6 +556,8 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
     hKinDebug->SetTitle("Debug Kinematic Punshthrough;#theta_{Lab} [#circ];E_{Vertex} [MeV]");
     auto* hAlfaEnergyInitial = new TH2D(
         "hAlfaEnergyInitial", "Alfa initial energy;#theta_{Lab} [#circ];E_{Vertex} [MeV]", 180, 0, 180, 150, 0, 50);
+    auto* hAlfaEnergyInitialAll = new TH2D(
+        "hAlfaEnergyInitialAll", "Alfa initial energy;#theta_{Lab} [#circ];E_{Vertex} [MeV]", 180, 0, 180, 150, 0, 50);
     auto* hAlfaEnergyPost =
         new TH2D("hAlfaEnergyPostSil", "Alfa energy after silicon;#theta_{Lab} [#circ];E_{Vertex} [MeV]", 180, 0, 180,
                  150, 0, 50);
@@ -525,8 +568,9 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
     //     tag = "_" + std::to_string(thread);
 
     // File to save data
-    TString fileName {TString::Format("./Outputs/%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_decay_%s.root", beam.c_str(),
-                                      target.c_str(), light.c_str(), Ex, neutronPS, protonPS, decayStr.c_str())};
+    TString fileName {TString::Format("./Outputs/%s/Decay/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_decay_%s.root",
+                                      beam.c_str(), target.c_str(), light.c_str(), Ex, neutronPS, protonPS,
+                                      decayStr.c_str())};
     // TString fileName {TString::Format("./Outputs/%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s.root", beam.c_str(),
     //                                   target.c_str(), light.c_str(), Ex, neutronPS, protonPS, tag.c_str())};
     auto outFile {new TFile(fileName, inspect ? "read" : "recreate")};
@@ -709,31 +753,39 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
             phi4Lab = kin->GetPhi4Lab();
             T4Lab = kin->GetT4Lab();
         }
-        else if(directGen4Body)
+        else if(directGenNBody)
         {
-            // Breakup democratico a 4 cuerpos (p+n+alfa+t), sin resonancias
-            // reales: T3Lab/theta3Lab/phi3Lab TAMBIEN salen de aqui, no hay
-            // kinGen en absoluto en este modo.
-            weight = directGen4Body->Generate();
-            TLorentzVector pLV {*directGen4Body->GetDecay(0)};
-            neutronLV = *directGen4Body->GetDecay(1);
-            alfaLV = *directGen4Body->GetDecay(2);
-            tritonLV = *directGen4Body->GetDecay(3);
+            // Breakup democratico (p+n+alfa+t si emitNeutron, o d'+alfa+t si
+            // !emitNeutron), sin resonancias reales: T3Lab/theta3Lab/phi3Lab
+            // TAMBIEN salen de aqui, no hay kinGen en absoluto en este modo.
+            weight = directGenNBody->Generate();
+            TLorentzVector lightLV {*directGenNBody->GetDecay(0)}; // p (con n) o d' (sin n)
+            int idxAlfa {1};
+            int idxTriton {2};
+            if(directGenNBodyMult == 4)
+            {
+                neutronLV = *directGenNBody->GetDecay(1);
+                idxAlfa = 2;
+                idxTriton = 3;
+            }
+            alfaLV = *directGenNBody->GetDecay(idxAlfa);
+            tritonLV = *directGenNBody->GetDecay(idxTriton);
             // TGenPhaseSpace trabaja en GeV con las masas que le dimos; reescalar a MeV
-            pLV *= 1. / ActPhysics::Constants::kMeVToGeV;
-            neutronLV *= 1. / ActPhysics::Constants::kMeVToGeV;
+            lightLV *= 1. / ActPhysics::Constants::kMeVToGeV;
+            if(directGenNBodyMult == 4)
+                neutronLV *= 1. / ActPhysics::Constants::kMeVToGeV;
             alfaLV *= 1. / ActPhysics::Constants::kMeVToGeV;
             tritonLV *= 1. / ActPhysics::Constants::kMeVToGeV;
             haveAlphaTriton = true;
 
-            theta3Lab = pLV.Theta();
-            phi3Lab = pLV.Phi();
-            T3Lab = pLV.E() - pLV.M();
+            theta3Lab = lightLV.Theta();
+            phi3Lab = lightLV.Phi();
+            T3Lab = lightLV.E() - lightLV.M();
             theta3LabSampled = theta3Lab;
             ApplyThetaRes(theta3Lab);
 
             // OJO: 'kin' aqui es el binario original (heavy/Ex pasados a la
-            // funcion), que no describe exactamente este breakup a 4 cuerpos
+            // funcion), que no describe exactamente este breakup democratico
             // (no hay 2-cuerpos real). Se usa igualmente como referencia
             // aproximada para theta3CM, igual que el resto del pipeline.
             theta3CMBefore = kin->ReconstructTheta3CMFromLab(T3Lab, theta3LabSampled) * TMath::RadToDeg();
@@ -780,7 +832,16 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
             // ---- Cascada de decaimiento del nodo "heavy" a productos detectables ----
             if(doAlphaTritonBreakup)
             {
-                if(useResonance8Li && useResonance7Li)
+                if(!emitNeutron && useResonance7Li)
+                {
+                    // Canal (d,d'): 7Li* -> alfa + t directamente, sin neutron
+                    decayStep2->SetDecay(T4Lab, theta4Lab, phi4Lab);
+                    double w2 {decayStep2->Generate()};
+                    alfaLV = *decayStep2->GetLorentzVector(0);
+                    tritonLV = *decayStep2->GetLorentzVector(1);
+                    weight *= w2;
+                }
+                else if(useResonance8Li && useResonance7Li)
                 {
                     // 8Li* -> n + 7Li*
                     decayStep2->SetDecay(T4Lab, theta4Lab, phi4Lab);
@@ -805,7 +866,7 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
                     tritonLV = *decayStep2->GetLorentzVector(2);
                     weight *= w2;
                 }
-                else // !useResonance8Li && useResonance7Li
+                else // !useResonance8Li && useResonance7Li (emitNeutron = true)
                 {
                     // el neutron ya salio directo de kinGen (3 cuerpos: p,n,7Li*)
                     neutronLV = *kinGen->GetLorentzVector(2);
@@ -819,6 +880,8 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
                 haveAlphaTriton = true;
             }
         }
+        // Fill debug alfa energy
+        hAlfaEnergyInitialAll->Fill(alfaLV.Theta() * TMath::RadToDeg(), alfaLV.E() - alfaLV.M());
         // Fill kinematics and angles
         hKin->Fill(theta3LabSampled * TMath::RadToDeg(), T3Lab);
         hThetaCMAll->Fill(theta3CMBefore);
@@ -840,7 +903,8 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
         // Threshold L1, particles that stop in actar. Check before doing the continues
         double rangeInGas {srim->EvalRange("light", T3Lab)};
         ROOT::Math::XYZPoint finalPointGas {vertex + rangeInGas * dirWorldFrame.Unit()};
-        if(0 <= finalPointGas.X() && finalPointGas.X() <= 256 && 0 <= finalPointGas.Y() && finalPointGas.Y() <= 256)
+        if(0 <= finalPointGas.X() && finalPointGas.X() <= 256 && 0 <= finalPointGas.Y() && finalPointGas.Y() <= 256 &&
+           std::abs(vertex.Z() - finalPointGas.Z()) < (235. / 2.))
         {
             // The end point of the proton range is still inside the ACTAR gas volume: it did not have enough energy to
             // exit and reach any silicon. It is only counted here (no 'continue' is done: the rest of the loop already
@@ -865,11 +929,6 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
         }
         // Fix silion resolution depending on hte layer hit
         silRes->SetParameter(0, layer0 == "f0" ? sigmaSilFront : sigmaSilLat);
-        // Check if corresponds to a hit when the detector was off or on
-        if(!AcceptHit(silEfficiencies, layer0, silIndex0))
-        {
-            continue; // if not accepted, go to next iteration
-        }
         if(silIndex0 == -1)
         {
             continue;
@@ -981,6 +1040,11 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
             EexGateHeavy_tree_side = -1000;
             weight_tree_gateHeavy = -1000;
             weight_tree_gateHeavy_side = -1000;
+        }
+        // Check if corresponds to a hit when the detector was off or on
+        if(!AcceptHit(silEfficiencies, layer0, silIndex0))
+        {
+            continue; // if not accepted, go to next iteration
         }
         // Reconstruct!
         if(T3AfterSil0 > 0)
@@ -1187,10 +1251,12 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
         hTheta3Lab->DrawClone();
 
         auto* cDebugAlfa {new TCanvas {"cDebugAlfa", "Debug Alfa"}};
-        cDebugAlfa->DivideSquare(2);
+        cDebugAlfa->DivideSquare(3);
         cDebugAlfa->cd(1);
-        hAlfaEnergyInitial->DrawClone("colz");
+        hAlfaEnergyInitialAll->DrawClone("colz");
         cDebugAlfa->cd(2);
+        hAlfaEnergyInitial->DrawClone("colz");
+        cDebugAlfa->cd(3);
         hAlfaEnergyPost->DrawClone("colz");
     }
 

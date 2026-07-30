@@ -20,7 +20,7 @@
 void analysisDecaySimulation()
 {
     ROOT::RDataFrame df {"SimulationTTree",
-                         "../Outputs/7Li/2H_1H_TRIUMF_Eex_7.100_nPS_1_pPS_0_decay_democratic4Body.root"};
+                         "../Outputs/7Li/Decay/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_decay_democratic4Body.root"};
 
     auto dfTriton = df.Filter("tritonLayerCode != 0", "Select events where triton is detected");
     auto dfAlfa = df.Filter("alfaLayerCode != 0", "Select events where alfa is detected");
