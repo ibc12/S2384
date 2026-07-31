@@ -21,6 +21,7 @@
 #include "TH2D.h"
 #include "TString.h"
 
+#include <fstream>
 #include <map>
 #include <string>
 
@@ -31,7 +32,7 @@ void Pipe1_PIDM4(const std::string& beam, const std::string& target, const std::
 {
     // Get file from pipe0
     TString infile = TString::Format("./Outputs/SelectorM4_%s.root", beam.c_str());
-    ROOT::EnableImplicitMT();
+    // ROOT::EnableImplicitMT();
     ROOT::RDataFrame df("Final_Tree", infile.Data());
 
     // Get silicon matrix and silspecs to get particle to go to lateral silicons
@@ -228,6 +229,10 @@ void Pipe1_PIDM4(const std::string& beam, const std::string& target, const std::
     c1->cd(2);
     hPIDr0->DrawClone("colz");
     cuts.DrawCut("r0");
+
+    std::ofstream out(TString::Format("./Outputs/Pipe1_PIDM4_%s.dat", light.c_str()).Data());
+    dfPIDfiltered.Foreach([&](ActRoot::MergerData& m) { m.Stream(out); }, {"MergerData"});
+    out.close();
 
     // Save dataframe in a .root file
     TString outfile = TString::Format("./Outputs/PIDM4_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str());

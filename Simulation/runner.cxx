@@ -21,10 +21,10 @@ void runner(TString what = "simu", bool inspect = true)
     int protonPS {0};  // number of protons in final state
     bool isPS {neutronPS > 0 || protonPS > 0};
     // Particles
-    std::string beam {"11Li"};
+    std::string beam {"7Li"};
     std::string target {"2H"};
     std::string light {"1H"};
-    std::string heavy {"12Li"};
+    std::string heavy {"8Li"};
     // Beam energy
     double Tbeam {};
     if(beam == "7Li")
@@ -132,6 +132,7 @@ void runner(TString what = "simu", bool inspect = true)
         target = "2H";
         light = "1H";
         heavy = "8Li";
+        Tbeam = 7 * 7.558; // MeV
         bool emitNeutron {light == "1H"}; //
         // Exs = {0};                        // Ex of the reaction for 7Li
         Exs = {0};                  // Ex of the reaction for 8Li

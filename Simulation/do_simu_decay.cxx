@@ -378,6 +378,8 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
     // Kinematics
     auto* kinTheo {new ActPhysics::Kinematics {beam, target, light, heavy, Tbeam, Ex}};
     auto* kin {new ActPhysics::Kinematics {beam, target, light, heavy, Tbeam, Ex}};
+    auto* kinProton {new ActPhysics::Kinematics {beam, target, "1H", "8Li", Tbeam, Ex}};
+    auto* kinDeuteron {new ActPhysics::Kinematics {beam, target, "2H", "7Li", Tbeam, Ex}};
 
     // ---- Cnstruction of the kinematic generator and, if applicable, the DecayGenerators for the cascade. This is done
     //      ONCE here outside, not in each iteration of the loop. ----
@@ -561,6 +563,8 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
     auto* hAlfaEnergyPost =
         new TH2D("hAlfaEnergyPostSil", "Alfa energy after silicon;#theta_{Lab} [#circ];E_{Vertex} [MeV]", 180, 0, 180,
                  150, 0, 50);
+    auto* hEx_asProton = new TH1D("hEx_asProton", "Eex assuming proton;E_{ex} [MeV];Counts", 150, 0, 15);
+    auto* hEx_asDeuteron = new TH1D("hEx_asDeuteron", "Eex assuming deuteron;E_{ex} [MeV];Counts", 150, 0, 15);
 
     // Allow multiple theads
     // std::string tag {""};
@@ -631,6 +635,8 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
     stoppedTree->Branch("T3Lab", &lightT3Lab_treeStop);
     double lightRangeInGas_treeStop {};
     stoppedTree->Branch("rangeInGas", &lightRangeInGas_treeStop);
+    double lightEx_treeStop {};
+    stoppedTree->Branch("Eex", &lightEx_treeStop);
     // reutiliza las variables de alfa/triton (ya calculadas arriba, antes de estos continues)
     stoppedTree->Branch("alfaLayerCode", &alfaLayerCode_tree);
     stoppedTree->Branch("alfaEnergy", &alfaEnergy_tree);
@@ -1013,6 +1019,7 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
                 lightTheta3Lab_treeStop = theta3Lab * TMath::RadToDeg();
                 lightT3Lab_treeStop = T3Lab;
                 lightRangeInGas_treeStop = rangeInGas;
+                lightEx_treeStop = kin->ReconstructExcitationEnergy(T3Lab, theta3Lab);
                 alfaEnergyTruth_treeStop = alfaEnergyTruth_tree;
                 alfaThetaLabTruth_treeStop = alfaAngleTruth_tree;
                 tritonEnergyTruth_treeStop = tritonEnergyTruth_tree;
@@ -1036,6 +1043,7 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
                 lightTheta3Lab_treeStop = theta3Lab * TMath::RadToDeg();
                 lightT3Lab_treeStop = T3Lab;
                 lightRangeInGas_treeStop = rangeInGas;
+                lightEx_treeStop = kin->ReconstructExcitationEnergy(T3Lab, theta3Lab);
                 alfaEnergyTruth_treeStop = alfaEnergyTruth_tree;
                 alfaThetaLabTruth_treeStop = alfaAngleTruth_tree;
                 tritonEnergyTruth_treeStop = tritonEnergyTruth_tree;
@@ -1141,6 +1149,9 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
             hEx->Fill(ExRec, weight);                            // To get real counts weigth * alpha
             hRP_X->Fill(vertex.X());
             hRP->Fill(vertex.X(), vertex.Y());
+            // Debug proton/deuteron contamination
+            hEx_asDeuteron->Fill(kinDeuteron->ReconstructExcitationEnergy(T3Rec, theta3Lab), weight);
+            hEx_asProton->Fill(kinProton->ReconstructExcitationEnergy(T3Rec, theta3Lab), weight);
             if(layer0 == "f0")
             {
                 hSPf0->Fill(silPoint0.Y(), silPoint0.Z());
@@ -1318,6 +1329,13 @@ void do_simu_decay(const std::string& beam, const std::string& target, const std
         hAlfaEnergyInitial->DrawClone("colz");
         cDebugAlfa->cd(3);
         hAlfaEnergyPost->DrawClone("colz");
+
+        auto* cDebugEx {new TCanvas {"cDebugEx", "Debug Ex"}};
+        cDebugEx->DivideSquare(2);
+        cDebugEx->cd(1);
+        hEx_asDeuteron->DrawClone("hist");
+        cDebugEx->cd(2);
+        hEx_asProton->DrawClone("hist");
     }
 
     // deleting news

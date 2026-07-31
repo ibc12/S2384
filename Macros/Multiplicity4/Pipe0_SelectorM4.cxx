@@ -58,8 +58,18 @@ void Pipe0_SelectorM4(const std::string& beam, const std::string& target, const 
 
     // First filter TPC multiplicity 4 and ensure a later silicon hit
     auto dfFilter = df.Filter("fClusters.size() == 4")
-                        .Filter([](ActRoot::ModularData& m)
-                                { return (m.Get("GATCONF") == 1 || m.Get("GATCONF") == 2); }, {"ModularData"})
+                        .Filter(
+                            [](ActRoot::ModularData& m)
+                            {
+                                // Keep lateral triggers (1, 2) as before, but also keep frontal
+                                // triggers (4): the light particle (p/d) can still reach a lateral
+                                // silicon even when the trigger that fired was the frontal wall.
+                                // Which layer it actually hit is now resolved geometrically in
+                                // Pipe1_PIDM4, not from GATCONF.
+                                auto gatconf = m.Get("GATCONF");
+                                return (gatconf == 1 || gatconf == 2 || gatconf == 4);
+                            },
+                            {"ModularData"})
                         .Filter(
                             [](ActRoot::SilData& sil, ActRoot::ModularData& m)
                             {
@@ -87,8 +97,7 @@ void Pipe0_SelectorM4(const std::string& beam, const std::string& target, const 
                                     for(auto& v : voxels)
                                     {
                                         if(v.GetPosition().Y() > rp_y - 3 && v.GetPosition().Y() < rp_y + 3 &&
-                                           v.GetPosition().X() > rp_x - 10 &&
-                                           v.GetPosition().X() < rp_x + 10)
+                                           v.GetPosition().X() > rp_x - 10 && v.GetPosition().X() < rp_x + 10)
                                             if(v.GetCharge() > 3000.)
                                                 counter++;
                                     }
