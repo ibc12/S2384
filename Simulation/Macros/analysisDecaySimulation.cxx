@@ -28,6 +28,13 @@ ROOT::RDF::RResultPtr<TH2D> BookKin2D(RNode d, const std::string& name, const st
     return d.Histo2D({name.c_str(), title.c_str(), 100, 0, 180, 100, 0, eMax}, thetaVar, eVar);
 }
 
+// Crea un TH2D (theta vs theta) para un df dado
+ROOT::RDF::RResultPtr<TH2D> BookAngleCorr2D(RNode d, const std::string& name, const std::string& title,
+                                            const std::string& thetaVar1, const std::string& thetaVar2)
+{
+    return d.Histo2D({name.c_str(), title.c_str(), 100, 0, 180, 100, 0, 180}, thetaVar1, thetaVar2);
+}
+
 // Crea un TH1D de Eex para un df dado
 ROOT::RDF::RResultPtr<TH1D> BookEx1D(RNode d, const std::string& name, const std::string& title)
 {
@@ -37,15 +44,15 @@ ROOT::RDF::RResultPtr<TH1D> BookEx1D(RNode d, const std::string& name, const std
 void analysisDecaySimulation()
 {
     // Files for proton channel (light = 1H)
-    // ROOT::RDataFrame df {"SimulationTTree",
-    //                      "../Outputs/7Li/Decay/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_decay_democratic4Body.root"};
-    // ROOT::RDataFrame dfL1 {"LightMissTree",
-    //                        "../Outputs/7Li/Decay/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_decay_democratic4Body.root"};
-    // Files for deuteron channel (light = 2H)
     ROOT::RDataFrame df {"SimulationTTree",
-                         "../Outputs/7Li/Decay/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_decay_democratic3Body_dd.root"};
+                         "../Outputs/7Li/Decay/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_decay_democratic4Body.root"};
     ROOT::RDataFrame dfL1 {"LightMissTree",
-                           "../Outputs/7Li/Decay/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_decay_democratic3Body_dd.root"};
+                           "../Outputs/7Li/Decay/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_decay_democratic4Body.root"};
+    // Files for deuteron channel (light = 2H)
+    // ROOT::RDataFrame df {"SimulationTTree",
+    //                      "../Outputs/7Li/Decay/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_decay_democratic3Body_dd.root"};
+    // ROOT::RDataFrame dfL1 {"LightMissTree",
+    //                        "../Outputs/7Li/Decay/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_decay_democratic3Body_dd.root"};
 
 
     // ---- Selecciones sobre el arbol principal ----
@@ -113,6 +120,23 @@ void analysisDecaySimulation()
         BookKin2D(dfOnlyAlfa, "hKin_alfaOnlyAlfa", "Alfa Kinematics (only alfa);Theta [deg];Energy [MeV]", "alfaAngle",
                   "alfaEnergy", 40);
 
+    // Triton / alfa angle correlation
+    auto hAngleCorr_tritonAlfaAll = BookAngleCorr2D(
+        dfAlfaTriton, "hAngleCorr_tritonAlfaCorrAll",
+        "Triton vs Alfa Angle Correlation;Theta_{triton} [deg];Theta_{alfa} [deg]", "tritonAngle", "alfaAngle");
+    auto hAngleCorr_tritonAlfaOnlyTriton =
+        BookAngleCorr2D(dfOnlyTriton, "hAngleCorr_tritonAlfaCorrOnlyTriton",
+                        "Triton vs Alfa Angle Correlation (only triton);Theta_{triton} [deg];Theta_{alfa} [deg]",
+                        "tritonAngle", "alfaAngle");
+    auto hAngleCorr_tritonAlfaOnlyAlfa =
+        BookAngleCorr2D(dfOnlyAlfa, "hAngleCorr_tritonAlfaCorrOnlyAlfa",
+                        "Triton vs Alfa Angle Correlation (only alfa);Theta_{triton} [deg];Theta_{alfa} [deg]",
+                        "tritonAngle", "alfaAngle");
+    auto hAngleCorr_tritonAlfaAlfaTriton =
+        BookAngleCorr2D(dfAlfaTriton, "hAngleCorr_tritonAlfaCorrAlfaTriton",
+                        "Triton vs Alfa Angle Correlation (alfa+triton);Theta_{triton} [deg];Theta_{alfa} [deg]",
+                        "tritonAngle", "alfaAngle");
+
     // Eex
     auto hEx_All = BookEx1D(df, "hEx_All", "Excitation Energy;E_{ex} [MeV];Counts");
     auto hEx_AlfaTriton =
@@ -158,6 +182,23 @@ void analysisDecaySimulation()
         BookKin2D(dfL1OnlyAlfa, "hKin_alfaOnlyAlfa_L1", "Alfa Kinematics L1 (only alfa);Theta [deg];Energy [MeV]",
                   "alfaAngle", "alfaEnergy", 40);
 
+    // Triton / alfa angle correlation en L1
+    auto hAngleCorr_tritonAlfaAll_L1 = BookAngleCorr2D(
+        dfL1AlfaTriton, "hAngleCorr_tritonAlfaCorrAll_L1",
+        "Triton vs Alfa Angle Correlation L1;Theta_{triton} [deg];Theta_{alfa} [deg]", "tritonAngle", "alfaAngle");
+    auto hAngleCorr_tritonAlfaOnlyTriton_L1 =
+        BookAngleCorr2D(dfL1OnlyTriton, "hAngleCorr_tritonAlfaCorrOnlyTriton_L1",
+                        "Triton vs Alfa Angle Correlation L1 (only triton);Theta_{triton} [deg];Theta_{alfa} [deg]",
+                        "tritonAngle", "alfaAngle");
+    auto hAngleCorr_tritonAlfaOnlyAlfa_L1 =
+        BookAngleCorr2D(dfL1OnlyAlfa, "hAngleCorr_tritonAlfaCorrOnlyAlfa_L1",
+                        "Triton vs Alfa Angle Correlation L1 (only alfa);Theta_{triton} [deg];Theta_{alfa} [deg]",
+                        "tritonAngle", "alfaAngle");
+    auto hAngleCorr_tritonAlfaAlfaTriton_L1 =
+        BookAngleCorr2D(dfL1AlfaTriton, "hAngleCorr_tritonAlfaCorrAlfaTriton_L1",
+                        "Triton vs Alfa Angle Correlation L1 (alfa+triton);Theta_{triton} [deg];Theta_{alfa} [deg]",
+                        "tritonAngle", "alfaAngle");
+
     // Eex en L1
     auto hEx_All_L1 = BookEx1D(dfL1, "hEx_All_L1", "Excitation Energy L1;E_{ex} [MeV];Counts");
     auto hEx_AlfaTriton_L1 =
@@ -195,6 +236,17 @@ void analysisDecaySimulation()
     hKin_alfaOnlyAlfa->DrawClone("colz");
     cKinTritonAndAlfa->cd(6);
     hKin_alfaAlfaTriton->DrawClone("colz");
+
+    auto* cAngleCorr = new TCanvas("cAngleCorr", "Triton vs Alfa Angle Correlation", 1200, 800);
+    cAngleCorr->Divide(2, 2);
+    cAngleCorr->cd(1);
+    hAngleCorr_tritonAlfaAll->DrawClone("colz");
+    cAngleCorr->cd(2);
+    hAngleCorr_tritonAlfaOnlyTriton->DrawClone("colz");
+    cAngleCorr->cd(3);
+    hAngleCorr_tritonAlfaOnlyAlfa->DrawClone("colz");
+    cAngleCorr->cd(4);
+    hAngleCorr_tritonAlfaAlfaTriton->DrawClone("colz");
 
     auto* cEx = new TCanvas("cEx", "Excitation Energy", 1200, 800);
     cEx->Divide(2, 2);
@@ -235,6 +287,17 @@ void analysisDecaySimulation()
     hKin_alfaOnlyAlfa_L1->DrawClone("colz");
     cKinTritonAndAlfa_L1->cd(6);
     hKin_alfaAlfaTriton_L1->DrawClone("colz");
+
+    auto* cAngleCorr_L1 = new TCanvas("cAngleCorr_L1", "Triton vs Alfa Angle Correlation (L1)", 1200, 800);
+    cAngleCorr_L1->Divide(2, 2);
+    cAngleCorr_L1->cd(1);
+    hAngleCorr_tritonAlfaAll_L1->DrawClone("colz");
+    cAngleCorr_L1->cd(2);
+    hAngleCorr_tritonAlfaOnlyTriton_L1->DrawClone("colz");
+    cAngleCorr_L1->cd(3);
+    hAngleCorr_tritonAlfaOnlyAlfa_L1->DrawClone("colz");
+    cAngleCorr_L1->cd(4);
+    hAngleCorr_tritonAlfaAlfaTriton_L1->DrawClone("colz");
 
     auto* cEx_L1 = new TCanvas("cEx_L1", "Excitation Energy (L1)", 1200, 800);
     cEx_L1->Divide(2, 2);

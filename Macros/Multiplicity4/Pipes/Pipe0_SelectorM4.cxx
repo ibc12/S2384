@@ -58,8 +58,13 @@ void Pipe0_SelectorM4(const std::string& beam, const std::string& target, const 
 
     // First filter TPC multiplicity 4 and ensure a later silicon hit
     auto dfFilter = df.Filter("fClusters.size() == 4")
-                        .Filter([](ActRoot::ModularData& m)
-                                { return (m.Get("GATCONF") == 1 || m.Get("GATCONF") == 2); }, {"ModularData"})
+                        .Filter(
+                            [](ActRoot::ModularData& m)
+                            {
+                                return (m.Get("GATCONF") == 1 || m.Get("GATCONF") == 2 || m.Get("GATCONF") == 4 ||
+                                        m.Get("GATCONF") == 8);
+                            },
+                            {"ModularData"})
                         .Filter(
                             [](ActRoot::SilData& sil, ActRoot::ModularData& m)
                             {
@@ -87,8 +92,7 @@ void Pipe0_SelectorM4(const std::string& beam, const std::string& target, const 
                                     for(auto& v : voxels)
                                     {
                                         if(v.GetPosition().Y() > rp_y - 3 && v.GetPosition().Y() < rp_y + 3 &&
-                                           v.GetPosition().X() > rp_x - 10 &&
-                                           v.GetPosition().X() < rp_x + 10)
+                                           v.GetPosition().X() > rp_x - 10 && v.GetPosition().X() < rp_x + 10)
                                             if(v.GetCharge() > 3000.)
                                                 counter++;
                                     }
@@ -112,9 +116,45 @@ void Pipe0_SelectorM4(const std::string& beam, const std::string& target, const 
                             },
                             {"TPCData"});
 
+    auto dfLight = dfFilter.Define("LightIdx", [&](ActRoot::TPCData& tpc)
+                                       { // Get index of light particle - highest angle with respect to beam-like particle
+        auto beamIdx = -1;
+        for(int i = 0; i < tpc.fClusters.size(); ++i)
+        {
+            auto& cluster = tpc.fClusters[i];
+            if(cluster.GetIsBeamLike())
+            {
+                beamIdx = i;
+                break;;
+            }
+        }
+        if(beamIdx == -1)
+            return -1;
+        auto& beamCluster = tpc.fClusters[beamIdx];
+        auto beamDir = beamCluster.GetLine().GetDirection();
+        double maxAngle = -1.0;
+        int lightIdx = -1;
+        for(int i = 0; i < tpc.fClusters.size(); ++i)
+        {
+            if(i == beamIdx)
+                continue;
+            auto& cluster = tpc.fClusters[i];
+            auto clusterDir = cluster.GetLine().GetDirection();
+            auto angle = Utils::GetTheta3D(beamDir, clusterDir);
+            if(angle > maxAngle)
+            {
+                maxAngle = angle;
+                lightIdx = i;
+            }
+        }
+        return lightIdx;
+        }, {"TPCData"});
+
+    std::cout << "Counts after filtering: " << dfFilter.Count().GetValue() << std::endl;
+
     // Save dataframe in a .root file
     TString outfile = TString::Format("./Outputs/SelectorM4_%s.root", beam.c_str());
-    dfFilter.Snapshot("Final_Tree", outfile);
+    dfLight.Snapshot("Final_Tree", outfile);
     std::cout << "Saving Final_Tree in " << outfile << " from Pipe0_SelectorM4" << '\n';
 }
 #endif
