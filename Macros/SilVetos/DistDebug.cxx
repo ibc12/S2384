@@ -17,7 +17,7 @@
 
 void DistDebug()
 {
-    std::string layer {"f0"};
+    std::string layer {"r0"};
     TString outpath {TString::Format("./Outputs/Dists/sms_%s.root", layer.c_str())};
     // TString outpath {TString::Format("./Outputs/Dists/sms_%s.root", layer.c_str())};
     auto f {new TFile {outpath}};

@@ -3,6 +3,9 @@
 
 #include "Math/Point3Dfwd.h"
 #include "Math/Vector3D.h"
+#include "Math/PositionVector3D.h"
+
+#include "TMath.h"
 
 
 namespace Utils {

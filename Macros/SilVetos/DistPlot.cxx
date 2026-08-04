@@ -33,7 +33,7 @@ std::pair<double, double> Do(TH1D*& p)
 
 void DistPlot()
 {
-    std::string layer {"f0"};
+    std::string layer {"r0"};
     TString outpath {TString::Format("./Outputs/Dists/histos_%s.root", layer.c_str())};
     // TString outpath {TString::Format("./Outputs/Dists/histos_%s_preL0change.root", layer.c_str())};
     auto f {std::make_unique<TFile>(outpath)};

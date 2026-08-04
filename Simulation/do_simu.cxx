@@ -318,7 +318,7 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
                                         "r0"}; // For the moment only laterals, front not yet available for analysis
     std::vector<std::string> AllsilLayers {"f0", "f1", "f2", "f3", "l0", "r0"};
 
-    std::string filenameSMlat {"../Macros/SilVetos/Outputs/Dists/sms_f0.root"};
+    std::string filenameSMlat {"../Macros/SilVetos/Outputs/Dists/sms_l0.root"};
     auto fileSMlat {new TFile {filenameSMlat.c_str()}};
     ActPhysics::SilMatrix* smlat =
         fileSMlat->Get<ActPhysics::SilMatrix>("sm5"); // matrix for good distance of left wall

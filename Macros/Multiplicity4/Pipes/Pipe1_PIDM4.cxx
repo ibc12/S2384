@@ -19,6 +19,7 @@
 #include "TCanvas.h"
 #include "TH2.h"
 #include "TH2D.h"
+#include "TMath.h"
 #include "TString.h"
 
 #include <search.h>
@@ -60,6 +61,13 @@ void Pipe1_PIDM4(const std::string& beam, const std::string& target, const std::
     double silCentreRight = smright->GetMeanZ({4, 5});
     double beamOffsetRight {-2.14};
     const double zVertexMeanRight {silCentreRight - beamOffsetRight}; // beam on right
+    std::string filenameSMfront {"../SilVetos/Outputs/Dists/sms_f0.root"};
+    auto fileSMfront {new TFile {filenameSMfront.c_str()}};
+    ActPhysics::SilMatrix* smfront =
+        fileSMfront->Get<ActPhysics::SilMatrix>("sm2"); // matrix for good distance of front wall
+    double silCentreFront = smfront->GetMeanZ({7, 6, 4});
+    double beamOffsetFront {-2.5};
+    const double zVertexMeanFront {silCentreFront - beamOffsetFront}; // beam on front
 
     auto sils {std::make_shared<ActPhysics::SilSpecs>()};
     sils->ReadFile("../../configs/silspecs.conf");
@@ -67,64 +75,81 @@ void Pipe1_PIDM4(const std::string& beam, const std::string& target, const std::
 
     // Now get the index of the particle that hit the silicon to do PID
     auto dfLayer =
-        df.Define("LayerAndSP",
-                  [&](ActRoot::TPCData& tpc, ActRoot::SilData& silIn,
-                      int LightIdx) -> std::pair<std::string, ROOT::Math::XYZPointF>
-                  {
-                      std::pair<std::string, ROOT::Math::XYZPointF> res {"", {}};
-                      if(LightIdx < 0)
-                          return res;
-
-                      ActRoot::SilData sil {silIn};
-                      sil.ApplyFinerThresholds(sils);
-
-                      auto& cluster = tpc.fClusters[LightIdx];
-                      auto line = cluster.GetLine();
-                      line.Scale(Utils::scaleXY, Utils::scaleZ);
-
-                      double minDistance {1e8};
-                      const double kSilMatchTol {60.}; // mm -- ajustar según resolución angular/geométrica
-
-                      for(const std::string layer : {"l0", "r0", "f0"})
-                      {
-                          auto it = sil.fSiN.find(layer);
-                          if(it == sil.fSiN.end() || it->second.empty())
-                              continue; // no hit en esta layer
-
-                          auto pointLayer {sils->GetLayer(layer).GetPoint()};
-                          auto silIdx {it->second[0]};
-                          auto silHitPosition {sils->GetLayer(layer).GetPlacements().at(silIdx)};
-
-                          ROOT::Math::XYZPointF pseudoSP {};
-                          if(layer == "l0")
-                              pseudoSP = {static_cast<float>(silHitPosition.first), static_cast<float>(pointLayer.Y()),
-                                          static_cast<float>(smleft->GetMeanZ({silIdx}) - beamOffsetLeft)};
-                          else if(layer == "r0")
-                              pseudoSP = {static_cast<float>(silHitPosition.first), static_cast<float>(pointLayer.Y()),
-                                          static_cast<float>(smright->GetMeanZ({silIdx}) - beamOffsetRight)};
-                          else if(layer == "f0")
-                              pseudoSP = {static_cast<float>(pointLayer.X()), static_cast<float>(pointLayer.Y()), 0};
-
-                          auto posibleSP = line.MoveToY(pseudoSP.Y());
-                          float distance {};
-                          if(layer == "l0" || layer == "r0")
-                              distance = (posibleSP - pseudoSP).R();
-                          else if(layer == "f0")
-                          {
-                              posibleSP.SetZ(
-                                  0); // We have a bad matrix for the front silicon, so just check in XY plane
-                              distance = (posibleSP - pseudoSP).R();
-                          }
-
-                          if(distance < kSilMatchTol && distance < minDistance)
-                          {
-                              minDistance = distance;
-                              res = {layer, pseudoSP};
-                          }
-                      }
+        df.Define(
+              "LayerAndSP",
+              [&](ActRoot::TPCData& tpc, ActRoot::SilData& silIn,
+                  int LightIdx) -> std::pair<std::string, ROOT::Math::XYZPointF>
+              {
+                  std::pair<std::string, ROOT::Math::XYZPointF> res {"", {}};
+                  if(LightIdx < 0)
                       return res;
-                  },
-                  {"TPCData", "SilData", "LightIdx"})
+
+                  ActRoot::SilData sil {silIn};
+                  sil.ApplyFinerThresholds(sils);
+
+                  auto& cluster = tpc.fClusters[LightIdx];
+                  auto line = cluster.GetLine();
+                  line.Scale(Utils::scaleXY, Utils::scaleZ);
+
+                  double minDistance {1e8};
+                  const double kSilMatchTol {70.}; // mm -- distance between front and sides is 71 mm. So has to be lower than that
+
+                  for(const std::string layer : {"l0", "r0"})
+                  {
+                      auto it = sil.fSiN.find(layer);
+                      if(it == sil.fSiN.end() || it->second.empty())
+                          continue; // no hit en esta layer
+
+                      auto pointLayer {sils->GetLayer(layer).GetPoint()};
+                      auto silIdx {it->second[0]};
+                      auto silHitPosition {sils->GetLayer(layer).GetPlacements().at(silIdx)};
+
+                      ROOT::Math::XYZPointF pseudoSP {};
+                      if(layer == "l0")
+                          pseudoSP = {static_cast<float>(silHitPosition.first),
+                          static_cast<float>(pointLayer.Y()),
+                                      static_cast<float>(smleft->GetMeanZ({silIdx}) - beamOffsetLeft)};
+                      else if(layer == "r0")
+                          pseudoSP = {static_cast<float>(silHitPosition.first),
+                          static_cast<float>(pointLayer.Y()),
+                                      static_cast<float>(smright->GetMeanZ({silIdx}) - beamOffsetRight)};
+                      else if(layer == "f0")
+                          pseudoSP = {static_cast<float>(silHitPosition.first),
+                          static_cast<float>(pointLayer.Y()),
+                                      static_cast<float>(smfront->GetMeanZ({silIdx}) - beamOffsetFront)};
+                      // if(layer == "l0")
+                      //     pseudoSP = {static_cast<float>(pointLayer.X()), static_cast<float>(pointLayer.Y()), 0};
+                      // else if(layer == "r0")
+                      //     pseudoSP = {static_cast<float>(pointLayer.X()), static_cast<float>(pointLayer.Y()), 0};
+                      // else if(layer == "f0")
+                      //     pseudoSP = {static_cast<float>(pointLayer.X()), static_cast<float>(pointLayer.Y()), 0};
+
+                      ROOT::Math::XYZPoint posibleSP = {0, 0, 0};
+                      float distance {};
+                      // if(layer == "l0" || layer == "r0")
+                      //     distance = (posibleSP - pseudoSP).R();
+                      if(layer == "l0" || layer == "r0")
+                      {
+                          posibleSP = line.MoveToY(pointLayer.Y());
+                          //posibleSP.SetZ(0); // We have a bad matrix for the front silicon, so just check in XY plane
+                          distance = (posibleSP - pseudoSP).R();
+                      }
+                      else if(layer == "f0")
+                      {
+                          posibleSP = line.MoveToX(pointLayer.X());
+                          //posibleSP.SetZ(0); // We have a bad matrix for the front silicon, so just check in XY plane
+                          distance = (posibleSP - pseudoSP).R();
+                      }
+
+                      if(distance < kSilMatchTol && distance < minDistance)
+                      {
+                          minDistance = distance;
+                          res = {layer, pseudoSP};
+                      }
+                  }
+                  return res;
+              },
+              {"TPCData", "SilData", "LightIdx"})
             .Define("Layer", [](const std::pair<std::string, ROOT::Math::XYZPointF>& p) { return p.first; },
                     {"LayerAndSP"})
             .Define("pseudoSP", [](const std::pair<std::string, ROOT::Math::XYZPointF>& p) { return p.second; },
@@ -238,6 +263,8 @@ void Pipe1_PIDM4(const std::string& beam, const std::string& target, const std::
                 return cuts.IsInside("l0", silE, Qave);
             else if(layer == "r0")
                 return cuts.IsInside("r0", silE, Qave);
+            else
+                return false;
         },
         {"Layer", "SilESelectedParticle", "QaveSelectedParticle"});
 
@@ -342,13 +369,8 @@ void Pipe1_PIDM4(const std::string& beam, const std::string& target, const std::
     f0AndLateral_NotInPID.close();
 
     std::ofstream out(TString::Format("./Outputs/Pipe1_PIDM4_side_%s.dat", light.c_str()).Data());
-    dfWithQave.Foreach(
-        [&](ActRoot::MergerData& m, const std::string& layer)
-        {
-            if(layer != "f0")
-                m.Stream(out);
-        },
-        {"MergerData", "Layer"});
+    dfPIDfiltered.Foreach([&](ActRoot::MergerData& m, const std::string& layer) { m.Stream(out); },
+                          {"MergerData", "Layer"});
     out.close();
 
     // Save dataframe in a .root file
