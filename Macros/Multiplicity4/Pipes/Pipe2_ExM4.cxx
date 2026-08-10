@@ -21,6 +21,7 @@
 #include "TH2D.h"
 #include "TString.h"
 
+#include <fstream>
 #include <map>
 #include <string>
 
@@ -73,14 +74,16 @@ void Pipe2_ExM4(const std::string& beam, const std::string& target, const std::s
 
     auto dfVertex =
         df.Define("EVertex",
-                  [&](float TL, float eSil)
+                  [&](float TL, float eSil, std::string layer)
                   {
-                      double ret = srim->EvalInitialEnergy(light, eSil, TL);
-                      // else // L1 trigger
-                      //     ret = srim->EvalEnergy("p", d.fLight.fTL);
+                      double ret {};
+                      if(layer == "L1")
+                          ret = srim->EvalEnergy(light, TL);
+                      else if(layer == "l0" || layer == "r0" || layer == "f0")
+                          ret = srim->EvalInitialEnergy(light, eSil, TL);
                       return ret;
                   },
-                  {"TrackLength", "SilESelectedParticle"})
+                  {"TrackLength", "SilE", "Layer"})
             .Define("EBeam", [&](const ActRoot::TPCData& tpc)
                     { return srim->Slow(beam, initialEnergy * pb.GetAMU(), tpc.fRPs.front().X()); }, {"TPCData"});
 
@@ -110,17 +113,42 @@ void Pipe2_ExM4(const std::string& beam, const std::string& target, const std::s
     dfVertex.Snapshot("Final_Tree", outfile);
     std::cout << "Saving Final_Tree in " << outfile << " from Pipe2_ExM4" << '\n';
 
-    // Plot Ex and kin
-    auto hEx {dfVertex.Histo1D(HistConfig::Ex, "Ex")};
-    auto hkin {dfVertex.Histo2D(HistConfig::Kin, "ThetaLab", "EVertex")};
+    // ---- Separamos por layer: L1 vs el resto (l0, r0, f0) ----
+    auto dfL1 = dfVertex.Filter([](const std::string& layer) { return layer == "L1"; }, {"Layer"});
+    auto dfOthers = dfVertex.Filter([](const std::string& layer) { return layer != "L1"; }, {"Layer"});
 
-    auto c1 = new TCanvas("cExM4_0", "Excitation energy Multiplicity 4", 800, 600);
+    // Histogramas de Ex para cada subconjunto
+    auto hExL1 {dfL1.Histo1D(HistConfig::Ex, "Ex")};
+    auto hExOthers {dfOthers.Histo1D(HistConfig::Ex, "Ex")};
+
+    // Histogramas de cinematica para cada subconjunto
+    auto hkinL1 {dfL1.Histo2D(HistConfig::Kin, "ThetaLab", "EVertex")};
+    auto hkinOthers {dfOthers.Histo2D(HistConfig::Kin, "ThetaLab", "EVertex")};
+
+    // --- Plots de Ex ---
+    auto c1 = new TCanvas("cExM4_L1", "Excitation energy Multiplicity 4 - L1", 800, 600);
     c1->cd();
-    hEx->DrawClone();
-    auto c2 = new TCanvas("cExM4_1", "Kinematics Multiplicity 4", 800, 600);
+    hExL1->SetTitle("Ex, layer L1");
+    hExL1->DrawClone();
+
+    auto c2 = new TCanvas("cExM4_Others", "Excitation energy Multiplicity 4 - Other layers", 800, 600);
     c2->cd();
-    hkin->DrawClone("colz");
+    hExOthers->SetTitle("Ex, layers l0/r0/f0");
+    hExOthers->DrawClone();
+
+    // --- Plots de cinematica ---
+    auto c3 = new TCanvas("cKinM4_L1", "Kinematics Multiplicity 4 - L1", 800, 600);
+    c3->cd();
+    hkinL1->SetTitle("Kinematics, layer L1");
+    hkinL1->DrawClone("colz");
+
+    auto c4 = new TCanvas("cKinM4_Others", "Kinematics Multiplicity 4 - Other layers", 800, 600);
+    c4->cd();
+    hkinOthers->SetTitle("Kinematics, layers l0/r0/f0");
+    hkinOthers->DrawClone("colz");
+
     // theo kin: una linea por cada nivel de excitacion, con su color y su entrada en la leyenda
+    // Se dibuja sobre ambos canvases de cinematica (L1 y otras layers)
 
     std::vector<ExLevel> levels {
         {0.0, kBlack, "g.s."},
@@ -129,9 +157,13 @@ void Pipe2_ExM4(const std::string& beam, const std::string& target, const std::s
         {7.1, kGreen + 2, "7.1 MeV"},
     };
 
-    auto* legend = new TLegend(0.65, 0.65, 0.88, 0.88);
-    legend->SetBorderSize(0);
-    legend->SetFillStyle(0);
+    auto* legendL1 = new TLegend(0.65, 0.65, 0.88, 0.88);
+    legendL1->SetBorderSize(0);
+    legendL1->SetFillStyle(0);
+
+    auto* legendOthers = new TLegend(0.65, 0.65, 0.88, 0.88);
+    legendOthers->SetBorderSize(0);
+    legendOthers->SetFillStyle(0);
 
     // Guardamos los objetos Kinematics para que no mueran al salir del bucle
     static std::vector<ActPhysics::Kinematics> kinLevels;
@@ -144,10 +176,30 @@ void Pipe2_ExM4(const std::string& beam, const std::string& target, const std::s
         auto* theo {kinLevels.back().GetKinematicLine3()};
         theo->SetLineColor(level.color);
         theo->SetLineWidth(2);
-        theo->Draw("same");
-        legend->AddEntry(theo, level.label.c_str(), "l");
+
+        c3->cd();
+        auto* theoL1 {(TGraph*)theo->DrawClone("same")};
+        legendL1->AddEntry(theoL1, level.label.c_str(), "l");
+
+        c4->cd();
+        auto* theoOthers {(TGraph*)theo->DrawClone("same")};
+        legendOthers->AddEntry(theoOthers, level.label.c_str(), "l");
     }
 
-    legend->Draw();
+    c3->cd();
+    legendL1->Draw();
+
+    c4->cd();
+    legendOthers->Draw();
+
+    std::ofstream out(TString::Format("./Outputs/Pipe2_ExM4_%s_ex.dat", light.c_str()).Data());
+    dfL1.Foreach(
+        [&](ActRoot::MergerData& m, double ex)
+        {
+            if(ex > 2)
+                m.Stream(out);
+        },
+        {"MergerData", "Ex"});
+    out.close();
 }
 #endif
