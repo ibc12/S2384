@@ -81,15 +81,20 @@ void Ang(bool isLab = false)
 
     // Efficiency
     Interpolators::Efficiency eff;
-    eff.Add("g0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
-    eff.Add("g1", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.981_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
-    // eff.Add("g2", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_2.255_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
-    // eff.Add("v0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_3.210_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
-    // eff.Add("v1", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_5.400_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
-    // eff.Add("v2", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_6.100_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
-    // eff.Add("v3", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_6.530_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
-    // eff.Add("v4", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_7.100_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
-    // eff.Add("ps0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.000_nPS_1_pPS_0.root", isLab ? "effLabside" : "effCMside");
+    eff.Add("g0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0.root",
+            isLab ? "effLabside" : "effCMside");
+    eff.Add("g1", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.981_nPS_0_pPS_0.root",
+            isLab ? "effLabside" : "effCMside");
+    eff.Add("g2", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_2.255_nPS_0_pPS_0.root",
+            isLab ? "effLabside" : "effCMside");
+    // eff.Add("v0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_3.210_nPS_0_pPS_0.root", isLab ? "effLabside" :
+    // "effCMside"); eff.Add("v1", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_5.400_nPS_0_pPS_0.root", isLab ?
+    // "effLabside" : "effCMside"); eff.Add("v2",
+    // "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_6.100_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
+    // eff.Add("v3", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_6.530_nPS_0_pPS_0.root", isLab ? "effLabside" :
+    // "effCMside"); eff.Add("v4", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_7.100_nPS_0_pPS_0.root", isLab ?
+    // "effLabside" : "effCMside"); eff.Add("ps0",
+    // "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.000_nPS_1_pPS_0.root", isLab ? "effLabside" : "effCMside");
     // eff.Add("g1", "./Inputs/effs/g1_7Li_dp_sil.root", "effCMside");
     //  Draw to check is fine
     eff.Draw();
@@ -104,41 +109,47 @@ void Ang(bool isLab = false)
     // Plot
     Angular::Comparator comp {"g.s", xs.Get("g0")};
     comp.Add("ADWA", "./Inputs/gs_ADWA/fort.202");
-    comp.Add("ADWA twofnr", "./Inputs/gs_ADWA/21.gs");
-    comp.Add("ADWA finite range", "./Inputs/gs_ADWA_FiniteRange/fort.202");
-    comp.Add("DA1p-Delaroche", "./Inputs/gs_DA1p_Delaroche/21.g0");
-    comp.Add("Daehnik-Delaroche", "./Inputs/gs_Daehnik_Delaroche/21.g0");
-    comp.Add("DA1pcorr-Delaroche", "./Inputs/gs_DA1pcorr_Delaroche/21.g0");
-    comp.Add("DA1pcorr-Delaroche tweakPar", "./Inputs/gs_DA1pcorr_Delaroche_tweakPar/21.g0");
-    comp.Add("DA1pcorr-JLMmicroscopic (fermi)", "./Inputs/gs_DA1pcorr_JLMmicroscopic/21.g0");
-    comp.Add("DA1pcorr-JLMmicroscopic (oscillator)", "./Inputs/gs_DA1pcorr_JLMmicroscopic_other/21.g0");
-    comp.Add("DA1pcorr-Perey", "./Inputs/gs_DA1pcorr_Perey/21.g0");
-    comp.Add("DA1pcorr-CH89", "./Inputs/gs_DA1pcorr_CH89/21.g0");
-    comp.Add("DA1pcorr-Becheti", "./Inputs/gs_DA1pcorr_Bechetti/21.g0");
-    comp.Add("DA1pcorr-Menet", "./Inputs/gs_DA1pcorr_Menet/21.g0");
-    comp.Add("OMP paper 5.44 MeV/u", "./Inputs/gs_DWBA_paper/21.g0");
-    comp.Add("ADWA-CH89", "./Inputs/gs_ADWA_CH89/21.g0");
-    comp.Add("ADWA-Perey", "./Inputs/gs_ADWA_Perey/21.g0");
-    comp.Add("Bea calcs", "./Inputs/7Lidp_Bea/21.7Li_dp_gs");
+    // comp.Add("ADWA twofnr", "./Inputs/gs_ADWA/21.gs");
+    // comp.Add("ADWA finite range", "./Inputs/gs_ADWA_FiniteRange/fort.202");
+    // comp.Add("DA1p-Delaroche", "./Inputs/gs_DA1p_Delaroche/21.g0");
+    // comp.Add("Daehnik-Delaroche", "./Inputs/gs_Daehnik_Delaroche/21.g0");
+    // comp.Add("DA1pcorr-Delaroche", "./Inputs/gs_DA1pcorr_Delaroche/21.g0");
+    // comp.Add("DA1pcorr-Delaroche tweakPar", "./Inputs/gs_DA1pcorr_Delaroche_tweakPar/21.g0");
+    // comp.Add("DA1pcorr-JLMmicroscopic (fermi)", "./Inputs/gs_DA1pcorr_JLMmicroscopic/21.g0");
+    // comp.Add("DA1pcorr-JLMmicroscopic (oscillator)", "./Inputs/gs_DA1pcorr_JLMmicroscopic_other/21.g0");
+    // comp.Add("DA1pcorr-Perey", "./Inputs/gs_DA1pcorr_Perey/21.g0");
+    // comp.Add("DA1pcorr-CH89", "./Inputs/gs_DA1pcorr_CH89/21.g0");
+    // comp.Add("DA1pcorr-Becheti", "./Inputs/gs_DA1pcorr_Bechetti/21.g0");
+    // comp.Add("DA1pcorr-Menet", "./Inputs/gs_DA1pcorr_Menet/21.g0");
+    // comp.Add("OMP paper 5.44 MeV/u", "./Inputs/gs_DWBA_paper/21.g0");
+    // comp.Add("ADWA-CH89", "./Inputs/gs_ADWA_CH89/21.g0");
+    // comp.Add("ADWA-Perey", "./Inputs/gs_ADWA_Perey/21.g0");
+    // comp.Add("Bea calcs", "./Inputs/7Lidp_Bea/21.7Li_dp_gs");
+    comp.Add("DA1pcorr-Watson", "./Inputs/gs_DA1pcorr_Watson/fort.202");
     Angular::Comparator comp1 {"1st Ex", xs.Get("g1")};
     comp1.Add("Daehnik-Delaroche 1st Ex", "./Inputs/g1_Daehnik_Delaroche/21.g1");
     comp1.Add("DA1pcorr-Delaroche 1st Ex", "./Inputs/g1_DA1pcorr_Delaroche/21.g1");
     comp1.Add("Bea calcs 1st", "./Inputs/7Lidp_Bea/21.7Li_dp_1st");
     comp1.Add("ADWA 1st Ex", "./Inputs/gs_ADWA/fort.203");
-    comp1.Add("ADWA 1st Ex", "./Inputs/g1_ADWA_twofnr/21.g1");   
-    // Angular::Comparator comp2 {"2nd Ex", xs.Get("g2")};
-    // comp2.Add("ADWA", "./Inputs/gs_ADWA/fort.203");
-    // comp.Fit();
-    // comp.Draw("", true);
-    // comp.DrawTheo();
-    // comp.DrawSFfromIntegral();
-    // comp1.Fit();
-    // comp1.Draw("", true);
-    // comp1.DrawTheo();
-    // comp2.Fit();
-    // comp2.Draw("", true);
-    // comp2.DrawTheo();
-    
+    comp1.Add("ADWA 1st Ex", "./Inputs/g1_ADWA_twofnr/21.g1");
+    //comp1.Add("DA1p-Watson 1st Ex", "./Inputs/gs_DA1pcorr_Watson/fort.203");
+    Angular::Comparator comp2 {"2nd Ex", xs.Get("g2")};
+    comp2.Add("ADWA", "./Inputs/gs_ADWA/fort.204");
+    comp2.Add("ADWA corrected front version", "./Inputs/gs_ADWA_newFront/fort.204");
+    //comp2.Add("DA1p-Watson 2nd Ex bound 200 keV", "./Inputs/gs_DA1pcorr_Watson/fort.204");
+    //comp2.Add("DA1p-Watson 2nd Ex bound 100 keV", "./Inputs/gs_DA1pcorr_Watson/fort.205");
+    //comp2.Add("DA1p-Watson 2nd Ex unbound", "./Inputs/gs_DA1pcorr_Watson/fort.206");
+    comp.Fit();
+    comp.Draw("", true);
+    comp.DrawTheo();
+    comp.DrawSFfromIntegral();
+    comp1.Fit();
+    comp1.Draw("", true);
+    comp1.DrawTheo();
+    comp2.Fit();
+    comp2.Draw("", true);
+    comp2.DrawTheo();
+
 
     auto* c0 {new TCanvas {"c0", "(d,p) canvas"}};
     c0->DivideSquare(2);

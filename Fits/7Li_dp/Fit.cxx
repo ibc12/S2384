@@ -6,6 +6,7 @@
 #include "FitModel.h"
 #include "FitUtils.h"
 #include "Interpolators.h"
+#include "PhysOMP.h"
 
 #include "ActMergerData.h"
 
@@ -40,7 +41,7 @@ void Fit()
     double gamma {0.05}; // common init gamma for all voigts
     inter.AddState("g0", {100, 0, sigma});
     inter.AddState("g1", {30, 0.98, sigma});
-    // inter.AddState("g2", {60, 2.2, sigma});
+    inter.AddState("g2", {60, 2.2, sigma});
     // inter.AddState("v0", {20, 3.2, sigma, 1});
     // inter.AddState("v1", {15, 5.4, sigma, 0.65});
     // inter.AddState("v2", {15, 6.1, sigma, 1});
@@ -66,7 +67,7 @@ void Fit()
 
     // Fitting range
     double exmin {-1};
-    double exmax {1.5};
+    double exmax {2.5};
 
     // Run!
     Fitters::RunFit(hEx.GetPtr(), exmin, exmax, model, inter.GetInitial(), inter.GetBounds(), inter.GetFixed(),
