@@ -33,7 +33,7 @@ void Fit()
     // Sigmas
     Interpolators::Sigmas sigmas;
     // sigmas.Read("../../Simulation/Outputs/7Li/sigmas_7Li_2H_1H.root");
-    sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_1H_2-1AngStr.root");
+    sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_1H_1-4AngStr.root");
 
     // Interface to fit
     Fitters::Interface inter;

@@ -64,11 +64,11 @@ ActRoot::TPCParameters tpc {"Actar"}; // TPC parameters
 constexpr double Gmean = 3000.0;      // Mean gain
 constexpr double theta = 0.7;         // Polya parameter
 // constexpr double thresholdPadCharge = 5.4857e6; // that n electrons corresponds to 0.8789 pC
-constexpr float thresholdPadCharge = 1e6; // that n electrons corresponds to 0.8789 pC
+constexpr float thresholdPadCharge = 1e4; // that n electrons corresponds to 0.8789 pC
 constexpr int yMinExclusionZone = 56;
 constexpr int yMaxExclusionZone = 71;
 constexpr int nPadsThreshold = 8; // Minimum number of pads outside the exclusion zone to consider an event valid
-constexpr int validationZone = 8;  // Minimum distance from the last voxel to the TPC borders in mm (from detector.conf)
+constexpr int validationZone = 8; // Minimum distance from the last voxel to the TPC borders in mm (from detector.conf)
 using voxelKey = std::tuple<int, int, int>; // ix,iy,iz
 
 std::pair<XYZPoint, XYZPoint> SampleVertex(double meanZ, double sigmaZ, TH3D* h, double lengthX)
@@ -565,9 +565,9 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
         tag = "_" + std::to_string(thread);
 
     // File to save data
-    TString fileName {
-        TString::Format("./Outputs/%s/test_nPads_threshold/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s_L1_8Thresh.root",
-                        beam.c_str(), target.c_str(), light.c_str(), Ex, neutronPS, protonPS, tag.c_str())};
+    TString fileName {TString::Format(
+        "./Outputs/%s/test_charge_threshold/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s_L1_1e4Thresh.root",
+        beam.c_str(), target.c_str(), light.c_str(), Ex, neutronPS, protonPS, tag.c_str())};
     auto outFile {new TFile(fileName, inspect ? "read" : "recreate")};
     auto* outTree {new TTree("SimulationTTree", "A TTree containing only our Eex obtained by simulation")};
     if(inspect)
@@ -707,7 +707,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
             theta3LabSampled = theta3Lab;
             // Apply angle resolution
             ApplyThetaRes(theta3Lab);
-            theta3CM = kin->ReconstructTheta3CMFromLab(TbeamCorr, theta3Lab);
+            theta3CM = kin->ReconstructTheta3CMFromLab(T3Lab, theta3Lab);
 
             // Heavy
             theta4Lab = kin->GetTheta4Lab();

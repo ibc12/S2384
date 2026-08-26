@@ -54,9 +54,9 @@ void Ang(bool isLab = false)
     else
     {
         thetaMin = 32.0;
-        thetaMax = 63; // It was 80
+        thetaMax = 80; // It was 80
     }
-    double thetaStep {5};
+    double thetaStep {7.5};
     Angular::Intervals ivs {thetaMin, thetaMax, S2384Fit::Exdp_7Li, thetaStep, 0};
     if(isLab)
         def.Foreach([&](float thetalab, double ex) { ivs.Fill(thetalab, ex); }, {"fThetaLight", "Ex"});

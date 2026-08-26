@@ -49,7 +49,6 @@ void Ang_lDependent(bool isLab = false)
                   {"theta3CM", "Eex", "weight"});
     ivs.TreatPS(0, 0.2);
     ivs.Draw();
-
     // Init fitter
     Angular::Fitter fitter {&ivs};
     fitter.SetAllowFreeMean(false);
