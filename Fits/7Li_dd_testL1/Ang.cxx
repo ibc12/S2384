@@ -88,10 +88,10 @@ void Ang(bool isLab = false)
     // "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.477_nPS_0_pPS_0_L1_1e6Thresh.root", isLab
     // ? "effLab" : "effCM");
     eff.Add("g0",
-            "../../Simulation/Outputs/7Li/test_nPads_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_8Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e5Thresh.root",
             isLab ? "effLab" : "effCM");
     eff.Add("g1",
-            "../../Simulation/Outputs/7Li/test_nPads_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_8Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e5Thresh.root",
             isLab ? "effLab" : "effCM");
     // Draw to check is fine
     eff.Draw();

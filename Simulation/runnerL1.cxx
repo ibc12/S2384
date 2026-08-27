@@ -10,7 +10,7 @@
 #include "./do_simuL1.cxx"
 #include "./plotter.cxx"
 
-void runnerL1(TString what = "simu", bool inspect = true)
+void runnerL1(TString what = "simu", bool inspect = false)
 {
     // Neutron and Proton phase space
     int neutronPS {0}; // number of neutrons in final state
@@ -19,8 +19,8 @@ void runnerL1(TString what = "simu", bool inspect = true)
     // Particles
     std::string beam {"7Li"};
     std::string target {"2H"};
-    std::string light {"2H"};
-    std::string heavy {"7Li"};
+    std::string light {"1H"};
+    std::string heavy {"8Li"};
     // Beam energy
     double Tbeam {};
     if(beam == "7Li")

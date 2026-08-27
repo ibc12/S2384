@@ -1,16 +1,18 @@
+#include "ActCutsManager.h"
 #include "ActMergerData.h"
 #include "ActTPCData.h"
 
 #include "ROOT/RDataFrame.hxx"
 
 #include <TCanvas.h>
+#include <TF1.h>
 #include <TFile.h>
 #include <TH2D.h>
-#include <TProfile.h>
-#include <TF1.h>
 #include <TPaveText.h>
+#include <TProfile.h>
 
 #include <cmath>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -92,29 +94,53 @@ TPaveText* MakeParamBox(TF1* f)
 
 void PlotCorrelations_Simu_Exp()
 {
-    std::vector<std::string> files = {
-        "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_9e5Thresh.root",
-        "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_8e5Thresh.root",
-        "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_7e5Thresh.root",
-        "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_6e5Thresh.root",
-        "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_5e5Thresh.root",
-        "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_4e5Thresh.root",
-        "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_3e5Thresh.root",
-        "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_2e5Thresh.root",
-        "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e5Thresh.root",
-        "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_9e4Thresh.root",
-        "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_8e4Thresh.root",
-        "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_7e4Thresh.root",
-        "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_6e4Thresh.root",
-        "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_5e4Thresh.root",
-        "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_4e4Thresh.root",
-        "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_3e4Thresh.root",
-        "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_2e4Thresh.root",
-        "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e4Thresh.root",
-    };
+    std::string particle = "p";
+    std::vector<std::string> files {};
+    if(particle == "d")
+    {
+
+        files = {
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_9e5Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_8e5Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_7e5Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_6e5Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_5e5Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_4e5Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_3e5Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_2e5Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e5Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_9e4Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_8e4Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_7e4Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_6e4Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_5e4Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_4e4Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_3e4Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_2e4Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e4Thresh.root",
+        };
+    }
+    else if(particle == "p")
+    {
+        files = {
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e5Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_9e4Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_8e4Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_7e4Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_6e4Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_5e4Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_4e4Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_3e4Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_2e4Thresh.root",
+            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e4Thresh.root",
+        };
+    }
 
     // --- Datos experimentales (se construyen una sola vez) ---
-    ROOT::RDataFrame df_exp {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_7Li_d_d_filtered.root"};
+    ROOT::DisableImplicitMT();
+    ROOT::RDataFrame df_exp {
+        "Final_Tree",
+        TString::Format("../../PostAnalysis/Outputs/tree_ex_F_7Li_d_%s_filtered.root", particle.c_str()).Data()};
     auto df_exp_filtered =
         df_exp.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; }, {"MergerData"});
 
@@ -139,7 +165,7 @@ void PlotCorrelations_Simu_Exp()
                             .Define("TL", [](ActRoot::MergerData& m) { return m.fLight.fTL; }, {"MergerData"});
 
     auto hist_theta_nPads_exp = df_exp_nPads.Histo2D(
-        {"hist_theta_nPads_exp", "Theta vs nPads (Exp); theta3Lab [deg]; nPads", 100, 70, 90, 100, 0, 100}, "theta3Lab",
+        {"hist_theta_nPads_exp", "Theta vs nPads (Exp); theta3Lab [deg]; nPads", 400, 70, 190, 100, 0, 100}, "theta3Lab",
         "nPads");
     auto hist_TL_nPads_exp = df_exp_nPads.Histo2D(
         {"hist_TL_nPads_exp", "TL vs nPads (Exp); TL [mm]; nPads", 100, 0, 300, 100, 0, 100}, "TL", "nPads");
@@ -160,7 +186,7 @@ void PlotCorrelations_Simu_Exp()
         auto nameTheta = "hist_theta_nPads_simu_" + std::to_string(i);
         auto titleTheta = "Theta vs nPads (Simu " + label + "); theta3Lab [deg]; nPads";
         histsThetaSimu.push_back(
-            df_simu.Histo2D({nameTheta.c_str(), titleTheta.c_str(), 100, 70, 90, 100, 0, 100}, "theta3Lab", "nPads"));
+            df_simu.Histo2D({nameTheta.c_str(), titleTheta.c_str(), 400, 70, 190, 100, 0, 100}, "theta3Lab", "nPads"));
 
         auto nameTL = "hist_TL_nPads_simu_" + std::to_string(i);
         auto titleTL = "TL vs nPads (Simu " + label + "); TL [mm]; nPads";
