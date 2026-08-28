@@ -92,7 +92,7 @@ TPaveText* MakeParamBox(TF1* f)
     return pave;
 }
 
-void PlotCorrelations_Simu_Exp()
+void PlotCorrelations_Simu_Exp_ChargeThreshold()
 {
     std::string particle = "p";
     std::vector<std::string> files {};
