@@ -31,8 +31,7 @@ void GetNPadsOutExclusionZone()
         {
             return (m.fRun == 66 && m.fEntry == 292) || (m.fRun == 66 && m.fEntry == 973) ||
                    (m.fRun == 66 && m.fEntry == 1554) || (m.fRun == 66 && m.fEntry == 6583) ||
-                   (m.fRun == 66 && m.fEntry == 8012) || (m.fRun == 67 && m.fEntry == 23132) ||
-                   (m.fRun == 70 && m.fEntry == 5435) || (m.fRun == 67 && m.fEntry == 27439);
+                   (m.fRun == 66 && m.fEntry == 8012) || (m.fRun == 67 && m.fEntry == 23132);
         },
         {"MergerData"});
 

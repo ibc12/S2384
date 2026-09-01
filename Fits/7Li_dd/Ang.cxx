@@ -81,6 +81,7 @@ void Ang(bool isLab = false)
     //     eff.Add(peak, inputPath.Data(), isLab ? "effLab" : "effCM");
     // }
     eff.Add("g0", "../../Simulation/Outputs/7Li/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
+    eff.Scale(0.95);
     eff.Add("g1", "../../Simulation/Outputs/7Li/2H_2H_TRIUMF_Eex_0.477_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
     // Draw to check is fine
     eff.Draw();

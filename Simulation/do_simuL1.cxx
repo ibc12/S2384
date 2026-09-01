@@ -567,7 +567,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
 
     // File to save data
     TString fileName {
-        TString::Format("./Outputs/%s/test_ang_straggling_L1/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s_L1_3-4AngStr.root",
+        TString::Format("./Outputs/%s/test_charge_threshold/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s_L1_3e4Thresh.root",
                         beam.c_str(), target.c_str(), light.c_str(), Ex, neutronPS, protonPS, tag.c_str())};
     auto outFile {new TFile(fileName, inspect ? "read" : "recreate")};
     auto* outTree {new TTree("SimulationTTree", "A TTree containing only our Eex obtained by simulation")};
