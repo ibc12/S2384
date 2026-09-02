@@ -5,6 +5,7 @@
 #include "ActMergerData.h"
 #include "ActParticle.h"
 #include "ActSRIM.h"
+#include "ActCutsManager.h"
 
 #include "ROOT/RDataFrame.hxx"
 #include "Rtypes.h"

@@ -19,6 +19,7 @@
 #include <TRandom3.h>
 #include <TSpline.h>
 #include <TStyle.h>
+#include <TSystem.h>
 
 #include <Math/Point3D.h>
 #include <Math/Vector3D.h>
@@ -428,6 +429,10 @@ BuildThresholdPlots(double threshold, int index, const std::map<voxelKey, ActRoo
 // run of the macro. For each value, the charge maps (XY/XZ/YZ) are plotted and the
 // number of pads out of the exclusion zone is printed / summarized, without having
 // to rerun the SRIM+diffusion simulation (which is the expensive part).
+//
+// All canvases are also saved as PNG under ./Figures/, one subfolder per event
+// (./Figures/<eventName>/...), plus the two cross-event summary plots directly
+// under ./Figures/. Set saveFigures = false below to skip saving.
 void PlotTPCEvent_DifferentThresholds()
 {
     PrettyStyle();
@@ -441,6 +446,10 @@ void PlotTPCEvent_DifferentThresholds()
     // off makes every histogram a plain in-memory object, so per-event copies coexist safely.
     TH1::AddDirectory(kFALSE);
 
+    bool saveFigures = true;
+    if(saveFigures)
+        gSystem->mkdir("./Figures", true);
+
     auto* srim = new ActPhysics::SRIM;
     srim->ReadTable("light", "../../Calibrations/SRIM/1H_900mb_CF4_95-5.txt");
     srim->ReadTable("lightD", "../../Calibrations/SRIM/2H_900mb_CF4_95-5.txt");
@@ -451,22 +460,64 @@ void PlotTPCEvent_DifferentThresholds()
     //             110); // mm, starting point in the middle of the TPC for xy and 110 mm from the pad plane.
 
     std::vector<double> chargeThresholds = {1e3, 1e4, 2e4, 3e4, 4e4, 5e4, 6e4, 7e4, 8e4, 9e4, 1e5}; // in electrons
-
-    std::vector<double> thetaLights = {79, 77.2, 81.14, 149.5, 128.5, 149.4};
-    std::vector<double> phiLights = {-122.8, 105.5, -100.6, -148.3, -87, -44};
-    std::vector<double> thetaHeavy = {4.8, 5.5, 3.64, 2.8, 2.76, 1.36};
-    std::vector<double> phiHeavy = {43.43, -72.73, 72.3, 30.57, 104.3, 96.3};
-    std::vector<double> rp_x = {200.5, 16.4, 198., 208., 129.7, 149.8}; // in mm
-    std::vector<double> rp_y = {128.5, 123.6, 126., 126., 123.6, 123.4}; // in mm
-    std::vector<double> ranges = {30.8, 115.8, 23.4, 99.23, 136, 112.7};
-    std::vector<std::string> lightStrings = {"lightD", "lightD", "lightD", "light", "light", "light"};
-
-    // Event identifiers, same ordering/positions as the lists above (index i <-> eventNames[i])
-    std::vector<std::string> eventNames = {"r66e292", "r66e973", "r66e1554", "r66e6583", "r66e8012", "r67e23132"};
+                                                                                                    //
+    // std::vector<double> thetaLights = {79, 77.2, 81.14, 149.5, 128.5, 149.4};
+    // std::vector<double> phiLights = {-122.8, 105.5, -100.6, -148.3, -87, -44};
+    // std::vector<double> thetaHeavy = {4.8, 5.5, 3.64, 2.8, 2.76, 1.36};
+    // std::vector<double> phiHeavy = {43.43, -72.73, 72.3, 30.57, 104.3, 96.3};
+    // std::vector<double> rp_x = {200.5, 16.4, 198., 208., 129.7, 149.8};  // in mm
+    // std::vector<double> rp_y = {128.5, 123.6, 126., 126., 123.6, 123.4}; // in mm
+    // std::vector<double> ranges = {30.8, 115.8, 23.4, 99.23, 136, 112.7};
+    // std::vector<std::string> lightStrings = {"lightD", "lightD", "lightD", "light", "light", "light"};
+    //
+    // // Event identifiers, same ordering/positions as the lists above (index i <-> eventNames[i])
+    // std::vector<std::string> eventNames = {"r66e292", "r66e973", "r66e1554", "r66e6583", "r66e8012", "r67e23132"};
 
     // Experimental pads-out-of-exclusion-zone count for each event, same ordering as eventNames.
     // Used below to build the simulated/experimental ratio vs threshold.
-    std::vector<double> nPadsExperimental = {13, 278, 12, 50, 141, 100};
+    // std::vector<double> nPadsExperimental = {13, 278, 12, 50, 141, 100};
+    std::vector<double> nPadsExperimental = {46,  278, 92, 63, 22,  75, 13,  58,  20, 90, 26,
+                                             103, 14,  29, 50, 141, 75, 158, 100, 66, 135};
+    std::vector<std::string> eventNames = {"r66e152",   "r66e973",   "r66e1144", "r66e2479", "r66e2486",  "r66e2789",
+                                           "r66e2887",  "r66e3680",  "r66e3804", "r66e3863", "r66e3876",  "r66e4792",
+                                           "r66e5152",  "r66e5315",  "r66e6583", "r66e8012", "r66e32485", "r67e17514",
+                                           "r67e23132", "r67e35434", "r67e35453"};
+    std::vector<int> runs = {66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 67, 67, 67, 67};
+    std::vector<int> entries = {152,  973,  1144, 2479, 2486, 2789,  2887,  3680,  3804,  3863, 3876,
+                                4792, 5152, 5315, 6583, 8012, 32485, 17514, 23132, 35434, 35453};
+    std::vector<double> thetaLights = {79.43,  77.2,  78.3,  77.61, 81.09, 77.15,  79.65, 75.25, 81.84,  76.39, 80.17,
+                                       140.94, 80.15, 80.72, 149.5, 128.5, 141.32, 128.4, 149.4, 139.34, 128.13};
+    std::vector<double> phiLights = {58.5,   105.5,  -101.7, -41.35, -58.18,  -138.94, 133.63,
+                                     94.22,  -107.5, -60.1,  107.21, -140.66, -120.08, -122.73,
+                                     -148.3, -87,    46.35,  54.54,  -44,     125.5,   -106.84};
+    std::vector<double> thetaHeavy = {4.44, 5.5,  5.73, 4.7, 3.29, 5.0,  5.67, 7.33, 4.19, 4.83, 4.25,
+                                      3.41, 3.85, 4.74, 2.8, 2.76, 2.06, 3.1,  1.36, 2.91, 2.94};
+    std::vector<double> phiHeavy = {-118.5, -72.73, 66.6,    134.97,  123.58, 52.42,  -42.21,
+                                    5.97,   65.35,  117.88,  -72.64,  24.9,   56.37,  51.99,
+                                    30.57,  104.3,  -140.01, -117.46, 96.3,   -33.27, 77.7};
+    std::vector<double> rp_x = {138.9,  16.4,   202.4, 25.65, 200.81, 17.25,  204.17, 222.35, 146.79, 117.25, 108.09,
+                                200.29, 235.72, 13.86, 208.,  129.7,  109.76, 125.44, 149.8,  137.91, 99.85};
+    std::vector<double> rp_y = {125.,  123.6, 124.1,  123.73, 123.93, 123.84, 121.98, 122.82, 126.52, 123.71, 128.13,
+                                123.2, 124.9, 124.58, 126.,   123.6,  127.9,  120.25, 123.4,  122.64, 123.29};
+    std::vector<double> ranges = {59.19, 115.8, 82.4,  77.21, 29.65, 105.83, 44.53,  64.13, 29.09, 87.58, 33.34,
+                                  128.8, 25.84, 34.02, 99.23, 136,   95.07,  164.73, 112.7, 98.08, 136.73};
+    std::vector<std::string> lightStrings = {"lightD", "lightD", "lightD", "lightD", "lightD", "lightD", "lightD",
+                                             "lightD", "lightD", "lightD", "lightD", "light",  "lightD", "lightD",
+                                             "light",  "light",  "light",  "light",  "light",  "light",  "light"};
+
+    // Only short events
+    // std::vector<double> nPadsExperimental = {22 , 13 , 20 , 26 , 14 , 29};
+    // std::vector<std::string> eventNames = {"r66e2486", "r66e2887", "r66e3804", "r66e3876", "r66e5152", "r66e5315"};
+    // std::vector<int> runs = {66, 66, 66, 66, 66, 66};
+    // std::vector<int> entries = {2486, 2887, 3804, 3876, 5152, 5315};
+    // std::vector<double> thetaLights = {81.09, 79.65, 81.84, 80.17, 80.15, 80.72};
+    // std::vector<double> phiLights = {-58.18, 133.63, -107.5, 107.21, -120.08, -122.73};
+    // std::vector<double> thetaHeavy = {3.29, 5.67, 4.19, 4.25, 3.85, 4.74};
+    // std::vector<double> phiHeavy = {123.58, -42.21, 65.35, -72.64, 56.37, 51.99};
+    // std::vector<double> rp_x = {200.81, 204.17, 146.79, 108.09, 235.72, 13.86};
+    // std::vector<double> rp_y = {123.93, 121.98, 126.52, 128.13, 124.9, 124.58};
+    // std::vector<double> ranges = {29.65, 44.53, 29.09, 33.34, 25.84, 34.02};
+    // std::vector<std::string> lightStrings = {"lightD", "lightD", "lightD", "lightD", "lightD", "lightD"};
 
     // Collect the per-event "pads out of exclusion zone vs threshold" graphs so we can
     // also draw them together at the very end for a quick cross-event comparison.
@@ -480,6 +531,11 @@ void PlotTPCEvent_DifferentThresholds()
         const std::string& eventName = eventNames[wantedIdx];
         std::cout << "\n\n########## Processing event " << eventName << " (idx = " << wantedIdx << ") ##########"
                   << std::endl;
+
+        // Per-event output folder for the PNGs generated below
+        TString figDir = TString::Format("./Figures/DifferentThresholds/%s", eventName.c_str());
+        if(saveFigures)
+            gSystem->mkdir(figDir, true);
 
         std::string lightString = lightStrings[wantedIdx];
 
@@ -508,16 +564,16 @@ void PlotTPCEvent_DifferentThresholds()
 
         // ================= Primary electrons plots (units: mm) =================
         TH2D* hXY = new TH2D(TString::Format("hXY_%s", eventName.c_str()),
-                             TString::Format("XY (%s);X [mm];Y [mm]", eventName.c_str()), tpc.X(), 0, tpc.X(),
-                             tpc.Y(), 0, tpc.Y());
+                             TString::Format("XY (%s);X [mm];Y [mm]", eventName.c_str()), tpc.X(), 0, tpc.X(), tpc.Y(),
+                             0, tpc.Y());
 
         TH2D* hXZ = new TH2D(TString::Format("hXZ_%s", eventName.c_str()),
-                             TString::Format("XZ (%s);X [mm];Z [mm]", eventName.c_str()), tpc.X(), 0, tpc.X(),
-                             tpc.Z(), 0, tpc.Z());
+                             TString::Format("XZ (%s);X [mm];Z [mm]", eventName.c_str()), tpc.X(), 0, tpc.X(), tpc.Z(),
+                             0, tpc.Z());
 
         TH2D* hYZ = new TH2D(TString::Format("hYZ_%s", eventName.c_str()),
-                             TString::Format("YZ (%s);Z [mm];Y [mm]", eventName.c_str()), tpc.Z(), 0, tpc.Z(),
-                             tpc.Y(), 0, tpc.Y());
+                             TString::Format("YZ (%s);Z [mm];Y [mm]", eventName.c_str()), tpc.Z(), 0, tpc.Z(), tpc.Y(),
+                             0, tpc.Y());
 
         // Fill the primary electrons plots
         for(const auto& e : electronsLight)
@@ -552,6 +608,9 @@ void PlotTPCEvent_DifferentThresholds()
         cEle->cd(3);
         hYZ->Draw("COLZ");
 
+        if(saveFigures)
+            cEle->SaveAs(figDir + "/electrons.png");
+
         // ================= Charge profile canvas (independent of threshold) =================
         TCanvas* cProfile = new TCanvas(TString::Format("cProfile_%s", eventName.c_str()),
                                         TString::Format("Charge profile - %s", eventName.c_str()), 1500, 500);
@@ -575,11 +634,13 @@ void PlotTPCEvent_DifferentThresholds()
             "Charge profile shifted to origin (%s);Track length from start of track [mm];Charge", eventName.c_str()));
         hShifted->Draw("HIST");
 
+        if(saveFigures)
+            cProfile->SaveAs(figDir + "/profile.png");
+
         // Save hShifted for later fit: create output file and write the histogram there.
         {
-            TFile fout(
-                TString::Format("./Outputs/hShifted_profile_%s_%s.root", eventName.c_str(), lightString.c_str()),
-                "RECREATE");
+            TFile fout(TString::Format("./Outputs/hShifted_profile_%s_%s.root", eventName.c_str(), lightString.c_str()),
+                       "RECREATE");
             hShifted->Write();
             fout.Close();
         }
@@ -618,12 +679,15 @@ void PlotTPCEvent_DifferentThresholds()
             cThr->cd(3);
             res.hYZq->Draw("COLZ");
 
+            if(saveFigures)
+                cThr->SaveAs(TString::Format("%s/thr%02zu.png", figDir.Data(), i));
+
             results.push_back(res);
         }
 
         // ================= Summary: pads out of exclusion zone vs threshold (this event) =================
-        std::cout << "\n===== Summary for " << eventName << ": pads out of exclusion zone vs threshold ====="
-                  << std::endl;
+        std::cout << "\n===== Summary for " << eventName
+                  << ": pads out of exclusion zone vs threshold =====" << std::endl;
         std::cout << std::left << std::setw(20) << "Threshold [e-]" << "Pads out of exclusion zone" << std::endl;
         for(const auto& res : results)
             std::cout << std::left << std::setw(20) << res.threshold << res.nPadsOutExclusionZone << std::endl;
@@ -637,13 +701,15 @@ void PlotTPCEvent_DifferentThresholds()
             gSummary->SetPoint(gSummary->GetN(), res.threshold, res.nPadsOutExclusionZone);
 
         TCanvas* cSummary = new TCanvas(TString::Format("cSummary_%s", eventName.c_str()),
-                                        TString::Format("Pads vs threshold summary - %s", eventName.c_str()), 700,
-                                        500);
+                                        TString::Format("Pads vs threshold summary - %s", eventName.c_str()), 700, 500);
         cSummary->SetLogx();
         gSummary->SetMarkerStyle(20);
         gSummary->SetMarkerColor(kAzure + 2);
         gSummary->SetLineColor(kAzure + 2);
         gSummary->Draw("APL");
+
+        if(saveFigures)
+            cSummary->SaveAs(figDir + "/summary_pads_vs_threshold.png");
 
         gSummaryPerEvent.push_back(gSummary);
 
@@ -665,6 +731,9 @@ void PlotTPCEvent_DifferentThresholds()
         gRatio->SetMarkerColor(kAzure + 2);
         gRatio->SetLineColor(kAzure + 2);
         gRatio->Draw("APL");
+
+        if(saveFigures)
+            cRatio->SaveAs(figDir + "/ratio_vs_threshold.png");
 
         gRatioPerEvent.push_back(gRatio);
     }
@@ -715,6 +784,9 @@ void PlotTPCEvent_DifferentThresholds()
     }
     legAll->Draw();
 
+    if(saveFigures)
+        cSummaryAll->SaveAs("./Figures/summary_pads_vs_threshold_all_events.png");
+
     // ================= Combined simu/exp ratio summary across all events =================
     TCanvas* cRatioAll = new TCanvas("cRatioAll", "Simu/Exp pads ratio - all events", 700, 500);
     cRatioAll->SetLogx();
@@ -763,4 +835,7 @@ void PlotTPCEvent_DifferentThresholds()
     lineOne->Draw();
 
     legRatioAll->Draw();
+
+    if(saveFigures)
+        cRatioAll->SaveAs("./Figures/ratio_all_events.png");
 }

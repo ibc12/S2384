@@ -406,6 +406,37 @@ ProjectionPlots BuildProjectionPlots(const std::map<voxelKey, ActRoot::Voxel>& n
 }
 
 // ============================================================
+// Guarda las tres proyecciones normalizadas en archivos PNG.
+// ============================================================
+void SaveProjectionPlots(const ProjectionPlots& p,
+                         const TString& outDir,
+                         const TString& tag)
+{
+    gSystem->mkdir(outDir, true);
+
+    auto* c = new TCanvas(
+        TString::Format("cSaveProjections_%s", tag.Data()),
+        "Normalized projections",
+        1800,
+        600);
+
+    c->Divide(3, 1);
+
+    c->cd(1);
+    p.hXY->Draw("COLZ");
+
+    c->cd(2);
+    p.hXZ->Draw("COLZ");
+
+    c->cd(3);
+    p.hYZ->Draw("COLZ");
+
+    c->SaveAs(TString::Format("%s/projections_normalized.png", outDir.Data()));
+
+    delete c;
+}
+
+// ============================================================
 // Rellena un histograma NUEVO, con un binning comun, a partir de los puntos
 // (x,y) de un TGraph, aplicando un desplazamiento en x.
 // ============================================================
@@ -514,22 +545,67 @@ void PlotTPCEvent_ChargeDistribution()
     // std::vector<std::string> lightStrings = {"lightD", "lightD", "lightD", "light", "light", "light"};
 
     // ================= 2. Events without short ones =================
-    std::vector<std::string> eventNames = {"r66e152", "r66e973", "r66e1144", "r66e6583", "r66e8012", "r67e23132"};
-    std::vector<int> runs = {66, 66, 66, 66, 66, 67};
-    std::vector<int> entries = {152, 973, 1144, 6583, 8012, 23132};
+    // std::vector<std::string> eventNames = {"r66e152", "r66e973", "r66e1144", "r66e6583", "r66e8012", "r67e23132"};
+    // std::vector<int> runs = {66, 66, 66, 66, 66, 67};
+    // std::vector<int> entries = {152, 973, 1144, 6583, 8012, 23132};
+    //
+    // std::vector<double> thetaLights = {79.43, 77.2, 78.3, 149.5, 128.5, 149.4};
+    // std::vector<double> phiLights = {58.5, 105.5, -101.7, -148.3, -87, -44};
+    // std::vector<double> thetaHeavy = {4.44, 5.5, 5.73, 2.8, 2.76, 1.36};
+    // std::vector<double> phiHeavy = {-118.5, -72.73, 66.6, 30.57, 104.3, 96.3};
+    // std::vector<double> rp_x = {138.9, 16.4, 202.4, 208., 129.7, 149.8};
+    // std::vector<double> rp_y = {125., 123.6, 124.1, 126., 123.6, 123.4};
+    // std::vector<double> ranges = {59.19, 115.8, 82.4, 99.23, 136, 112.7};
+    // std::vector<std::string> lightStrings = {"lightD", "lightD", "lightD", "light", "light", "light"};
 
-    std::vector<double> thetaLights = {79.43, 77.2, 78.3, 149.5, 128.5, 149.4};
-    std::vector<double> phiLights = {58.5, 105.5, -101.7, -148.3, -87, -44};
-    std::vector<double> thetaHeavy = {4.44, 5.5, 5.73, 2.8, 2.76, 1.36};
-    std::vector<double> phiHeavy = {-118.5, -72.73, 66.6, 30.57, 104.3, 96.3};
-    std::vector<double> rp_x = {138.9, 16.4, 202.4, 208., 129.7, 149.8};
-    std::vector<double> rp_y = {125., 123.6, 124.1, 126., 123.6, 123.4};
-    std::vector<double> ranges = {59.19, 115.8, 82.4, 99.23, 136, 112.7};
-    std::vector<std::string> lightStrings = {"lightD", "lightD", "lightD", "light", "light", "light"};
+    // ================= 2. More events =================
+    std::vector<std::string> eventNames = {"r66e152",   "r66e973",   "r66e1144", "r66e2479", "r66e2486",  "r66e2789",
+                                           "r66e2887",  "r66e3680",  "r66e3804", "r66e3863", "r66e3876",  "r66e4792",
+                                           "r66e5152",  "r66e5315",  "r66e6583", "r66e8012", "r66e32485", "r67e17514",
+                                           "r67e23132", "r67e35434", "r67e35453"};
+    std::vector<int> runs = {66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 67, 67, 67, 67};
+    std::vector<int> entries = {152,  973,  1144, 2479, 2486, 2789,  2887,  3680,  3804,  3863, 3876,
+                                4792, 5152, 5315, 6583, 8012, 32485, 17514, 23132, 35434, 35453};
+    std::vector<double> thetaLights = {79.43,  77.2,  78.3,  77.61, 81.09, 77.15,  79.65, 75.25, 81.84,  76.39, 80.17,
+                                       140.94, 80.15, 80.72, 149.5, 128.5, 141.32, 128.4, 149.4, 139.34, 128.13};
+    std::vector<double> phiLights = {58.5,   105.5,  -101.7, -41.35, -58.18,  -138.94, 133.63,
+                                     94.22,  -107.5, -60.1,  107.21, -140.66, -120.08, -122.73,
+                                     -148.3, -87,    46.35,  54.54,  -44,     125.5,   -106.84};
+    std::vector<double> thetaHeavy = {4.44, 5.5,  5.73, 4.7, 3.29, 5.0,  5.67, 7.33, 4.19, 4.83, 4.25,
+                                      3.41, 3.85, 4.74, 2.8, 2.76, 2.06, 3.1,  1.36, 2.91, 2.94};
+    std::vector<double> phiHeavy = {-118.5, -72.73, 66.6,    134.97,  123.58, 52.42,  -42.21,
+                                    5.97,   65.35,  117.88,  -72.64,  24.9,   56.37,  51.99,
+                                    30.57,  104.3,  -140.01, -117.46, 96.3,   -33.27, 77.7};
+    std::vector<double> rp_x = {138.9,  16.4,   202.4, 25.65, 200.81, 17.25,  204.17, 222.35, 146.79, 117.25, 108.09,
+                                200.29, 235.72, 13.86, 208.,  129.7,  109.76, 125.44, 149.8,  137.91, 99.85};
+    std::vector<double> rp_y = {125.,  123.6, 124.1,  123.73, 123.93, 123.84, 121.98, 122.82, 126.52, 123.71, 128.13,
+                                123.2, 124.9, 124.58, 126.,   123.6,  127.9,  120.25, 123.4,  122.64, 123.29};
+    std::vector<double> ranges = {59.19, 115.8, 82.4,  77.21, 29.65, 105.83, 44.53,  64.13, 29.09, 87.58, 33.34,
+                                  128.8, 25.84, 34.02, 99.23, 136,   95.07,  164.73, 112.7, 98.08, 136.73};
+    std::vector<std::string> lightStrings = {"lightD", "lightD", "lightD", "lightD", "lightD", "lightD", "lightD",
+                                             "lightD", "lightD", "lightD", "lightD", "light",  "lightD", "lightD",
+                                             "light",  "light",  "light",  "light",  "light",  "light",  "light"};
+
+    // ================= 2. Individual events =================
+    // std::vector<std::string> eventNames = {"r67e35453"};
+    // std::vector<int> runs = {67};
+    // std::vector<int> entries = {35453};
+    // std::vector<double> thetaLights = {128.13};
+    // std::vector<double> phiLights = {-106.84};
+    // std::vector<double> thetaHeavy = {2.94};
+    // std::vector<double> phiHeavy = {77.7};
+    // std::vector<double> rp_x = {99.85};
+    // std::vector<double> rp_y = {123.29};
+    // std::vector<double> ranges = {136.73};
+    // std::vector<std::string> lightStrings = {"light"};
 
     // IMPORTANT: use a threshold appropriate for the experimental charge scale.
     // Charge thresholds to compare. Adjust these values to the experimental charge scale.
     std::vector<double> chargeThresholds = {1e2, 7e2, 1e3, 5e3, 7e3, 9e3, 1e4, 2e4, 3e4, 4e4, 7e4, 1e5, 4e5, 1e6};
+
+    bool saveFigures = true;
+    if(saveFigures)
+        gSystem->mkdir("./Figures/ChargeDistribution", true);
 
     // ================= 3. Experimental data =================
     std::string expFile = "../../PostAnalysis/Outputs/tree_preprocess_F_7Li.root";
@@ -551,6 +627,11 @@ void PlotTPCEvent_ChargeDistribution()
         const std::string& eventName = eventNames[i];
         std::cout << "\n\n########## " << eventName << " (run " << runs[i] << ", entry " << entries[i] << ") ##########"
                   << std::endl;
+
+        // Per-event output folder for the PNGs generated below
+        TString figDir = TString::Format("./Figures/ChargeDistribution/%s", eventName.c_str());
+        if(saveFigures)
+            gSystem->mkdir(figDir, true);
 
         // ---- Simulation of this event ----
         double thLight = thetaLights[i] * TMath::DegToRad();
@@ -726,26 +807,67 @@ void PlotTPCEvent_ChargeDistribution()
             rmsByThr[k].push_back(rms);
             ratiosByThr[k].push_back(hRatio);
 
-            // ---- 2D normalized projections: keep individual canvas ----
-            auto projSim = BuildProjectionPlots(normSim, tpc, TString::Format("sim_%s_thr%zu", eventName.c_str(), k),
-                                                "Simulation");
+            // ---- 2D normalized projections ----
+            auto projSim = BuildProjectionPlots(
+                normSim,
+                tpc,
+                TString::Format("sim_%s_thr%zu", eventName.c_str(), k),
+                TString::Format("Simulation - threshold %.3g e^{-}", thr));
 
-            TCanvas* cProj = new TCanvas(TString::Format("cProj_%s_thr%zu", eventName.c_str(), k),
-                                         TString::Format("Normalized maps %s thr=%.3g", eventName.c_str(), thr), 1500,
-                                         hasExpThr ? 900 : 500);
+            // Guardar las proyecciones simuladas para cada threshold.
+            if(saveFigures)
+            {
+                TString thrDirName = TString::Format("thr_%g", thr);
+                TString simDir = TString::Format("%s/%s", figDir.Data(), thrDirName.Data());
+
+                SaveProjectionPlots(
+                    projSim,
+                    simDir,
+                    TString::Format("sim_%s_thr%zu", eventName.c_str(), k));
+            }
+
+            // El experimental es el mismo para todos los thresholds.
+            // Se construye para cada canvas combinado, pero se guarda solo
+            // una vez por evento en la carpeta Experimental.
+            ProjectionPlots projExp;
 
             if(hasExpThr)
             {
-                auto projExp = BuildProjectionPlots(
-                    normExp, tpc, TString::Format("exp_%s_thr%zu", eventName.c_str(), k), "Experiment");
+                projExp = BuildProjectionPlots(
+                    normExp,
+                    tpc,
+                    TString::Format("exp_%s_thr%zu", eventName.c_str(), k),
+                    "Experiment");
 
+                if(saveFigures && k == 0)
+                {
+                    TString expDir = TString::Format("%s/Experimental", figDir.Data());
+
+                    SaveProjectionPlots(
+                        projExp,
+                        expDir,
+                        TString::Format("exp_%s", eventName.c_str()));
+                }
+            }
+
+            // ---- Combined canvas: Experiment (top) / Simulation (bottom) ----
+            TCanvas* cProj = new TCanvas(
+                TString::Format("cProj_%s_thr%zu", eventName.c_str(), k),
+                TString::Format("Normalized maps %s thr=%.3g", eventName.c_str(), thr),
+                1500,
+                hasExpThr ? 900 : 500);
+
+            if(hasExpThr)
+            {
                 cProj->Divide(3, 2);
+
                 cProj->cd(1);
                 projExp.hXY->Draw("COLZ");
                 cProj->cd(2);
                 projExp.hXZ->Draw("COLZ");
                 cProj->cd(3);
                 projExp.hYZ->Draw("COLZ");
+
                 cProj->cd(4);
                 projSim.hXY->Draw("COLZ");
                 cProj->cd(5);
@@ -756,6 +878,7 @@ void PlotTPCEvent_ChargeDistribution()
             else
             {
                 cProj->Divide(3, 1);
+
                 cProj->cd(1);
                 projSim.hXY->Draw("COLZ");
                 cProj->cd(2);

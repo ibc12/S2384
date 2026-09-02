@@ -1,5 +1,6 @@
 #ifndef PIPE3_FILTER_H
 #define PIPE3_FILTER_H
+#include "ActCutsManager.h"
 #include "ActKinematics.h"
 #include "ActMergerData.h"
 #include "ActParticle.h"
@@ -292,6 +293,20 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
     //     },
     //     {"MergerData", "Ex"});
     // out.close();
+    ActRoot::CutsManager<std::string> cuts;
+    cuts.ReadCut("elastic", TString::Format("./Cuts/elastic_events_7Li.root").Data());
+    auto dfOut = dfFilter.Filter(
+        [&](ActRoot::MergerData& m)
+        {
+            if(m.fLight.IsFilled() == false)
+                return (cuts.IsInside("elastic", m.fThetaLight, m.fLight.fQtotal));
+            else
+                return false;
+        },
+        {"MergerData"});
+    auto outfileElastic {
+        TString::Format("./Outputs/tree_ex%s_%s_elastic.root", isFiltered ? "_F" : "", beam.c_str())};
+    dfOut.Snapshot("Final_Tree", outfileElastic);
 
     // Save canvases
     if(savePlots)

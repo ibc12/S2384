@@ -32,7 +32,9 @@ void checkScaleFactor_chargeThreshold(bool isLab = false)
 
     ROOT::EnableImplicitMT();
 
-    ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_7Li_d_d_filtered.root"};
+    // ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_7Li_d_d_filtered.root"};
+    ROOT::RDataFrame df {"Final_Tree", "./Inputs/tree_ex_F_7Li_elastic.root"}; // all elastic data, got from kinematic
+                                                                               // plot Qtot vs ThetaLab
     auto def {df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; },
                         {"MergerData"})}; // only silicons
 

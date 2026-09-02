@@ -531,17 +531,17 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     // std::ofstream out("./Outputs/pid_events_z1Front_11Li.dat");
     // dfOut.Foreach([&](ActRoot::MergerData& m) { m.Stream(out); }, {"MergerData"});
     // out.close();
-    cuts.ReadCut("lowQ", TString::Format("./cuts_lowQL1.root").Data());
-    auto dfOut = df.Filter(
-        [&](ActRoot::MergerData& m, ActRoot::ModularData& mod)
-        {
-            if(mod.Get("GATCONF") != 8)
-                return false;
-            else
-                return (cuts.IsInside("lowQ", m.fLight.fRawTL, m.fLight.fQtotal));
-        },
-        {"MergerData", "ModularData"});
-    std::ofstream out("./Outputs/pid_events_lowQ.dat");
-    dfOut.Foreach([&](ActRoot::MergerData& m) { m.Stream(out); }, {"MergerData"});
-    out.close();
+    // cuts.ReadCut("lowQ", TString::Format("./cuts_lowQL1.root").Data());
+    // auto dfOut = df.Filter(
+    //     [&](ActRoot::MergerData& m, ActRoot::ModularData& mod)
+    //     {
+    //         if(mod.Get("GATCONF") != 8)
+    //             return false;
+    //         else
+    //             return (cuts.IsInside("lowQ", m.fLight.fRawTL, m.fLight.fQtotal));
+    //     },
+    //     {"MergerData", "ModularData"});
+    // std::ofstream out("./Outputs/pid_events_lowQ.dat");
+    // dfOut.Foreach([&](ActRoot::MergerData& m) { m.Stream(out); }, {"MergerData"});
+    // out.close();
 }
