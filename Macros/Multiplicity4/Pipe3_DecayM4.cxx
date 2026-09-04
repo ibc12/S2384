@@ -26,9 +26,8 @@
 #include <map>
 #include <string>
 
-#include "../../../PostAnalysis/HistConfig.h"
-#include "../../../PrettyStyle.C"
-#include "../Utils.h"
+#include "../../PostAnalysis/HistConfig.h"
+#include "./Utils.h"
 
 struct DecayInfo
 {

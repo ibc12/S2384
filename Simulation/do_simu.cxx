@@ -32,6 +32,9 @@
 #include "TSystem.h"
 #include "TTree.h"
 
+#include "Math/Point3Dfwd.h"
+#include "Math/Vector3Dfwd.h"
+
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -42,6 +45,8 @@
 
 using XYZPoint = ROOT::Math::XYZPoint;
 using XYZVector = ROOT::Math::XYZVector;
+
+constexpr double kBeamDisplacementZ {0.0}; // mm respect to the center of the front layer
 
 struct BeamOffset
 {
@@ -245,7 +250,7 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     // Set whether is PS or not
     bool isPS {(neutronPS > 0) || (protonPS > 0)};
     // Set number of iterations
-    const int niter {static_cast<int>(inspect ? 1e6 : (isPS ? 3e7 : 1e7))};
+    const int niter {static_cast<int>(inspect ? 2e6 : (isPS ? 3e7 : 1e7))};
     gRandom->SetSeed(0);
     // Runner: contains utility functions to execute multiple actions as rotate directions
     ActSim::Runner runner(nullptr, nullptr, gRandom, 0);
@@ -328,7 +333,7 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     std::string filenameSMfront {"../Macros/SilVetos/Outputs/Dists/sms_f0.root"};
     auto fileSMfront {new TFile {filenameSMfront.c_str()}};
     ActPhysics::SilMatrix* smfront =
-        fileSMfront->Get<ActPhysics::SilMatrix>("sm3"); // matrix for good distance of left wall
+        fileSMfront->Get<ActPhysics::SilMatrix>("sm7"); // matrix for good distance of front wall
     double silCentreFront = smfront->GetMeanZ({6, 7, 4});
     std::cout << "Silicon front centre at Z = " << silCentreFront << " mm" << std::endl;
 
@@ -340,11 +345,12 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     for(auto& [name, layer] : sils->GetLayers())
     {
         if(name == "f0" || name == "f1")
-            layer.MoveZTo(silCentreFront, {5});
+            layer.MoveZTo(silCentreFront - kBeamDisplacementZ, {5});
         if(name == "f2")
-            layer.MoveZTo(silCentreFront + 12.5, {0}); // Manually substract 12.5 to get the f2 in the same height as the f3
+            layer.MoveZTo(silCentreFront + 12.5 - kBeamDisplacementZ,
+                          {0}); // Manually substract 12.5 to get the f2 in the same height as the f3
         if(name == "f3")
-            layer.MoveZTo(silCentreFront, {0});
+            layer.MoveZTo(silCentreFront - kBeamDisplacementZ, {0});
         if(name == "l0" || name == "r0")
             layer.MoveZTo(silCentreLat, {4});
     }
@@ -478,6 +484,14 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     // Silicon hits
     auto hSPf0 {HistConfig::SP.GetHistogram()};
     hSPf0->SetTitle("SP for f0");
+    auto hSPf2 {HistConfig::SP.GetHistogram()};
+    hSPf2->SetTitle("SP for f2");
+    auto hSPf3 {HistConfig::SP.GetHistogram()};
+    hSPf3->SetTitle("SP for f3");
+    auto hAllSPf3 {HistConfig::SP.GetHistogram()};
+    hAllSPf3->SetTitle("All SP projection to f3");
+    auto hVertexOnf3 {HistConfig::SP.GetHistogram()};
+    hVertexOnf3->SetTitle("Vertex projection on f3");
     auto hSPl0 {HistConfig::SP.GetHistogram()};
     hSPl0->SetTitle("SP for l0");
     auto hSPr0 {HistConfig::SP.GetHistogram()};
@@ -501,8 +515,9 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         tag = "_" + std::to_string(thread);
 
     // File to save data
-    TString fileName {TString::Format("./Outputs/%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s.root", beam.c_str(),
-                                      target.c_str(), light.c_str(), Ex, neutronPS, protonPS, tag.c_str())};
+    TString fileName {TString::Format(
+        "./Outputs/%s/test_telescope_beam_displacement/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_%.1f%s.root", beam.c_str(),
+        target.c_str(), light.c_str(), Ex, neutronPS, protonPS, kBeamDisplacementZ, tag.c_str())};
     auto outFile {new TFile(fileName, inspect ? "read" : "recreate")};
     auto* outTree {new TTree("SimulationTTree", "A TTree containing only our Eex obtained by simulation")};
     if(inspect)
@@ -786,9 +801,19 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
                 }
             }
         }
+        // Extrapolate heavy into f3 position in X
+        ROOT::Math::XYZPointF vertexF {static_cast<float>(vertex.X()), static_cast<float>(vertex.Y()),
+                                       static_cast<float>(vertex.Z())};
+        ROOT::Math::XYZVectorF heavyWorldFrameF {static_cast<float>(heavyWorldFrame.X()),
+                                                 static_cast<float>(heavyWorldFrame.Y()),
+                                                 static_cast<float>(heavyWorldFrame.Z())};
+        ActRoot::Line heavyLine {vertexF, heavyWorldFrameF, -1};
+        auto extrapolatedHeavyPointF3 {heavyLine.MoveToX(sils->GetLayer("f3").GetPoint().X())};
         // Check if heavy particle hit f3
         int silIndexHeavy {};
+        int silIndexHeavyF2 {};
         ROOT::Math::XYZPoint silPointHeavy {};
+        ROOT::Math::XYZPoint silPointHeavyF2 {};
         std::tie(silIndexHeavy, silPointHeavy) = sils->FindSPInLayer("f3", vertex, heavyWorldFrame);
         if(silIndexHeavy != -1)
         {
@@ -799,6 +824,8 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
                 hTheta3CMsideGateHeavy->Fill(theta3CMBefore);
                 hTheta3LabsideGateHeavy->Fill(theta3Lab * TMath::RadToDeg());
             }
+            // If impact in f3 get silicon point of f2
+            std::tie(silIndexHeavyF2, silPointHeavyF2) = sils->FindSPInLayer("f2", vertex, heavyWorldFrame);
         }
         else
         {
@@ -858,8 +885,11 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
             }
             hTheta3CM->Fill(theta3CMBefore); // only thetaCm that enter our cuts
             hTheta3Lab->Fill(theta3Lab * TMath::RadToDeg());
-            // write to TTree
-            Eex_tree = ExRec;
+            // Debug telescope
+            hAllSPf3->Fill(extrapolatedHeavyPointF3.Y(), extrapolatedHeavyPointF3.Z());
+
+                // write to TTree
+                Eex_tree = ExRec;
             theta3CM_tree = theta3CM * TMath::RadToDeg();
             EVertex_tree = T3Rec;
             theta3Lab_tree = theta3Lab * TMath::RadToDeg();
@@ -884,6 +914,9 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
             }
             if(silIndexHeavy != -1)
             {
+                hSPf2->Fill(silPointHeavyF2.Y(), silPointHeavyF2.Z());
+                hSPf3->Fill(silPointHeavy.Y(), silPointHeavy.Z());
+                hVertexOnf3->Fill(vertex.Y(), vertex.Z());
                 EexGateHeavy_tree = ExRec;
                 weight_tree_gateHeavy = weight;
             }
@@ -942,7 +975,7 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     if(inspect)
     {
         auto* cSP {new TCanvas {"cSP", "Sil Points"}};
-        cSP->DivideSquare(3);
+        cSP->DivideSquare(5);
         cSP->cd(1);
         hSPf0->DrawClone("colz");
         sils->GetLayer("f0").GetSilMatrix()->Draw();
@@ -952,6 +985,21 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
         cSP->cd(3);
         hSPr0->DrawClone("colz");
         sils->GetLayer("r0").GetSilMatrix()->Draw();
+        cSP->cd(4);
+        hSPf2->DrawClone("colz");
+        sils->GetLayer("f2").GetSilMatrix()->Draw();
+        cSP->cd(5);
+        hSPf3->DrawClone("colz");
+        sils->GetLayer("f3").GetSilMatrix()->DrawClone();
+
+        auto* cVertex {new TCanvas {"cVertex", "Vertex"}};
+        cVertex->DivideSquare(2);
+        cVertex->cd(1);
+        hAllSPf3->DrawClone("colz");
+        sils->GetLayer("f3").GetSilMatrix()->DrawClone();
+        cVertex->cd(2);
+        hVertexOnf3->DrawClone("colz");
+        sils->GetLayer("f3").GetSilMatrix()->DrawClone();
 
         auto* c0 {new TCanvas {"c0", "Sim inspect 0"}};
         c0->DivideSquare(6);

@@ -24,7 +24,9 @@ void DistRun()
 
     ActRoot::DataManager data {"../../configs/data.conf", ActRoot::ModeType::EMerge};
     // data.SetRuns(19, 66); // L0 trigger window changed for
-    data.SetRuns(68, 122); // L0 trigger window changed for
+    // data.SetRuns(68, 122); // L0 trigger window changed for
+    // data.SetRuns(68, 107); // L0 trigger window changed for
+    data.SetRuns(107, 122); // L0 trigger window changed for
     auto chain {data.GetJoinedData()};
 
     ROOT::RDataFrame df {*chain};
@@ -47,7 +49,7 @@ void DistRun()
     std::vector<double> dists;
     // l0 from 310 to 320
     // f0 from 315 to 330
-    for(double d = 305; d < 315; d += 1)
+    for(double d = 300; d < 320; d += 2)
         dists.push_back(base + d);
 
     int xbins {200};
@@ -108,7 +110,8 @@ void DistRun()
                                          zlims.first,
                                          zlims.second};
         std::map<int, ROOT::TThreadedObject<TH1D>> pxs, pzs;
-        std::vector<int> idxs {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+        // std::vector<int> idxs {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+        std::vector<int> idxs {4, 6, 7}; // for f0
         for(const auto& idx : idxs)
         {
             pxs.emplace(std::piecewise_construct, std::forward_as_tuple(idx),

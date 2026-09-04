@@ -22,7 +22,7 @@ void Get()
     ROOT::EnableImplicitMT();
     std::string beam {"11Li"};
     ActRoot::DataManager datman {"../../configs/data_" + beam + ".conf", ActRoot::ModeType::EFilter};
-    std::string moment {"post_preMeasure"};
+    std::string moment {"pre"};
     if(beam == "7Li")
         datman.SetRuns(66, 69); // 7Li runs after change in L0 trigger in run 67
     else if(beam == "11Li")
@@ -76,9 +76,9 @@ void Get()
                               // correction for change in L0 trigger window
                               if(m.fRun < 67)
                               {
-                                  auto p = line.GetPoint();
-                                  p.SetZ(p.Z() + 62.5 / 4.); // Offset of 5 microsecons == 62.5 tb
-                                  line.SetPoint(p);
+                                  // auto p = line.GetPoint();
+                                  // p.SetZ(p.Z() + 62.5 / 4.); // Offset of 5 microsecons == 62.5 tb
+                                  // line.SetPoint(p);
                               }
                               // conversion to physical units
                               line.Scale(padSide, driftFactor);

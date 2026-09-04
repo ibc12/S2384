@@ -17,7 +17,7 @@
 
 void DistDebug()
 {
-    std::string layer {"r0"};
+    std::string layer {"f0"};
     TString outpath {TString::Format("./Outputs/Dists/sms_%s.root", layer.c_str())};
     // TString outpath {TString::Format("./Outputs/Dists/sms_%s.root", layer.c_str())};
     auto f {new TFile {outpath}};
@@ -34,7 +34,7 @@ void DistDebug()
     if(layer == "l0")
         indexes = {5, 8};
     else if(layer == "f0")
-        indexes = {6, 7};
+        indexes = {4, 6, 7};
     else if(layer == "r0")
         indexes = {6, 0};
 
@@ -42,7 +42,7 @@ void DistDebug()
     if(layer == "l0")
         indexesString = "{5, 8}";
     else if(layer == "f0")
-        indexesString = "{6, 7}";
+        indexesString = "{4, 6, 7}";
     else if(layer == "r0")
         indexesString = "{6, 0}";
 

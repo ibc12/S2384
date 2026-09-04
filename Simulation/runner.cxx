@@ -14,17 +14,17 @@
 #include "./do_simu_decay.cxx"
 #include "./plotter.cxx"
 
-void runner(TString what = "simu", bool inspect = true)
+void runner(TString what = "simu", bool inspect = false)
 {
     // Neutron and Proton phase space
     int neutronPS {0}; // number of neutrons in final state
     int protonPS {0};  // number of protons in final state
     bool isPS {neutronPS > 0 || protonPS > 0};
     // Particles
-    std::string beam {"7Li"};
+    std::string beam {"11Li"};
     std::string target {"2H"};
-    std::string light {"1H"};
-    std::string heavy {"8Li"};
+    std::string light {"2H"};
+    std::string heavy {"11Li"};
     // Beam energy
     double Tbeam {};
     if(beam == "7Li")
@@ -49,7 +49,8 @@ void runner(TString what = "simu", bool inspect = true)
     else if(neutronPS == 0 && protonPS == 0 && target == "2H" && light == "2H") // Elastic and Inelastic scattering
     {
         if(beam == "11Li")
-            Exs = {0, 0.7, 1.2, 2.4};
+            // Exs = {0, 0.7, 1.2, 2.4};
+            Exs = {0.};
         else if(beam == "7Li")
             Exs = {0, 0.477, 2.5, 5.0};
     }
@@ -132,10 +133,10 @@ void runner(TString what = "simu", bool inspect = true)
         target = "2H";
         light = "1H";
         heavy = "8Li";
-        Tbeam = 7 * 7.558; // MeV
+        Tbeam = 7 * 7.558;                // MeV
         bool emitNeutron {light == "1H"}; //
         // Exs = {0};                        // Ex of the reaction for 7Li
-        Exs = {0};                  // Ex of the reaction for 8Li
+        Exs = {0};                    // Ex of the reaction for 8Li
         bool useResonance8Li = false; // Use 8Li* resonance
         bool useResonance7Li = false; // Use 7Li* resonance
         double ExSecondary = 4.63;    // Ex of the 7Li* resonance

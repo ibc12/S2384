@@ -25,8 +25,7 @@
 #include <map>
 #include <string>
 
-#include "../../../PrettyStyle.C"
-#include "../Utils.h"
+#include "./Utils.h"
 
 // Result of geometrically matching the light-particle track (chosen by angle,
 // see LightIdx below) to a real hit in either lateral silicon wall, regardless

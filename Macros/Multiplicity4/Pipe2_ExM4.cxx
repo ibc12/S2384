@@ -19,14 +19,14 @@
 #include "TCanvas.h"
 #include "TH2.h"
 #include "TH2D.h"
+#include "TLegend.h"
 #include "TString.h"
 
 #include <map>
 #include <string>
 
-#include "../../../PostAnalysis/HistConfig.h"
-#include "../../../PrettyStyle.C"
-#include "../Utils.h"
+#include "../../PostAnalysis/HistConfig.h"
+#include "./Utils.h"
 
 struct ExLevel
 {

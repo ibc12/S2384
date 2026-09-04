@@ -22,7 +22,7 @@ void Plot()
 {
     ROOT::EnableImplicitMT();
     std::string beam {"11Li"};
-    std::string moment {"_post_preMeasure"};
+    std::string moment {"_pre"};
     ROOT::RDataFrame df {"Emittance_Tree", "./Outputs/emittance" + beam + moment + ".root"};
     // Compute angles
     auto def {df.Define("thetaXY",

@@ -16,7 +16,7 @@
 
 void OverlapSM()
 {
-    std::string beam {"7Li"};
+    std::string beam {"11Li_post_postMeasure"};
 
     // Read histograms
     std::string filename {"./Outputs/histos" + beam + ".root"};
