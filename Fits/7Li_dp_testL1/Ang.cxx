@@ -47,7 +47,7 @@ void Ang(bool isLab = false)
 
     // Init intervals
     double thetaMin = isLab ? 70.0 : 4.5;
-    double thetaMax = isLab ? 80.0 : 19.5;
+    double thetaMax = isLab ? 80.0 : 30.5;
     double thetaStep = isLab ? 2.5 : 2.50;
     Angular::Intervals ivs {thetaMin, thetaMax, S2384Fit::Exdp_7Li, thetaStep, 0};
     if(isLab)
