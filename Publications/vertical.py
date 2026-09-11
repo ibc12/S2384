@@ -241,7 +241,7 @@ extracted = extract_max_sf(ret)
 shift_ex(extracted)
 
 fig, ax = plt.subplots(1, 1, figsize=(9, 12))
-exp_ex = [0.0, 0.98, 2.1, 3.01654, 5.21178, 5.90033, 6.34973]
+exp_ex = [0.0, 0.936, 2.19, 3.3, 3.802, 5.90033, 6.34973]
 plot_bars([extracted], ax, exp_ex=exp_ex, exclude_l=[0])  # Ejemplo excluyendo s
 
 ax.set_ylabel(r"$E_{x}$ [MeV]")

@@ -67,10 +67,12 @@ constexpr double theta = 0.7;         // Polya parameter
 constexpr float thresholdPadCharge = 3e4; // that n electrons corresponds to 0.8789 pC
 constexpr int yMinExclusionZone = 56;
 constexpr int yMaxExclusionZone = 71;
-constexpr int nPadsThreshold = 10; // Minimum number of pads outside the exclusion zone to consider an event valid
+constexpr int nPadsThreshold = 14; // Minimum number of pads outside the exclusion zone to consider an event valid
 constexpr int validationZone = 8;  // Minimum distance from the last voxel to the TPC borders in mm (from detector.conf)
-constexpr double thetaResFWHM = 3.1; // FWHM of theta resolution in degrees (in the begining was 1.5)
-using voxelKey = std::tuple<int, int, int>; // ix,iy,iz
+constexpr double thetaResFWHM = 3.5; // FWHM of theta resolution in degrees (in the begining was 1.5)
+constexpr std::pair<double, double> phiRangePositive {16., 160.};   // Range of positive phi in deg for the experiment
+constexpr std::pair<double, double> phiRangeNegative {-160., -16.}; // Range of negative phi in deg for the experiment
+using voxelKey = std::tuple<int, int, int>;                         // ix,iy,iz
 
 std::pair<XYZPoint, XYZPoint> SampleVertex(double meanZ, double sigmaZ, TH3D* h, double lengthX)
 {
@@ -419,7 +421,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
     // Set whether is PS or not
     bool isPS {(neutronPS > 0) || (protonPS > 0)};
     // Set number of iterations
-    const int niter {static_cast<int>(inspect ? 1e5 : (isPS ? 1e8 : 1e5))};
+    const int niter {static_cast<int>(inspect ? 1e5 : (isPS ? 1e8 : 1e6))};
     gRandom->SetSeed(0);
     // Runner: contains utility functions to execute multiple actions as rotate directions
     ActSim::Runner runner(nullptr, nullptr, gRandom, 0);
@@ -567,7 +569,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
 
     // File to save data
     TString fileName {
-        TString::Format("./Outputs/%s/test_charge_threshold/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s_L1_3e4Thresh.root",
+        TString::Format("./Outputs/%s/test_ang_straggling_L1/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s_L1_3-5AngStr_14pads.root",
                         beam.c_str(), target.c_str(), light.c_str(), Ex, neutronPS, protonPS, tag.c_str())};
     auto outFile {new TFile(fileName, inspect ? "read" : "recreate")};
     auto* outTree {new TTree("SimulationTTree", "A TTree containing only our Eex obtained by simulation")};
@@ -680,6 +682,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
         double phi4Lab {};
         double theta3CM {};
         double phi3CM {};
+        double phi3CMdeg {}; // Variable to do experimental cuts in phi3CM, in deg
         double theta3CMBefore {-1};
         double weight {1.};
         // Sample kinematics, diferent method depending on existance of xs and particles in ps
@@ -699,6 +702,8 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
                 // std::cout << theta3CMBefore << std::endl;
             } // sample in deg
             phi3CM = gRandom->Uniform(0, 2 * TMath::Pi());
+            // Define for the experiment cuts the phi between -180 and 180 (now is 0 and 2pi)
+            phi3CMdeg = (phi3CM - M_PI) * 180.0 / M_PI;
             kin->ComputeRecoilKinematics(theta3CMBefore * TMath::DegToRad(), phi3CM);
             // Get Lab kinematics
             T3Lab = kin->GetT3Lab();
@@ -714,6 +719,9 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
             theta4Lab = kin->GetTheta4Lab();
             phi4Lab = kin->GetPhi4Lab();
             T4Lab = kin->GetT4Lab();
+
+            // Also, now convert the phi between -pi, pi as the no XS calculation, to be comparable
+            phi3CM = phi3CM - M_PI;
         }
         else
         {
@@ -741,6 +749,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
                              TMath::RadToDeg(); // this is in deg, because of xs sampling in other case
             theta3CM = kin->ReconstructTheta3CMFromLab(T3Lab, theta3Lab);
             phi3CM = phi3Lab;
+            phi3CMdeg = phi3CM * TMath::RadToDeg();
 
             // Heavy
             theta4Lab = LorenztVector4->Theta();
@@ -772,6 +781,13 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
                    finalPointGas.Y() <= tpc.Y() && 0 <= finalPointGas.Z() && finalPointGas.Z() <= tpc.Z()};
         if(!isL1)
             continue;
+        // Phi experimental cuts
+        if(phi3CMdeg > 0)
+            if(phi3CMdeg < phiRangeNegative.first || phi3CMdeg > phiRangePositive.second)
+                continue;
+        if(phi3CMdeg < 0)
+            if(phi3CMdeg < phiRangeNegative.first || phi3CMdeg > phiRangePositive.second)
+                continue;
 
         std::map<voxelKey, ActRoot::Voxel> voxelMapLight;
         std::map<voxelKey, ActRoot::Voxel> voxelMapHeavy;
@@ -825,9 +841,9 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
         if(isOk && cutELoss0)
         {
             double T3Rec {srim->EvalEnergy("light", TL)};
-            // double T3Rec {T3Lab}; // for L1 we dont have a real reconstruction yet, so we will just use the smeared T3
-                                  // as "reconstructed" energy at vertex. Maybe useful to recover energy from range in
-                                  // gas with profile¿? but maybe to slow
+            // double T3Rec {T3Lab}; // for L1 we dont have a real reconstruction yet, so we will just use the smeared
+            // T3 as "reconstructed" energy at vertex. Maybe useful to recover energy from range in gas with profile¿?
+            // but maybe to slow
             auto ExRec {kin->ReconstructExcitationEnergy(T3Rec, theta3Lab)};
             // Fill
             hKinRec->Fill(theta3Lab * TMath::RadToDeg(), T3Rec); // after reconstruction

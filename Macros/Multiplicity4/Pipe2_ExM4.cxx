@@ -37,6 +37,7 @@ struct ExLevel
 
 void Pipe2_ExM4(const std::string& beam, const std::string& target, const std::string& light)
 {
+    bool savePlots = true;
     // Get file from pipe1
     TString infile = TString::Format("./Outputs/PIDM4_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str());
     ROOT::EnableImplicitMT();
@@ -149,5 +150,13 @@ void Pipe2_ExM4(const std::string& beam, const std::string& target, const std::s
     }
 
     legend->Draw();
+
+    if(savePlots)
+    {
+        TString outputEx = TString::Format("../Figures/ex_M4_%s_%s_%s.png", beam.c_str(), target.c_str(), light.c_str());
+        c1->SaveAs(outputEx, "PNG");
+        TString outputKin = TString::Format("../Figures/kin_M4_%s_%s_%s.png", beam.c_str(), target.c_str(), light.c_str());
+        c2->SaveAs(outputKin, "PNG");
+    }
 }
 #endif

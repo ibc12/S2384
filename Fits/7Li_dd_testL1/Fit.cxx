@@ -63,7 +63,7 @@ void Fit()
 
     // Fitting range
     double exmin {-2};
-    double exmax {4};
+    double exmax {3};
     // double exmin {-0.8};
     // double exmax {1};
 

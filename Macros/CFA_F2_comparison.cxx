@@ -13,6 +13,9 @@
 #include "TMath.h"
 #include "TLegend.h"
 
+#include <fstream>
+#include <map>
+
 void CFA_F2_comparison()
 {
     // Get Sil data
@@ -34,12 +37,12 @@ void CFA_F2_comparison()
     auto minRun = *df.Min<int>("fRun");
     auto maxRun = *df.Max<int>("fRun");
     int nbinsX = maxRun - minRun + 1;
-    std::cout << "Rango de runs: " << minRun << " - " << maxRun 
-              << " → nbinsX = " << nbinsX << std::endl;
+    std::cout << "Rango de runs: " << minRun << " - " << maxRun
+               << " → nbinsX = " << nbinsX << std::endl;
 
     // Histogramas por run (un bin por run)
     auto cfa_counts = gatedCFA.Histo1D({"cfaCounts", "CFA counts per run;Run;Counts",
-                                        nbinsX, minRun - 0.5, maxRun + 0.5}, "fRun");
+                                         nbinsX, minRun - 0.5, maxRun + 0.5}, "fRun");
     auto f2_counts  = gatedF2.Histo1D({"f2Counts", "F2 counts per run;Run;Counts",
                                         nbinsX, minRun - 0.5, maxRun + 0.5}, "fRun");
 
@@ -65,16 +68,29 @@ void CFA_F2_comparison()
     if (firstBin != 0) {
         ratio_h->Scale(1.0 / firstBin);
     }
-    // Crear TGraph a partir del histograma
+
+    // Crear TGraph a partir del histograma y, de paso, el mapa run->ratio
     int nbins = ratio_h->GetNbinsX();
     TGraph *gRatio = new TGraph(nbins);
+    std::map<int, double> ratioPerRun {};
     for (int i = 1; i <= nbins; i++) {
         double x = ratio_h->GetBinCenter(i);
         double y = ratio_h->GetBinContent(i);
         gRatio->SetPoint(i-1, x, y);
+
+        int run = minRun + (i - 1);
+        ratioPerRun[run] = y;
     }
 
-    
+    // Guardar ratio de correccion por run, ordenado de mayor a menor run
+    std::string filename {"../Fits/norm/CFA_F2_ratio_run.dat"};
+    std::ofstream streamer {filename};
+    if(!streamer)
+        throw std::runtime_error("No se pudo abrir el fichero " + filename);
+    for(auto it = ratioPerRun.rbegin(); it != ratioPerRun.rend(); ++it)
+        streamer << it->first << "  " << it->second << '\n';
+    streamer.close();
+    std::cout << "-> Fichero escrito: " << filename << '\n';
 
     // Canvas
     auto c1 = new TCanvas("c1", "Beam Counts per Run", 1200, 800);
@@ -99,8 +115,6 @@ void CFA_F2_comparison()
     c1->cd(2);
     gRatio->SetMarkerColor(kBlack);
     gRatio->SetMarkerStyle(22);
-    gRatio->SetTitle("CFA/F2 counts per run (normalized to first run);Run;CFA/F2"); // título y ejes
+    gRatio->SetTitle("CFA/F2 counts per run (normalized to first run);Run;CFA/F2");
     gRatio->Draw("AP"); // A = axis, P = points
 }
-
-

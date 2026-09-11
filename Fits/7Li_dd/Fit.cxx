@@ -62,8 +62,8 @@ void Fit()
     Fitters::Model model {inter.GetNGauss(), inter.GetNVoigt(), {}};
 
     // Fitting range
-    double exmin {-1};
-    double exmax {1.5};
+    double exmin {-2};
+    double exmax {3};
     // double exmin {-0.8};
     // double exmax {1};
 

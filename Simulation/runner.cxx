@@ -21,10 +21,10 @@ void runner(TString what = "simu", bool inspect = false)
     int protonPS {0};  // number of protons in final state
     bool isPS {neutronPS > 0 || protonPS > 0};
     // Particles
-    std::string beam {"11Li"};
+    std::string beam {"7Li"};
     std::string target {"2H"};
-    std::string light {"2H"};
-    std::string heavy {"11Li"};
+    std::string light {"1H"};
+    std::string heavy {"8Li"};
     // Beam energy
     double Tbeam {};
     if(beam == "7Li")
@@ -61,7 +61,16 @@ void runner(TString what = "simu", bool inspect = false)
     else if(neutronPS == 2 && protonPS == 0 && target == "2H" && light == "2H")
         Exs = {0}; // half value between first excited state and the S_2n
     else if(neutronPS > 0 && protonPS == 0)
-        Exs = {0}; // only gs for n phase space
+    {
+        if(beam == "7Li" && light == "1H")
+        {
+            Exs = {0.4776};
+            // Exs = {0, 0.4776};
+            // Exs = {0}; // only gs for n phase space
+        }
+        else if(beam == "11Li" && target == "2H" && light == "1H")
+            Exs = {0}; // only gs for n phase space
+    }
     else if(neutronPS == 0 && protonPS > 0)
         Exs = {0};
     else

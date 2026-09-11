@@ -38,6 +38,8 @@ struct ExLevel
 
 void Pipe2_ExM4(const std::string& beam, const std::string& target, const std::string& light)
 {
+    bool savePlots = true;
+    PrettyStyle(false);
     // Get file from pipe1
     TString infile = TString::Format("./Outputs/PIDM4_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str());
     ROOT::EnableImplicitMT();
@@ -155,6 +157,7 @@ void Pipe2_ExM4(const std::string& beam, const std::string& target, const std::s
         {4.63, kRed, "4.63 MeV"},
         {6.53, kBlue, "6.53 MeV"},
         {7.1, kGreen + 2, "7.1 MeV"},
+        {8.5, kPink + 2, "8.5 MeV"},
     };
 
     auto* legendL1 = new TLegend(0.65, 0.65, 0.88, 0.88);
@@ -201,5 +204,58 @@ void Pipe2_ExM4(const std::string& beam, const std::string& target, const std::s
         },
         {"MergerData", "Ex"});
     out.close();
+
+    if(savePlots)
+    {
+        // Join plot for kinematics L1 and others
+        auto* ctmpKinAll = new TCanvas("ctmpKinL1", "Kinematics Multiplicity 4 - All layers", 800, 600);
+        ctmpKinAll->cd();
+        hkinL1->DrawClone("colz");
+        hkinOthers->DrawClone("colz same");
+        for(const auto& level : levels)
+        {
+            kinLevels.emplace_back(pb, pt, pl, initialEnergy * pb.GetAMU(), level.Eex);
+            auto* theo {kinLevels.back().GetKinematicLine3()};
+            theo->SetLineColor(level.color);
+            theo->SetLineWidth(2);
+            theo->Draw("same");
+        }
+        auto* legendAll = new TLegend(0.65, 0.65, 0.88, 0.88);
+        legendAll->SetBorderSize(0);
+        legendAll->SetFillStyle(0);
+        for(const auto& level : levels)
+        {
+            kinLevels.emplace_back(pb, pt, pl, initialEnergy * pb.GetAMU(), level.Eex);
+            auto* theo {kinLevels.back().GetKinematicLine3()};
+            theo->SetLineColor(level.color);
+            theo->SetLineWidth(2);
+            auto* theoAll {(TGraph*)theo->DrawClone("same")};
+            legendAll->AddEntry(theoAll, level.label.c_str(), "l");
+        }
+        legendAll->Draw();
+        TString outputKinAll =
+            TString::Format("../../Figures/kin_all_M4_%s_%s_%s.png", beam.c_str(), target.c_str(), light.c_str());
+        ctmpKinAll->SaveAs(outputKinAll);
+
+        // Now do a copy of the histograms and set range in x from -2 to 10
+        auto* hcloneExL1 = (TH1D*)hExL1->Clone("hcloneExL1");
+        auto* hcloneExOthers = (TH1D*)hExOthers->Clone("hcloneExOthers");
+        hcloneExL1->GetXaxis()->SetRangeUser(-2, 12);
+        hcloneExOthers->GetXaxis()->SetRangeUser(-2, 10);
+
+        auto* ctmpExL1 = new TCanvas("ctmpExL1", "Excitation energy Multiplicity 4 - L1", 800, 600);
+        ctmpExL1->cd();
+        hcloneExL1->DrawClone();
+        TString outputExL1 =
+            TString::Format("../../Figures/ex_L1_M4_%s_%s_%s.png", beam.c_str(), target.c_str(), light.c_str());
+        ctmpExL1->SaveAs(outputExL1);
+
+        auto* ctmpExOthers = new TCanvas("ctmpExOthers", "Excitation energy Multiplicity 4 - Other layers", 800, 600);
+        ctmpExOthers->cd();
+        hcloneExOthers->DrawClone();
+        TString outputExOthers =
+            TString::Format("../../Figures/ex_sil_M4_%s_%s_%s.png", beam.c_str(), target.c_str(), light.c_str());
+        ctmpExOthers->SaveAs(outputExOthers);
+    }
 }
 #endif

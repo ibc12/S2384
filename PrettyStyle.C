@@ -84,6 +84,7 @@ void PrettyStyle(bool showStats = true, bool palete2D = true)
     {
         st->SetOptStat(0);
         st->SetOptFit(0);
+        st->SetOptTitle(0);
     }
 
     // --- Título centrado ---

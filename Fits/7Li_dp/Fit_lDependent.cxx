@@ -6,6 +6,7 @@
 
 #include "FitInterface.h"
 #include "FitModel.h"
+#include "FitRunner.h"
 #include "FitUtils.h"
 #include "Interpolators.h"
 
@@ -29,6 +30,10 @@ void Fit_lDependent()
     // Phase space
     ROOT::RDataFrame phase {"SimulationTTree", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.000_nPS_1_pPS_0.root"};
     auto hPS {phase.Histo1D(S2384Fit::Exdp_7Li, "Eex_side", "weight")};
+    hPS->SetNameTitle("hPS", "1n PS");
+    // ROOT::RDataFrame phase2 {"SimulationTTree",
+    // "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.478_nPS_1_pPS_0.root"}; auto hPS2
+    // {phase.Histo1D(S2384Fit::Exdp_7Li, "Eex_side", "weight")}; hPS2->SetNameTitle("hPS2", "1n PS2");
 
     // Sigmas
     Interpolators::Sigmas sigmas;
@@ -53,25 +58,31 @@ void Fit_lDependent()
     inter.AddState("v4", {15, 6.1, sigma, 1});
     inter.AddState("v5", {10, 6.5, sigma, 0.035});
     inter.AddState("v6", {5, 7.1, sigma, 0.4});
-    inter.AddState("ps0", {1e-6}, "ps0");
+    // inter.AddState("v8", {5, 7.6, sigma, 0.4});
+    // inter.AddState("v7", {5, 2.7, sigma, 0.4});
+    inter.AddState("ps0", {0.0005});
+    // inter.AddState("ps1", {1e-6});
     inter.EndAddingStates();
     inter.EvalSigma(sigmas.GetGraph());
     inter.SetFixAll(2, true); // fix all sigmas
     // inter.SetBoundsAll(2, {0.01,0.3}); // sigma bounds
-    inter.SetFix("v1", 3, true); // fix gamma of v0 to 1 (previous results)
+    // inter.SetFix("v1", 3, true); // fix gamma of v0 to 1 (previous results)
     // inter.SetFixAll(3, true); // fix all gammas
     // inter.SetBoundsAll(2, {0.05, 0.3}); // sigma bounds
     // inter.SetBounds("g0", 0, {2, 200});
     // inter.SetBounds("g1", 0, {2, 100});
     // inter.SetBounds("g2", 0, {2, 100});
     // inter.SetBounds("v0", 0, {20, 30});
+    // inter.SetFix("ps0", 0, true);
     inter.SetBounds("v0", 3, {0.005, 0.3}); // gamma bounds
-    inter.SetBounds("v1", 3, {0.5, 1.5}); // gamma bounds
+    inter.SetBounds("v1", 3, {0.5, 1.5});   // gamma bounds
     inter.SetBounds("v2", 3, {0.01, 1});
     inter.SetBounds("v3", 3, {0.3, 1});
     inter.SetBounds("v4", 3, {0.5, 1.5});
     inter.SetBounds("v5", 3, {0.01, 0.1});
     inter.SetBounds("v6", 3, {0.1, 0.8});
+    inter.SetOffsetMeanBounds(0.4);
+    // inter.SetBounds("v7", 3, {0.1, 0.8});
 
     // Save to be used later
     inter.Write("./Outputs/interface_lDependent.root");
@@ -82,6 +93,7 @@ void Fit_lDependent()
 
     // Model
     Fitters::Model model {inter.GetNGauss(), inter.GetNVoigt(), {*hPS}};
+    // Fitters::Model model {inter.GetNGauss(), inter.GetNVoigt(), {*hPS, *hPS2}};
     double R {(std::pow(7, 1. / 3.) + std::pow(1, 1. / 3.)) * 1.25}; // interaction radius in fm, with r0 = 1.25 fm
     double mu {7 * 1. / (7 + 1) * 931.5};                            // reduced mass in MeV/c^2
     model.AddBWL(0, 1, 2.03262, mu, R);
@@ -91,6 +103,10 @@ void Fit_lDependent()
     model.AddBWL(4, 2, 2.03262, mu, R);
     model.AddBWL(5, 1, 2.03262, mu, R);
     model.AddBWL(6, 2, 2.03262, mu, R);
+    // model.AddBWL(7, 1, 2.03262, mu, R);
+    // model.AddBWL(8, 1, 2.03262, mu, R);
+
+    // Fitters::ToggleIsLogL();
 
     // Run!
     Fitters::RunFit(hEx.GetPtr(), exmin, exmax, model, inter.GetInitial(), inter.GetBounds(), inter.GetFixed(),

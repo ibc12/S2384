@@ -113,14 +113,14 @@ void WriteRejectedEvents(const std::string& infile)
 
 void Pipe3_Filter(const std::string& beam, const std::string& target, const std::string& light, bool isFiltered)
 {
-    // PrettyStyle(false);
+    // PrettyStyle();
     bool savePlots {false};
     bool onlySil {true};
 
     auto infile {TString::Format("./Outputs/tree_ex%s_%s_%s_%s.root", isFiltered ? "_F" : "", beam.c_str(),
                                  target.c_str(), light.c_str())};
 
-    ROOT::DisableImplicitMT();
+    // ROOT::DisableImplicitMT();
     ROOT::RDataFrame df {"Final_Tree", infile.Data()};
 
     // Aply cuts to reconstruc just a fraction of events
@@ -294,19 +294,19 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
     //     {"MergerData", "Ex"});
     // out.close();
     ActRoot::CutsManager<std::string> cuts;
-    cuts.ReadCut("elastic", TString::Format("./Cuts/elastic_events_7Li.root").Data());
-    auto dfOut = dfFilter.Filter(
-        [&](ActRoot::MergerData& m)
-        {
-            if(m.fLight.IsFilled() == false)
-                return (cuts.IsInside("elastic", m.fThetaLight, m.fLight.fQtotal));
-            else
-                return false;
-        },
-        {"MergerData"});
-    auto outfileElastic {
-        TString::Format("./Outputs/tree_ex%s_%s_elastic.root", isFiltered ? "_F" : "", beam.c_str())};
-    dfOut.Snapshot("Final_Tree", outfileElastic);
+    // cuts.ReadCut("elastic", TString::Format("./Cuts/elastic_events_7Li.root").Data());
+    // auto dfOut = dfFilter.Filter(
+    //     [&](ActRoot::MergerData& m)
+    //     {
+    //         if(m.fLight.IsFilled() == false)
+    //             return (cuts.IsInside("elastic", m.fThetaLight, m.fLight.fQtotal));
+    //         else
+    //             return false;
+    //     },
+    //     {"MergerData"});
+    // auto outfileElastic {
+    //     TString::Format("./Outputs/tree_ex%s_%s_elastic.root", isFiltered ? "_F" : "", beam.c_str())};
+    // dfOut.Snapshot("Final_Tree", outfileElastic);
 
     // Save canvases
     if(savePlots)
@@ -357,6 +357,15 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
         TString outputKinL1 =
             TString::Format("../Figures/kin_L1_%s_%s_%s.png", beam.c_str(), target.c_str(), light.c_str());
         ctmpKinL1->SaveAs(outputKinL1, "PNG");
+
+        auto* ctmpKinTot = new TCanvas("ctmpKinTot", "", 1600, 1200);
+        ctmpKinTot->cd();
+        hcloneKinSil->DrawClone("colz");
+        hcloneKinL1->DrawClone("colz same");
+        theo->Draw("same");
+        TString outputKinTot =
+            TString::Format("../Figures/kin_tot_%s_%s_%s.png", beam.c_str(), target.c_str(), light.c_str());
+        ctmpKinTot->SaveAs(outputKinTot, "PNG");
 
         // Guardar
     }

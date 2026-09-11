@@ -28,7 +28,7 @@ void TL_LastVoxel()
     double Ex {0.}; // MeV
     // Get simu data
     TString fileName {TString::Format(
-        "../../Simulation/Outputs/%s/test_charge_threshold/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_L1_1e6Thresh.root",
+        "../../Simulation/Outputs/%s/test_ang_straggling_L1/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_L1_3-5AngStr_12pads.root",
         beam.c_str(), target.c_str(), light.c_str(), Ex, 0, 0)};
     // Get exp data
     TString fileNameExp {TString::Format("../../PostAnalysis/Outputs/tree_ex_F_%s_%s_%s.root", beam.c_str(),

@@ -33,6 +33,7 @@ void Ang(bool isLab = false)
     ROOT::EnableImplicitMT();
 
     ROOT::RDataFrame df {"Final_Tree", "./Inputs/tree_ex_F_7Li_d_p_filtered.root"};
+    // ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_F_7Li_d_p_filtered.root"};
     auto def {df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; },
                         {"MergerData"})}; // only silicons
 
@@ -46,8 +47,8 @@ void Ang(bool isLab = false)
         hKin = def.Histo2D({"hCM", "CM;#theta_{CM};E [MeV]", 300, 0, 120, 300, 0, 60}, "ThetaCM", "EVertex");
 
     // Init intervals
-    double thetaMin = isLab ? 70.0 : 4.5;
-    double thetaMax = isLab ? 80.0 : 30.5;
+    double thetaMin = isLab ? 70.0 : 7.5;
+    double thetaMax = isLab ? 80.0 : 18.5;
     double thetaStep = isLab ? 2.5 : 2.50;
     Angular::Intervals ivs {thetaMin, thetaMax, S2384Fit::Exdp_7Li, thetaStep, 0};
     if(isLab)
@@ -81,10 +82,13 @@ void Ang(bool isLab = false)
     // }
     // eff.Add("g0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1.root",
     //         isLab ? "effLab" : "effCM");
-    eff.Add("g0", "../../Simulation/Outputs/7Li/test_charge_threshold/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e6Thresh.root",
+    eff.Add("g0",
+            "../../Simulation/Outputs/7Li/test_ang_straggling_L1/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_3-5AngStr.root",
             isLab ? "effLab" : "effCM");
-     eff.Add(
-        "g1", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.981_nPS_0_pPS_0_L1.root", isLab ? "effLab" : "effCM");
+    eff.Add("g1",
+            "../../Simulation/Outputs/7Li/test_ang_straggling_L1/2H_1H_TRIUMF_Eex_0.981_nPS_0_pPS_0_L1_3-5AngStr.root",
+            isLab ? "effLab" : "effCM");
+    eff.Scale(0.931);
     // Draw to check is fine
     eff.Draw();
 

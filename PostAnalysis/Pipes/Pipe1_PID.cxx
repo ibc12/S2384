@@ -21,7 +21,7 @@
 
 void Pipe1_PID(const std::string& beam, const std::string& target, const std::string& light, bool isFiltered)
 {
-    // PrettyStyle(false);
+    PrettyStyle();
     bool savePlots = false;
 
     auto inFile {TString::Format("./Outputs/tree_preprocess%s_%s.root", isFiltered ? "_F" : "", beam.c_str())};
@@ -385,11 +385,13 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
         auto hptrL0 = hsgas.at("l0").Merge();
         auto hptrR0 = hsgas.at("r0").Merge();
         auto hptrF2F3 = hszero.at("0").Merge();
+        auto hptrL1 = hl1.Merge();
 
         // Clone to modify axis ranges
         auto* hmodL0 = (TH2D*)hptrL0->Clone("hmodL0");
         auto* hmodR0 = (TH2D*)hptrR0->Clone("hmodR0");
         auto* hmodF2F3 = (TH2D*)hptrF2F3->Clone("hmodF2F3");
+        auto* hmodL1 = (TH2D*)hptrL1->Clone("hmodL1");
 
         hmodL0->GetXaxis()->SetRangeUser(0, 16);
         hmodL0->GetYaxis()->SetRangeUser(0, 700);
@@ -421,6 +423,13 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
         ctmpF2F3->Update();
         TString outputF2F3 = TString::Format("../Figures/pid_f2f3_%s.png", beam.c_str());
         ctmpF2F3->SaveAs(outputF2F3);
+
+        auto* ctmpL1 = new TCanvas("ctmpL1", "", 1600, 1200);
+        ctmpL1->cd();
+        hmodL1->Draw("colz");
+        ctmpL1->Update();
+        TString outputL1 = TString::Format("../Figures/pid_l1_%s.png", beam.c_str());
+        ctmpL1->SaveAs(outputL1);
     }
 
     // ======================================

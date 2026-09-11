@@ -16,11 +16,12 @@
 #include "../Histos.h"
 void Fit()
 {
-    PrettyStyle(false);
+    PrettyStyle(true);
     ROOT::EnableImplicitMT();
 
     // Analysis
-    ROOT::RDataFrame df {"Final_Tree", "./Inputs/tree_ex_F_7Li_d_p_filtered.root"};
+    ROOT::RDataFrame df {"Final_Tree", "./Inputs/tree_ex_F_7Li_d_p_filtered.root"}; // Data with all events L1 inside cut to get all protons
+    // ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_F_7Li_d_p_filtered.root"};
     auto def {df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; },
                         {"MergerData"})}; // == false is for L1 events
     // Ex
@@ -44,13 +45,14 @@ void Fit()
 
     // Interface to fit
     Fitters::Interface inter;
-    double sigma_g0 {0.159188}; // given by simu
+    double sigma_g0 {0.1378}; // given by simu
     double sigma_g1 {0.167294};
     inter.AddState("g0", {240, 0, sigma_g0});
     inter.AddState("g1", {30, 0.981, sigma_g1});
-    inter.EndAddingStates();
 
-    inter.EvalSigma(sigmas.GetGraph());
+    inter.EndAddingStates();
+    // inter.SetFixAll(2, true);
+    // inter.EvalSigma(sigmas.GetGraph());
     // inter.SetFix("g1", 2, true); // fix all sigmas
     // inter.SetFix("g0", 2, true); // fix g.s. sigma
     //  inter.SetBounds("g1", 1, {0.4, 0.55});

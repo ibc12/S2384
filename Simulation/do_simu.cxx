@@ -512,12 +512,12 @@ void do_simu(const std::string& beam, const std::string& target, const std::stri
     // Allow multiple theads
     std::string tag {""};
     if(thread > 0)
-        tag = "_" + std::to_string(thread);
+        tag = "" + std::to_string(thread);
 
     // File to save data
     TString fileName {TString::Format(
-        "./Outputs/%s/test_telescope_beam_displacement/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_%.1f%s.root", beam.c_str(),
-        target.c_str(), light.c_str(), Ex, neutronPS, protonPS, kBeamDisplacementZ, tag.c_str())};
+        "./Outputs/%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_%s.root", beam.c_str(),
+        target.c_str(), light.c_str(), Ex, neutronPS, protonPS, tag.c_str())};
     auto outFile {new TFile(fileName, inspect ? "read" : "recreate")};
     auto* outTree {new TTree("SimulationTTree", "A TTree containing only our Eex obtained by simulation")};
     if(inspect)
