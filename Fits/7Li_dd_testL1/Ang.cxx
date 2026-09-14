@@ -88,7 +88,7 @@ void Ang(bool isLab = false)
     // "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.477_nPS_0_pPS_0_L1_1e6Thresh.root", isLab
     // ? "effLab" : "effCM");
     eff.Add("g0",
-            "../../Simulation/Outputs/7Li/test_ang_straggling_L1/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_3-5AngStr_12pads.root",
+            "../../Simulation/Outputs/7Li/test_ang_straggling_L1/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_3-5AngStr_14pads.root",
             isLab ? "effLab" : "effCM");
     eff.Scale(0.931);
     eff.Add("g1",

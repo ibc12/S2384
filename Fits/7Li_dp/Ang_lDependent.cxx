@@ -126,126 +126,126 @@ void Ang_lDependent(bool isLab = false)
     inter.FillComp();
     inter.FitComp();
 
-    Angular::Comparator comp {"g.s", xs.Get("g0")};
-    comp.Add("ADWA", "./Inputs/gs_ADWA/fort.202");
-    comp.Add("ADWA corrected front version", "./Inputs/gs_ADWA_newFront/fort.202");
-    // // comp.Add("ADWA twofnr", "./Inputs/gs_ADWA/21.gs");
-    // // comp.Add("ADWA finite range", "./Inputs/gs_ADWA_FiniteRange/fort.202");
-    // // comp.Add("DA1p-Delaroche", "./Inputs/gs_DA1p_Delaroche/21.g0");
-    // // comp.Add("Daehnik-Delaroche", "./Inputs/gs_Daehnik_Delaroche/21.g0");
-    // // comp.Add("DA1pcorr-Delaroche", "./Inputs/gs_DA1pcorr_Delaroche/21.g0");
-    // // comp.Add("DA1pcorr-Delaroche tweakPar", "./Inputs/gs_DA1pcorr_Delaroche_tweakPar/21.g0");
-    // // comp.Add("DA1pcorr-JLMmicroscopic (fermi)", "./Inputs/gs_DA1pcorr_JLMmicroscopic/21.g0");
-    // // comp.Add("DA1pcorr-JLMmicroscopic (oscillator)", "./Inputs/gs_DA1pcorr_JLMmicroscopic_other/21.g0");
-    // // comp.Add("DA1pcorr-Perey", "./Inputs/gs_DA1pcorr_Perey/21.g0");
-    // // comp.Add("DA1pcorr-CH89", "./Inputs/gs_DA1pcorr_CH89/21.g0");
-    // // comp.Add("DA1pcorr-Becheti", "./Inputs/gs_DA1pcorr_Bechetti/21.g0");
-    // // comp.Add("DA1pcorr-Menet", "./Inputs/gs_DA1pcorr_Menet/21.g0");
-    Angular::Comparator comp1 {"1st Ex", xs.Get("g1")};
-    // // comp1.Add("Daehnik-Delaroche 1st Ex", "./Inputs/g1_Daehnik_Delaroche/21.g1");
-    // comp1.Add("DA1pcorr-Delaroche 1st Ex", "./Inputs/g1_DA1pcorr_Delaroche/21.g1");
-    // comp1.Add("ADWA 1st Ex", "./Inputs/gs_ADWA/fort.203");
-    comp1.Add("ADWA 1st corrected front version", "./Inputs/gs_ADWA_newFront/fort.203");
-    Angular::Comparator comp2 {"2nd Ex", xs.Get("v0")};
-    // comp2.Add("Daehnik-Delaroche 2nd Ex", "./Inputs/g2_Daehnik_Delaroche/21.g2");
-    // comp2.Add("DA1pcorr-Delaroche 2nd Ex", "./Inputs/g2_DA1pcorr_Delaroche/21.g2");
-    comp2.Add("ADWA 2nd Ex - bound 200keV", "./Inputs/gs_ADWA/fort.204");
-    comp2.Add("ADWA 2nd Ex - bound 200keV corrected front version", "./Inputs/gs_ADWA_newFront/fort.205");
-    comp2.Add("ADWA 2nd Ex - bound 100keV", "./Inputs/gs_ADWA/fort.205");
-    comp2.Add("ADWA 2nd Ex - bound 100keV corrected front version", "./Inputs/gs_ADWA_newFront/fort.205");
-    comp2.Add("ADWA 2nd Ex - unbound", "./Inputs/gs_ADWA/fort.206");
-    comp2.Add("ADWA 2nd Ex - unbound corrected front version", "./Inputs/gs_ADWA_newFront/fort.206");
-    Angular::Comparator comp3 {"3rd Ex", xs.Get("v1")};
-    comp3.Add("ADWA weak bound 1+",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.202");
-    comp3.Add("ADWA weak bound 2+",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.203");
-    comp3.Add("ADWA weak bound 4-",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.204");
-    comp3.Add("ADWA weak bound 0+",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.205");
-    comp3.Add("ADWA weak bound 1-",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.206");
-    Angular::Comparator comp4 {"4th Ex", xs.Get("v2")};
-    comp4.Add("ADWA weak bound 1+",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.202");
-    comp4.Add("ADWA weak bound 2+",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.203");
-    comp4.Add("ADWA weak bound 4-",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.204");
-    comp4.Add("ADWA weak bound 0+",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.205");
-    comp4.Add("ADWA weak bound 1-",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.206");
-    Angular::Comparator comp5 {"5th Ex", xs.Get("v3")};
-    comp5.Add("ADWA weak bound 1+",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.202");
-    comp5.Add("ADWA weak bound 2+",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.203");
-    comp5.Add("ADWA weak bound 4-",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.204");
-    comp5.Add("ADWA weak bound 0+",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.205");
-    comp5.Add("ADWA weak bound 1-",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.206");
-    Angular::Comparator comp6 {"6th Ex", xs.Get("v4")};
-    comp6.Add("ADWA weak bound 1+",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.202");
-    comp6.Add("ADWA weak bound 2+",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.203");
-    comp6.Add("ADWA weak bound 4-",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.204");
-    comp6.Add("ADWA weak bound 0+",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.205");
-    comp6.Add("ADWA weak bound 1-",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.206");
-    Angular::Comparator comp7 {"7th Ex", xs.Get("v5")};
-    comp7.Add("ADWA weak bound 1+",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.202");
-    comp7.Add("ADWA weak bound 2+",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.203");
-    comp7.Add("ADWA weak bound 4-",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.204");
-    comp7.Add("ADWA weak bound 0+",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.205");
-    comp7.Add("ADWA weak bound 1-",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.206");
-    Angular::Comparator comp8 {"8th Ex", xs.Get("v6")};
-    comp8.Add("ADWA weak bound 1+",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.202");
-    comp8.Add("ADWA weak bound 2+",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.203");
-    comp8.Add("ADWA weak bound 4-",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.204");
-    comp8.Add("ADWA weak bound 0+",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.205");
-    comp8.Add("ADWA weak bound 1-",
-              "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.206");
-
-
-    comp.Draw("gs", true);
-    comp.Fit();
-    comp.Draw("gs", true);
-    // comp.DrawTheo();
-    comp1.Fit();
-    comp1.Draw("1st", true);
-    // comp1.DrawTheo();
-    comp2.Fit();
-    comp2.Draw("2nd", true);
-    comp2.DrawTheo();
-    comp3.Fit();
-    comp3.Draw("3rd", true);
-    comp3.DrawTheo();
-    comp4.Fit();
-    comp4.Draw("4th", true);
-    comp5.Fit();
-    comp5.Draw("5th", true);
-    comp6.Fit();
-    comp6.Draw("6th", true);
-    comp7.Fit();
-    comp7.Draw("7th", true);
-    comp8.Fit();
-    comp8.Draw("8th", true);
+    // Angular::Comparator comp {"g.s", xs.Get("g0")};
+    // comp.Add("ADWA", "./Inputs/gs_ADWA/fort.202");
+    // comp.Add("ADWA corrected front version", "./Inputs/gs_ADWA_newFront/fort.202");
+    // // // comp.Add("ADWA twofnr", "./Inputs/gs_ADWA/21.gs");
+    // // // comp.Add("ADWA finite range", "./Inputs/gs_ADWA_FiniteRange/fort.202");
+    // // // comp.Add("DA1p-Delaroche", "./Inputs/gs_DA1p_Delaroche/21.g0");
+    // // // comp.Add("Daehnik-Delaroche", "./Inputs/gs_Daehnik_Delaroche/21.g0");
+    // // // comp.Add("DA1pcorr-Delaroche", "./Inputs/gs_DA1pcorr_Delaroche/21.g0");
+    // // // comp.Add("DA1pcorr-Delaroche tweakPar", "./Inputs/gs_DA1pcorr_Delaroche_tweakPar/21.g0");
+    // // // comp.Add("DA1pcorr-JLMmicroscopic (fermi)", "./Inputs/gs_DA1pcorr_JLMmicroscopic/21.g0");
+    // // // comp.Add("DA1pcorr-JLMmicroscopic (oscillator)", "./Inputs/gs_DA1pcorr_JLMmicroscopic_other/21.g0");
+    // // // comp.Add("DA1pcorr-Perey", "./Inputs/gs_DA1pcorr_Perey/21.g0");
+    // // // comp.Add("DA1pcorr-CH89", "./Inputs/gs_DA1pcorr_CH89/21.g0");
+    // // // comp.Add("DA1pcorr-Becheti", "./Inputs/gs_DA1pcorr_Bechetti/21.g0");
+    // // // comp.Add("DA1pcorr-Menet", "./Inputs/gs_DA1pcorr_Menet/21.g0");
+    // Angular::Comparator comp1 {"1st Ex", xs.Get("g1")};
+    // // // comp1.Add("Daehnik-Delaroche 1st Ex", "./Inputs/g1_Daehnik_Delaroche/21.g1");
+    // // comp1.Add("DA1pcorr-Delaroche 1st Ex", "./Inputs/g1_DA1pcorr_Delaroche/21.g1");
+    // // comp1.Add("ADWA 1st Ex", "./Inputs/gs_ADWA/fort.203");
+    // comp1.Add("ADWA 1st corrected front version", "./Inputs/gs_ADWA_newFront/fort.203");
+    // Angular::Comparator comp2 {"2nd Ex", xs.Get("v0")};
+    // // comp2.Add("Daehnik-Delaroche 2nd Ex", "./Inputs/g2_Daehnik_Delaroche/21.g2");
+    // // comp2.Add("DA1pcorr-Delaroche 2nd Ex", "./Inputs/g2_DA1pcorr_Delaroche/21.g2");
+    // comp2.Add("ADWA 2nd Ex - bound 200keV", "./Inputs/gs_ADWA/fort.204");
+    // comp2.Add("ADWA 2nd Ex - bound 200keV corrected front version", "./Inputs/gs_ADWA_newFront/fort.205");
+    // comp2.Add("ADWA 2nd Ex - bound 100keV", "./Inputs/gs_ADWA/fort.205");
+    // comp2.Add("ADWA 2nd Ex - bound 100keV corrected front version", "./Inputs/gs_ADWA_newFront/fort.205");
+    // comp2.Add("ADWA 2nd Ex - unbound", "./Inputs/gs_ADWA/fort.206");
+    // comp2.Add("ADWA 2nd Ex - unbound corrected front version", "./Inputs/gs_ADWA_newFront/fort.206");
+    // Angular::Comparator comp3 {"3rd Ex", xs.Get("v1")};
+    // comp3.Add("ADWA weak bound 1+",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.202");
+    // comp3.Add("ADWA weak bound 2+",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.203");
+    // comp3.Add("ADWA weak bound 4-",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.204");
+    // comp3.Add("ADWA weak bound 0+",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.205");
+    // comp3.Add("ADWA weak bound 1-",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.206");
+    // Angular::Comparator comp4 {"4th Ex", xs.Get("v2")};
+    // comp4.Add("ADWA weak bound 1+",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.202");
+    // comp4.Add("ADWA weak bound 2+",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.203");
+    // comp4.Add("ADWA weak bound 4-",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.204");
+    // comp4.Add("ADWA weak bound 0+",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.205");
+    // comp4.Add("ADWA weak bound 1-",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.206");
+    // Angular::Comparator comp5 {"5th Ex", xs.Get("v3")};
+    // comp5.Add("ADWA weak bound 1+",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.202");
+    // comp5.Add("ADWA weak bound 2+",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.203");
+    // comp5.Add("ADWA weak bound 4-",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.204");
+    // comp5.Add("ADWA weak bound 0+",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.205");
+    // comp5.Add("ADWA weak bound 1-",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.206");
+    // Angular::Comparator comp6 {"6th Ex", xs.Get("v4")};
+    // comp6.Add("ADWA weak bound 1+",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.202");
+    // comp6.Add("ADWA weak bound 2+",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.203");
+    // comp6.Add("ADWA weak bound 4-",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.204");
+    // comp6.Add("ADWA weak bound 0+",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.205");
+    // comp6.Add("ADWA weak bound 1-",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.206");
+    // Angular::Comparator comp7 {"7th Ex", xs.Get("v5")};
+    // comp7.Add("ADWA weak bound 1+",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.202");
+    // comp7.Add("ADWA weak bound 2+",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.203");
+    // comp7.Add("ADWA weak bound 4-",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.204");
+    // comp7.Add("ADWA weak bound 0+",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.205");
+    // comp7.Add("ADWA weak bound 1-",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.206");
+    // Angular::Comparator comp8 {"8th Ex", xs.Get("v6")};
+    // comp8.Add("ADWA weak bound 1+",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.202");
+    // comp8.Add("ADWA weak bound 2+",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.203");
+    // comp8.Add("ADWA weak bound 4-",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.204");
+    // comp8.Add("ADWA weak bound 0+",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.205");
+    // comp8.Add("ADWA weak bound 1-",
+    //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.206");
+// 
+// 
+    // comp.Draw("gs", true);
+    // comp.Fit();
+    // comp.Draw("gs", true);
+    // // comp.DrawTheo();
+    // comp1.Fit();
+    // comp1.Draw("1st", true);
+    // // comp1.DrawTheo();
+    // comp2.Fit();
+    // comp2.Draw("2nd", true);
+    // comp2.DrawTheo();
+    // comp3.Fit();
+    // comp3.Draw("3rd", true);
+    // comp3.DrawTheo();
+    // comp4.Fit();
+    // comp4.Draw("4th", true);
+    // comp5.Fit();
+    // comp5.Draw("5th", true);
+    // comp6.Fit();
+    // comp6.Draw("6th", true);
+    // comp7.Fit();
+    // comp7.Draw("7th", true);
+    // comp8.Fit();
+    // comp8.Draw("8th", true);
 
     auto* c0 {new TCanvas {"c0", "(d,p) canvas"}};
     c0->DivideSquare(2);

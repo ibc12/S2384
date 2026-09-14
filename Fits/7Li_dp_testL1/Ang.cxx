@@ -83,10 +83,10 @@ void Ang(bool isLab = false)
     // eff.Add("g0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1.root",
     //         isLab ? "effLab" : "effCM");
     eff.Add("g0",
-            "../../Simulation/Outputs/7Li/test_ang_straggling_L1/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_3-5AngStr.root",
+            "../../Simulation/Outputs/7Li/test_ang_straggling_L1/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_3-5AngStr_14pads.root",
             isLab ? "effLab" : "effCM");
     eff.Add("g1",
-            "../../Simulation/Outputs/7Li/test_ang_straggling_L1/2H_1H_TRIUMF_Eex_0.981_nPS_0_pPS_0_L1_3-5AngStr.root",
+            "../../Simulation/Outputs/7Li/test_ang_straggling_L1/2H_1H_TRIUMF_Eex_0.981_nPS_0_pPS_0_L1_3-5AngStr_14pads.root",
             isLab ? "effLab" : "effCM");
     eff.Scale(0.931);
     // Draw to check is fine

@@ -241,8 +241,8 @@ extracted = extract_max_sf(ret)
 shift_ex(extracted)
 
 fig, ax = plt.subplots(1, 1, figsize=(9, 12))
-exp_ex = [0.0, 0.936, 2.19, 3.3, 3.802, 5.90033, 6.34973]
-plot_bars([extracted], ax, exp_ex=exp_ex, exclude_l=[0])  # Ejemplo excluyendo s
+exp_ex = [0.0, 0.936, 2.19, 3.29, 3.81, 5.21, 5.765, 6.24]
+plot_bars([extracted], ax, exp_ex=exp_ex, exclude_l=[0,2])  # Ejemplo excluyendo s
 
 ax.set_ylabel(r"$E_{x}$ [MeV]")
 ax.set_title("SF por estado, coloreado por ℓ")
