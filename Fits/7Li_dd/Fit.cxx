@@ -3,6 +3,7 @@
 #include "ROOT/RDataFrame.hxx"
 
 #include "TROOT.h"
+#include "TStyle.h"
 
 #include "FitInterface.h"
 #include "FitModel.h"
@@ -70,4 +71,5 @@ void Fit()
     // Run!
     Fitters::RunFit(hEx.GetPtr(), exmin, exmax, model, inter.GetInitial(), inter.GetBounds(), inter.GetFixed(),
                     ("./Outputs/fit.root"), "7Li(d,d) fit", {{"g0", "g.s"}, {"g1", "1st"}}, false);
+    gROOT->ForceStyle();
 }

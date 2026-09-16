@@ -66,8 +66,8 @@ void Ang_lDependent(bool isLab = false)
             m.AddBWL(4, 2, 2.03262, mu, R);
             m.AddBWL(5, 1, 2.03262, mu, R);
             m.AddBWL(6, 2, 2.03262, mu, R);
-            //         m.AddBWL(7, 1, 2.03262, mu, R);
-            //         m.AddBWL(8, 1, 2.03262, mu, R);
+            m.AddBWL(7, 1, 2.03262, mu, R);
+            m.AddBWL(8, 1, 2.03262, mu, R);
         });
     fitter.Run();
     fitter.Draw();
@@ -98,10 +98,10 @@ void Ang_lDependent(bool isLab = false)
             isLab ? "effLabside" : "effCMside");
     eff.Add("v6", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_7.100_nPS_0_pPS_0.root",
             isLab ? "effLabside" : "effCMside");
-    //  eff.Add("v7", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_3.210_nPS_0_pPS_0.root",
-    //          isLab ? "effLabside" : "effCMside");
-    //  eff.Add("v8", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_7.100_nPS_0_pPS_0.root",
-    //          isLab ? "effLabside" : "effCMside");
+    eff.Add("v7", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_3.210_nPS_0_pPS_0.root",
+            isLab ? "effLabside" : "effCMside");
+    eff.Add("v8", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_7.100_nPS_0_pPS_0.root",
+            isLab ? "effLabside" : "effCMside");
     // Scale the efficiencies
     eff.Scale(0.946);
 
@@ -221,8 +221,8 @@ void Ang_lDependent(bool isLab = false)
     //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.205");
     // comp8.Add("ADWA weak bound 1-",
     //           "../../../Charlas/Ganil Colloque 2026/lineas teoricas dp weakly bound/gs_ADWA_unbound/fort.206");
-// 
-// 
+    //
+    //
     // comp.Draw("gs", true);
     // comp.Fit();
     // comp.Draw("gs", true);

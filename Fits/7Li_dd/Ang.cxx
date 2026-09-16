@@ -16,18 +16,18 @@
 #include "AngIntervals.h"
 #include "FitInterface.h"
 #include "Interpolators.h"
+#include "PhysColors.h"
 #include "PhysExperiment.h"
 
 #include <string>
 #include <vector>
 
-#include "../Histos.h"
-
 #include "../../PrettyStyle.C"
+#include "../Histos.h"
 
 void Ang(bool isLab = false)
 {
-    PrettyStyle(false);
+    PrettyStyle(false, false);
     if(isLab)
         Angular::ToggleIsLab();
 
@@ -80,9 +80,11 @@ void Ang(bool isLab = false)
     //                                     : TString::Format("Inputs/effs/%s_7Li_dd_sil.root", peak.c_str());
     //     eff.Add(peak, inputPath.Data(), isLab ? "effLab" : "effCM");
     // }
-    eff.Add("g0", "../../Simulation/Outputs/7Li/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
+    eff.Add("g0", "../../Simulation/Outputs/7Li/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0.root",
+            isLab ? "effLabside" : "effCMside");
     eff.Scale(0.95);
-    eff.Add("g1", "../../Simulation/Outputs/7Li/2H_2H_TRIUMF_Eex_0.477_nPS_0_pPS_0.root", isLab ? "effLabside" : "effCMside");
+    eff.Add("g1", "../../Simulation/Outputs/7Li/2H_2H_TRIUMF_Eex_0.477_nPS_0_pPS_0.root",
+            isLab ? "effLabside" : "effCMside");
     // Draw to check is fine
     eff.Draw();
 
@@ -94,14 +96,19 @@ void Ang(bool isLab = false)
     if(!isLab)
         xs.Write("./Outputs/");
 
+    // for(const auto& peak : peaks)
+    //     inter.AddAngularDistribution(peak, xs.Get(peak));
+    // inter.ReadCompConfig("./comps.conf");
+    // inter.FillComp();
+    // inter.FitComp();
 
     // Plot
     Angular::Comparator comp {"g.s", xs.Get("g0")};
-    //comp.Add("Haixia", "./Inputs/gsH/fort.201");
-    //comp.Add("Daehnick", "./Inputs/gsD/fort.201");
-    //comp.Add("DA1p", "./Inputs/gsDA1p/fort.201");
+    // comp.Add("Haixia", "./Inputs/gsH/fort.201");
+    // comp.Add("Daehnick", "./Inputs/gsD/fort.201");
+    // comp.Add("DA1p", "./Inputs/gsDA1p/fort.201");
     comp.Add("DA1pcorr", "./Inputs/gsDA1p_corr/fort.201");
-    //comp.Add("ADWA", "../7Li_dp/Inputs/gs_ADWA/fort.201");
+    // comp.Add("ADWA", "../7Li_dp/Inputs/gs_ADWA/fort.201");
     Angular::Comparator comp1 {"1st Ex", xs.Get("g1")};
     comp1.Add("DA1p BE2 deformation", "./Inputs/g1_DA1p/fort.202");
     comp1.Add("DA1pcorr BE2 deformation", "./Inputs/g1_DA1p_corr/fort.202");
@@ -126,6 +133,10 @@ void Ang(bool isLab = false)
     comp1.Fit();
     comp1.Draw("", true);
     comp1.DrawTheo();
+
+    gPhysColors->GetInstance();
+    gPhysColors->Get(6);
+    
     // Papers data
     // Paper japones 14,7 MeV Ed
     TGraphErrors* gExp_14_7MeV_Ed {new TGraphErrors("./re-ana_exp_7MeVEd/Inputs/14-7MeVEd.dat", "%lg %lg")};

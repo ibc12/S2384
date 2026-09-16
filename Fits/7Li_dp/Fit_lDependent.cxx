@@ -18,7 +18,7 @@
 #include "../Histos.h"
 void Fit_lDependent()
 {
-    PrettyStyle();
+    PrettyStyle(false, false);
     ROOT::EnableImplicitMT();
 
     // Analysis
@@ -88,8 +88,8 @@ void Fit_lDependent()
     inter.Write("./Outputs/interface_lDependent.root");
 
     // Fitting range
-    double exmin {-2};
-    double exmax {9};
+    double exmin {-1};
+    double exmax {10};
 
     // Model
     Fitters::Model model {inter.GetNGauss(), inter.GetNVoigt(), {*hPS}};

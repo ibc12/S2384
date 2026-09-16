@@ -41,9 +41,9 @@ void Ang()
     auto hCM {def.Histo2D({"hCM", "CM;#theta_{CM};E [MeV]", 300, 0, 120, 300, 0, 60}, "ThetaCM", "EVertex")};
 
     // Init intervals
-    double thetaMin {28};
-    double thetaMax {44};
-    // double thetaMax {60};
+    double thetaMin {30};
+    //double thetaMax {44};
+    double thetaMax {60};
     double thetaStep {2};
     Angular::Intervals ivs {thetaMin, thetaMax, S2384Fit::Exdd, thetaStep, 0};
     def.Foreach([&](double thetacm, double ex) { ivs.Fill(thetacm, ex); }, {"ThetaCM", "Ex"});
@@ -66,6 +66,7 @@ void Ang()
     // Efficiency
     Interpolators::Efficiency eff;
     eff.Add("g0", "../../Simulation/Outputs/11Li/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0.root", "effCMside");
+    eff.Scale(0.95);
     // eff.Add("g0",
     // "../../Simulation/Outputs/11Li/test_ang_straggling/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_1-4AngStr.root",
     // "effCMgateHeavy"); Draw to check is fine
@@ -80,12 +81,16 @@ void Ang()
 
     // Plot
     Angular::Comparator comp {"g.s", xs.Get("g0")};
-    comp.Add("SFRESCO", "./Inputs/gsSFRESCO/fort.201");
-    comp.Add("Haixia", "./Inputs/gsH/fort.201");
+    // comp.Add("SFRESCO", "./Inputs/gsSFRESCO/fort.201");
+    //comp.Add("Haixia", "./Inputs/gsH/fort.201");
     // comp.Fit();
-    comp.Add("Daehnick", "./Inputs/gsD/fort.201");
+    //comp.Add("Daehnick", "./Inputs/gsD/fort.201");
     // comp.Fit();
-    comp.Add("DA1p", "./Inputs/gsDA1p/fort.201");
+    //comp.Add("DA1p", "./Inputs/gsDA1p/fort.201");
+    comp.Add("full OP1", "../../../Tese/L11-Li12/full_OP1.dat");
+    comp.Add("full OP2", "../../../Tese/L11-Li12/full_OP2.dat");
+    comp.Add("no cont OP1", "../../../Tese/L11-Li12/no_cont_OP1.dat");
+    comp.Add("no cont OP2", "../../../Tese/L11-Li12/no_cont_OP2.dat");
     comp.Fit();
     comp.Draw("", true);
 

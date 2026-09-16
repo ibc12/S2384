@@ -114,7 +114,7 @@ void WriteRejectedEvents(const std::string& infile)
 void Pipe3_Filter(const std::string& beam, const std::string& target, const std::string& light, bool isFiltered)
 {
     // PrettyStyle();
-    bool savePlots {false};
+    bool savePlots {true};
     bool onlySil {true};
 
     auto infile {TString::Format("./Outputs/tree_ex%s_%s_%s_%s.root", isFiltered ? "_F" : "", beam.c_str(),
@@ -318,25 +318,25 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
         auto* hcloneKinL1 = (TH2D*)hkinL1->Clone("hcloneKinL1");
 
         // Crear canvas temporal solo para guardar
-        auto* ctmpEx = new TCanvas("ctmpEx", "", 1600, 1200);
+        auto* ctmpEx = new TCanvas("ctmpEx", "", 1200, 1200);
         ctmpEx->cd();
         hcloneEx->DrawClone("hist");
         TString outputEx =
             TString::Format("../Figures/ex_latSil_%s_%s_%s.png", beam.c_str(), target.c_str(), light.c_str());
         ctmpEx->SaveAs(outputEx, "PNG");
 
-        auto* ctmpExL1 = new TCanvas("ctmpExL1", "", 1600, 1200);
+        auto* ctmpExL1 = new TCanvas("ctmpExL1", "", 1200, 1200);
         ctmpExL1->cd();
         hcloneExL1->DrawClone("hist");
         TString outputExL1 =
             TString::Format("../Figures/ex_L1_%s_%s_%s.png", beam.c_str(), target.c_str(), light.c_str());
         ctmpExL1->SaveAs(outputExL1, "PNG");
 
-        auto* ctmpKinSil = new TCanvas("ctmpKinSil", "", 1600, 1200);
+        auto* ctmpKinSil = new TCanvas("ctmpKinSil", "", 1200, 1200);
         ctmpKinSil->cd();
         hcloneKinSil->DrawClone("colz");
         auto* theo {kin.GetKinematicLine3()};
-        theo->SetLineColor(TColor::GetColor("#2ca02c"));
+        theo->SetLineColor(kRed + 1);
         theo->Draw("same");
         // auto* theo1st {kin1st.GetKinematicLine3()};
         // theo1st->SetLineColor(TColor::GetColor("#1f77b4"));
@@ -348,7 +348,7 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
             TString::Format("../Figures/kin_latSil_%s_%s_%s.png", beam.c_str(), target.c_str(), light.c_str());
         ctmpKinSil->SaveAs(outputKinSil, "PNG");
 
-        auto* ctmpKinL1 = new TCanvas("ctmpKinL1", "", 1600, 1200);
+        auto* ctmpKinL1 = new TCanvas("ctmpKinL1", "", 1200, 1200);
         ctmpKinL1->cd();
         hcloneKinL1->DrawClone("colz");
         theo->Draw("same");
@@ -358,7 +358,7 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
             TString::Format("../Figures/kin_L1_%s_%s_%s.png", beam.c_str(), target.c_str(), light.c_str());
         ctmpKinL1->SaveAs(outputKinL1, "PNG");
 
-        auto* ctmpKinTot = new TCanvas("ctmpKinTot", "", 1600, 1200);
+        auto* ctmpKinTot = new TCanvas("ctmpKinTot", "", 1200, 1200);
         ctmpKinTot->cd();
         hcloneKinSil->DrawClone("colz");
         hcloneKinL1->DrawClone("colz same");

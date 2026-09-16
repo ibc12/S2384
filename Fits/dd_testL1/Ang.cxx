@@ -66,12 +66,13 @@ void Ang()
     // Efficiency
     Interpolators::Efficiency eff;
     // eff.Add("g0", "../../Simulation/Outputs/11Li/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0.root", "effCMside");
-    eff.Add("g0", "../../Simulation/Outputs/11Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e6Thresh.root", "effCM");
+    eff.Add("g0", "../../Simulation/Outputs/11Li/test_ang_straggling_L1/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_3-5AngStr_14pads.root", "effCM");
+    eff.Scale(0.931);
     // Draw to check is fine
     eff.Draw();
 
     // Set experiment info
-    PhysUtils::Experiment exp {"../norm/11Li_norm.dat"};
+    PhysUtils::Experiment exp {"../norm/11Li_norm_L1.dat"};
     // And compute differential xs!
     Angular::DifferentialXS xs {&ivs, &fitter, &eff, &exp};
     xs.DoFor(peaks);
@@ -79,7 +80,7 @@ void Ang()
 
     // Plot
     Angular::Comparator comp {"g.s", xs.Get("g0")};
-    comp.Add("SFRESCO", "./Inputs/gsSFRESCO/fort.201");
+    // comp.Add("SFRESCO", "./Inputs/gsSFRESCO/fort.201");
     comp.Add("Haixia", "./Inputs/gsH/fort.201");
     // comp.Fit();
     comp.Add("Daehnick", "./Inputs/gsD/fort.201");

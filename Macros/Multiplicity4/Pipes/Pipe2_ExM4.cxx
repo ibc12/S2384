@@ -154,10 +154,10 @@ void Pipe2_ExM4(const std::string& beam, const std::string& target, const std::s
 
     std::vector<ExLevel> levels {
         {0.0, kBlack, "g.s."},
-        {4.63, kRed, "4.63 MeV"},
+        // {4.63, kRed, "4.63 MeV"},
         {6.53, kBlue, "6.53 MeV"},
-        {7.1, kGreen + 2, "7.1 MeV"},
-        {8.5, kPink + 2, "8.5 MeV"},
+        // {7.1, kGreen + 2, "7.1 MeV"},
+        {7.5, kPink + 2, "7.5 MeV"},
     };
 
     auto* legendL1 = new TLegend(0.65, 0.65, 0.88, 0.88);
@@ -208,7 +208,7 @@ void Pipe2_ExM4(const std::string& beam, const std::string& target, const std::s
     if(savePlots)
     {
         // Join plot for kinematics L1 and others
-        auto* ctmpKinAll = new TCanvas("ctmpKinL1", "Kinematics Multiplicity 4 - All layers", 800, 600);
+        auto* ctmpKinAll = new TCanvas("ctmpKinL1", "Kinematics Multiplicity 4 - All layers", 1200, 1200);
         ctmpKinAll->cd();
         hkinL1->DrawClone("colz");
         hkinOthers->DrawClone("colz same");
@@ -237,20 +237,36 @@ void Pipe2_ExM4(const std::string& beam, const std::string& target, const std::s
             TString::Format("../../Figures/kin_all_M4_%s_%s_%s.png", beam.c_str(), target.c_str(), light.c_str());
         ctmpKinAll->SaveAs(outputKinAll);
 
+        auto* ctmpKinOthers = new TCanvas("ctmpKinOthers", "Kinematics Multiplicity 4 - Other layers", 1200, 1200);
+        ctmpKinOthers->cd();
+        hkinOthers->Rebin(2);
+        hkinOthers->DrawClone("colz");
+        for(const auto& level : levels)
+        {
+            kinLevels.emplace_back(pb, pt, pl, initialEnergy * pb.GetAMU(), level.Eex);
+            auto* theo {kinLevels.back().GetKinematicLine3()};
+            theo->SetLineColor(level.color);
+            theo->SetLineWidth(2);
+            theo->Draw("same");
+        }
+        TString outputKinOthers =
+            TString::Format("../../Figures/kin_others_M4_%s_%s_%s.png", beam.c_str(), target.c_str(), light.c_str());
+        ctmpKinOthers->SaveAs(outputKinOthers);
+
         // Now do a copy of the histograms and set range in x from -2 to 10
         auto* hcloneExL1 = (TH1D*)hExL1->Clone("hcloneExL1");
         auto* hcloneExOthers = (TH1D*)hExOthers->Clone("hcloneExOthers");
-        hcloneExL1->GetXaxis()->SetRangeUser(-2, 12);
-        hcloneExOthers->GetXaxis()->SetRangeUser(-2, 10);
+        hcloneExL1->GetXaxis()->SetRangeUser(0, 12);
+        hcloneExOthers->GetXaxis()->SetRangeUser(0, 12);
 
-        auto* ctmpExL1 = new TCanvas("ctmpExL1", "Excitation energy Multiplicity 4 - L1", 800, 600);
+        auto* ctmpExL1 = new TCanvas("ctmpExL1", "Excitation energy Multiplicity 4 - L1", 1200, 1200);
         ctmpExL1->cd();
         hcloneExL1->DrawClone();
         TString outputExL1 =
             TString::Format("../../Figures/ex_L1_M4_%s_%s_%s.png", beam.c_str(), target.c_str(), light.c_str());
         ctmpExL1->SaveAs(outputExL1);
 
-        auto* ctmpExOthers = new TCanvas("ctmpExOthers", "Excitation energy Multiplicity 4 - Other layers", 800, 600);
+        auto* ctmpExOthers = new TCanvas("ctmpExOthers", "Excitation energy Multiplicity 4 - Other layers", 1200, 1200);
         ctmpExOthers->cd();
         hcloneExOthers->DrawClone();
         TString outputExOthers =

@@ -14,18 +14,17 @@ void PrettyStyle(bool showStats = true, bool palete2D = true)
     // Tableau 10 - colores bien diferenciados
     const Int_t NColors = 10;
     Int_t palette[NColors] = {
-        TColor::GetColor("#1f77b4"), // Azul
-        TColor::GetColor("#ff7f0e"), // Naranja
-        TColor::GetColor("#2ca02c"), // Verde
-        TColor::GetColor("#d62728"), // Rojo
-        TColor::GetColor("#9467bd"), // Morado
-        TColor::GetColor("#8c564b"), // Marrón
-        TColor::GetColor("#e377c2"), // Rosa
-        TColor::GetColor("#7f7f7f"), // Gris
-        TColor::GetColor("#bcbd22"), // Oliva
-        TColor::GetColor("#17becf")  // Cian
+        TColor::GetColor("#1B3A6F"), // 0 - Azul oscuro  -> puntos
+        TColor::GetColor("#008C45"), // 2 - Verde fuerte
+        TColor::GetColor("#C2185B"), // 3 - Magenta
+        TColor::GetColor("#E66100"), // 4 - Naranja
+        TColor::GetColor("#6A3D9A"), // 5 - Violeta
+        TColor::GetColor("#008C95"), // 6 - Cian oscuro
+        TColor::GetColor("#0057B8"), // 7 - Azul fuerte
+        TColor::GetColor("#8B1E1E"), // 8 - Rojo oscuro
+        TColor::GetColor("#176B3A"), // 9 - Verde oscuro
+        TColor::GetColor("#D62728"), // 1 - Rojo fuerte  -> fit
     };
-
     // --- Colores y fuentes ---
     if(palete2D)
         st->SetPalette(kCividis);

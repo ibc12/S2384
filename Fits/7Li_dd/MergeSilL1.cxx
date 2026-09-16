@@ -28,7 +28,7 @@
 
 void MergeSilL1()
 {
-    PrettyStyle();
+    PrettyStyle(false, false);
     // Sil xs
     TGraphErrors* g_sil_xs {new TGraphErrors()};
     {
@@ -86,7 +86,7 @@ void MergeSilL1()
     Angular::Comparator comp {"Merged g.s", g_merged};
     comp.Add("DA1p", "./Inputs/gsDA1p_corr/fort.201");
     comp.Fit();
-    comp.Draw("", true);
+    comp.Draw("", true, false);
     Angular::Comparator compSil {"Sil g.s", g_sil_xs};
     compSil.Add("DA1pcorr", "./Inputs/gsDA1p_corr/fort.201");
     compSil.Fit();
