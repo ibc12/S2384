@@ -26,6 +26,7 @@
 #include <string>
 
 #include "../../../PostAnalysis/HistConfig.h"
+#include "../../../Fits/Histos.h"
 #include "../../../PrettyStyle.C"
 #include "../Utils.h"
 
@@ -121,7 +122,7 @@ void Pipe2_ExM4(const std::string& beam, const std::string& target, const std::s
 
     // Histogramas de Ex para cada subconjunto
     auto hExL1 {dfL1.Histo1D(HistConfig::Ex, "Ex")};
-    auto hExOthers {dfOthers.Histo1D(HistConfig::Ex, "Ex")};
+    auto hExOthers {dfOthers.Histo1D(S2384Fit::Exdp_7Li, "Ex")};
 
     // Histogramas de cinematica para cada subconjunto
     auto hkinL1 {dfL1.Histo2D(HistConfig::Kin, "ThetaLab", "EVertex")};
@@ -195,15 +196,15 @@ void Pipe2_ExM4(const std::string& beam, const std::string& target, const std::s
     c4->cd();
     legendOthers->Draw();
 
-    std::ofstream out(TString::Format("./Outputs/Pipe2_ExM4_%s_ex.dat", light.c_str()).Data());
-    dfL1.Foreach(
-        [&](ActRoot::MergerData& m, double ex)
-        {
-            if(ex > 2)
-                m.Stream(out);
-        },
-        {"MergerData", "Ex"});
-    out.close();
+    // std::ofstream out(TString::Format("./Outputs/Pipe2_ExM4_%s_ex.dat", light.c_str()).Data());
+    // dfL1.Foreach(
+    //     [&](ActRoot::MergerData& m, double ex)
+    //     {
+    //         if(ex > 2)
+    //             m.Stream(out);
+    //     },
+    //     {"MergerData", "Ex"});
+    // out.close();
 
     if(savePlots)
     {
@@ -257,7 +258,7 @@ void Pipe2_ExM4(const std::string& beam, const std::string& target, const std::s
         auto* hcloneExL1 = (TH1D*)hExL1->Clone("hcloneExL1");
         auto* hcloneExOthers = (TH1D*)hExOthers->Clone("hcloneExOthers");
         hcloneExL1->GetXaxis()->SetRangeUser(0, 12);
-        hcloneExOthers->GetXaxis()->SetRangeUser(0, 12);
+        hcloneExOthers->GetXaxis()->SetRangeUser(-1, 10);
 
         auto* ctmpExL1 = new TCanvas("ctmpExL1", "Excitation energy Multiplicity 4 - L1", 1200, 1200);
         ctmpExL1->cd();

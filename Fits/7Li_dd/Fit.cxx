@@ -17,7 +17,7 @@
 #include "../Histos.h"
 void Fit()
 {
-    PrettyStyle(false);
+    PrettyStyle(false, false);
     ROOT::EnableImplicitMT();
 
     // Analysis

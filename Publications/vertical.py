@@ -1,10 +1,10 @@
 from collections import defaultdict
-from re import S
 from typing import Dict, List, Tuple, Optional
 import pyphysics as phys
 import uncertainties as un
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 from matplotlib.patches import Patch
 import copy
 import re
@@ -36,13 +36,20 @@ class QState:
 TwoDict = Dict[QState, Dict[float, List]]
 OneDict = Dict[QState, List[Tuple[phys.QuantumNumbers, phys.ShellModelData]]]
 
-# Cada nivel experimental: (Ex, l, j, C2S)
+# Cada nivel experimental: (Ex, l, j, C2S, C2S_err, Jpi)
 # - Si c2s > 0  -> se dibuja como barra coloreada según l (igual criterio que el modelo),
 #   normalizada al número de "huecos" disponibles en ese orbital (l, j) — ver
 #   VACANCY_EXCEPTIONS / get_vacancies más abajo.
 # - Si c2s <= 0 -> se dibuja la barra/línea negra fina de siempre, indicando el nivel
 #   sin SF asociado (en ese caso l y j son irrelevantes, pon lo que quieras, p.ej. -1, -1).
-ExpLevel = Tuple[float, int, float, float]
+# - C2S_err es la incertidumbre absoluta del C2S (misma escala que C2S), o None si no hay.
+#   Se escribe en notación compacta tras el valor, con 2 cifras significativas en el error
+#   y el C2S redondeado al mismo decimal:
+#     (1.22, 0.20)  -> "C²S=1.22(20)"
+#     (0.28, 0.056) -> "C²S=0.280(56)"
+# - Jpi es un string libre (p.ej. "3/2⁻", "(1,2)⁺") o None si no quieres escribir nada.
+#   Se dibuja a la izquierda de la barra, junto con el orbital (si hay C2S).
+ExpLevel = Tuple[float, int, float, float, Optional[float], Optional[str]]
 
 # -------------------------
 # VACANCIAS (tamaño total de la barra experimental)
@@ -126,7 +133,7 @@ def extract_max_sf(data: TwoDict) -> OneDict:
 
 def shift_ex(data: TwoDict | OneDict) -> None:
     maxEx = max(
-        tup[1].Ex #type: ignore
+        tup[1].Ex  # type: ignore
         for v in data.values()
         for tup in (v if isinstance(v, list) else sum(v.values(), []))
     )
@@ -170,6 +177,15 @@ def l_to_color(l: int) -> str:
     return l_colors.get(l, "gray")
 
 
+def _dodge(y: float, used: List[float], step: float) -> float:
+    """Sube el texto en pasos de `step` hasta que no pise a otro ya colocado."""
+    offset = 0.0
+    while any(abs(y + offset - pos) < step for pos in used):
+        offset += step
+    used.append(y + offset)
+    return y + offset
+
+
 # -------------------------
 # PLOT COMPLETO
 # -------------------------
@@ -184,15 +200,27 @@ def plot_bars(
         exclude_l = []
 
     height = 0.1
-    left_padding = 0.05
-    right_padding = 0.05
-    annotated_positions = []
+    pad = 0.05
+    fontsize_text = 16
+    step = 0.16  # separación vertical mínima entre textos
 
-    for i, data in enumerate(models):
+    # Geometría horizontal
+    exp_left = 0.1  # barras experimentales: [0.1, 0.6]
+    th_left = 1.5  # barras teóricas:        [1.5, 2.0]
+    bar_width = 0.5
+
+    # Posiciones y ya ocupadas por texto (una lista por lado para poder repartirlos)
+    used_theory: List[float] = []
+    used_exp: List[float] = []
+
+    # -------------------------
+    # Barras teóricas (derecha)
+    #   - C²S en el hueco central (a la izquierda de la barra)
+    #   - nlj y Jπ a la derecha de la barra
+    # -------------------------
+    for data in models:
         for qstate, vals in data.items():
-            for j, tup in enumerate(vals):
-                qnucleon, smdata = tup
-
+            for qnucleon, smdata in vals:
                 if qnucleon.l in exclude_l:
                     continue
 
@@ -201,93 +229,112 @@ def plot_bars(
 
                 # Máximo número de huecos/vacantes (respeta VACANCY_EXCEPTIONS)
                 max_c2s = get_vacancies(qnucleon.l, qnucleon.j)
-
-                # Barra teoría horizontal de 1.5 a 2.0 (ancho total 0.5)
-                left = 1.5
-                full_width = 0.5
-                width = (c2s_theo / max_c2s) * full_width
+                width = (c2s_theo / max_c2s) * bar_width
 
                 # Color base por ℓ
                 color = l_colors.get(qnucleon.l, "gray")
 
                 # Oscurecer p1/2
                 if qnucleon.l == 1 and abs(qnucleon.j - 0.5) < 1e-6:
-                    import matplotlib.colors as mcolors
                     r, g, b = mcolors.to_rgb(color)
                     factor = 0.6
                     color = (r * factor, g * factor, b * factor)
 
                 # Background barra (representa el 100% del limite max_c2s)
-                ax.barh(ex, left=left, width=full_width, height=height, color=color, alpha=0.35, edgecolor="none")
+                ax.barh(ex, left=th_left, width=bar_width, height=height, color=color, alpha=0.35, edgecolor="none")
 
                 # Foreground barra (proporcional a C2S / max_c2s)
-                ax.barh(ex, left=left, width=width, height=height, color=color, alpha=0.75, edgecolor="none")
+                ax.barh(ex, left=th_left, width=width, height=height, color=color, alpha=0.75, edgecolor="none")
 
-                # Texto nlj, SF, Jπ
-                n = qnucleon.n
-                l = qnucleon.l
-                j_orb = qnucleon.j
-                j_txt = format_j_fraction(j_orb)
-                nlj = f"{n}{l_chars[l]}{j_txt}"
-                sf_txt = f"C²S={c2s_theo:.2f}"
+                # Textos
+                nlj = f"{qnucleon.n}{l_chars[qnucleon.l]}{format_j_fraction(qnucleon.j)}"
                 pi_char = "⁺" if qstate.pi > 0 else "⁻"
                 jpi_txt = f"{format_j_fraction(qstate.J)}{pi_char}"
 
-                text = f"{nlj}   {sf_txt}   {jpi_txt}"
+                y_txt = _dodge(ex, used_theory, step)
 
-                fontsize_text = 12
-                step = 0.16
-                offset = 0.0
-                while any(abs(ex + offset - pos) < step for pos in annotated_positions):
-                    offset += step
-                annotated_positions.append(ex + offset)
-
-                ax.annotate(text, xy=(left - right_padding, ex + offset), ha="right", va="center", fontsize=fontsize_text)
+                # C²S: centro, pegado a la barra teórica
+                ax.annotate(
+                    #f"C²S={c2s_theo:.2f}",
+                    f"{c2s_theo:.2f}",
+                    xy=(th_left - pad, y_txt), ha="right", va="center", fontsize=fontsize_text,
+                )
+                # nlj + Jπ: a la derecha de la barra
+                ax.annotate(
+                    f"{nlj}   {jpi_txt}",
+                    xy=(th_left + bar_width + pad, y_txt), ha="left", va="center", fontsize=fontsize_text,
+                )
 
     # -------------------------
-    # Barras experimentales a la izquierda
+    # Barras experimentales (izquierda)
+    #   - orbital (l j) y Jπ a la izquierda de la barra
+    #   - C²S en el hueco central (a la derecha de la barra)
     # -------------------------
-    # Altura de la barra/línea "sin SF" (negra), un poco más fina que antes
-    neg_height = height * 0.55  # antes era height (0.1); ahora más fina
-
-    exp_left = 0.1
-    exp_full_width = 0.5
+    neg_height = height * 0.55  # altura de la línea negra "sin SF"
 
     if exp_data is not None:
-        for ex_val, l, j, c2s in exp_data:
-            if c2s is not None and c2s > 0:
+        for ex_val, l, j, c2s, c2s_err, jpi in exp_data:
+            has_sf = c2s is not None and c2s > 0
+
+            if has_sf:
                 color = l_to_color(l)
-                max_c2s = get_vacancies(l, j)
-                frac = c2s / max_c2s
+                frac = c2s / get_vacancies(l, j)
 
                 # Fondo (referencia del 100% = huecos disponibles en ese orbital)
                 ax.barh(
-                    ex_val, left=exp_left, width=exp_full_width, height=height,
+                    ex_val, left=exp_left, width=bar_width, height=height,
                     color=color, alpha=0.35, edgecolor="none",
                 )
                 # Barra proporcional al C2S respecto a las vacancies del orbital
                 ax.barh(
-                    ex_val, left=exp_left, width=frac * exp_full_width, height=height,
+                    ex_val, left=exp_left, width=frac * bar_width, height=height,
                     color=color, alpha=0.85, edgecolor="none",
                 )
-
-                l_char = l_chars[l] if 0 <= l < len(l_chars) else str(l)
-                orbital = f"{l_char}{format_j_fraction(j)}"
-                # Experimental C2S label
-                label = f"C²S={c2s:.2f}" 
-                ax.annotate( label, xy=(exp_left + exp_full_width + right_padding, ex_val), ha="left", va="center", fontsize=12, )
             else:
-                # Sin C2S asignado (o negativo): barra/línea negra fina, como antes
+                # Sin C2S asignado (o negativo): línea negra fina
                 ax.barh(
-                    ex_val, left=exp_left, width=exp_full_width, height=neg_height,
+                    ex_val, left=exp_left, width=bar_width, height=neg_height,
                     color="black", edgecolor="black",
                 )
+
+            # Texto de la izquierda: orbital (solo si hay C2S) + Jπ (si se ha dado)
+            left_parts = []
+            if has_sf:
+                l_char = l_chars[l] if 0 <= l < len(l_chars) else str(l)
+                left_parts.append(f"{l_char}{format_j_fraction(j)}")
+            if jpi:
+                left_parts.append(jpi)
+            left_txt = "   ".join(left_parts)
+
+            right_txt = ""
+            if has_sf:
+                if c2s_err is not None and c2s_err > 0:
+                    # Notación compacta: el error se da con 2 cifras significativas y el
+                    # C2S se redondea al mismo decimal -> 0.28 ± 0.056 -> "0.280(56)"
+                    #right_txt = f"C²S={un.ufloat(c2s, c2s_err):.2uS}"
+                    right_txt = f"{un.ufloat(c2s, c2s_err):.2uS}"
+                else:
+                    #right_txt = f"C²S={c2s:.2f}"
+                    right_txt = f"{c2s:.2f}"
+
+            if left_txt or right_txt:
+                y_txt = _dodge(ex_val, used_exp, step)
+                if left_txt:
+                    ax.annotate(
+                        left_txt,
+                        xy=(exp_left - pad, y_txt), ha="right", va="center", fontsize=fontsize_text,
+                    )
+                if right_txt:
+                    ax.annotate(
+                        right_txt,
+                        xy=(exp_left + bar_width + pad, y_txt), ha="left", va="center", fontsize=fontsize_text,
+                    )
 
     # Quitar eje X
     ax.set_xticks([])
 
     # Limites
-    exp_ex_vals = [ex_val for ex_val, _, _, _ in exp_data] if exp_data else [0]
+    exp_ex_vals = [lvl[0] for lvl in exp_data] if exp_data else [0]
     max_ex = max(
         [
             un.nominal_value(tup[1].Ex)
@@ -298,12 +345,13 @@ def plot_bars(
         ]
         + exp_ex_vals
     )
-    ax.set_xlim(0, 2.3)
+    # x negativo: hace falta sitio para los textos a la izquierda de las barras experimentales
+    ax.set_xlim(-0.4, 2.5)
     ax.set_ylim(-0.3, max_ex + 0.5)
 
-    # Etiquetas debajo de cada grupo
-    ax.text(0.35, -0.5, "Experiment", ha="center", va="top", fontsize=14, fontweight="bold")
-    ax.text(1.75, -0.5, "SFO-tls model", ha="center", va="top", fontsize=14, fontweight="bold")
+    # Etiquetas debajo de cada grupo (centradas en sus barras)
+    ax.text(exp_left + bar_width / 2, -0.5, "Experiment", ha="center", va="top", fontsize=16, fontweight="bold")
+    ax.text(th_left + bar_width / 2, -0.5, "SFO-tls model", ha="center", va="top", fontsize=16, fontweight="bold")
 
 
 # -------------------------
@@ -323,27 +371,31 @@ ret = parse_files(files)
 extracted = extract_max_sf(ret)
 shift_ex(extracted)
 
-fig, ax = plt.subplots(1, 1, figsize=(9, 12))
+plt.rcParams["ytick.labelsize"] = 18
+fig, ax = plt.subplots(1, 1, figsize=(10, 12))  # un poco más ancho por los textos laterales
 
-# Ejemplo de exp_data: (Ex, l, j, C2S)
+# exp_data: (Ex, l, j, C2S, C2S_err, Jpi)
 # - Si C2S > 0 -> barra coloreada según l, normalizada a get_vacancies(l, j)
 # - Si C2S <= 0 -> línea negra fina (l, j no importan en ese caso)
+# - C2S_err: incertidumbre absoluta del C2S, o None (no se dibuja paréntesis)
+# - Jpi: string o None
+# OJO: los Jπ de abajo son de ejemplo (2⁺, 1⁺, 3⁺ típicos de 8Li) — revísalos/complétalos.
 exp_data: List[ExpLevel] = [
-    (0.0,   1, 1.5,  1.22),      # sin dato -> línea negra fina
-    (0.936,  1, 1.5, 0.65),    # p3/2 (l=1, j=3/2): usa la excepción -> máx=2
-    (2.19,   1, 1.5, 0.28),    # f7/2 (l=3, j=7/2): sin excepción -> máx=2j+1=8
-    (3.29,  -1, -1,  -1),
-    (3.81,  -1, -1,  -1),
-    (5.21,   1, -1, -1),    # p1/2 (l=1, j=1/2): sin excepción -> máx=2j+1=2
-    (5.765, -1, -1,  -1),
-    (6.24,  -1, -1,  -1),
+    (0.0,   1, 1.5,  1.22, 0.24,  "2⁺"),   # -> C²S=1.22(20)
+    (0.936, 1, 1.5,  0.65, 0.13,  "1⁺"),   # TODO: rellenar errores
+    (2.19,  1, 1.5,  0.28, 0.056, "3⁺"),   # -> C²S=0.280(56)
+    (3.29, -1, -1,  -1,    None, None),
+    (3.81, -1, -1,  -1,    None, None),
+    (5.21,  1, -1,  -1,    None, None),
+    (5.765, -1, -1, -1,    None, None),
+    (6.24, -1, -1,  -1,    None, None),
 ]
 
-plot_bars([extracted], ax, exp_data=exp_data, exclude_l=[0])  # Ejemplo excluyendo s
+plot_bars([extracted], ax, exp_data=exp_data, exclude_l=[0,2])  # Ejemplo excluyendo s
 
-ax.set_ylabel(r"$E_{x}$ [MeV]")
+ax.set_ylabel(r"$E_{x}$ [MeV]", fontsize=18)
 ax.set_title("SF por estado, coloreado por ℓ")
 
-plt.savefig("./SF_bars_Li8.png")
-plt.tight_layout()
+plt.tight_layout()  # antes del savefig, si no el guardado ignora el ajuste
+plt.savefig("./SF_bars_Li8.png", bbox_inches="tight")
 plt.show()

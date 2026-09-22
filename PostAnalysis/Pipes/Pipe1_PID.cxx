@@ -156,6 +156,7 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
         hszero[std::to_string(s)]->SetTitle(TString::Format("f2_%d vs f3;E_{f3} [MeV];#DeltaE_{f2} [MeV]", s));
     }
     ROOT::TThreadedObject<TH2D> hl1 {"hl1", "L1 PID;Raw TL [au];Q_{total} [au]", 200, 0, 120, 2000, 0, 3e5};
+    ROOT::TThreadedObject<TH2D> hl1mm {"hl1mm", "L1 PID;TL [mm];Q_{total} [au]", 300, 0, 200, 2000, 0, 3e5};
     ROOT::TThreadedObject<TH2D> hl1Gated {"hl1", "L1 PID > 100#circ;Raw TL [au];Q_{total} [au]", 200, 0, 120, 2000, 0,
                                           3e5};
     ROOT::TThreadedObject<TH2D> hl1theta {
@@ -171,6 +172,7 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
             if(lambdaIsL1(m, mod))
             {
                 hl1->Fill(m.fLight.fRawTL, m.fLight.fQtotal);
+                hl1mm->Fill(m.fLight.fTL, m.fLight.fQtotal);
                 hl1theta->Fill(m.fThetaLight, m.fLight.fQtotal);
                 hl1thetaCorr->Fill(m.fThetaLight, m.fThetaHeavy);
                 if(m.fThetaLight > 100)
@@ -376,7 +378,8 @@ void Pipe1_PID(const std::string& beam, const std::string& target, const std::st
     gtheo->SetLineColor(46);
     gtheo->Draw("l");
     c2->cd(4);
-    hl1Gated.Merge()->DrawClone("colz");
+    hl1mm.Merge()->DrawClone("colz");
+    // hl1Gated.Merge()->DrawClone("colz");
 
     // Save important canvases
     if(savePlots)

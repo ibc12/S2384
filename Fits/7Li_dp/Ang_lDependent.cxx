@@ -66,8 +66,8 @@ void Ang_lDependent(bool isLab = false)
             m.AddBWL(4, 2, 2.03262, mu, R);
             m.AddBWL(5, 1, 2.03262, mu, R);
             m.AddBWL(6, 2, 2.03262, mu, R);
-            m.AddBWL(7, 1, 2.03262, mu, R);
-            m.AddBWL(8, 1, 2.03262, mu, R);
+            // m.AddBWL(7, 1, 2.03262, mu, R);
+            // m.AddBWL(8, 1, 2.03262, mu, R);
         });
     fitter.Run();
     fitter.Draw();
@@ -98,10 +98,10 @@ void Ang_lDependent(bool isLab = false)
             isLab ? "effLabside" : "effCMside");
     eff.Add("v6", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_7.100_nPS_0_pPS_0.root",
             isLab ? "effLabside" : "effCMside");
-    eff.Add("v7", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_3.210_nPS_0_pPS_0.root",
-            isLab ? "effLabside" : "effCMside");
-    eff.Add("v8", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_7.100_nPS_0_pPS_0.root",
-            isLab ? "effLabside" : "effCMside");
+    // eff.Add("v7", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_3.210_nPS_0_pPS_0.root",
+    //         isLab ? "effLabside" : "effCMside");
+    // eff.Add("v8", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_7.100_nPS_0_pPS_0.root",
+    //         isLab ? "effLabside" : "effCMside");
     // Scale the efficiencies
     eff.Scale(0.946);
 

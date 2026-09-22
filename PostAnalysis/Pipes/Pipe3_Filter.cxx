@@ -238,8 +238,8 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
     initialEnergy = srim->Slow(beam, initialEnergy, 60 + 100); // 60 mm of gas before the pad plane
     initialEnergy = initialEnergy / pb.GetAMU();               // back to amu units
     ActPhysics::Kinematics kin {pb, pt, pl, initialEnergy * pb.GetAMU()};
-    ActPhysics::Kinematics kin1st {pb, pt, pl, initialEnergy * pb.GetAMU(), 1};
-    ActPhysics::Kinematics kin2nd {pb, pt, pl, initialEnergy * pb.GetAMU(), 2.2};
+    ActPhysics::Kinematics kin1st {pb, pt, pl, initialEnergy * pb.GetAMU(), 4.630};
+    ActPhysics::Kinematics kin2nd {pb, pt, pl, initialEnergy * pb.GetAMU(), 6};
 
     // States to figure out posible reaction channels
     ActPhysics::Kinematics kin_dt_gs {pb, pt, pTri, initialEnergy * pb.GetAMU()};
@@ -336,6 +336,8 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
         ctmpKinSil->cd();
         hcloneKinSil->DrawClone("colz");
         auto* theo {kin.GetKinematicLine3()};
+        auto* theo_1st {kin1st.GetKinematicLine3()};
+        auto* theo_2nd {kin2nd.GetKinematicLine3()};
         theo->SetLineColor(kRed + 1);
         theo->Draw("same");
         // auto* theo1st {kin1st.GetKinematicLine3()};
@@ -363,6 +365,10 @@ void Pipe3_Filter(const std::string& beam, const std::string& target, const std:
         hcloneKinSil->DrawClone("colz");
         hcloneKinL1->DrawClone("colz same");
         theo->Draw("same");
+        theo_1st->Draw("same");
+        theo_2nd->Draw("same");
+        
+
         TString outputKinTot =
             TString::Format("../Figures/kin_tot_%s_%s_%s.png", beam.c_str(), target.c_str(), light.c_str());
         ctmpKinTot->SaveAs(outputKinTot, "PNG");

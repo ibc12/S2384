@@ -37,6 +37,7 @@ void Pipe2_Ex(const std::string& beam, const std::string& target, const std::str
     auto* srim {new ActPhysics::SRIM};
     // Correct SRIM names
     std::string srimName {};
+    
     if(light == "d")
         srimName = "2H";
     else if(light == "p")

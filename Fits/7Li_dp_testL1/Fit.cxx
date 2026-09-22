@@ -16,12 +16,12 @@
 #include "../Histos.h"
 void Fit()
 {
-    PrettyStyle(true);
+    PrettyStyle(false, false);
     ROOT::EnableImplicitMT();
 
     // Analysis
-    ROOT::RDataFrame df {"Final_Tree", "./Inputs/tree_ex_F_7Li_d_p_filtered.root"}; // Data with all events L1 inside cut to get all protons
-    // ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_F_7Li_d_p_filtered.root"};
+    // ROOT::RDataFrame df {"Final_Tree", "./Inputs/tree_ex_F_7Li_d_p_filtered.root"}; // Data with all events L1 inside cut to get all protons
+    ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_F_7Li_d_p_filtered.root"};
     auto def {df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; },
                         {"MergerData"})}; // == false is for L1 events
     // Ex

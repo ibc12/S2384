@@ -14,16 +14,16 @@ void PrettyStyle(bool showStats = true, bool palete2D = true)
     // Tableau 10 - colores bien diferenciados
     const Int_t NColors = 10;
     Int_t palette[NColors] = {
-        TColor::GetColor("#1B3A6F"), // 0 - Azul oscuro  -> puntos
-        TColor::GetColor("#008C45"), // 2 - Verde fuerte
-        TColor::GetColor("#C2185B"), // 3 - Magenta
-        TColor::GetColor("#E66100"), // 4 - Naranja
+        TColor::GetColor("#1B3A6F"), // 0 - Azul oscuro   -> puntos
         TColor::GetColor("#6A3D9A"), // 5 - Violeta
-        TColor::GetColor("#008C95"), // 6 - Cian oscuro
-        TColor::GetColor("#0057B8"), // 7 - Azul fuerte
-        TColor::GetColor("#8B1E1E"), // 8 - Rojo oscuro
-        TColor::GetColor("#176B3A"), // 9 - Verde oscuro
-        TColor::GetColor("#D62728"), // 1 - Rojo fuerte  -> fit
+        TColor::GetColor("#E66100"), // 6 - Naranja        (empieza a acercarse al rojo)
+        TColor::GetColor("#C2185B"), // 7 - Magenta
+        TColor::GetColor("#8B1E1E"), // 8 - Rojo oscuro    (tono casi igual al del fit)
+        TColor::GetColor("#008C95"), // 1 - Cian oscuro    (muy distinto del rojo)
+        TColor::GetColor("#008C45"), // 2 - Verde fuerte
+        TColor::GetColor("#0057B8"), // 3 - Azul fuerte
+        TColor::GetColor("#176B3A"), // 4 - Verde oscuro
+        TColor::GetColor("#D62728"), // 9 - Rojo fuerte    -> fit total
     };
     // --- Colores y fuentes ---
     if(palete2D)
