@@ -145,8 +145,8 @@ void runner(TString what = "simu", bool inspect = false)
         Tbeam = 7 * 7.558;                // MeV
         bool emitNeutron {light == "1H"}; //
         // Exs = {0};                        // Ex of the reaction for 7Li
-        Exs = {0};                    // Ex of the reaction for 8Li
-        bool useResonance8Li = false; // Use 8Li* resonance
+        Exs = {6};                    // Ex of the reaction for 8Li
+        bool useResonance8Li = true; // Use 8Li* resonance
         bool useResonance7Li = false; // Use 7Li* resonance
         double ExSecondary = 4.63;    // Ex of the 7Li* resonance
         do_simu_decay(beam, target, light, heavy, neutronPS, protonPS, Tbeam, Exs.front(), inspect, true, emitNeutron,

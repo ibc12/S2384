@@ -32,7 +32,7 @@ ROOT::RDF::RResultPtr<TH2D> BookKin2D(RNode d, const std::string& name, const st
 ROOT::RDF::RResultPtr<TH2D> BookAngleCorr2D(RNode d, const std::string& name, const std::string& title,
                                             const std::string& thetaVar1, const std::string& thetaVar2)
 {
-    return d.Histo2D({name.c_str(), title.c_str(), 100, 0, 180, 100, 0, 180}, thetaVar1, thetaVar2);
+    return d.Histo2D({name.c_str(), title.c_str(), 100, 0, 50, 100, 0, 50}, thetaVar1, thetaVar2);
 }
 
 // Crea un TH1D de Eex para un df dado
@@ -44,19 +44,23 @@ ROOT::RDF::RResultPtr<TH1D> BookEx1D(RNode d, const std::string& name, const std
 void analysisDecaySimulation()
 {
     // Files for proton channel (light = 1H)
-    ROOT::RDataFrame df {"SimulationTTree",
-                         "../Outputs/7Li/Decay/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_decay_democratic4Body.root"};
-    ROOT::RDataFrame dfL1 {"LightMissTree",
-                           "../Outputs/7Li/Decay/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_decay_democratic4Body.root"};
-    // Files for deuteron channel (light = 2H)
     // ROOT::RDataFrame df {"SimulationTTree",
-    //                      "../Outputs/7Li/Decay/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_decay_democratic3Body_dd.root"};
+    //                     "../Outputs/7Li/Decay/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_decay_democratic4Body.root"};
     // ROOT::RDataFrame dfL1 {"LightMissTree",
-    //                        "../Outputs/7Li/Decay/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_decay_democratic3Body_dd.root"};
+    //                       "../Outputs/7Li/Decay/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_decay_democratic4Body.root"};
+    ROOT::RDataFrame df {"SimulationTTree",
+                         "../Outputs/7Li/Decay/2H_1H_TRIUMF_Eex_6.000_nPS_0_pPS_0_decay_8LiEx6.00.root"};
+    ROOT::RDataFrame dfL1 {"LightMissTree",
+                           "../Outputs/7Li/Decay/2H_1H_TRIUMF_Eex_6.000_nPS_0_pPS_0_decay_8LiEx6.00.root"};
+        // Files for deuteron channel (light = 2H)
+        // ROOT::RDataFrame df {"SimulationTTree",
+        //                      "../Outputs/7Li/Decay/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_decay_democratic3Body_dd.root"};
+        // ROOT::RDataFrame dfL1 {"LightMissTree",
+        //                        "../Outputs/7Li/Decay/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_decay_democratic3Body_dd.root"};
 
 
-    // ---- Selecciones sobre el arbol principal ----
-    RNode dfTriton = df.Filter("tritonLayerCode != 0", "Select events where triton is detected");
+        // ---- Selecciones sobre el arbol principal ----
+        RNode dfTriton = df.Filter("tritonLayerCode != 0", "Select events where triton is detected");
     RNode dfAlfa = df.Filter("alfaLayerCode != 0", "Select events where alfa is detected");
     RNode dfAlfaTriton = df.Filter("gateAlfaTriton != 0", "Select events where both alfa and triton are detected");
     RNode dfOnlyTriton =

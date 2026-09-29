@@ -73,20 +73,21 @@ double ComputeQLength(ActRoot::Cluster& cl)
 
 // Dibuja las 4 distribuciones (beam/light/max/min Q-L) superpuestas para un dataframe dado,
 // en el pad actualmente activo. name se usa como sufijo unico para los histogramas.
-void DrawQLengthOverlay(ROOT::RDF::RNode df, const std::string& name, const std::string& titleSuffix, bool hasBeam = true, bool hasLight = true)
+void DrawQLengthOverlay(ROOT::RDF::RNode df, const std::string& name, const std::string& titleSuffix,
+                        bool hasBeam = true, bool hasLight = true)
 {
-    auto hBeam = df.Histo1D({("hChargeBeam_" + name).c_str(), ("Charge/Distance " + titleSuffix + ";Counts").c_str(),
-                              150, 0, 2000},
-                             "beamQLength");
-    auto hLight = df.Histo1D({("hChargeLight_" + name).c_str(), ("Charge/Distance " + titleSuffix + ";Counts").c_str(),
-                               150, 0, 2000},
-                              "lightQLength");
-    auto hMax = df.Histo1D({("hChargeMax_" + name).c_str(), ("Charge/Distance " + titleSuffix + ";Counts").c_str(),
-                             150, 0, 2000},
-                            "maxQLength");
-    auto hMin = df.Histo1D({("hChargeMin_" + name).c_str(), ("Charge/Distance " + titleSuffix + ";Counts").c_str(),
-                             150, 0, 2000},
-                            "minQLength");
+    auto hBeam = df.Histo1D(
+        {("hChargeBeam_" + name).c_str(), ("Charge/Distance " + titleSuffix + ";Counts").c_str(), 150, 0, 2000},
+        "beamQLength");
+    auto hLight = df.Histo1D(
+        {("hChargeLight_" + name).c_str(), ("Charge/Distance " + titleSuffix + ";Counts").c_str(), 150, 0, 2000},
+        "lightQLength");
+    auto hMax = df.Histo1D(
+        {("hChargeMax_" + name).c_str(), ("Charge/Distance " + titleSuffix + ";Counts").c_str(), 150, 0, 2000},
+        "maxQLength");
+    auto hMin = df.Histo1D(
+        {("hChargeMin_" + name).c_str(), ("Charge/Distance " + titleSuffix + ";Counts").c_str(), 150, 0, 2000},
+        "minQLength");
 
     hBeam->SetLineColor(kBlue + 1);
     hLight->SetLineColor(kMagenta + 1);
@@ -213,7 +214,32 @@ void Pipe3_DecayM4(const std::string& beam, const std::string& target, const std
     auto dfPlot = dfDecay.Define("beamQLength", "Decay.beamQLength")
                       .Define("lightQLength", "Decay.lightQLength")
                       .Define("maxQLength", "Decay.maxQLength")
-                      .Define("minQLength", "Decay.minQLength");
+                      .Define("minQLength", "Decay.minQLength")
+                      .Define("thetaMaxQLength",
+                              [](DecayInfo decay, ActRoot::TPCData& tpc)
+                              {
+                                  int maxQLidx = decay.maxQLengthIdx;
+                                  auto cluster = tpc.fClusters[maxQLidx];
+                                  auto line = cluster.GetLine();
+                                  line.Scale(Utils::scaleXY, Utils::scaleZ);
+                                  // Get angle with x axis (beam direction)
+
+                                  auto angle = line.GetDirection().Unit().X();
+                                  return TMath::ACos(angle) * TMath::RadToDeg();
+                              },
+                              {"Decay", "TPCData"})
+                      .Define("thetaMinQLength",
+                              [](DecayInfo decay, ActRoot::TPCData& tpc)
+                              {
+                                  int minQLidx = decay.minQLengthIdx;
+                                  auto cluster = tpc.fClusters[minQLidx];
+                                  auto line = cluster.GetLine();
+                                  line.Scale(Utils::scaleXY, Utils::scaleZ);
+                                  // Get angle with x axis (beam direction)
+                                  auto angle = line.GetDirection().Unit().X();
+                                  return TMath::ACos(angle) * TMath::RadToDeg();
+                              },
+                              {"Decay", "TPCData"});
 
     // Separar eventos de silicio (l0/r0/f0) de eventos L1 (parada validada dentro de ACTAR),
     // usando la columna "Layer" ya calculada en Pipe1 y propagada por el Snapshot.
@@ -222,6 +248,10 @@ void Pipe3_DecayM4(const std::string& beam, const std::string& target, const std
 
     std::cout << "Eventos con hit de silicio (l0/r0/f0): " << dfSil.Count().GetValue() << std::endl;
     std::cout << "Eventos L1 (parada validada dentro de ACTAR): " << dfL1Only.Count().GetValue() << std::endl;
+
+    auto hAngleCorrelation = dfPlot.Histo2D(
+        {"hAngleCorrelation", "Theta Max vs Min Q/L;Theta (Min Q/L) [deg];Theta (Max Q/L) [deg]", 40, 0, 40, 40, 0, 40},
+        "thetaMinQLength", "thetaMaxQLength");
 
     // Plot separado: silicio vs L1, cada uno con las 4 distribuciones superpuestas
     auto c0 = new TCanvas("cDecayM4_0", "Decay Q/L comparison - Silicon vs L1", 1600, 600);
@@ -234,6 +264,8 @@ void Pipe3_DecayM4(const std::string& beam, const std::string& target, const std
     auto c1 = new TCanvas("cDecayM4_1", "Decay Q/L comparison Max-Min Q/L", 800, 600);
     DrawQLengthOverlay(dfPlot, "maxmin", "(Max-Min Q/L)", false, false);
 
+    auto c2 = new TCanvas("cDecayM4_2", "Theta correlation Max-Min Q/L", 800, 600);
+    hAngleCorrelation->DrawClone("colz");
 
     // Save dataframe in a .root file
     TString outfile = TString::Format("./Outputs/DecayM4_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str());

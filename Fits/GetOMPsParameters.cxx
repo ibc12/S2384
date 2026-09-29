@@ -30,7 +30,9 @@ void GetOMPsParameters()
     ActPhysics::Particle pl {light};
     ActPhysics::Particle ph {heavy};
 
-    double Ex {2.255}; // Excitation energy of the heavy particle (8Li)
+    //double Ex {0}; // Excitation energy of the heavy particle (8Li)
+    //double Ex {0.981};
+     double Ex {2.255};
 
     auto kin {ActPhysics::Kinematics(pt, pb, ph, pl, energy * 2, Ex)};
     auto equivalentEnergy {kin.ComputeEquivalentBeamEnergy()}; // Enegy for the protons potential (as incident proton)
@@ -39,7 +41,7 @@ void GetOMPsParameters()
               << " MeV is: " << equivalentEnergy << " MeV" << std::endl;
 
 
-    int potIdx {0}; // index of the potential to use, if we want FRESCO to have multiple potentials (e.g., for different
+    int potIdx {6}; // index of the potential to use, if we want FRESCO to have multiple potentials (e.g., for different
                     // energy ranges)
 
     std::cout << "===================" << std::endl;
