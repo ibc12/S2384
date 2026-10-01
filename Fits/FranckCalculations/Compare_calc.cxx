@@ -316,7 +316,12 @@ void Compare_calc()
     std::vector<Calc> gs = {
         Calc("./DWUCK4_personal_calculations/ADKDWat_noSO/gs/xs_dw4.n", "DWUCK4", Format::DWUCK4, kBlack)
             .Tag("ADKDWat-no SO"),
-        Calc("./gs_ADWA_Watson_FRESCO/fort.202", "FRESCO", Format::FRESCO, kRed + 1, 2).Tag("ADKDWat-no SO"),
+        Calc("./DWUCK4_personal_calculations/ADKDKD_noSO/gs/xs_dw4.n", "DWUCK4", Format::DWUCK4, kPink)
+            .Tag("ADKDKD-no SO"),
+        Calc("./DWUCK4_personal_calculations/ADKDKD/gs/xs_dw4.n", "DWUCK4", Format::DWUCK4, kGreen).Tag("ADKDKD"),
+        Calc("./gs_ADWA_Watson_FRESCO/fort.202", "FRESCO", Format::FRESCO, kBlack, 2).Tag("ADKDWat-no SO"),
+        Calc("./gs_ADWA_KD_FRESCO_noSO/fort.202", "FRESCO", Format::FRESCO, kPink, 2).Tag("ADKDKD-no SO"),
+        Calc("./gs_ADWA_KD_FRESCO/fort.202", "FRESCO", Format::FRESCO, kGreen, 2).Tag("ADKDKD"),
     };
     PlotOptions optGS;
     optGS.title = "g.s.";
@@ -328,7 +333,10 @@ void Compare_calc()
     std::vector<Calc> g1 = {
         Calc("./DWUCK4_personal_calculations/ADKDWat_noSO/g1/xs_dw4.n", "DWUCK4", Format::DWUCK4, kBlack)
             .Tag("ADKDWat-no SO"),
-        Calc("./gs_ADWA_Watson_FRESCO/fort.203", "FRESCO", Format::FRESCO, kRed + 1, 2).Tag("ADKDWat-no SO"),
+        Calc("./DWUCK4_personal_calculations/ADKDKD_noSO/g1/xs_dw4.n", "DWUCK4", Format::DWUCK4, kPink)
+            .Tag("ADKDKD-no SO"),
+        Calc("./gs_ADWA_Watson_FRESCO/fort.203", "FRESCO", Format::FRESCO, kBlack, 2).Tag("ADKDWat-no SO"),
+        Calc("./gs_ADWA_KD_FRESCO/fort.203", "FRESCO", Format::FRESCO, kGreen + 1, 2).Tag("ADKDKD"),
     };
     PlotOptions optG1;
     optG1.title = "E_{x} = 0.981 MeV";
@@ -340,9 +348,13 @@ void Compare_calc()
     std::vector<Calc> v0 = {
         Calc("./DWUCK4_personal_calculations/ADKDWat_noSO/v0/xs_dw4.n", "DWUCK4", Format::DWUCK4, kBlack)
             .Tag("ADKDWat-no SO"),
+        Calc("./DWUCK4_personal_calculations/ADKDKD_noSO/v0/xs_dw4.n", "DWUCK4", Format::DWUCK4, kPink)
+            .Tag("ADKDKD-no SO"),
         Calc("./gs_ADWA_Watson_FRESCO/fort.204", "FRESCO", Format::FRESCO, kRed + 1, 2)
             .Tag("ADKDWat-no SO-weakly bound"),
-        Calc("./gs_ADWA_Watson_FRESCO/fort.206", "FRESCO", Format::FRESCO, kGreen + 1, 2).Tag("ADKDWat-no SO-unbound"),
+        Calc("./gs_ADWA_Watson_FRESCO/fort.206", "FRESCO", Format::FRESCO, kBlack, 2).Tag("ADKDWat-no SO-unbound"),
+        Calc("./gs_ADWA_KD_FRESCO/fort.204", "FRESCO", Format::FRESCO, kPink + 1, 2).Tag("ADKDKD-weakly bound"),
+        Calc("./gs_ADWA_KD_FRESCO/fort.206", "FRESCO", Format::FRESCO, kYellow + 1, 2).Tag("ADKDKD-unbound"),
     };
     PlotOptions optV0;
     optV0.title = "E_{x} = 2.255 MeV (unbound)";

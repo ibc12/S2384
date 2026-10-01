@@ -3,7 +3,7 @@ NAMELIST
 ! rmatch= 60 but now 30 fm to mimic 2fnr
 ! jtmax=40 also as in 2fnr
 &FRESCO
-hcm=0.10 rmatch=150.0 rintp=0.10 rsp=160
+hcm=0.10 rmatch=13.0 rintp=0.10 rsp=160
 hnl=0.10 rnl=4.50 centre=0.0
 jtmin=0.0 jtmax=30.0 absend=-0.1000
 thmin=0.00 thmax=-180.00 thinc=1.00 cutl=-2.5
@@ -89,7 +89,7 @@ elab(1)=14.53114 / ! Energy of deuteron
 ! Finite range: kind = 7 -> p1,p2 not used
 
 ! I would put ip1=0 to work in POST formulation (stripping reaction)
-&COUPLING icto=-2 icfrom=1 kind=5 ip1=0 ip2=0 ip3=0 p1=125.19 p2=0 /
+&COUPLING icto=-2 icfrom=1 kind=5 ip1=0 ip2=0 ip3=0 p1=125.19 p2=0.7457 /
 ! Projectile coupling (ignored if kind=5=zero-range)
 &cfp  in=1 ib=1 ia=1 kn=1  a=1.0 /
 ! Heavy couplings
