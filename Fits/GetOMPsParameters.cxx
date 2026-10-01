@@ -32,7 +32,11 @@ void GetOMPsParameters()
 
     //double Ex {0}; // Excitation energy of the heavy particle (8Li)
     //double Ex {0.981};
-     double Ex {2.255};
+    // double Ex {2.255};
+    // double Ex {3.2};
+    // double Ex {4};
+     double Ex {6};
+    // double Ex {6};
 
     auto kin {ActPhysics::Kinematics(pt, pb, ph, pl, energy * 2, Ex)};
     auto equivalentEnergy {kin.ComputeEquivalentBeamEnergy()}; // Enegy for the protons potential (as incident proton)

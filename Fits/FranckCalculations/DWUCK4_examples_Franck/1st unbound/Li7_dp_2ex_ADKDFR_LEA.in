@@ -1,6 +1,6 @@
-
-~/Travail/LPC/dwuck4/dw4<<EOF >dw4.res
-20010100300021      7Li(d,p)8Li(2ex,2.255,unbound) 7.266 AMeV ADKDFR-Watson LEA
+NOM=Li7_dp_2nd_ADKDWat_LEA
+dwuck4 <<EOF >${NOM}.res
+20010100300021      7Li(d,p)8Li(2ex,2.255,unbound) 7.266 AMeV ADKDFR-Watson LEA no SO
    180.0     0.0     1.0
  30  1  1  3
     0.10     0.0    40.0          0.7457
@@ -140,9 +140,15 @@
 9
 EOF
 
+# --- NEW: change fort.7 (title + values with no angle and 5 in same row) to "angle xs" ---
+A0=0.0      # angle first value
+STEP=1.0    # angular step
+tail -n +2 fort.7 | tr -s ' ' '\n' | \
+  awk -v a0=$A0 -v s=$STEP 'NF{printf "%8.2f %14.6E\n", a0+(NR-1)*s, $1}' > fort7_2col.dat
+
   
-~/Travail/LPC/dwuck4/normdw4 <<EOF
-fort.7
-dw4.n
+normdw4 <<EOF
+fort7_2col.dat
+xs_dw4.n
 6.85783
 EOF
