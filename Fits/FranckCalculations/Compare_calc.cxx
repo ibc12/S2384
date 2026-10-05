@@ -335,7 +335,9 @@ void Compare_calc()
             .Tag("ADKDWat-no SO"),
         Calc("./DWUCK4_personal_calculations/ADKDKD_noSO/g1/xs_dw4.n", "DWUCK4", Format::DWUCK4, kPink)
             .Tag("ADKDKD-no SO"),
+        Calc("./DWUCK4_personal_calculations/ADKDKD/g1/xs_dw4.n", "DWUCK4", Format::DWUCK4, kGreen).Tag("ADKDKD"),
         Calc("./gs_ADWA_Watson_FRESCO/fort.203", "FRESCO", Format::FRESCO, kBlack, 2).Tag("ADKDWat-no SO"),
+        Calc("./gs_ADWA_KD_FRESCO_noSO/fort.203", "FRESCO", Format::FRESCO, kPink + 1, 2).Tag("ADKDKD-no SO"),
         Calc("./gs_ADWA_KD_FRESCO/fort.203", "FRESCO", Format::FRESCO, kGreen + 1, 2).Tag("ADKDKD"),
     };
     PlotOptions optG1;
@@ -350,6 +352,7 @@ void Compare_calc()
             .Tag("ADKDWat-no SO"),
         Calc("./DWUCK4_personal_calculations/ADKDKD_noSO/v0/xs_dw4.n", "DWUCK4", Format::DWUCK4, kPink)
             .Tag("ADKDKD-no SO"),
+        Calc("./DWUCK4_personal_calculations/ADKDKD/v0/xs_dw4.n", "DWUCK4", Format::DWUCK4, kGreen).Tag("ADKDKD"),
         Calc("./gs_ADWA_Watson_FRESCO/fort.204", "FRESCO", Format::FRESCO, kRed + 1, 2)
             .Tag("ADKDWat-no SO-weakly bound"),
         Calc("./gs_ADWA_Watson_FRESCO/fort.206", "FRESCO", Format::FRESCO, kBlack, 2).Tag("ADKDWat-no SO-unbound"),
@@ -363,24 +366,56 @@ void Compare_calc()
     DrawComparison(v0, optV0);
 
     // --- various not bound ---
-    std::vector<Calc> vs = {
+    std::vector<Calc> vs3MeV = {
         Calc("./DWUCK4_personal_calculations/ADKDWat_noSO/v_1+_3MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4, kBlack, 2)
             .Tag("ADKDWat-no SO estado a 3MeV Ex 1+ p3/2"),
-        Calc("./DWUCK4_personal_calculations/ADKDWat_noSO/v_1+_5MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4, kRed + 1, 2)
-            .Tag("ADKDWat-no SO estado a 5MeV Ex 1+ p3/2"),
-        Calc("./DWUCK4_personal_calculations/ADKDWat_noSO/v_1+_6MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4, kPink + 1, 2)
-            .Tag("ADKDWat-no SO estado a 6MeV Ex 1+ p3/2"),
         Calc("./DWUCK4_personal_calculations/ADKDWat_noSO/v_p1-2_1+_3MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4,
-             kGreen + 1, 2)
+             kGreen, 2)
             .Tag("ADKDWat-no SO estado a 3MeV Ex 1+ p1/2"),
-        Calc("./DWUCK4_personal_calculations/ADKDWat_noSO/v_p1-2_1+_5MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4, kBlue + 1,
-             2)
-            .Tag("ADKDWat-no SO estado a 5MeV Ex 1+ p1/2"),
+        Calc("./DWUCK4_personal_calculations/ADKDKD_noSO/v_1+_3MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4, kPink + 1, 2)
+            .Tag("ADKDKD-no SO estado a 3MeV Ex 1+ p3/2"),
+        Calc("./DWUCK4_personal_calculations/ADKDKD/v_1+_3MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4, kRed, 2)
+            .Tag("ADKDKD estado a 3MeV Ex 1+ p3/2"),
 
     };
-    PlotOptions optVs;
-    optVs.title = "E_{x} = 2.255 MeV (unbound)";
-    optVs.canvasName = "cVs";
-    optVs.saveAs = "./Figures/compare_unbound_2-255MeV.png";
-    DrawComparison(vs, optVs);
+    PlotOptions optVs3MeV;
+    optVs3MeV.title = "E_{x} = 3.0 MeV (unbound)";
+    optVs3MeV.canvasName = "cVs3MeV";
+    optVs3MeV.saveAs = "./Figures/compare_unbound_3-0MeV.png";
+    DrawComparison(vs3MeV, optVs3MeV);
+
+    // --- various not bound ---
+    std::vector<Calc> vs5MeV = {
+        Calc("./DWUCK4_personal_calculations/ADKDWat_noSO/v_1+_5MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4, kBlack, 2)
+            .Tag("ADKDWat-no SO estado a 5MeV Ex 1+ p3/2"),
+        Calc("./DWUCK4_personal_calculations/ADKDWat_noSO/v_p1-2_1+_5MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4,
+             kGreen + 1, 2)
+            .Tag("ADKDWat-no SO estado a 5MeV Ex 1+ p1/2"),
+        Calc("./DWUCK4_personal_calculations/ADKDKD_noSO/v_1+_5MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4, kPink + 1, 2)
+            .Tag("ADKDKD-no SO estado a 5MeV Ex 1+ p3/2"),
+        Calc("./DWUCK4_personal_calculations/ADKDKD/v_1+_5MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4, kRed, 2)
+            .Tag("ADKDKD estado a 5MeV Ex 1+ p3/2"),
+
+    };
+    PlotOptions optVs5MeV;
+    optVs5MeV.title = "E_{x} = 5.0 MeV (unbound)";
+    optVs5MeV.canvasName = "cVs5MeV";
+    optVs5MeV.saveAs = "./Figures/compare_unbound_5-0MeV.png";
+    DrawComparison(vs5MeV, optVs5MeV);
+
+    // --- various not bound ---
+    std::vector<Calc> vs6MeV = {
+        Calc("./DWUCK4_personal_calculations/ADKDWat_noSO/v_1+_6MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4, kPink + 1, 2)
+            .Tag("ADKDWat-no SO estado a 6MeV Ex 1+ p3/2"),
+        Calc("./DWUCK4_personal_calculations/ADKDKD_noSO/v_1+_6MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4, kGreen, 2)
+            .Tag("ADKDKD-no SO estado a 6MeV Ex 1+ p3/2"),
+        Calc("./DWUCK4_personal_calculations/ADKDKD/v_1+_6MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4, kRed, 2)
+            .Tag("ADKDKD estado a 6MeV Ex 1+ p3/2"),
+
+    };
+    PlotOptions optVs6MeV;
+    optVs6MeV.title = "E_{x} = 6.0 MeV (unbound)";
+    optVs6MeV.canvasName = "cVs6MeV";
+    optVs6MeV.saveAs = "./Figures/compare_unbound_6-0MeV.png";
+    DrawComparison(vs6MeV, optVs6MeV);
 }
