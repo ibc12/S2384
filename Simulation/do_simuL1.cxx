@@ -59,10 +59,11 @@ using BeamOffsetMap = std::map<std::string, std::vector<BeamOffset>>;
 // ============================================================
 // Geometry
 // ============================================================
-constexpr double voxelSize = 2.0;     // mm
-ActRoot::TPCParameters tpc {"Actar"}; // TPC parameters
-constexpr double Gmean = 3000.0;      // Mean gain
-constexpr double theta = 0.7;         // Polya parameter
+constexpr double voxelSizeXY = 2.0;    // mm, pad size (X and Y)
+constexpr double voxelSizeZ = 2.84032; // mm, time bin * drift velocity (Z)
+ActRoot::TPCParameters tpc {"Actar"};  // TPC parameters
+constexpr double Gmean = 3000.0;       // Mean gain
+constexpr double theta = 0.7;          // Polya parameter
 // constexpr double thresholdPadCharge = 5.4857e6; // that n electrons corresponds to 0.8789 pC
 constexpr float thresholdPadCharge = 3e4; // that n electrons corresponds to 0.8789 pC
 constexpr int yMinExclusionZone = 56;
@@ -320,11 +321,12 @@ void DivideSegmentInPortions(double eLoss, int nPortions, const XYZPoint& center
             double y = gRandom->Gaus(center.Y(), sigmaT);
             double z = gRandom->Gaus(center.Z(), sigmaL);
 
-            int ix = int(std::floor(x / voxelSize));
-            int iy = int(std::floor(y / voxelSize));
-            int iz = int(std::floor(z / voxelSize));
+            // XY binned in pads, Z binned in time bins (converted to mm by the drift velocity)
+            int ix = int(std::floor(x / voxelSizeXY));
+            int iy = int(std::floor(y / voxelSizeXY));
+            int iz = int(std::floor(z / voxelSizeZ));
 
-            if(ix < 0 || ix >= int(tpc.X() / voxelSize) || iy < 0 || iy >= int(tpc.Y() / voxelSize))
+            if(ix < 0 || ix >= int(tpc.X() / voxelSizeXY) || iy < 0 || iy >= int(tpc.Y() / voxelSizeXY) || iz < 0)
                 continue;
 
             voxelKey key {ix, iy, iz};
@@ -332,6 +334,8 @@ void DivideSegmentInPortions(double eLoss, int nPortions, const XYZPoint& center
         }
 
         // Generamos la Polya **una vez por voxel**
+        // (Gamma additivity: the total charge per pad summed over iz is statistically
+        //  independent of the Z binning)
         for(auto& [key, nElec] : electronsPerVoxel)
         {
             double k = nElec * (theta + 1.0);
@@ -412,6 +416,52 @@ bool IsLastVoxelFarFromBorders(const ActRoot::Voxel::XYZPointF& lastPoint, const
             lastPoint.Y() > validationZone && lastPoint.Y() < tpc.Y() - validationZone);
 }
 
+// ============================================================
+// Track length helpers, replicating ActRoot::MergerDetector::TrackLengthFromLightIt
+// - The line is fitted ONCE, in pad units (voxel indices; the fitter adds +0.5 to each coordinate itself).
+// - RawTL (scale = false): RP (vertex in pad units, no offset) and last voxel (+0.5 offset, centred)
+//         projected on the pad-unit line.
+// - TL    (scale = true, UseRP): line scaled to mm (Line::Scale), begin = RP (vertex), end = last voxel
+//         scaled with ScalePoint(..., true) i.e. (index + 0.5) * scale.
+// The cluster must be sorted along the track beforehand.
+// ============================================================
+using PointF = ActRoot::Voxel::XYZPointF;
+
+// index -> voxel centre in pad units (ScalePoint(p, 1, 1, true): point += (0.5, 0.5, 0.5))
+PointF VoxelCentrePad(const PointF& p)
+{
+    return PointF(p.X() + 0.5f, p.Y() + 0.5f, p.Z() + 0.5f);
+}
+
+// index -> voxel centre in mm (ScalePoint(p, padSide, driftFactor, true): (point + 0.5) * scale)
+PointF VoxelToMM(const PointF& p)
+{
+    return PointF(float((p.X() + 0.5) * voxelSizeXY), float((p.Y() + 0.5) * voxelSizeXY),
+                  float((p.Z() + 0.5) * voxelSizeZ));
+}
+
+// rpPad: vertex in pad units (continuous, NOT offset: it is a real position, not a bin)
+double ComputeRawTL(ActRoot::Cluster& cluster, const PointF& rpPad)
+{
+    const auto& vox = cluster.GetVoxels();
+    if(vox.empty())
+        return -1.;
+    auto line = cluster.GetLine();                       // copy, pad units
+    auto end = VoxelCentrePad(vox.back().GetPosition()); // last voxel centred before projecting
+    return (line.ProjectionPointOnLine(rpPad) - line.ProjectionPointOnLine(end)).R();
+}
+
+double ComputeTL(ActRoot::Cluster& cluster, const PointF& rp)
+{
+    const auto& vox = cluster.GetVoxels();
+    if(vox.empty())
+        return -1.;
+    auto line = cluster.GetLine(); // copy to avoid modifying the cluster
+    line.Scale(voxelSizeXY, voxelSizeZ);
+    auto end = VoxelToMM(vox.back().GetPosition());
+    return (line.ProjectionPointOnLine(rp) - line.ProjectionPointOnLine(end)).R();
+}
+
 void do_simuL1(const std::string& beam, const std::string& target, const std::string& light, const std::string& heavy,
                int neutronPS, int protonPS, double Tbeam, double Ex, bool inspect, int thread = -1)
 {
@@ -477,7 +527,35 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
     // IMPORTANT: Pad plane is in z = 0, so the z position is the distance to the pad plane directly.
     const double zVertexSigma {0.81}; // From emitance study / always  around the same)
 
-    // No experimental cuts for L1 yet
+    // Names for the cut files
+    std::string light_name {};
+    if(light == "1H")
+        light_name = "p";
+    else if(light == "2H")
+        light_name = "d";
+    else if(light == "3H")
+        light_name = "t";
+    // Experimental cut for L1: only one layer ("l1"), file pid_<light_name>_l1_<beam>.root
+    // The X range of the graphical cut is used as the RawTL window (pad units)
+    ActRoot::CutsManager<std::string> cuts;
+    const std::string cut_type {"l1"};
+    const std::string lightCutName {light + cut_type};
+    std::pair<double, double> rawTLCut {0., 1e9}; // default: accept everything
+    cuts.ReadCut(lightCutName, TString::Format("../PostAnalysis/Cuts/pid_%s_%s_%s.root", light_name.c_str(),
+                                               cut_type.c_str(), beam.c_str())
+                                   .Data());
+    if(cuts.GetCut(lightCutName))
+    {
+        rawTLCut = cuts.GetXRange(lightCutName);
+        std::cout << BOLDGREEN << "-> RawTL range for " << lightCutName << ": [" << rawTLCut.first << ", "
+                  << rawTLCut.second << "]" << RESET << '\n';
+    }
+    else
+    {
+        std::cout << BOLDRED << "do_simuL1(): could not read PID cut for " << light << " in " << cut_type
+                  << " -> using default RawTL cut (no cut)" << RESET << '\n';
+    }
+
 
     // Sigmas
     const double sigmaPercentBeam {0.0019}; // 0,19% beam energy spread (meassured by operators)
@@ -561,6 +639,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
     hRP->SetTitle("Reconstructed RP;RP [mm];Counts");
     // L1 specific histos
     auto hPads {new TH1D("hPads", "Number of pads hit out of exclusion zone;Pads;Counts", 50, 0, 50)};
+    auto hRawTL {new TH1D("hRawTL", "RawTL (pad units);RawTL [pad units];Counts", 300, 0, 150)};
 
     // Allow multiple theads
     std::string tag {""};
@@ -568,9 +647,9 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
         tag = "_" + std::to_string(thread);
 
     // File to save data
-    TString fileName {
-        TString::Format("./Outputs/%s/test_ang_straggling_L1/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s_L1_3-5AngStr_14pads.root",
-                        beam.c_str(), target.c_str(), light.c_str(), Ex, neutronPS, protonPS, tag.c_str())};
+    TString fileName {TString::Format("./Outputs/%s/test_RawTL_L1/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s.root",
+                                      beam.c_str(), target.c_str(), light.c_str(), Ex, neutronPS, protonPS,
+                                      tag.c_str())};
     auto outFile {new TFile(fileName, inspect ? "read" : "recreate")};
     auto* outTree {new TTree("SimulationTTree", "A TTree containing only our Eex obtained by simulation")};
     if(inspect)
@@ -581,6 +660,8 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
     outTree->Branch("Eex", &Eex_tree);
     double TL_tree {};
     outTree->Branch("TL", &TL_tree);
+    double RawTL_tree {};
+    outTree->Branch("RawTL", &RawTL_tree);
     double LastPosX_tree {};
     outTree->Branch("LastPosX", &LastPosX_tree);
     double LastPosY_tree {};
@@ -609,6 +690,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
     int step {niter / (100 / percentPrint)};
     int nextPrint {step};
     int percent {};
+    int nBadTL {}; // events rejected because RawTL / TL (or the fit) was NaN / non-positive
     for(int it = 0; it < niter; it++)
     {
         // Print progress
@@ -783,10 +865,10 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
             continue;
         // Phi experimental cuts
         if(phi3CMdeg > 0)
-            if(phi3CMdeg < phiRangeNegative.first || phi3CMdeg > phiRangePositive.second)
+            if(phi3CMdeg < phiRangePositive.first || phi3CMdeg > phiRangePositive.second)
                 continue;
         if(phi3CMdeg < 0)
-            if(phi3CMdeg < phiRangeNegative.first || phi3CMdeg > phiRangePositive.second)
+            if(phi3CMdeg < phiRangeNegative.first || phi3CMdeg > phiRangeNegative.second)
                 continue;
 
         std::map<voxelKey, ActRoot::Voxel> voxelMapLight;
@@ -803,47 +885,58 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
         if(nPadsOutExclusionZone < nPadsThreshold)
             continue;
 
-        // Create ActClusters from voxel maps
-        ActRoot::Cluster clusterLight = ActRoot::Cluster();
-        // Get vector of voxels from map
-        std::vector<ActRoot::Voxel> voxelsLight;
+        // ---- Single cluster in PAD UNITS (ix, iy, binZ), as in the analysis ----
+        // The voxel positions in the map are the indices (lower edge). They are passed as they are:
+        // the ActRoot fitter adds +0.5 to each coordinate itself.
+        ActRoot::Cluster clusterRaw = ActRoot::Cluster();
+        std::vector<ActRoot::Voxel> voxelsRaw;
+        voxelsRaw.reserve(voxelMapLight.size());
         for(const auto& [key, voxel] : voxelMapLight)
-        {
-            auto voxelmm = voxel;
-            voxelmm.SetPosition(ActRoot::Voxel::XYZPointF(voxel.GetPosition().X() * voxelSize,
-                                                          voxel.GetPosition().Y() * voxelSize,
-                                                          voxel.GetPosition().Z() * voxelSize));
-            voxelsLight.push_back(voxelmm);
-        }
-        clusterLight.SetVoxels(voxelsLight);
-        clusterLight.ReFit();
-        // Create direction vector from vertex to GravityPoint of cluster
-        auto dirCluster = clusterLight.GetLine().GetPoint() - vertex;
-        clusterLight.SortAlongDir(dirCluster);
-        // Get last point of cluster
-        auto lastPoint = clusterLight.GetVoxels().back().GetPosition();
-        // Ensure is far from borders (validation zone)
+            voxelsRaw.push_back(voxel);
+        clusterRaw.SetVoxels(voxelsRaw);
+        clusterRaw.ReFit();
+        // Vertex expressed in pad units, to define the sorting direction
+        XYZPoint vertexPad {vertex.X() / voxelSizeXY, vertex.Y() / voxelSizeXY, vertex.Z() / voxelSizeZ};
+        auto dirRaw = clusterRaw.GetLine().GetPoint() - vertexPad;
+        clusterRaw.SortAlongDir(dirRaw);
+
+        // Last voxel in mm (voxel centre) for the border check
+        const auto lastPoint = VoxelToMM(clusterRaw.GetVoxels().back().GetPosition());
         if(!IsLastVoxelFarFromBorders(lastPoint, tpc))
             continue;
-        // To get the TL project to the line the last point and the vertex
-        auto lineCluster = clusterLight.GetLine();
-        auto vertexPointFloat = ROOT::Math::XYZPointF(vertex.X(), vertex.Y(), vertex.Z());
-        auto lastPointFloat = ROOT::Math::XYZPointF(lastPoint.X(), lastPoint.Y(), lastPoint.Z());
-        auto TL =
-            (lineCluster.ProjectionPointOnLine(lastPointFloat) - lineCluster.ProjectionPointOnLine(vertexPointFloat))
-                .R();
-        // std::cout << "Distance from vertex to vertex projection: "
-        //           << (vertexPointFloat - lineCluster.ProjectionPointOnLine(vertexPointFloat)).R() << std::endl;
+
+        // RawTL: pad-unit line, vertex (pad units) -> last voxel (centred). Then experimental cut
+        const PointF vertexPadFloat(float(vertexPad.X()), float(vertexPad.Y()), float(vertexPad.Z()));
+        double rawTL = ComputeRawTL(clusterRaw, vertexPadFloat);
+        if(!std::isfinite(rawTL))
+        {
+            nBadTL++;
+            continue;
+        }
+        // Graphical cut on RawTL (experimental cut)
+        bool cutRawTL = (rawTL >= rawTLCut.first && rawTL <= rawTLCut.second);
+        hRawTL->Fill(rawTL);
+
+        // TL: line scaled to mm, RP (vertex) -> last voxel
+        const PointF vertexPointFloat(vertex.X(), vertex.Y(), vertex.Z());
+        double TL = ComputeTL(clusterRaw, vertexPointFloat);
+        // Guard: a NaN / non-positive TL would crash the TSpline3 in EvalEnergy
+        if(!std::isfinite(TL) || TL <= 0)
+        {
+            if(nBadTL < 10)
+                std::cout << "\n[bad TL] TL = " << TL << " | rawTL = " << rawTL
+                          << " | nVoxels = " << clusterRaw.GetVoxels().size() << " | vertex = (" << vertex.X() << ", "
+                          << vertex.Y() << ", " << vertex.Z() << ") | lastPoint = (" << lastPoint.X() << ", "
+                          << lastPoint.Y() << ", " << lastPoint.Z() << ")\n";
+            nBadTL++;
+            continue;
+        }
 
         // Reconstruct Ex!
-        bool isOk {true};      // no punchthrouhg
-        bool cutELoss0 {true}; // for L1 not implemented yet the graphical cuts
-        if(isOk && cutELoss0)
+        bool isOk {true}; // no punchthrouhg
+        if(isOk && cutRawTL)
         {
             double T3Rec {srim->EvalEnergy("light", TL)};
-            // double T3Rec {T3Lab}; // for L1 we dont have a real reconstruction yet, so we will just use the smeared
-            // T3 as "reconstructed" energy at vertex. Maybe useful to recover energy from range in gas with profile¿?
-            // but maybe to slow
             auto ExRec {kin->ReconstructExcitationEnergy(T3Rec, theta3Lab)};
             // Fill
             hKinRec->Fill(theta3Lab * TMath::RadToDeg(), T3Rec); // after reconstruction
@@ -857,6 +950,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
             theta3CM_tree = theta3CM * TMath::RadToDeg();
             EVertex_tree = T3Rec;
             TL_tree = TL;
+            RawTL_tree = rawTL;
             LastPosX_tree = lastPoint.X();
             LastPosY_tree = lastPoint.Y();
             LastPosZ_tree = lastPoint.Z();
@@ -868,6 +962,8 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
         }
     }
 
+
+    std::cout << RESET << "\nEvents rejected for invalid TL: " << nBadTL << '\n';
 
     // Compute efficiency side, front and total
     auto* effCM {new TEfficiency {*hTheta3CM, *hThetaCMAll}};
@@ -883,6 +979,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
         effCM->Write();
         effLab->Write();
         hRP->Write("hRP");
+        hRawTL->Write("hRawTL");
         outFile->Close();
         delete outFile;
         outFile = nullptr;
@@ -922,6 +1019,8 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
         hPhiAll->DrawClone();
         c1->cd(3);
         hPads->DrawClone();
+        c1->cd(4);
+        hRawTL->DrawClone();
 
         auto* cEff {new TCanvas {"cEff", "Eff plots"}};
         cEff->DivideSquare(7);

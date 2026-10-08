@@ -1,20 +1,19 @@
 // =============================================================================
-//  compare_calc.C
+//  Compare_calc.C
 //
 //  Macro de ROOT para comparar gráficamente distribuciones angulares
-//  (ángulo - sección eficaz) calculadas con DWUCK4 y/o FRESCO.
+//  (ángulo - sección eficaz) calculadas con TWOFNR y FRESCO (y DWUCK4).
 //
 //  Formatos de entrada:
 //    DWUCK4 : dos columnas "angulo  seccion_eficaz", sin cabecera.
-//    FRESCO : mismo formato, pero con 10 líneas de título al principio
+//    FRESCO : mismo formato, con 10 líneas de título al principio
 //             y una línea "END" al final.
+//    TWOFNR : tres columnas "angulo  seccion_eficaz  (tercera col.)", sin
+//             cabecera. Solo se leen las dos primeras columnas.
 //
 //  Uso:
-//    root -l compare_calc.C            // ejecuta compare_calc() con el ejemplo
-//    root -l 'compare_calc.C+'         // compilada (más rápido y más estricto)
-//
-//  Para tus propios archivos, edita la función compare_calc() al final
-//  (o llama a CompCalc::DrawComparison(...) desde otra macro).
+//    root -l Compare_calc.C
+//    root -l 'Compare_calc.C+'     // compilada
 // =============================================================================
 
 #include "Rtypes.h"
@@ -46,20 +45,34 @@ namespace CompCalc
 enum class Format
 {
     DWUCK4,
-    FRESCO
+    FRESCO,
+    TWOFNR
 };
+
+inline const char* CodeName(Format f)
+{
+    switch(f)
+    {
+    case Format::FRESCO: return "FRESCO";
+    case Format::TWOFNR: return "TWOFNR";
+    default: return "DWUCK4";
+    }
+}
 
 // Descripción de un cálculo (un archivo) a dibujar
 struct Calc
 {
     TString path;      // ruta al archivo
     TString label;     // texto de la leyenda
-    Format format;     // DWUCK4 o FRESCO
+    Format format;     // DWUCK4, FRESCO o TWOFNR
     Color_t color;     // -1 => se asigna automáticamente
     Style_t lineStyle; // 1 = continua, 2 = discontinua, ...
     Width_t lineWidth;
-    TString tag; // texto que distingue este cálculo de otros
-                 // del mismo código (p.ej. "pot. Koning", "r0=1.25")
+    TString tag; // texto que distingue este cálculo de otros del mismo código
+
+    int skipLines = -1; // -1 => valor por defecto del formato
+    int xCol = 0;       // columna del ángulo
+    int yCol = 1;       // columna de la sección eficaz
 
     Calc(const TString& p, const TString& l, Format f, Color_t c = -1, Style_t ls = 1, Width_t lw = 2,
          const TString& t = "")
@@ -73,21 +86,32 @@ struct Calc
     {
     }
 
-    // Setter encadenable:  Calc(...).Tag("CCBA, sin spin-orbita")
+    // Setters encadenables
     Calc& Tag(const TString& t)
     {
         tag = t;
         return *this;
     }
+    Calc& Skip(int n)
+    {
+        skipLines = n;
+        return *this;
+    }
+    Calc& Cols(int ix, int iy)
+    {
+        xCol = ix;
+        yCol = iy;
+        return *this;
+    }
 
     // Texto final de la leyenda:
-    //   label vacío  -> nombre del código ("DWUCK4" / "FRESCO")
+    //   label vacío  -> nombre del código
     //   tag no vacío -> se añade entre paréntesis: "FRESCO (pot. Koning)"
     TString LegendText() const
     {
         TString s = label;
         if(s.IsNull())
-            s = (format == Format::FRESCO) ? "FRESCO" : "DWUCK4";
+            s = CodeName(format);
         if(!tag.IsNull())
             s += " (" + tag + ")";
         return s;
@@ -100,23 +124,23 @@ struct PlotOptions
     TString title = "";
     TString xTitle = "#theta_{cm} (deg)";
     TString yTitle = "d#sigma/d#Omega (mb/sr)";
-    bool logY = true; // escala logarítmica en Y
+    bool logY = true;
     TString canvasName = "cComp";
     int width = 900;
     int height = 650;
-    TString saveAs = ""; // p.ej. "comparacion.png" o ".pdf"
+    TString saveAs = "";
 };
 
 // Parámetros de cada formato
 constexpr int kFrescoHeaderLines = 10;
 
-inline int HeaderLines(Format f)
+inline int DefaultHeaderLines(Format f)
 {
-    return f == Format::FRESCO ? kFrescoHeaderLines : 0;
+    return f == Format::FRESCO ? kFrescoHeaderLines : 0; // DWUCK4 y TWOFNR: sin cabecera
 }
 inline bool HasEndMarker(Format f)
 {
-    return f == Format::FRESCO;
+    return f == Format::FRESCO; // DWUCK4 y TWOFNR: sin "END"
 }
 
 // -----------------------------------------------------------------------------
@@ -140,14 +164,19 @@ inline bool IsEndMarker(const std::string& line)
     return t == "END";
 }
 
-// Lee dos números de una línea. Acepta exponentes estilo Fortran (1.0D-03).
-inline bool ParseLine(std::string line, double& x, double& y)
+// Lee todos los números de una línea (acepta exponentes Fortran 1.0D-03).
+// Devuelve true si la línea tiene al menos 'nNeeded' números válidos.
+inline bool ParseNumbers(std::string line, std::vector<double>& vals, size_t nNeeded)
 {
     for(auto& c : line)
         if(c == 'D' || c == 'd')
             c = 'E';
     std::istringstream ss(line);
-    return static_cast<bool>(ss >> x >> y);
+    double v;
+    vals.clear();
+    while(ss >> v)
+        vals.push_back(v);
+    return vals.size() >= nNeeded;
 }
 
 // -----------------------------------------------------------------------------
@@ -164,9 +193,12 @@ inline bool ReadData(const Calc& calc, std::vector<double>& x, std::vector<doubl
         return false;
     }
 
-    const int skip = HeaderLines(calc.format);
+    const int skip = (calc.skipLines >= 0) ? calc.skipLines : DefaultHeaderLines(calc.format);
     const bool useEnd = HasEndMarker(calc.format);
+    const size_t nNeeded = static_cast<size_t>(std::max(calc.xCol, calc.yCol)) + 1;
+
     std::string line;
+    std::vector<double> vals;
     int nLine = 0, nBad = 0;
 
     while(std::getline(in, line))
@@ -179,14 +211,13 @@ inline bool ReadData(const Calc& calc, std::vector<double>& x, std::vector<doubl
         if(Trim(line).empty())
             continue; // línea vacía
 
-        double a, b;
-        if(!ParseLine(line, a, b))
+        if(!ParseNumbers(line, vals, nNeeded))
         {
             ++nBad;
             continue;
         }
-        x.push_back(a);
-        y.push_back(b);
+        x.push_back(vals[calc.xCol]);
+        y.push_back(vals[calc.yCol]);
     }
 
     if(nBad > 0)
@@ -263,6 +294,7 @@ inline TCanvas* DrawComparison(const std::vector<Calc>& calcs, const PlotOptions
 
     // El TMultiGraph es el propietario de los TGraph que se le añaden
     auto* mg = new TMultiGraph(Form("mg_%s", opt.canvasName.Data()), "");
+
     // Ancho de la leyenda según el texto más largo (entre 25% y 70% del canvas)
     size_t maxLen = 0;
     for(const auto& cc : calcs)
@@ -306,116 +338,73 @@ inline TCanvas* DrawComparison(const std::vector<Calc>& calcs, const PlotOptions
 } // namespace CompCalc
 
 // -----------------------------------------------------------------------------
-//  Punto de entrada: EDITA AQUÍ tus archivos
+//  Punto de entrada: EDITA AQUÍ tus archivos (TWOFNR vs FRESCO)
+//  TWOFNR: línea continua.  FRESCO: línea discontinua.
 // -----------------------------------------------------------------------------
-void Compare_calc()
+void Compare_calc_FRESCO_TWOFNR()
 {
     using namespace CompCalc;
 
     // --- Estado fundamental ---
     std::vector<Calc> gs = {
-        Calc("./DWUCK4_personal_calculations/ADKDWat_noSO/gs/xs_dw4.n", "DWUCK4", Format::DWUCK4, kBlack)
-            .Tag("ADKDWat-no SO"),
-        Calc("./DWUCK4_personal_calculations/ADKDKD_noSO/gs/xs_dw4.n", "DWUCK4", Format::DWUCK4, kPink)
-            .Tag("ADKDKD-no SO"),
-        Calc("./DWUCK4_personal_calculations/ADKDKD/gs/xs_dw4.n", "DWUCK4", Format::DWUCK4, kGreen).Tag("ADKDKD"),
-        Calc("./FRESCO_personal_calculations/gs_ADWA_Watson_FRESCO/fort.202", "FRESCO", Format::FRESCO, kBlack, 2).Tag("ADKDWat-no SO"),
-        Calc("./FRESCO_personal_calculations/gs_ADWA_KD_FRESCO_noSO/fort.202", "FRESCO", Format::FRESCO, kPink, 2).Tag("ADKDKD-no SO"),
-        Calc("./FRESCO_personal_calculations/gs_ADWA_KD_FRESCO/fort.202", "FRESCO", Format::FRESCO, kGreen, 2).Tag("ADKDKD"),
+        Calc("./gs_ADWA_KD_twofnr_JohnSoper_LEA(zerorange)/21.gs", "TWOFNR", Format::TWOFNR, kBlack).Tag("ADKD-ZR-LEA"),
+        Calc("./gs_ADWA_KD_twofnr_JohnTandy_LEA(finiterange)/21.gs", "TWOFNR", Format::TWOFNR, kPink)
+            .Tag("ADKD-FR-LEA"),
+        Calc("./gs_ADWA_KD_twofnr_JohnSoper_LEA(zerorange)/fort.202", "FRESCO", Format::FRESCO, kBlack, 2)
+            .Tag("ADKD-ZR-LEA (in twofnr, ZR in fresco)"),
+        Calc("./gs_ADWA_KD_twofnr_JohnTandy_LEA(finiterange)/fort.202", "FRESCO", Format::FRESCO, kPink, 2)
+            .Tag("ADKD-FR-LEA (in twofnr, ZR in fresco)"),
     };
     PlotOptions optGS;
     optGS.title = "g.s.";
     optGS.canvasName = "cGS";
-    optGS.saveAs = "./Figures/compare_gs.png";
+    optGS.saveAs = "./Figures/compare_twofnr_gs.png";
     DrawComparison(gs, optGS);
 
-    // --- Primer estado no ligado, Ex = 2.255 MeV ---
-    std::vector<Calc> g1 = {
-        Calc("./DWUCK4_personal_calculations/ADKDWat_noSO/g1/xs_dw4.n", "DWUCK4", Format::DWUCK4, kBlack)
-            .Tag("ADKDWat-no SO"),
-        Calc("./DWUCK4_personal_calculations/ADKDKD_noSO/g1/xs_dw4.n", "DWUCK4", Format::DWUCK4, kPink)
-            .Tag("ADKDKD-no SO"),
-        Calc("./DWUCK4_personal_calculations/ADKDKD/g1/xs_dw4.n", "DWUCK4", Format::DWUCK4, kGreen).Tag("ADKDKD"),
-        Calc("./FRESCO_personal_calculations/gs_ADWA_Watson_FRESCO/fort.203", "FRESCO", Format::FRESCO, kBlack, 2).Tag("ADKDWat-no SO"),
-        Calc("./FRESCO_personal_calculations/gs_ADWA_KD_FRESCO_noSO/fort.203", "FRESCO", Format::FRESCO, kPink + 1, 2).Tag("ADKDKD-no SO"),
-        Calc("./FRESCO_personal_calculations/gs_ADWA_KD_FRESCO/fort.203", "FRESCO", Format::FRESCO, kGreen + 1, 2).Tag("ADKDKD"),
+    // --- Estado fundamental SO contribution---
+    std::vector<Calc> gs_SO = {
+        // --- Zero range (línea discontinua) ---
+        Calc("./gs_ADWA_KD_twofnr_JohnSoper_LEA(zerorange)/fort.202", "FRESCO", Format::FRESCO, kBlack, 2)
+            .Tag("ADKD-ZR-LEA, (in twofnr, ZR in fresco), SO completo "),
+        Calc("./gs_ADWA_KD_twofnr_JohnSoper_LEA(zerorange)_noSO_entrance/fort.202", "FRESCO", Format::FRESCO, kRed + 1,
+             2)
+            .Tag("ADKD-ZR-LEA, (in twofnr, ZR in fresco),noSO entrance "),
+        Calc("./gs_ADWA_KD_twofnr_JohnSoper_LEA(zerorange)_noSO_exit/fort.202", "FRESCO", Format::FRESCO, kBlue + 1, 2)
+            .Tag("ADKD-ZR-LEA,(in twofnr, ZR in fresco), noSO exit"),
+        Calc("./gs_ADWA_KD_twofnr_JohnSoper_LEA(zerorange)_noSO_both/fort.202", "FRESCO", Format::FRESCO, kGreen + 2, 2)
+            .Tag("ADKD-ZR-LEA,(in twofnr, ZR in fresco), noSO both"),
+        // --- Finite range (línea continua) ---
+        Calc("./gs_ADWA_KD_twofnr_JohnTandy_LEA(finiterange)/fort.202", "FRESCO", Format::FRESCO, kBlack, 1)
+            .Tag("ADKD-FR-LEA, (in twofnr, ZR in fresco), SO completo "),
+        Calc("./gs_ADWA_KD_twofnr_JohnTandy_LEA(finiterange)_noSO_entrance/fort.202", "FRESCO", Format::FRESCO,
+             kRed + 1, 1)
+            .Tag("ADKD-FR-LEA, (in twofnr, ZR in fresco), noSO entrance "),
+        Calc("./gs_ADWA_KD_twofnr_JohnTandy_LEA(finiterange)_noSO_exit/fort.202", "FRESCO", Format::FRESCO, kBlue + 1,
+             1)
+            .Tag("ADKD-FR-LEA, (in twofnr, ZR in fresco), noSO exit"),
+        Calc("./gs_ADWA_KD_twofnr_JohnTandy_LEA(finiterange)_noSO_both/fort.202", "FRESCO", Format::FRESCO, kGreen + 2,
+             1)
+            .Tag("ADKD-FR-LEA,(in twofnr, ZR in fresco), noSO both"),
     };
-    PlotOptions optG1;
-    optG1.title = "E_{x} = 0.981 MeV";
-    optG1.canvasName = "cG1";
-    optG1.saveAs = "./Figures/compare_unbound_0-981MeV.png";
-    DrawComparison(g1, optG1);
+    PlotOptions optGS_SO;
+    optGS_SO.title = "g.s. SO contribution";
+    optGS_SO.canvasName = "cGS_SO";
+    optGS_SO.saveAs = "./Figures/compare_twofnr_gs_SO.png";
+    DrawComparison(gs_SO, optGS_SO);
 
-    // --- Primer estado no ligado, Ex = 2.255 MeV ---
-    std::vector<Calc> v0 = {
-        Calc("./DWUCK4_personal_calculations/ADKDWat_noSO/v0/xs_dw4.n", "DWUCK4", Format::DWUCK4, kBlack)
-            .Tag("ADKDWat-no SO"),
-        Calc("./DWUCK4_personal_calculations/ADKDKD_noSO/v0/xs_dw4.n", "DWUCK4", Format::DWUCK4, kPink)
-            .Tag("ADKDKD-no SO"),
-        Calc("./DWUCK4_personal_calculations/ADKDKD/v0/xs_dw4.n", "DWUCK4", Format::DWUCK4, kGreen).Tag("ADKDKD"),
-        Calc("./FRESCO_personal_calculations/gs_ADWA_Watson_FRESCO/fort.204", "FRESCO", Format::FRESCO, kRed + 1, 2)
-            .Tag("ADKDWat-no SO-weakly bound"),
-        Calc("./FRESCO_personal_calculations/gs_ADWA_Watson_FRESCO/fort.206", "FRESCO", Format::FRESCO, kBlack, 2).Tag("ADKDWat-no SO-unbound"),
-        Calc("./FRESCO_personal_calculations/gs_ADWA_KD_FRESCO/fort.204", "FRESCO", Format::FRESCO, kPink + 1, 2).Tag("ADKDKD-weakly bound"),
-        Calc("./FRESCO_personal_calculations/gs_ADWA_KD_FRESCO/fort.206", "FRESCO", Format::FRESCO, kYellow + 1, 2).Tag("ADKDKD-unbound"),
-    };
-    PlotOptions optV0;
-    optV0.title = "E_{x} = 2.255 MeV (unbound)";
-    optV0.canvasName = "cV0";
-    optV0.saveAs = "./Figures/compare_unbound_2-255MeV.png";
-    DrawComparison(v0, optV0);
-
-    // --- various not bound ---
-    std::vector<Calc> vs3MeV = {
-        Calc("./DWUCK4_personal_calculations/ADKDWat_noSO/v_1+_3MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4, kBlack, 2)
-            .Tag("ADKDWat-no SO estado a 3MeV Ex 1+ p3/2"),
-        Calc("./DWUCK4_personal_calculations/ADKDWat_noSO/v_p1-2_1+_3MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4,
-             kGreen, 2)
-            .Tag("ADKDWat-no SO estado a 3MeV Ex 1+ p1/2"),
-        Calc("./DWUCK4_personal_calculations/ADKDKD_noSO/v_1+_3MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4, kPink + 1, 2)
-            .Tag("ADKDKD-no SO estado a 3MeV Ex 1+ p3/2"),
-        Calc("./DWUCK4_personal_calculations/ADKDKD/v_1+_3MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4, kRed, 2)
-            .Tag("ADKDKD estado a 3MeV Ex 1+ p3/2"),
-
-    };
-    PlotOptions optVs3MeV;
-    optVs3MeV.title = "E_{x} = 3.0 MeV (unbound)";
-    optVs3MeV.canvasName = "cVs3MeV";
-    optVs3MeV.saveAs = "./Figures/compare_unbound_3-0MeV.png";
-    DrawComparison(vs3MeV, optVs3MeV);
-
-    // --- various not bound ---
-    std::vector<Calc> vs5MeV = {
-        Calc("./DWUCK4_personal_calculations/ADKDWat_noSO/v_1+_5MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4, kBlack, 2)
-            .Tag("ADKDWat-no SO estado a 5MeV Ex 1+ p3/2"),
-        Calc("./DWUCK4_personal_calculations/ADKDWat_noSO/v_p1-2_1+_5MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4,
-             kGreen + 1, 2)
-            .Tag("ADKDWat-no SO estado a 5MeV Ex 1+ p1/2"),
-        Calc("./DWUCK4_personal_calculations/ADKDKD_noSO/v_1+_5MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4, kPink + 1, 2)
-            .Tag("ADKDKD-no SO estado a 5MeV Ex 1+ p3/2"),
-        Calc("./DWUCK4_personal_calculations/ADKDKD/v_1+_5MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4, kRed, 2)
-            .Tag("ADKDKD estado a 5MeV Ex 1+ p3/2"),
-
-    };
-    PlotOptions optVs5MeV;
-    optVs5MeV.title = "E_{x} = 5.0 MeV (unbound)";
-    optVs5MeV.canvasName = "cVs5MeV";
-    optVs5MeV.saveAs = "./Figures/compare_unbound_5-0MeV.png";
-    DrawComparison(vs5MeV, optVs5MeV);
-
-    // --- various not bound ---
-    std::vector<Calc> vs6MeV = {
-        Calc("./DWUCK4_personal_calculations/ADKDWat_noSO/v_1+_6MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4, kPink + 1, 2)
-            .Tag("ADKDWat-no SO estado a 6MeV Ex 1+ p3/2"),
-        Calc("./DWUCK4_personal_calculations/ADKDKD_noSO/v_1+_6MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4, kGreen, 2)
-            .Tag("ADKDKD-no SO estado a 6MeV Ex 1+ p3/2"),
-        Calc("./DWUCK4_personal_calculations/ADKDKD/v_1+_6MeV/xs_dw4.n", "DWUCK4", Format::DWUCK4, kRed, 2)
-            .Tag("ADKDKD estado a 6MeV Ex 1+ p3/2"),
-
-    };
-    PlotOptions optVs6MeV;
-    optVs6MeV.title = "E_{x} = 6.0 MeV (unbound)";
-    optVs6MeV.canvasName = "cVs6MeV";
-    optVs6MeV.saveAs = "./Figures/compare_unbound_6-0MeV.png";
-    DrawComparison(vs6MeV, optVs6MeV);
+    // --- Primer estado, Ex = 0.981 MeV ---
+    // std::vector<Calc> g1 = {
+    //     Calc("./TWOFNR_calculations/ADKDWat_noSO/g1/xs_twofnr.dat", "TWOFNR", Format::TWOFNR, kBlack)
+    //         .Tag("ADKDWat-no SO"),
+    //     Calc("./TWOFNR_calculations/ADKDKD_noSO/g1/xs_twofnr.dat", "TWOFNR", Format::TWOFNR, kPink).Tag("ADKDKD-no
+    //     SO"), Calc("./TWOFNR_calculations/ADKDKD/g1/xs_twofnr.dat", "TWOFNR", Format::TWOFNR, kGreen).Tag("ADKDKD"),
+    //     Calc("./gs_ADWA_Watson_FRESCO/fort.203", "FRESCO", Format::FRESCO, kBlack, 2).Tag("ADKDWat-no SO"),
+    //     Calc("./gs_ADWA_KD_FRESCO_noSO/fort.203", "FRESCO", Format::FRESCO, kPink + 1, 2).Tag("ADKDKD-no SO"),
+    //     Calc("./gs_ADWA_KD_FRESCO/fort.203", "FRESCO", Format::FRESCO, kGreen + 1, 2).Tag("ADKDKD"),
+    // };
+    // PlotOptions optG1;
+    // optG1.title = "E_{x} = 0.981 MeV";
+    // optG1.canvasName = "cG1";
+    // optG1.saveAs = "./Figures/compare_twofnr_0-981MeV.png";
+    // DrawComparison(g1, optG1);
 }
