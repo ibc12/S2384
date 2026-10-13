@@ -22,14 +22,18 @@ void TL_LastVoxel()
     std::string beam {"7Li"};
     std::string target {"2H"};
     std::string targetExp {"d"};
-    std::string light {"2H"};
-    std::string lightExp {"d"};
-    std::string heavy {"7Li"};
+    std::string light {"1H"};
+    std::string lightExp {"p"};
+    std::string heavy {"8Li"};
     double Ex {0.}; // MeV
     // Get simu data
-    TString fileName {TString::Format(
-        "../../Simulation/Outputs/%s/test_ang_straggling_L1/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_L1_3-5AngStr_12pads.root",
-        beam.c_str(), target.c_str(), light.c_str(), Ex, 0, 0)};
+    // TString fileName {TString::Format("../../Simulation/Outputs/%s/test_ang_straggling_L1/"
+    //                                   "%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_L1_3-5AngStr_12pads.root",
+    //                                   beam.c_str(), target.c_str(), light.c_str(), Ex, 0, 0)};
+    TString fileName {TString::Format("../../Simulation/Outputs/%s/test_RawTL_L1/"
+                                      "%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_L1_30padUnits.root",
+                                      beam.c_str(), target.c_str(), light.c_str(), Ex, 0, 0)};
+
     // Get exp data
     TString fileNameExp {TString::Format("../../PostAnalysis/Outputs/tree_ex_F_%s_%s_%s.root", beam.c_str(),
                                          targetExp.c_str(), lightExp.c_str())};
@@ -41,7 +45,7 @@ void TL_LastVoxel()
 
     // Filter exp data to get only L1 events
     auto dfExpL1 = dfExp.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; }, {"MergerData"})
-                       .Filter([](ActRoot::MergerData& m) { return m.fThetaLight > 74; }, {"MergerData"});
+                       .Filter([](double ex) { return ex < 0.5; }, {"Ex"});
     // auto dfExpL1 = dfExpL1.Filter([](double & ex) { return ex < 1; }, {"Ex"});
 
     // Get drift parameter from config file
@@ -213,7 +217,7 @@ void TL_LastVoxel()
     auto dfSimu = df.Define("phi3CMdeg",
                             [](double phi)
                             {
-                                return (phi - M_PI) * 180.0 / M_PI; // Convert to degrees
+                                return (phi) * 180.0 / M_PI; // Convert to degrees
                             },
                             {"phi3CM"});
 

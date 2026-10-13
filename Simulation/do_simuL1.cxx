@@ -636,7 +636,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
     auto hRP_X {HistConfig::RPx.GetHistogram()};
     hRP_X->SetTitle("Reconstructed RP;X [mm];Counts");
     auto hRP {HistConfig::RP.GetHistogram()};
-    hRP->SetTitle("Reconstructed RP;RP [mm];Counts");
+    hRP->SetTitle("Reconstructed RP;RP X [mm];RP Y [mm]");
     // L1 specific histos
     auto hPads {new TH1D("hPads", "Number of pads hit out of exclusion zone;Pads;Counts", 50, 0, 50)};
     auto hRawTL {new TH1D("hRawTL", "RawTL (pad units);RawTL [pad units];Counts", 300, 0, 150)};
@@ -647,7 +647,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
         tag = "_" + std::to_string(thread);
 
     // File to save data
-    TString fileName {TString::Format("./Outputs/%s/test_RawTL_L1/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s.root",
+    TString fileName {TString::Format("./Outputs/%s/test_RawTL_L1/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s_L1.root",
                                       beam.c_str(), target.c_str(), light.c_str(), Ex, neutronPS, protonPS,
                                       tag.c_str())};
     auto outFile {new TFile(fileName, inspect ? "read" : "recreate")};
