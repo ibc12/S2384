@@ -71,6 +71,7 @@ constexpr int yMaxExclusionZone = 71;
 constexpr int nPadsThreshold = 14; // Minimum number of pads outside the exclusion zone to consider an event valid
 constexpr int validationZone = 8;  // Minimum distance from the last voxel to the TPC borders in mm (from detector.conf)
 constexpr double thetaResFWHM = 3.5; // FWHM of theta resolution in degrees (in the begining was 1.5)
+constexpr double rpXcut = 240.0; // Cut in rp.x for the dp channel in mm (in the begining was 240.0)
 constexpr std::pair<double, double> phiRangePositive {16., 160.};   // Range of positive phi in deg for the experiment
 constexpr std::pair<double, double> phiRangeNegative {-160., -16.}; // Range of negative phi in deg for the experiment
 using voxelKey = std::tuple<int, int, int>;                         // ix,iy,iz
@@ -471,7 +472,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
     // Set whether is PS or not
     bool isPS {(neutronPS > 0) || (protonPS > 0)};
     // Set number of iterations
-    const int niter {static_cast<int>(inspect ? 1e5 : (isPS ? 1e8 : 3e5))};
+    const int niter {static_cast<int>(inspect ? 1e5 : (isPS ? 1e8 : 3e6))};
     gRandom->SetSeed(0);
     // Runner: contains utility functions to execute multiple actions as rotate directions
     ActSim::Runner runner(nullptr, nullptr, gRandom, 0);
@@ -647,7 +648,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
         tag = "_" + std::to_string(thread);
 
     // File to save data
-    TString fileName {TString::Format("./Outputs/%s/test_RawTL_L1/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s_L1.root",
+    TString fileName {TString::Format("./Outputs/%s/test_rpCut/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s_L1_240rpCut_long.root",
                                       beam.c_str(), target.c_str(), light.c_str(), Ex, neutronPS, protonPS,
                                       tag.c_str())};
     auto outFile {new TFile(fileName, inspect ? "read" : "recreate")};
@@ -883,6 +884,10 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
         int nPadsOutExclusionZone = PadsOutExclusionZone(voxelMapLight, voxelMapHeavy, thresholdPadCharge);
         hPads->Fill(nPadsOutExclusionZone);
         if(nPadsOutExclusionZone < nPadsThreshold)
+            continue;
+
+        // Cut in rp.x for the dp channel,
+        if(light == "1H" && vertex.X() > rpXcut)
             continue;
 
         // ---- Single cluster in PAD UNITS (ix, iy, binZ), as in the analysis ----

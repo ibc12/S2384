@@ -32,18 +32,6 @@ constexpr double thetaMax = 170.;                  // deg
 constexpr int thetaInterval = thetaMax - thetaMin; // deg
 constexpr double eVertexMax = 3.;                  // MeV
 
-// Insert pads (unique X, Y) outside the exclusion zone
-template <typename Container>
-void FillPadsOutZone(const Container& voxels, std::set<std::pair<int, int>>& pads)
-{
-    for(const auto& voxel : voxels)
-    {
-        auto pos = voxel.GetPosition();
-        if(pos.Y() < yMinExclusionZone || pos.Y() > yMaxExclusionZone)
-            pads.insert({static_cast<int>(pos.X()), static_cast<int>(pos.Y())});
-    }
-}
-
 // Position (X, Y) in pads of the last voxel of the light cluster
 std::pair<double, double> GetLastVoxelXY(ActRoot::MergerData& m, ActRoot::TPCData& tpc)
 {
@@ -87,19 +75,19 @@ void DrawOverlay(TH1* hSimu, TH1* hExp)
     leg->Draw();
 }
 
-void CompareImportantVariables()
+void CompareImportantVariablesSil()
 {
     // Reaction: 7Li(d,p)8Li, only L1 events, elastic-like Ex = 0
-    std::string beam {"11Li"};
+    std::string beam {"7Li"};
     std::string target {"2H"};
     std::string targetExp {"d"};
     std::string light {"1H"};
     std::string lightExp {"p"};
     double Ex {0.}; // MeV
 
-    TString fileNameSimu {TString::Format("../../Simulation/Outputs/%s/test_RawTL_L1/"
-                                          "%s_2H_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_L1.root",
-                                          beam.c_str(), target.c_str(),  Ex, 0, 0)};
+    TString fileNameSimu {TString::Format("../../Simulation/Outputs/%s/"
+                                          "%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d.root",
+                                          beam.c_str(), target.c_str(), light.c_str(), Ex, 0, 0)};
     TString fileNameExp {TString::Format("../../PostAnalysis/Outputs/tree_ex_F_%s_%s_%s.root", beam.c_str(),
                                          targetExp.c_str(), lightExp.c_str())};
 
@@ -129,12 +117,12 @@ void CompareImportantVariables()
     auto dfSimuRaw = ROOT::RDataFrame("SimulationTTree", fileNameSimu);
     auto dfExpRaw = ROOT::RDataFrame("Final_Tree", fileNameExp);
 
-    // Simu columns used: theta3Lab, phi3CM, TL, RawTL, EVertex, nPads, LastPosX, LastPosY
+    // Simu columns used: theta3Lab, phi3CM, TL, RawTL, EVertex, LastPosX, LastPosY
     auto dfSimu = dfSimuRaw.Define("phiLabDeg", [](double phi) { return phi * 180.0 / M_PI; }, {"phi3CM"});
 
     // ---------------- Experiment: only L1 events and unify column names ----------------
     auto dfExp =
-        dfExpRaw.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; }, {"MergerData"})
+        dfExpRaw.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})
             .Filter([](double ex) { return ex < 0.5; }, {"Ex"})
             .Define("thetaLabDeg", [](ActRoot::MergerData& m) { return static_cast<double>(m.fThetaLight); },
                     {"MergerData"})
@@ -143,29 +131,9 @@ void CompareImportantVariables()
             .Define("RPx", [](ActRoot::MergerData& m) { return static_cast<double>(m.fRP.X()); }, {"MergerData"})
             .Define("TLExp", [](ActRoot::MergerData& m) { return static_cast<double>(m.fLight.fTL); }, {"MergerData"})
             .Define("RawTLExp", [](ActRoot::MergerData& m) { return static_cast<double>(m.fLight.fRawTL); },
-                    {"MergerData"})
-            // Last voxel: pads -> mm, to match the simulation
-            .Define("LastPosX", [](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
-                    { return padSize * GetLastVoxelXY(m, tpc).first; }, {"MergerData", "TPCData"})
-            .Define("LastPosY", [](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
-                    { return padSize * GetLastVoxelXY(m, tpc).second; }, {"MergerData", "TPCData"})
-            .Define("nPadsTotal",
-                    [](ActRoot::MergerData& m, ActRoot::TPCData& tpc)
-                    {
-                        std::set<std::pair<int, int>> pads;
-                        FillPadsOutZone(tpc.fClusters[m.fLightIdx].GetVoxels(), pads);
-                        FillPadsOutZone(tpc.fClusters[m.fHeavyIdx].GetVoxels(), pads);
-                        FillPadsOutZone(tpc.fClusters[m.fBeamIdx].GetVoxels(), pads);
-                        FillPadsOutZone(tpc.fRaw, pads);
-                        return static_cast<int>(pads.size());
-                    },
-                    {"MergerData", "TPCData"});
+                    {"MergerData"});
 
     // ---------------- Histograms ----------------
-    // Total number of pads out of the exclusion zone
-    auto hPadsSimu =
-        dfSimu.Histo1D({"hPadsSimu", "Total pads out of exclusion zone;N pads;Counts", 150, 0, 150}, "nPads");
-    auto hPadsExp = dfExp.Histo1D({"hPadsExp", "", 150, 0, 150}, "nPadsTotal");
 
     // Angular distributions
     auto hThetaSimu = dfSimu.Histo1D(
@@ -179,20 +147,6 @@ void CompareImportantVariables()
                                   hRPSimu->GetXaxis()->GetXmax()};
     auto hRPxExp = dfExp.Histo1D(rpModel, "RPx");
 
-    // TL and RawTL
-    auto hTLSimu = dfSimu.Histo1D({"hTLSimu", "TL;TL (mm);Counts", 100, 0, 200}, "TL");
-    auto hTLExp = dfExp.Histo1D({"hTLExp", "", 100, 0, 200}, "TLExp");
-    auto hRawTLSimu = dfSimu.Histo1D({"hRawTLSimu", "RawTL;RawTL (mm);Counts", 100, 0, 200}, "RawTL");
-    auto hRawTLExp = dfExp.Histo1D({"hRawTLExp", "", 100, 0, 200}, "RawTLExp");
-
-    // Last voxel position
-    auto hLastSimu =
-        dfSimu.Histo2D({"hLastSimu", "Last voxel (simu);LastPosX (mm);LastPosY (mm)", 128, 0, detMax, 128, 0, detMax},
-                       "LastPosX", "LastPosY");
-    auto hLastExp =
-        dfExp.Histo2D({"hLastExp", "Last voxel (exp);LastPosX (mm);LastPosY (mm)", 128, 0, detMax, 128, 0, detMax},
-                      "LastPosX", "LastPosY");
-
     // Kinematics: thetaLab vs EVertex
     auto hKinSimu = dfSimu.Histo2D({"hKinSimu", "Kinematics (simu);#theta_{Lab} (deg);E_{Vertex} (MeV)", thetaInterval,
                                     thetaMin, thetaMax, 120, 0, eVertexMax},
@@ -205,7 +159,6 @@ void CompareImportantVariables()
     auto c1 = new TCanvas("c1", "Pads, angles and RP.X", 1200, 800);
     c1->Divide(2, 2);
     c1->cd(1);
-    DrawOverlay(hPadsSimu.GetPtr(), hPadsExp.GetPtr());
     c1->cd(2);
     DrawOverlay(hRPSimu, hRPxExp.GetPtr());
     c1->cd(3);
@@ -216,13 +169,7 @@ void CompareImportantVariables()
     auto c2 = new TCanvas("c2", "TL, RawTL and last voxel", 1200, 800);
     c2->Divide(2, 2);
     c2->cd(1);
-    DrawOverlay(hTLSimu.GetPtr(), hTLExp.GetPtr());
-    c2->cd(2);
-    DrawOverlay(hRawTLSimu.GetPtr(), hRawTLExp.GetPtr());
     c2->cd(3);
-    hLastSimu->DrawClone("colz");
-    c2->cd(4);
-    hLastExp->DrawClone("colz");
 
     auto c3 = new TCanvas("c3", "Kinematics", 1200, 500);
     c3->Divide(2, 1);

@@ -26,7 +26,7 @@
 
 void Ang(bool isLab = false)
 {
-    PrettyStyle(false);
+    // PrettyStyle(false);
     if(isLab)
         Angular::ToggleIsLab();
 
@@ -47,9 +47,9 @@ void Ang(bool isLab = false)
         hKin = def.Histo2D({"hCM", "CM;#theta_{CM};E [MeV]", 300, 0, 120, 300, 0, 60}, "ThetaCM", "EVertex");
 
     // Init intervals
-    double thetaMin = isLab ? 70.0 : 7.5;
-    double thetaMax = isLab ? 80.0 : 18.5;
-    double thetaStep = isLab ? 2.5 : 2.50;
+    double thetaMin = isLab ? 70.0 : 8;
+    double thetaMax = isLab ? 80.0 : 16;
+    double thetaStep = isLab ? 2.5 : 2.0;
     Angular::Intervals ivs {thetaMin, thetaMax, S2384Fit::Exdp_7Li, thetaStep, 0};
     if(isLab)
         def.Foreach([&](float thetalab, double ex) { ivs.Fill(thetalab, ex); }, {"fThetaLight", "Ex"});
@@ -82,11 +82,21 @@ void Ang(bool isLab = false)
     // }
     // eff.Add("g0", "../../Simulation/Outputs/7Li/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1.root",
     //         isLab ? "effLab" : "effCM");
+    // eff.Add("g0",
+    //         "../../Simulation/Outputs/7Li/test_ang_straggling_L1/"
+    //         "2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_3-5AngStr_14pads.root",
+    //         isLab ? "effLab" : "effCM");
+    // eff.Add("g1",
+    //         "../../Simulation/Outputs/7Li/test_ang_straggling_L1/"
+    //         "2H_1H_TRIUMF_Eex_0.981_nPS_0_pPS_0_L1_3-5AngStr_14pads.root",
+    //         isLab ? "effLab" : "effCM");
     eff.Add("g0",
-            "../../Simulation/Outputs/7Li/test_ang_straggling_L1/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_3-5AngStr_14pads.root",
+            "../../Simulation/Outputs/7Li/test_rpCut/"
+            "2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_240rpCut_long.root",
             isLab ? "effLab" : "effCM");
     eff.Add("g1",
-            "../../Simulation/Outputs/7Li/test_ang_straggling_L1/2H_1H_TRIUMF_Eex_0.981_nPS_0_pPS_0_L1_3-5AngStr_14pads.root",
+            "../../Simulation/Outputs/7Li/test_rpCut/"
+            "2H_1H_TRIUMF_Eex_0.981_nPS_0_pPS_0_L1_240rpCut.root",
             isLab ? "effLab" : "effCM");
     eff.Scale(0.931);
     // Draw to check is fine
