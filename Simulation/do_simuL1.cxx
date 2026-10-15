@@ -71,7 +71,7 @@ constexpr int yMaxExclusionZone = 71;
 constexpr int nPadsThreshold = 14; // Minimum number of pads outside the exclusion zone to consider an event valid
 constexpr int validationZone = 8;  // Minimum distance from the last voxel to the TPC borders in mm (from detector.conf)
 constexpr double thetaResFWHM = 3.5; // FWHM of theta resolution in degrees (in the begining was 1.5)
-constexpr double rpXcut = 240.0; // Cut in rp.x for the dp channel in mm (in the begining was 240.0)
+constexpr double rpXcut = 240.0;     // Cut in rp.x for the dp channel in mm (in the begining was 240.0)
 constexpr std::pair<double, double> phiRangePositive {16., 160.};   // Range of positive phi in deg for the experiment
 constexpr std::pair<double, double> phiRangeNegative {-160., -16.}; // Range of negative phi in deg for the experiment
 using voxelKey = std::tuple<int, int, int>;                         // ix,iy,iz
@@ -464,7 +464,7 @@ double ComputeTL(ActRoot::Cluster& cluster, const PointF& rp)
 }
 
 void do_simuL1(const std::string& beam, const std::string& target, const std::string& light, const std::string& heavy,
-               int neutronPS, int protonPS, double Tbeam, double Ex, bool inspect, int thread = -1)
+               int neutronPS, int protonPS, double Tbeam, double Ex, bool inspect, const std::string& outFileName)
 {
     // set batch mode if inspect is false
     if(!inspect)
@@ -472,7 +472,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
     // Set whether is PS or not
     bool isPS {(neutronPS > 0) || (protonPS > 0)};
     // Set number of iterations
-    const int niter {static_cast<int>(inspect ? 1e5 : (isPS ? 1e8 : 3e6))};
+    const int niter {static_cast<int>(inspect ? 1e5 : (isPS ? 8e5 : 4e5))};
     gRandom->SetSeed(0);
     // Runner: contains utility functions to execute multiple actions as rotate directions
     ActSim::Runner runner(nullptr, nullptr, gRandom, 0);
@@ -642,16 +642,8 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
     auto hPads {new TH1D("hPads", "Number of pads hit out of exclusion zone;Pads;Counts", 50, 0, 50)};
     auto hRawTL {new TH1D("hRawTL", "RawTL (pad units);RawTL [pad units];Counts", 300, 0, 150)};
 
-    // Allow multiple theads
-    std::string tag {""};
-    if(thread > 0)
-        tag = "_" + std::to_string(thread);
-
-    // File to save data
-    TString fileName {TString::Format("./Outputs/%s/test_rpCut/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s_L1_240rpCut_long.root",
-                                      beam.c_str(), target.c_str(), light.c_str(), Ex, neutronPS, protonPS,
-                                      tag.c_str())};
-    auto outFile {new TFile(fileName, inspect ? "read" : "recreate")};
+    // File to save data (path decided by the caller)
+    auto outFile {new TFile(outFileName.c_str(), inspect ? "read" : "recreate")};
     auto* outTree {new TTree("SimulationTTree", "A TTree containing only our Eex obtained by simulation")};
     if(inspect)
         outTree->SetDirectory(nullptr);

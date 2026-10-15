@@ -13,7 +13,7 @@
 void runnerL1(TString what = "simu", bool inspect = false)
 {
     // Neutron and Proton phase space
-    int neutronPS {0}; // number of neutrons in final state
+    int neutronPS {1}; // number of neutrons in final state
     int protonPS {0};  // number of protons in final state
     bool isPS {neutronPS > 0 || protonPS > 0};
     // Particles
@@ -36,8 +36,9 @@ void runnerL1(TString what = "simu", bool inspect = false)
         else if(beam == "7Li")
             // Exs = {0,  0.981, 2.255, 3.210};
             // Exs = {5.400, 6.100, 6.530, 7.100};
-            Exs = {0, 0.981};
-            // Exs = {2.255};
+            // Exs = {0, 0.981};
+            Exs = {0};
+        // Exs = {2.255};
         // Exs = {0, 0.981, 2.255, 3.210, 5.400, 6.100, 6.530, 7.100};
     }
 
@@ -63,62 +64,59 @@ void runnerL1(TString what = "simu", bool inspect = false)
     else
         throw std::runtime_error("No confs with neutronPS and protonPS enabled at the same time");
 
+    // Output directory and file naming (single source of truth)
+    const TString outDir {TString::Format("./Outputs/%s/test_rpCut", beam.c_str())};
+    // suffix = "" -> final file; suffix = "_part<i>" -> partial file of job i
+    auto outName {[&](double ex, const TString& suffix = "")
+                  {
+                      return TString::Format("%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_L1_240rpCut_paralelization%s.root",
+                                             outDir.Data(), target.c_str(), light.c_str(), ex, neutronPS, protonPS,
+                                             suffix.Data());
+                  }};
+
     // Run simu or plot
     ROOT::EnableThreadSafety();
-    std::vector<std::thread> threads;
     auto worker {[](TString str) { return gSystem->Exec(str.Data()); }};
     if(what.Contains("simu"))
     {
+        gSystem->mkdir(outDir.Data(), true); // recursive, does nothing if it already exists
+
         if(inspect)
         {
-            do_simuL1(beam, target, light, heavy, neutronPS, protonPS, Tbeam, Exs.front(), inspect);
+            do_simuL1(beam, target, light, heavy, neutronPS, protonPS, Tbeam, Exs.front(), inspect,
+                      outName(Exs.front()).Data());
         }
         else
         {
-            TString haddlist {};
-            TString haddout {};
-            if(isPS)
+            // Number of parallel jobs per Ex
+            const int ncores {isPS ? 8 : 4};
+
+            // Process each Ex splitting the work in ncores jobs
+            for(const auto& ex : Exs)
             {
-                haddout = TString::Format("./Outputs/%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_L1.root", beam.c_str(),
-                                          target.c_str(), light.c_str(), Exs.front(), neutronPS, protonPS);
-                // List of files generated per thread
-                // Number of threads = 6
-                int nthreads {6};
-                // 1e8 events each
-                for(int i = 1; i <= nthreads; i++)
+                TString haddout {outName(ex)};
+                TString haddlist {};
+                std::vector<std::thread> threads;
+                threads.reserve(ncores);
+
+                for(int i = 1; i <= ncores; i++)
                 {
+                    TString partFile {outName(ex, TString::Format("_part%d", i))};
                     auto str {TString::Format(
-                        "root -l -b -q -x 'do_simuL1.cxx(\"%s\",\"%s\",\"%s\",\"%s\",%d,%d,%f,%f,%d,%d)\'",
-                        beam.c_str(), target.c_str(), light.c_str(), heavy.c_str(), neutronPS, protonPS, Tbeam,
-                        Exs.front(), inspect, i)};
-                    haddlist += TString::Format("./Outputs/%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_L1_%s.root",
-                                                beam.c_str(), target.c_str(), light.c_str(), Exs.front(), neutronPS,
-                                                protonPS, std::to_string(i).c_str()) +
-                                " ";
+                        "root -l -b -q -x 'do_simuL1.cxx(\"%s\",\"%s\",\"%s\",\"%s\",%d,%d,%f,%f,%d,\"%s\")'",
+                        beam.c_str(), target.c_str(), light.c_str(), heavy.c_str(), neutronPS, protonPS, Tbeam, ex,
+                        inspect, partFile.Data())};
+                    haddlist += partFile + " ";
                     threads.emplace_back(worker, str);
                 }
-            }
-            else
-            {
-                for(const auto& ex : Exs)
-                {
-                    auto str = TString::Format(
-                        "root -l -b -q -x 'do_simuL1.cxx(\"%s\",\"%s\",\"%s\",\"%s\",%d,%d,%f,%f,%d)'", beam.c_str(),
-                        target.c_str(), light.c_str(), heavy.c_str(), neutronPS, protonPS, Tbeam, ex, inspect);
-                    threads.emplace_back(std::thread {worker, str});
-                }
-            }
-            // Join threads for PS simu
-            for(auto& th : threads)
-                th.join();
-            // Now hadd if PS
-            if(isPS)
-            {
+                // Wait for all jobs of this Ex
+                for(auto& th : threads)
+                    th.join();
+
+                // Merge and clean
                 std::cout << "Output file: " << haddout << '\n';
                 std::cout << "Input files: " << haddlist << '\n';
-                // Merge
                 gSystem->Exec(TString::Format("hadd -f %s %s", haddout.Data(), haddlist.Data()).Data());
-                // Remove
                 gSystem->Exec(TString::Format("rm %s", haddlist.Data()).Data());
             }
         }

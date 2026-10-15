@@ -308,24 +308,74 @@ inline TCanvas* DrawComparison(const std::vector<Calc>& calcs, const PlotOptions
 // -----------------------------------------------------------------------------
 //  Punto de entrada: EDITA AQUÍ tus archivos
 // -----------------------------------------------------------------------------
-void Compare_calc()
+void Compare_calc_FRESCO_DWUCK4()
 {
     using namespace CompCalc;
 
-    // --- Estado fundamental  comapre SO contribution---
+    // --- Estado fundamental no SO implementation---
     std::vector<Calc> gs = {
-        Calc("./DWUCK4_personal_calculations/ADKDWat_noSO/gs/xs_dw4.n", "DWUCK4", Format::DWUCK4, kBlack)
-            .Tag("ADKDWat-no SO"),
-        Calc("./DWUCK4_personal_calculations/ADKDKD_noSO/gs/xs_dw4.n", "DWUCK4", Format::DWUCK4, kPink)
-            .Tag("ADKDKD-no SO"),
-        Calc("./DWUCK4_personal_calculations/ADKDKD/gs/xs_dw4.n", "DWUCK4", Format::DWUCK4, kGreen).Tag("ADKDKD"),
-        Calc("./FRESCO_personal_calculations/gs_ADWA_Watson_FRESCO/fort.202", "FRESCO", Format::FRESCO, kBlack, 2).Tag("ADKDWat-no SO"),
-        Calc("./FRESCO_personal_calculations/gs_ADWA_KD_FRESCO_noSO/fort.202", "FRESCO", Format::FRESCO, kPink, 2).Tag("ADKDKD-no SO"),
-        Calc("./FRESCO_personal_calculations/gs_ADWA_KD_FRESCO/fort.202", "FRESCO", Format::FRESCO, kGreen, 2).Tag("ADKDKD"),
+        Calc("../../DWUCK4_personal_calculations/dwuck_fresco_twofnr_comparison/"
+             "gs_ADWA_KD_twofnr_JohnSoper_LEA(zerorange)_noSO_both/xs_dw4.n",
+             "DWUCK4", Format::DWUCK4, kPink + 1, 2)
+            .Tag("ADKD-ZR-LEA,(in twofnr, ZR in dwuck4), noSO both"),
+        Calc("../../DWUCK4_personal_calculations/dwuck_fresco_twofnr_comparison/"
+             "gs_ADWA_KD_twofnr_JohnTandy_LEA(finiterange)_noSO_both/xs_dw4.n",
+             "DWUCK4", Format::DWUCK4, kPink + 1, 1)
+            .Tag("ADKD-FR-LEA,(in twofnr, ZR in dwuck4), noSO both"),
+        Calc("./gs_ADWA_KD_twofnr_JohnSoper_LEA(zerorange)_noSO_both/fort.202", "FRESCO", Format::FRESCO, kGreen + 2, 2)
+            .Tag("ADKD-ZR-LEA,(in twofnr, ZR in fresco), noSO both"),
+        Calc("./gs_ADWA_KD_twofnr_JohnTandy_LEA(finiterange)_noSO_both/fort.202", "FRESCO", Format::FRESCO, kGreen + 2,
+             1)
+            .Tag("ADKD-FR-LEA,(in twofnr, ZR in fresco), noSO both"),
     };
     PlotOptions optGS;
     optGS.title = "g.s.";
     optGS.canvasName = "cGS";
     optGS.saveAs = "./Figures/compare_gs.png";
     DrawComparison(gs, optGS);
+
+    // --- Estado fundamental no SO implementation in entrance but yes in exit ---
+    std::vector<Calc> gs_SOexit = {
+        Calc("../../DWUCK4_personal_calculations/dwuck_fresco_twofnr_comparison/"
+             "gs_ADWA_KD_twofnr_JohnSoper_LEA(zerorange)_noSO_entrance/xs_dw4.n",
+             "DWUCK4", Format::DWUCK4, kPink + 1, 2)
+            .Tag("ADKD-ZR-LEA,(in twofnr, ZR in dwuck4), noSO entrance"),
+        Calc("../../DWUCK4_personal_calculations/dwuck_fresco_twofnr_comparison/"
+             "gs_ADWA_KD_twofnr_JohnTandy_LEA(finiterange)_noSO_entrance/xs_dw4.n",
+             "DWUCK4", Format::DWUCK4, kPink + 1, 1)
+            .Tag("ADKD-FR-LEA,(in twofnr, ZR in dwuck4), noSO entrance"),
+        Calc("./gs_ADWA_KD_twofnr_JohnSoper_LEA(zerorange)_noSO_entrance/fort.202", "FRESCO", Format::FRESCO,
+             kGreen + 2, 2)
+            .Tag("ADKD-ZR-LEA,(in twofnr, ZR in fresco), noSO entrance"),
+        Calc("./gs_ADWA_KD_twofnr_JohnTandy_LEA(finiterange)_noSO_entrance/fort.202", "FRESCO", Format::FRESCO,
+             kGreen + 2, 1)
+            .Tag("ADKD-FR-LEA,(in twofnr, ZR in fresco), noSO entrance"),
+    };
+    PlotOptions optGS_SOexit;
+    optGS_SOexit.title = "g.s. no SO entrance";
+    optGS_SOexit.canvasName = "cGS_noSO_entrance";
+    optGS_SOexit.saveAs = "./Figures/compare_gs.png";
+    DrawComparison(gs_SOexit, optGS_SOexit);
+
+    // --- Estado fundamental no SO implementation in exit but yes in entrance---
+    std::vector<Calc> gs_SOentrance = {
+        Calc("../../DWUCK4_personal_calculations/dwuck_fresco_twofnr_comparison/"
+             "gs_ADWA_KD_twofnr_JohnSoper_LEA(zerorange)_noSO_exit/xs_dw4.n",
+             "DWUCK4", Format::DWUCK4, kPink + 1, 2)
+            .Tag("ADKD-ZR-LEA,(in twofnr, ZR in dwuck4), noSO exit"),
+        Calc("../../DWUCK4_personal_calculations/dwuck_fresco_twofnr_comparison/"
+             "gs_ADWA_KD_twofnr_JohnTandy_LEA(finiterange)_noSO_exit/xs_dw4.n",
+             "DWUCK4", Format::DWUCK4, kPink + 1, 1)
+            .Tag("ADKD-FR-LEA,(in twofnr, ZR in dwuck4), noSO exit"),
+        Calc("./gs_ADWA_KD_twofnr_JohnSoper_LEA(zerorange)_noSO_exit/fort.202", "FRESCO", Format::FRESCO, kGreen + 2, 2)
+            .Tag("ADKD-ZR-LEA,(in twofnr, ZR in fresco), noSO exit"),
+        Calc("./gs_ADWA_KD_twofnr_JohnTandy_LEA(finiterange)_noSO_exit/fort.202", "FRESCO", Format::FRESCO, kGreen + 2,
+             1)
+            .Tag("ADKD-FR-LEA,(in twofnr, ZR in fresco), noSO exit"),
+    };
+    PlotOptions optGS_SOentrance;
+    optGS_SOentrance.title = "g.s. no SO exit";
+    optGS_SOentrance.canvasName = "cGS_noSO_exit";
+    optGS_SOentrance.saveAs = "./Figures/compare_gs.png";
+    DrawComparison(gs_SOentrance, optGS_SOentrance);
 }

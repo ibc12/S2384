@@ -92,7 +92,7 @@ void Ang(bool isLab = false)
     //         isLab ? "effLab" : "effCM");
     eff.Add("g0",
             "../../Simulation/Outputs/7Li/test_rpCut/"
-            "2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_240rpCut_long.root",
+            "2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_232rpCut_long.root",
             isLab ? "effLab" : "effCM");
     eff.Add("g1",
             "../../Simulation/Outputs/7Li/test_rpCut/"
