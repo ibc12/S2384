@@ -13,7 +13,7 @@
 void runnerL1(TString what = "simu", bool inspect = false)
 {
     // Neutron and Proton phase space
-    int neutronPS {1}; // number of neutrons in final state
+    int neutronPS {0}; // number of neutrons in final state
     int protonPS {0};  // number of protons in final state
     bool isPS {neutronPS > 0 || protonPS > 0};
     // Particles
@@ -37,7 +37,7 @@ void runnerL1(TString what = "simu", bool inspect = false)
             // Exs = {0,  0.981, 2.255, 3.210};
             // Exs = {5.400, 6.100, 6.530, 7.100};
             // Exs = {0, 0.981};
-            Exs = {0};
+            Exs = {4.100, 5.400, 6.100, 6.530, 7.100};
         // Exs = {2.255};
         // Exs = {0, 0.981, 2.255, 3.210, 5.400, 6.100, 6.530, 7.100};
     }

@@ -1,0 +1,95 @@
+#!/bin/bash
+NAME=Li7_dp_gs_ADKDKD_noSO_LEA
+BASE=${NAME}_base.in
+SCAL=${NAME}_scaled.in
+
+# Tabulated potential blocks (+8.) to scale, counted in order of appearance:
+# 1 = central real, 2 = central imaginary, 3 = spin-orbit real, 4 = spin-orbit imaginary
+BLOCKS="3 4"
+
+[ -s "$BASE" ] || { echo "Missing or empty $BASE"; exit 1; }
+
+# ---- 1) build the input with the scaled tables ----
+# Each selected table is multiplied by the factor on its own "+8." card,
+# and that factor is then set to -1. (DWUCK default) so it is not applied twice.
+# Numbers are written in Fortran style: -0.8809164E+02 (mantissa 0.1 <= m < 1)
+awk -v blk_list="$BLOCKS" '
+# Fortran-style E format, width 16: 0.dddddddE+XX
+function fe(x,    s, p, mant, e, sg) {
+    if (x == 0) return sprintf("%16s", "0.0000000E+00")
+    sg = ""
+    if (x < 0) { sg = "-"; x = -x }
+    s = sprintf("%.6E", x)          # d.ddddddE+XX
+    split(s, p, "E")
+    mant = substr(p[1], 1, 1) substr(p[1], 3)   # 7 digits
+    e = p[2] + 1                    # shift the decimal point one place
+    return sprintf("%16s", sprintf("%s0.%sE%+03d", sg, mant, e))
+}
+
+BEGIN { n = split(blk_list, tmp, " "); for (i = 1; i <= n; i++) sel[tmp[i]] = 1 }
+
+# header card of a tabulated potential: "+8.   <factor>"
+state == 0 && $1 ~ /^[+-]?8\.?$/ && NF == 2 {
+    blk++
+    line = $0
+    scaling = (blk in sel)
+    if (scaling) {
+        f = $2 + 0
+        tok = $2
+        if (match($0, /[-+]?[0-9]+\.?[0-9]*[ \t]*$/)) {
+            len = length(tok); if (len < 3) len = 3
+            line = substr($0, 1, RSTART - 1) sprintf("%*s", len, "-1.") substr($0, RSTART + length(tok))
+        }
+        amax = 0; bmax = 0
+    }
+    print line
+    state = 1; next
+}
+
+# line "300.  flag" (number of points + flag)
+state == 1 { npts = $1 + 0; cnt = 0; state = 2; print; next }
+
+# data lines (5 values per line)
+state == 2 {
+    if (scaling) {
+        out = ""
+        for (i = 1; i <= NF; i++) {
+            a = $i + 0; b = a * f
+            if (a < 0) a = -a
+            if (b < 0) bb = -b; else bb = b
+            if (a  > amax) amax = a
+            if (bb > bmax) bmax = bb
+            out = out fe(b)
+            cnt++
+        }
+        print out
+    } else {
+        print
+        cnt += NF
+    }
+    if (cnt >= npts) {
+        if (scaling)
+            printf "  block %d: factor %g | max|V| %.4E -> %.4E\n", blk, f, amax, bmax > "/dev/stderr"
+        state = 0
+    }
+    next
+}
+
+{ print }
+' "$BASE" > "$SCAL"
+
+# ---- 2) run DWUCK4 with the scaled potential ----
+rm -f fort.7
+dwuck4 < "$SCAL" > "${NAME}.res" || { echo "dwuck4 failed"; exit 1; }
+
+# ---- 3) fort.7 -> "angle xs" and normalization ----
+A0=0.0      # first angle
+STEP=1.0    # angular step
+tail -n +2 fort.7 | tr -s ' ' '\n' | \
+  awk -v a0=$A0 -v s=$STEP 'NF{printf "%8.2f %14.6E\n", a0+n*s, $1; n++}' > fort7_2col.dat
+
+normdw4 <<EOF
+fort7_2col.dat
+xs_dw4.n
+4.89845
+EOF

@@ -1,0 +1,131 @@
+#!/bin/bash
+NAME=Li7_dp_gs_ADKDKD_noSO_LEA
+BASE=$(pwd)/${NAME}_base.in
+OUTDIR=$(pwd)/DifferentScaleFactor
+
+# ---- Scale factors to test (space-separated; sign included) ----
+# VSOR multiplies block 3 (spin-orbit real, flag 2), VSOI multiplies block 4 (spin-orbit imaginary, flag 3)
+VSOR_LIST="-1 1 45.2 -45.2 22.6 -22.6 11.3 -11.3 90.4 -90.4 180.8 -180.8"
+VSOI_LIST="-1 1 45.2 -45.2 22.6 -22.6 11.3 -11.3 90.4 -90.4 180.8 -180.8"
+
+A0=0.0      # first angle
+STEP=1.0    # angular step
+NORM=4.89845
+
+[ -s "$BASE" ] || { echo "Missing or empty $BASE"; exit 1; }
+mkdir -p "$OUTDIR"
+
+# awk program. For the 3rd and 4th "+8." tabulated blocks it:
+#   - multiplies the table by FR (block 3) or FI (block 4)
+#   - rewrites the header card so DWUCK4 really reads the factor:
+#       block 3 (flag 2, real SO):  VR in cols  9-16 = -1.0
+#       block 4 (flag 3, imag SO):  VI in cols 41-48 = -1.0
+#     (POTS reads FORMAT(10F8.4): FZ,VR,RY,AR,VSOR,VI,RZ,AI,VSOI,PWR; for tabulated
+#      potentials VSOR/VSOI are NOT read, they only matter for analytic potentials)
+#   - sets the flag line to "2." (block 3) and "3." (block 4)
+read -r -d '' AWKPROG <<'AWK'
+# Fortran-style E format, width 16: 0.dddddddE+XX
+function fe(x,    s, p, mant, e, sg) {
+    if (x == 0) return sprintf("%16s", "0.0000000E+00")
+    sg = ""
+    if (x < 0) { sg = "-"; x = -x }
+    s = sprintf("%.6E", x)
+    split(s, p, "E")
+    mant = substr(p[1], 1, 1) substr(p[1], 3)
+    e = p[2] + 1
+    return sprintf("%16s", sprintf("%s0.%sE%+03d", sg, mant, e))
+}
+
+BEGIN {
+    fac[3] = fr + 0; fac[4] = fi + 0
+    flag[3] = "2.";  flag[4] = "3."
+}
+
+# header card of a tabulated potential (FZ = +8. or -8.)
+state == 0 && $1 ~ /^[+-]?8(\.0*)?$/ {
+    blk++
+    scaling = (blk in fac)
+    if (scaling) {
+        f = fac[blk]
+        if (blk == 3) line = sprintf("%8s%8s", $1, "-1.0")            # VR  (cols  9-16)
+        else          line = sprintf("%8s%32s%8s", $1, "", "-1.0")    # VI  (cols 41-48)
+        amax = 0; bmax = 0
+    } else {
+        line = $0
+    }
+    print line
+    state = 1; next
+}
+
+# line "npts  flag"
+state == 1 {
+    npts = $1 + 0; cnt = 0; state = 2
+    if (scaling) printf "%8s%8s\n", $1, flag[blk]
+    else         print
+    next
+}
+
+# data lines
+state == 2 {
+    if (scaling) {
+        out = ""
+        for (i = 1; i <= NF; i++) {
+            a = $i + 0; b = a * f
+            if (a < 0) a = -a
+            if (b < 0) bb = -b; else bb = b
+            if (a  > amax) amax = a
+            if (bb > bmax) bmax = bb
+            out = out fe(b)
+            cnt++
+        }
+        print out
+    } else {
+        print
+        cnt += NF
+    }
+    if (cnt >= npts) {
+        if (scaling)
+            printf "block %d: factor %g | max|V| %.4E -> %.4E\n", blk, f, amax, bmax > "/dev/stderr"
+        state = 0
+    }
+    next
+}
+
+{ print }
+AWK
+
+nok=0; nfail=0
+
+for vsor in $VSOR_LIST; do
+  for vsoi in $VSOI_LIST; do
+    RUN="$OUTDIR/VSOR${vsor}_VSOI${vsoi}"
+    mkdir -p "$RUN"
+    echo "=== VSOR=$vsor  VSOI=$vsoi  ->  $RUN"
+
+    (
+      cd "$RUN" || exit 1
+      rm -f fort.7
+
+      # 1) scaled input
+      awk -v fr="$vsor" -v fi="$vsoi" "$AWKPROG" "$BASE" > "${NAME}_scaled.in" 2> scale.log
+      [ "$(grep -c '^block' scale.log)" -eq 2 ] || { echo "  scaling failed, see $RUN/scale.log"; exit 1; }
+
+      # 2) DWUCK4
+      dwuck4 < "${NAME}_scaled.in" > "${NAME}.res" || { echo "  dwuck4 failed"; exit 1; }
+      [ -s fort.7 ] || { echo "  fort.7 missing or empty"; exit 1; }
+
+      # 3) fort.7 -> "angle xs" and normalization
+      tail -n +2 fort.7 | tr -s ' ' '\n' | \
+        awk -v a0=$A0 -v s=$STEP 'NF{printf "%8.2f %14.6E\n", a0+n*s, $1; n++}' > fort7_2col.dat
+
+      normdw4 <<EOF
+fort7_2col.dat
+xs_dw4.n
+$NORM
+EOF
+    ) && nok=$((nok+1)) || nfail=$((nfail+1))
+  done
+done
+
+echo
+echo "Done: $nok OK, $nfail failed. Results in $OUTDIR"
