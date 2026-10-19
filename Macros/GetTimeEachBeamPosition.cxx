@@ -9,9 +9,36 @@
 
 #include <fstream>
 #include <iostream>
+#include <string>
 
+// separateL1threshold = false -> todos los runs (comportamiento original)
+// separateL1threshold = true  -> se separa por el cambio de threshold del trigger (run 58, excluido)
+//     which = "before" -> runs < 58
+//     which = "after"  -> runs > 58
 void GetTimeEachBeamPosition()
 {
+    bool separateL1threshold = true;
+    std::string which = "before";
+    const int thresholdRun = 58;
+
+    if(separateL1threshold && which != "before" && which != "after")
+    {
+        std::cout << "ERROR: 'which' debe ser \"before\" o \"after\" (recibido: " << which << ")\n";
+        return;
+    }
+
+    // Selección de runs según flags
+    auto isSelected = [&](int run)
+    {
+        if(!separateL1threshold)
+            return true;
+        if(run == thresholdRun)
+            return false; // el run 58 nunca se incluye
+        if(which == "before")
+            return run < thresholdRun;
+        return run > thresholdRun; // "after"
+    };
+
     // ---------------------------------------------------
     // 1. Leer datos de 11Li
     // ---------------------------------------------------
@@ -40,7 +67,7 @@ void GetTimeEachBeamPosition()
     auto hRuns = gated.Histo1D({"hRuns", "Beam counts per run;Run;Counts", 122 - 19 + 1, 18.5, 122.5}, "fRun");
 
     // ---------------------------------------------------
-    // 4. Sumar cuentas por periodo
+    // 4. Sumar cuentas por periodo (solo runs seleccionados)
     // ---------------------------------------------------
     double total = 0;
 
@@ -53,7 +80,7 @@ void GetTimeEachBeamPosition()
         int run = static_cast<int>(hRuns->GetBinCenter(bin));
         double counts = hRuns->GetBinContent(bin);
 
-        if(counts == 0)
+        if(counts == 0 || !isSelected(run))
             continue;
 
         total += counts;
@@ -66,10 +93,20 @@ void GetTimeEachBeamPosition()
             post7Li_postMeasure += counts;
     }
 
+    if(total == 0)
+    {
+        std::cout << "ERROR: no hay cuentas en los runs seleccionados\n";
+        return;
+    }
+
     // ---------------------------------------------------
-    // 5. Escribir output .dat (formato mínimo)
+    // 5. Escribir output .dat (nombre según flags)
     // ---------------------------------------------------
-    std::string outname = "./Outputs/beamEmittancePeriods_11Li.dat";
+    std::string suffix = "";
+    if(separateL1threshold)
+        suffix = "_" + which + "L1threshold"; // _beforeL1threshold / _afterL1threshold
+
+    std::string outname = "./Outputs/beamEmittancePeriods_11Li" + suffix + ".dat";
     std::ofstream out(outname);
 
     out << "pre7Li " << pre7Li / total << "\n";
