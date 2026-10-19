@@ -41,7 +41,7 @@ void Ang()
     auto hCM {def.Histo2D({"hCM", "CM;#theta_{CM};E [MeV]", 300, 0, 120, 300, 0, 60}, "ThetaCM", "EVertex")};
 
     // Init intervals
-    double thetaMin {30};
+    double thetaMin {5};
     //double thetaMax {44};
     double thetaMax {60};
     double thetaStep {2};
@@ -86,13 +86,14 @@ void Ang()
     // comp.Fit();
     //comp.Add("Daehnick", "./Inputs/gsD/fort.201");
     // comp.Fit();
-    //comp.Add("DA1p", "./Inputs/gsDA1p/fort.201");
+    comp.Add("DA1p", "./Inputs/gsDA1p/fort.201");
     comp.Add("full OP1", "../../../Tese/L11-Li12/full_OP1.dat");
     comp.Add("full OP2", "../../../Tese/L11-Li12/full_OP2.dat");
     comp.Add("no cont OP1", "../../../Tese/L11-Li12/no_cont_OP1.dat");
     comp.Add("no cont OP2", "../../../Tese/L11-Li12/no_cont_OP2.dat");
     comp.Fit();
     comp.Draw("", true);
+    comp.DrawTheo();
 
     auto* c0 {new TCanvas {"c0", "(d,d) canvas"}};
     c0->DivideSquare(2);

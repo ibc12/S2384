@@ -31,10 +31,12 @@ void Ang()
     ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_F_11Li_d_d_filtered.root"};
     // auto def {df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; },
     //                     {"MergerData"})}; // only silicons, == false is for L1 events
-    auto def {df.Filter([](ActRoot::MergerData& m)
-                        { return m.fLight.IsFilled() == false; },
-                        {"MergerData"})}; // only silicons, == false is for L1 events
-
+    // auto def {df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; },
+    //                     {"MergerData"})}; // false is for L1 events
+    // Filter on some runs
+    auto def {
+        df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; }, {"MergerData"})
+            .Filter([](ActRoot::MergerData& m) { return m.fRun <= 57; }, {"MergerData"})}; // false is for L1 events
 
     // Book histograms
     auto hEx {def.Histo1D(S2384Fit::Exdd, "Ex")};
@@ -66,7 +68,14 @@ void Ang()
     // Efficiency
     Interpolators::Efficiency eff;
     // eff.Add("g0", "../../Simulation/Outputs/11Li/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0.root", "effCMside");
-    eff.Add("g0", "../../Simulation/Outputs/11Li/test_ang_straggling_L1/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_3-5AngStr_14pads.root", "effCM");
+    // eff.Add("g0",
+    //         "../../Simulation/Outputs/11Li/test_ang_straggling_L1/"
+    //         "2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_3-5AngStr_14pads.root",
+    //         "effCM");
+    eff.Add("g0",
+            "../../Simulation/Outputs/11Li/test_triggerChange/"
+            "2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_BeforeTrigger.root",
+            "effCM");
     eff.Scale(0.931);
     // Draw to check is fine
     eff.Draw();
@@ -86,8 +95,13 @@ void Ang()
     comp.Add("Daehnick", "./Inputs/gsD/fort.201");
     // comp.Fit();
     comp.Add("DA1p", "./Inputs/gsDA1p/fort.201");
+    comp.Add("full OP1", "../../../Tese/L11-Li12/full_OP1.dat");
+    comp.Add("full OP2", "../../../Tese/L11-Li12/full_OP2.dat");
+    comp.Add("no cont OP1", "../../../Tese/L11-Li12/no_cont_OP1.dat");
+    comp.Add("no cont OP2", "../../../Tese/L11-Li12/no_cont_OP2.dat");
     comp.Fit();
     comp.Draw("", true);
+    comp.DrawTheo();
 
     auto* c0 {new TCanvas {"c0", "(d,d) canvas"}};
     c0->DivideSquare(2);

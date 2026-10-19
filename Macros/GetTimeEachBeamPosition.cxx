@@ -18,7 +18,7 @@
 void GetTimeEachBeamPosition()
 {
     bool separateL1threshold = true;
-    std::string which = "before";
+    std::string which = "after";
     const int thresholdRun = 58;
 
     if(separateL1threshold && which != "before" && which != "after")

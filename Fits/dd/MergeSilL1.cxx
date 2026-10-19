@@ -85,14 +85,26 @@ void MergeSilL1()
 
     Angular::Comparator comp {"Merged g.s", g_merged};
     comp.Add("DA1pcorr", "./Inputs/gsDA1p/fort.201");
+    comp.Add("full OP1", "../../../Tese/L11-Li12/full_OP1.dat");
+    comp.Add("full OP2", "../../../Tese/L11-Li12/full_OP2.dat");
+    comp.Add("no cont OP1", "../../../Tese/L11-Li12/no_cont_OP1.dat");
+    comp.Add("no cont OP2", "../../../Tese/L11-Li12/no_cont_OP2.dat");
     comp.Fit();
     comp.Draw("", true);
     Angular::Comparator compSil {"Sil g.s", g_sil_xs};
     compSil.Add("DA1pcorr", "./Inputs/gsDA1p/fort.201");
+    compSil.Add("full OP1", "../../../Tese/L11-Li12/full_OP1.dat");
+    compSil.Add("full OP2", "../../../Tese/L11-Li12/full_OP2.dat");
+    compSil.Add("no cont OP1", "../../../Tese/L11-Li12/no_cont_OP1.dat");
+    compSil.Add("no cont OP2", "../../../Tese/L11-Li12/no_cont_OP2.dat");
     compSil.Fit();
     compSil.Draw("", true);
     Angular::Comparator compL1 {"L1 g.s", g_L1_xs};
     compL1.Add("DA1pcorr", "../7Li_dd/Inputs/gsDA1p/fort.201");
+    compL1.Add("full OP1", "../../../Tese/L11-Li12/full_OP1.dat");
+    compL1.Add("full OP2", "../../../Tese/L11-Li12/full_OP2.dat");
+    compL1.Add("no cont OP1", "../../../Tese/L11-Li12/no_cont_OP1.dat");
+    compL1.Add("no cont OP2", "../../../Tese/L11-Li12/no_cont_OP2.dat");
     compL1.Fit();
     compL1.Draw("", true);
 

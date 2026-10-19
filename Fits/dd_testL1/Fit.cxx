@@ -20,9 +20,12 @@ void Fit()
     ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_F_11Li_d_d_filtered.root"};
     // auto def {df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == true; }, {"MergerData"})}; // only
     // silicons, == false is for L1 events
-    auto def {df.Filter([](ActRoot::MergerData& m)
-                        { return m.fLight.IsFilled() == false; },
-                        {"MergerData"})}; // only silicons, == false is for L1 events
+    // auto def {df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; },
+    //                     {"MergerData"})}; // false is for L1 events
+    // Get only runs from 59 onwards
+    auto def {
+        df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; }, {"MergerData"})
+            .Filter([](ActRoot::MergerData& m) { return m.fRun <= 57; }, {"MergerData"})}; // false is for L1 events
     // Ex
     auto hEx {def.Histo1D(S2384Fit::Exdd, "Ex")};
 

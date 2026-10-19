@@ -394,6 +394,9 @@ void Compare_calc_FRESCO_DWUCK4()
         Calc("./gs_ADWA_KD_twofnr_JohnTandy_LEA(finiterange)/fort.202", "FRESCO", Format::FRESCO, kGreen + 2,
              1)
             .Tag("ADKD-FR-LEA,(in twofnr, ZR in fresco), both SO"),
+        Calc("../../../7Li_dp/Inputs/gs_ADWA/fort.202", "FRESCO", Format::FRESCO, kRed + 2,
+             1)
+            .Tag("ADKD-FR-LEA, my previous calculation, both SO"),
     };
     PlotOptions optGS_SOboth;
     optGS_SOboth.title = "g.s. both SO";

@@ -92,11 +92,11 @@ void Ang(bool isLab = false)
     //         isLab ? "effLab" : "effCM");
     eff.Add("g0",
             "../../Simulation/Outputs/7Li/test_rpCut/"
-            "2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_232rpCut_long.root",
+            "2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_240rpCut_paralelization.root",
             isLab ? "effLab" : "effCM");
     eff.Add("g1",
             "../../Simulation/Outputs/7Li/test_rpCut/"
-            "2H_1H_TRIUMF_Eex_0.981_nPS_0_pPS_0_L1_240rpCut.root",
+            "2H_1H_TRIUMF_Eex_0.981_nPS_0_pPS_0_L1_240rpCut_paralelization.root",
             isLab ? "effLab" : "effCM");
     eff.Scale(0.931);
     // Draw to check is fine
@@ -115,9 +115,11 @@ void Ang(bool isLab = false)
     Angular::Comparator comp {"g.s", xs.Get("g0")};
     comp.Add("DA1p-Delaroche", "./Inputs/gs_DA1pcorr_Delaroche/21.g0");
     comp.Add("ADWA", "../7Li_dp/Inputs/gs_ADWA/fort.202");
+    comp.Add("ADWA DWUCK", "../FranckCalculations/DWUCK4_personal_calculations/good_calculations/gs/xs_dw4.n");
     Angular::Comparator comp1 {"1st Ex", xs.Get("g1")};
     comp1.Add("DA1p-Delaroche", "./Inputs/g1_DA1pcorr_Delaroche/21.g1");
     comp1.Add("ADWA", "../7Li_dp/Inputs/gs_ADWA/fort.203");
+    comp1.Add("ADWA DWUCK", "../FranckCalculations/DWUCK4_personal_calculations/good_calculations/g1/xs_dw4.n");
     // Plot
     if(isLab)
     {

@@ -1037,7 +1037,7 @@
    from    0.00000     to   0.00000     in     0 intervals
 
  Largest real,imaginary parts of any form factor at R=   29.00 are   9.00E-01  1.46E-15 MeV
- Finished all Couplings @    2.76670009E-02          33
+ Finished all Couplings @    4.75409999E-02          33
 
  Non-symmetric Hamiltonian
 1***********************************************************************************************************************************
@@ -3657,7 +3657,7 @@
       40.5  1.00000000  0.00000000i: elastic S-matrix  @@      0.00  0   0 F  0
  Reaction Xsec    40.5-/42 @ 6 =   0.000#, Out:   0.000#   0.000#   0.000#   0.000#   0.000#   0.000#  -0.000f
 
- Finished all CC sets @   0.146606997    
+ Finished all CC sets @   0.296368003    
 0CUMULATIVE REACTION cross section                 =  806.02627  <L> =     3.48  <L**2> =     14.5
 0CUMULATIVE outgoing cross sections in partition 1 :    0.00000
 0CUMULATIVE outgoing cross sections in partition 2 :   32.84760   20.23086   42.45139   40.47060   82.28552
@@ -4962,7 +4962,7 @@
    179.00 deg.: X-S =     0.696660 mb/sr,
    180.00 deg.: X-S =     0.696493 mb/sr,
                                            Integrated   82.2533 mb, over [   0.000, 180.000] at    14.5311 MeV 
- Finished all xsecs @   0.203567997    
+ Finished all xsecs @   0.425088018    
 
   The following files have been created:
    3:local copy of User input.            6:standard output.                   
@@ -4996,4 +4996,4 @@
  Forward-angle excitation cut off below   0.492 deg by max JT =      40.5
                               and below   0.731 deg by max R.
 
- Total CPU  0 time =       0.20 seconds
+ Total CPU  0 time =       0.43 seconds

@@ -113,8 +113,11 @@ void CompareImportantVariablesL1()
     //  true  -> use the same reconstruction as in the simulation (most consistent comparison)
     const bool useRecoRPExp {false};
 
+    // TString fileNameSimu {TString::Format("../../Simulation/Outputs/%s/test_rpCut/"
+    //                                       "%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_L1_232rpCut.root",
+    //                                       beam.c_str(), target.c_str(), light.c_str(), Ex, 0, 0)};
     TString fileNameSimu {TString::Format("../../Simulation/Outputs/%s/test_rpCut/"
-                                          "%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_L1_232rpCut.root",
+                                          "%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_L1_240rpCut_paralelization.root",
                                           beam.c_str(), target.c_str(), light.c_str(), Ex, 0, 0)};
     TString fileNameExp {TString::Format("../../PostAnalysis/Outputs/tree_ex_F_%s_%s_%s.root", beam.c_str(),
                                          targetExp.c_str(), lightExp.c_str())};
@@ -301,5 +304,4 @@ void CompareImportantVariablesL1()
     hSimu2DLast->DrawClone("colz");
     c4->cd(4);
     hExp2DLast->DrawClone("colz");
-
 }

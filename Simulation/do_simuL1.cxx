@@ -68,8 +68,11 @@ constexpr double theta = 0.7;          // Polya parameter
 constexpr float thresholdPadCharge = 3e4; // that n electrons corresponds to 0.8789 pC
 constexpr int yMinExclusionZone = 56;
 constexpr int yMaxExclusionZone = 71;
-constexpr int nPadsThreshold = 14; // Minimum number of pads outside the exclusion zone to consider an event valid
-constexpr int validationZone = 8;  // Minimum distance from the last voxel to the TPC borders in mm (from detector.conf)
+constexpr int nPadsThresholdDefault =
+    10; // Minimum number of pads outside the exclusion zone to consider an event valid
+constexpr int nPadsThresholdPreBeforeL1 = 19; // Minimum number of pads outside the exclusion zone to consider an event
+                                              // valid just for the 11Li runs before the L1 trigger change
+constexpr int validationZone = 8; // Minimum distance from the last voxel to the TPC borders in mm (from detector.conf)
 constexpr double thetaResFWHM = 3.5; // FWHM of theta resolution in degrees (in the begining was 1.5)
 constexpr double rpXcut = 240.0;     // Cut in rp.x for the dp channel in mm (in the begining was 240.0)
 constexpr std::pair<double, double> phiRangePositive {16., 160.};   // Range of positive phi in deg for the experiment
@@ -486,6 +489,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
     {
         TH3D* hist {};
         double fraction {};
+        int nPadsThreshold {nPadsThresholdDefault};
     };
     std::vector<EmittanceEntry> emittances;
 
@@ -500,7 +504,30 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
     }
     else if(beam == "11Li")
     {
-        // Read emittance periods and fractions from .dat file (3rd column = offset, ignored here)
+        // Split of the "pre" label before / after the L1 threshold change (run 58)
+        const std::string preLabel {"pre"}; // must match the suffix in the periods file
+        double fracPreBefore {0.}, fracPreAfter {1.};
+        {
+            std::string splitPath {"./Inputs/Efficiencies/triggerL1Periods_" + beam + ".dat"};
+            std::ifstream fs(splitPath);
+            if(!fs.is_open())
+                throw std::runtime_error("Could not open pre split file: " + splitPath);
+            std::string key;
+            double val;
+            double before {-1}, after {-1};
+            while(fs >> key >> val)
+            {
+                if(key == "before")
+                    before = val;
+                else if(key == "after")
+                    after = val;
+            }
+            if(before < 0 || after < 0 || before + after <= 0)
+                throw std::runtime_error("Invalid pre split file: " + splitPath);
+            fracPreBefore = before / (before + after); // normalised, works with % or fractions
+            fracPreAfter = after / (before + after);
+        }
+
         std::string datPath {"./Inputs/Efficiencies/beamEmittancePeriods_And_Zoffsets_" + beam + ".dat"};
         std::ifstream finEm(datPath);
         if(!finEm.is_open())
@@ -516,8 +543,21 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
             if(!h)
                 throw std::runtime_error("Could not load beam emittance histogram: " + fname);
             h->SetDirectory(nullptr);
-            emittances.push_back({h, frac});
-            std::cout << "Loaded emittance: " << fname << " (fraction = " << frac << ")\n";
+
+            if(suffix == preLabel)
+            {
+                // Same histogram, two entries with different pad threshold
+                emittances.push_back({h, frac * fracPreBefore, nPadsThresholdPreBeforeL1});
+                emittances.push_back({h, frac * fracPreAfter, nPadsThresholdDefault});
+                std::cout << "Loaded emittance: " << fname << " split -> before (" << frac * fracPreBefore << ", "
+                          << nPadsThresholdPreBeforeL1 << " pads), after (" << frac * fracPreAfter << ", "
+                          << nPadsThresholdDefault << " pads)\n";
+            }
+            else
+            {
+                emittances.push_back({h, frac, nPadsThresholdDefault});
+                std::cout << "Loaded emittance: " << fname << " (fraction = " << frac << ")\n";
+            }
         }
         finEm.close();
     }
@@ -662,6 +702,10 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
     double LastPosZ_tree {};
     outTree->Branch("LastPosZ", &LastPosZ_tree);
     double nPadsOut_tree {};
+    double vertexX_tree {};
+    outTree->Branch("vertexX", &vertexX_tree);
+    double vertexY_tree {};
+    outTree->Branch("vertexY", &vertexY_tree);
     outTree->Branch("nPads", &nPadsOut_tree);
     double EVertex_tree {};
     outTree->Branch("EVertex", &EVertex_tree);
@@ -670,6 +714,10 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
     double phi3CM_tree {};
     outTree->Branch("phi3CM", &phi3CM_tree);
     double weight_tree {};
+    double theta4Lab_tree {};
+    outTree->Branch("theta4Lab", &theta4Lab_tree);
+    double phi4Lab_tree {};
+    outTree->Branch("phi4Lab", &phi4Lab_tree);
     outTree->Branch("weight", &weight_tree);
 
     // ---- SIMU STARTS HERE ----
@@ -697,19 +745,19 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
         }
         // Sample vertex position
         // Pick emittance histogram according to beam-time fractions
-        TH3D* hBeam = [&]() -> TH3D*
+        const EmittanceEntry& em = [&]() -> const EmittanceEntry&
         {
             double rEm = gRandom->Uniform();
             double accEm = 0.0;
-            for(auto& em : emittances)
+            for(const auto& e : emittances)
             {
-                accEm += em.fraction;
+                accEm += e.fraction;
                 if(rEm < accEm)
-                    return em.hist;
+                    return e;
             }
-            return emittances.back().hist;
+            return emittances.back();
         }();
-        auto [start, vertex] {SampleVertex(zMeanEntrance, zVertexSigma, hBeam, tpc.X())};
+        auto [start, vertex] {SampleVertex(zMeanEntrance, zVertexSigma, em.hist, tpc.X())};
         auto distToVertex {(vertex - start).R()};
 
         // Randomize (if needed) Ex in a BW distribution
@@ -875,7 +923,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
 
         int nPadsOutExclusionZone = PadsOutExclusionZone(voxelMapLight, voxelMapHeavy, thresholdPadCharge);
         hPads->Fill(nPadsOutExclusionZone);
-        if(nPadsOutExclusionZone < nPadsThreshold)
+        if(nPadsOutExclusionZone < em.nPadsThreshold)
             continue;
 
         // Cut in rp.x for the dp channel,
@@ -951,9 +999,13 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
             LastPosX_tree = lastPoint.X();
             LastPosY_tree = lastPoint.Y();
             LastPosZ_tree = lastPoint.Z();
+            vertexX_tree = vertex.X();
+            vertexY_tree = vertex.Y();
             nPadsOut_tree = nPadsOutExclusionZone;
             theta3Lab_tree = theta3Lab * TMath::RadToDeg();
             phi3CM_tree = phi3CM;
+            theta4Lab_tree = theta4Lab;
+            phi4Lab_tree = phi4Lab;
             weight_tree = weight;
             outTree->Fill();
         }

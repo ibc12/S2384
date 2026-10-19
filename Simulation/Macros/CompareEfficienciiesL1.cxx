@@ -66,11 +66,23 @@ void CompareEfficienciiesL1()
     //     "../../Simulation/Outputs/7Li/test_RawTL_L1/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1.root",
     // };
 
+    // std::vector<std::string> files = {
+    //     "../../Simulation/Outputs/7Li/test_ang_straggling_L1/"
+    //     "2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_3-5AngStr_14pads.root",
+    //     "../../Simulation/Outputs/7Li/test_rpCut/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_240rpCut.root",
+    //     "../../Simulation/Outputs/7Li/test_rpCut/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_232rpCut.root",
+    // };
+
+    // std::vector<std::string> files = {
+    //     "../../Simulation/Outputs/7Li/test_ang_straggling_L1/"
+    //     "2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_3-5AngStr_14pads.root",
+    //     "../../Simulation/Outputs/7Li/test_rpCut/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_240rpCut_paralelization.root",
+    //     "../../Simulation/Outputs/7Li/test_rpCut/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_232rpCut.root",
+    // };
+    //
     std::vector<std::string> files = {
-        "../../Simulation/Outputs/7Li/test_ang_straggling_L1/"
-        "2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_3-5AngStr_14pads.root",
-        "../../Simulation/Outputs/7Li/test_rpCut/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_240rpCut.root",
-        "../../Simulation/Outputs/7Li/test_rpCut/2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_232rpCut.root",
+        "../../Simulation/Outputs/11Li/test_triggerChange/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_BeforeTrigger.root",
+        "../../Simulation/Outputs/11Li/test_triggerChange/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_PostTrigger.root",
     };
 
     std::vector<TEfficiency*> efficiencies;

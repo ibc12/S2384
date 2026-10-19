@@ -23,8 +23,8 @@
 #include <string>
 #include <vector>
 
-#include "../Histos.h"
 #include "../../PrettyStyle.C"
+#include "../Histos.h"
 
 void MergeSilL1()
 {
@@ -136,32 +136,38 @@ void MergeSilL1()
     Angular::Comparator comp {"Merged g.s", g_merged};
     // comp.Add("DA1pcorr", "./Inputs/gs_DA1pcorr_Delaroche/21.g0");
     comp.Add("ADWA", "../7Li_dp/Inputs/gs_ADWA/fort.202");
+    comp.Add("ADWA DWUCK", "../FranckCalculations/DWUCK4_personal_calculations/good_calculations/gs/xs_dw4.n");
     comp.Fit();
     comp.Draw("", true);
     Angular::Comparator compSil {"Sil g.s", g_sil_xs};
     compSil.Add("DA1pcorr", "./Inputs/gs_DA1pcorr_Delaroche/21.g0");
     compSil.Add("ADWA", "../7Li_dp/Inputs/gs_ADWA/fort.202");
+    compSil.Add("ADWA DWUCK", "../FranckCalculations/DWUCK4_personal_calculations/good_calculations/gs/xs_dw4.n");
     compSil.Fit();
     compSil.Draw("", true);
     Angular::Comparator compL1 {"L1 g.s", g_L1_xs};
     compL1.Add("DA1pcorr", "./Inputs/gs_DA1pcorr_Delaroche/21.g0");
     compL1.Add("ADWA", "../7Li_dp/Inputs/gs_ADWA/fort.202");
+    compL1.Add("ADWA DWUCK", "../FranckCalculations/DWUCK4_personal_calculations/good_calculations/gs/xs_dw4.n");
     compL1.Fit();
     compL1.Draw("", true);
 
     Angular::Comparator comp1 {"Merged 1st Ex", g_merged_1st};
     comp1.Add("DA1pcorr", "./Inputs/g1_DA1pcorr_Delaroche/21.g1");
     comp1.Add("ADWA", "../7Li_dp/Inputs/gs_ADWA/fort.203");
+    comp1.Add("ADWA DWUCK", "../FranckCalculations/DWUCK4_personal_calculations/good_calculations/g1/xs_dw4.n");
     comp1.Fit();
     comp1.Draw("", true);
     Angular::Comparator compSil1 {"Sil 1st Ex", g_sil_xs_1st};
     compSil1.Add("DA1pcorr", "./Inputs/g1_DA1pcorr_Delaroche/21.g1");
     compSil1.Add("ADWA", "../7Li_dp/Inputs/gs_ADWA/fort.203");
+    compSil1.Add("ADWA DWUCK", "../FranckCalculations/DWUCK4_personal_calculations/good_calculations/g1/xs_dw4.n");
     compSil1.Fit();
     compSil1.Draw("", true);
     Angular::Comparator compL11 {"L1 1st Ex", g_L1_xs_1st};
     compL11.Add("DA1pcorr", "./Inputs/g1_DA1pcorr_Delaroche/21.g1");
     compL11.Add("ADWA", "../7Li_dp/Inputs/gs_ADWA/fort.203");
+    compL11.Add("ADWA DWUCK", "../FranckCalculations/DWUCK4_personal_calculations/good_calculations/g1/xs_dw4.n");
     compL11.Fit();
     compL11.Draw("", true);
 }

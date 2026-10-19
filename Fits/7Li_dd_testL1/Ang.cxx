@@ -46,9 +46,9 @@ void Ang(bool isLab = false)
         hKin = def.Histo2D({"hCM", "CM;#theta_{CM};E [MeV]", 300, 0, 120, 300, 0, 60}, "ThetaCM", "EVertex");
 
     // Init intervals
-    double thetaMin = isLab ? 70.0 : 16;
+    double thetaMin = isLab ? 70.0 : 18;
     double thetaMax = isLab ? 80.0 : 26;
-    double thetaStep = isLab ? 2.5 : 2.50;
+    double thetaStep = isLab ? 2.5 : 2.0;
     Angular::Intervals ivs {thetaMin, thetaMax, S2384Fit::Exdd_7Li, thetaStep, 0};
     if(isLab)
         def.Foreach([&](float thetalab, double ex) { ivs.Fill(thetalab, ex); }, {"fThetaLight", "Ex"});
@@ -87,13 +87,18 @@ void Ang(bool isLab = false)
     // ? "effLab" : "effCM"); eff.Add("g1",
     // "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.477_nPS_0_pPS_0_L1_1e6Thresh.root", isLab
     // ? "effLab" : "effCM");
-    eff.Add("g0",
-            "../../Simulation/Outputs/7Li/test_ang_straggling_L1/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_3-5AngStr_14pads.root",
-            isLab ? "effLab" : "effCM");
-    eff.Scale(0.931);
+    // eff.Add("g0",
+    //        "../../Simulation/Outputs/7Li/test_ang_straggling_L1/"
+    //        "2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_3-5AngStr_14pads.root",
+    //        isLab ? "effLab" : "effCM");
+    eff.Add(
+        "g0",
+        "../../Simulation/Outputs/7Li/test_rpCut/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_240rpCut_paralelization.root",
+        isLab ? "effLab" : "effCM");
     eff.Add("g1",
             "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_1e5Thresh.root",
             isLab ? "effLab" : "effCM");
+    eff.Scale(0.931);
     // Draw to check is fine
     eff.Draw();
 
@@ -108,11 +113,11 @@ void Ang(bool isLab = false)
 
     // Plot
     Angular::Comparator comp {"g.s", xs.Get("g0")};
-    //comp.Add("Haixia", "./Inputs/gsH/fort.201");
-    //comp.Add("Daehnick", "./Inputs/gsD/fort.201");
-    comp.Add("DA1p", "./Inputs/gsDA1p/fort.201");
-    //comp.Add("DA1pcorr", "./Inputs/gsDA1p_corr/fort.201");
-    // comp.Add("ADWA", "../7Li_dp/Inputs/gs_ADWA/fort.201");
+    // comp.Add("Haixia", "./Inputs/gsH/fort.201");
+    // comp.Add("Daehnick", "./Inputs/gsD/fort.201");
+    comp.Add("DA1p", "./Inputs/gsDA1p_corr/fort.201");
+    // comp.Add("DA1pcorr", "./Inputs/gsDA1p_corr/fort.201");
+    //  comp.Add("ADWA", "../7Li_dp/Inputs/gs_ADWA/fort.201");
     Angular::Comparator comp1 {"1st Ex", xs.Get("g1")};
     comp1.Add("DA1p BE2 deformation", "./Inputs/g1_DA1p/fort.202");
     comp1.Add("DA1pcorr BE2 deformation", "./Inputs/g1_DA1p_corr/fort.202");

@@ -3,9 +3,9 @@ NAMELIST
 ! rmatch= 60 but now 30 fm to mimic 2fnr
 ! jtmax=40 also as in 2fnr
 &FRESCO
-hcm=0.10 rmatch=13.0 rintp=0.10 rsp=160
+hcm=0.10 rmatch=30.0 rintp=0.10 rsp=160
 hnl=0.10 rnl=4.50 centre=0.0
-jtmin=0.0 jtmax=30.0 absend=-0.1000
+jtmin=0.0 jtmax=40.0 absend=-0.1000
 thmin=0.00 thmax=-180.00 thinc=1.00 cutl=-2.5
 ! inh = 2 for zero-range transfer; otherwise, 0
 it0=1 iter=1 iblock=0 nnu=48 inh=2

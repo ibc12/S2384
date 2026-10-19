@@ -19,8 +19,7 @@ bool IsOutsideBeamZone(ROOT::Math::XYZPointF point, ActRoot::TPCParameters& tpcP
 {
     int nPadMin {56};
     int nPadMax {71};
-    bool isInY {point.Y() > (nPadMax) ||
-                point.Y() < (nPadMin)};
+    bool isInY {point.Y() > (nPadMax) || point.Y() < (nPadMin)};
     return (isInY);
 }
 
@@ -73,32 +72,49 @@ void countPadsOutExclusionZone()
                                           }
                                           for(auto& voxels : tpc.fRaw)
                                           {
-                                                const auto& pos = voxels.GetPosition();
-    
-                                                if(IsOutsideBeamZone(pos, tpcPars))
-                                                {
-                                                    int padx = static_cast<int>(std::floor(pos.X()));
-                                                    int pady = static_cast<int>(std::floor(pos.Y()));
-                                                    pads.insert({padx, pady});
-                                                }
+                                              const auto& pos = voxels.GetPosition();
+
+                                              if(IsOutsideBeamZone(pos, tpcPars))
+                                              {
+                                                  int padx = static_cast<int>(std::floor(pos.X()));
+                                                  int pady = static_cast<int>(std::floor(pos.Y()));
+                                                  pads.insert({padx, pady});
+                                              }
                                           }
 
                                           return static_cast<int>(pads.size());
                                       },
                                       {"TPCData"});
+    auto dfBeforeL1Thresholdchange =
+        dfcounts.Filter([](ActRoot::MergerData& m) { return m.fRun < 58; }, {"MergerData"});
+    auto dfAfterL1Thresholdchange = dfcounts.Filter([](ActRoot::MergerData& m) { return m.fRun > 58; }, {"MergerData"});
     auto histCounts =
         dfcounts.Histo1D({"nPadsOutside", "Pads outside exclusion zone;Count", 300, 0, 300}, "nPadsOutside");
+    auto histCountsBeforeL1Thresholdchange =
+        dfBeforeL1Thresholdchange.Histo1D({"nPadsOutsideBeforeL1Thresholdchange",
+                                           "Pads outside exclusion zone before L1 threshold change;Count", 300, 0, 300},
+                                          "nPadsOutside");
+    auto histCountsAfterL1Thresholdchange =
+        dfAfterL1Thresholdchange.Histo1D({"nPadsOutsideAfterL1Thresholdchange",
+                                          "Pads outside exclusion zone after L1 threshold change;Count", 300, 0, 300},
+                                         "nPadsOutside");
     auto canvas {new TCanvas("canvas", "Pads Outside Exclusion Zone")};
+    canvas->Divide(3, 1);
+    canvas->cd(1);
     histCounts->DrawClone();
+    canvas->cd(2);
+    histCountsBeforeL1Thresholdchange->DrawClone();
+    canvas->cd(3);
+    histCountsAfterL1Thresholdchange->DrawClone();
 
     // Save events if needed
-    std::ofstream out(TString::Format("./Outputs/eventsLessThan4PadsOutExclusion.dat").Data());
-    dfcounts.Foreach(
-        [&](ActRoot::MergerData& m, int nPadsOutside)
-        {
-            if(nPadsOutside < 4)
-                m.Stream(out);
-        },
-        {"MergerData", "nPadsOutside"});
-    out.close();
+    // std::ofstream out(TString::Format("./Outputs/eventsLessThan4PadsOutExclusion.dat").Data());
+    // dfcounts.Foreach(
+    //     [&](ActRoot::MergerData& m, int nPadsOutside)
+    //     {
+    //         if(nPadsOutside < 4)
+    //             m.Stream(out);
+    //     },
+    //     {"MergerData", "nPadsOutside"});
+    // out.close();
 }
