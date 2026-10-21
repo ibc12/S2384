@@ -41,7 +41,7 @@ void Ang()
     auto hCM {def.Histo2D({"hCM", "CM;#theta_{CM};E [MeV]", 300, 0, 120, 300, 0, 60}, "ThetaCM", "EVertex")};
 
     // Init intervals
-    double thetaMin {5};
+    double thetaMin {30.5};
     //double thetaMax {44};
     double thetaMax {60};
     double thetaStep {2};
@@ -82,9 +82,9 @@ void Ang()
     // Plot
     Angular::Comparator comp {"g.s", xs.Get("g0")};
     // comp.Add("SFRESCO", "./Inputs/gsSFRESCO/fort.201");
-    //comp.Add("Haixia", "./Inputs/gsH/fort.201");
+    comp.Add("Haixia", "./Inputs/gsH/fort.201");
     // comp.Fit();
-    //comp.Add("Daehnick", "./Inputs/gsD/fort.201");
+    comp.Add("Daehnick", "./Inputs/gsD/fort.201");
     // comp.Fit();
     comp.Add("DA1p", "./Inputs/gsDA1p/fort.201");
     comp.Add("full OP1", "../../../Tese/L11-Li12/full_OP1.dat");

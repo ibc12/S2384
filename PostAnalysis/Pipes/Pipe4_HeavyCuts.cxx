@@ -214,14 +214,17 @@ void Pipe4_HeavyCuts(const std::string& beam, const std::string& target, const s
     // {(TH1D*)hsEx[0].GetPtr()->Clone("hEx_Total")}; hTotSave->Write(); fTot->Close();
     //
     // // File 2: one histogram per heavy cut, all in the same file
-    // auto* fCuts {new TFile(TString::Format("../Macros/Scattering Length/Inputs/Ex_cuts_heavyGate_%s_%s_%s.root",
-    // beam.c_str(), target.c_str(), light.c_str()), "RECREATE")}; fCuts->cd(); for(size_t i = 1; i < hsEx.size(); ++i)
-    // // skip index 0 = "All"
-    // {
-    //     auto* hCutSave {(TH1D*)hsEx[i].GetPtr()->Clone(TString::Format("hEx_%s", labels[i].c_str()))};
-    //     hCutSave->Write();
-    // }
-    // fCuts->Close();
+    auto* fCuts {new TFile(
+        TString::Format("./Outputs/Ex_cuts_heavyGate_%s_%s_%s.root", beam.c_str(), target.c_str(), light.c_str()),
+        "RECREATE")};
+    fCuts->cd();
+    for(size_t i = 1; i < hsEx.size(); ++i)
+    // skip index 0 = "All"
+    {
+        auto* hCutSave {(TH1D*)hsEx[i].GetPtr()->Clone(TString::Format("hEx_%s", labels[i].c_str()))};
+        hCutSave->Write();
+    }
+    fCuts->Close();
 }
 
 #endif

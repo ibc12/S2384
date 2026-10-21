@@ -385,33 +385,43 @@ void DivideTrackInSegments(ActPhysics::SRIM* srim, double range, const XYZVector
 // ============================================================
 // Count pads outside exclusion zone (not taking into account angle or charge deposition)
 // ============================================================
-int PadsOutExclusionZone(const std::map<voxelKey, ActRoot::Voxel>& voxelMap1,
-                         const std::map<voxelKey, ActRoot::Voxel>& voxelMap2, float thresholdCharge = 0)
+std::pair<int, int> PadsOutExclusionZone(const std::map<voxelKey, ActRoot::Voxel>& voxelMapLight,
+                                         const std::map<voxelKey, ActRoot::Voxel>& voxelMapHeavy,
+                                         float thresholdCharge = 0)
 {
-    // First add all the charge of the pads (ix, iy) over all the existing iz
-    std::map<std::pair<int, int>, double> padCharge;
+    // For each pad (ix, iy): {charge from light, charge from heavy}, summed over all iz
+    std::map<std::pair<int, int>, std::pair<double, double>> padCharge;
 
-    auto accumulate = [&](const std::map<voxelKey, ActRoot::Voxel>& voxelMap)
+    auto accumulate = [&](const std::map<voxelKey, ActRoot::Voxel>& voxelMap, bool isLight)
     {
         for(const auto& [key, v] : voxelMap)
         {
             int ix = std::get<0>(key);
             int iy = std::get<1>(key);
             if(iy < yMinExclusionZone || iy > yMaxExclusionZone)
-                padCharge[{ix, iy}] += v.GetCharge(); // suma sobre todos los iz
+            {
+                auto& q = padCharge[{ix, iy}];
+                (isLight ? q.first : q.second) += v.GetCharge();
+            }
         }
     };
 
-    accumulate(voxelMap1);
-    accumulate(voxelMap2);
+    accumulate(voxelMapLight, true);
+    accumulate(voxelMapHeavy, false);
 
-    // Then apply the threshold and count the pads
-    int count = 0;
-    for(const auto& [pad, charge] : padCharge)
-        if(charge > thresholdCharge)
-            count++;
-
-    return count;
+    int nLight = 0;
+    int nHeavy = 0;
+    for(const auto& [pad, q] : padCharge)
+    {
+        if(q.first + q.second > thresholdCharge)
+        {
+            if(q.first >= q.second)
+                nLight++;
+            else
+                nHeavy++;
+        }
+    }
+    return {nLight, nHeavy};
 }
 
 bool IsLastVoxelFarFromBorders(const ActRoot::Voxel::XYZPointF& lastPoint, const ActRoot::TPCParameters& tpc)
@@ -701,12 +711,16 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
     outTree->Branch("LastPosY", &LastPosY_tree);
     double LastPosZ_tree {};
     outTree->Branch("LastPosZ", &LastPosZ_tree);
-    double nPadsOut_tree {};
     double vertexX_tree {};
     outTree->Branch("vertexX", &vertexX_tree);
     double vertexY_tree {};
     outTree->Branch("vertexY", &vertexY_tree);
+    double nPadsOut_tree {};
     outTree->Branch("nPads", &nPadsOut_tree);
+    double nPadsOutLight_tree {};
+    outTree->Branch("nPadsLight", &nPadsOutLight_tree);
+    double nPadsOutHeavy_tree {};
+    outTree->Branch("nPadsHeavy", &nPadsOutHeavy_tree);
     double EVertex_tree {};
     outTree->Branch("EVertex", &EVertex_tree);
     double theta3Lab_tree {};
@@ -921,7 +935,8 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
                               "light");
         DivideTrackInSegments(srim, 3000, heavyWorldFrame, vertex, 2.0, 5, voxelMapHeavy, electronsHeavy, tpc);
 
-        int nPadsOutExclusionZone = PadsOutExclusionZone(voxelMapLight, voxelMapHeavy, thresholdPadCharge);
+        auto [nPadsLight, nPadsHeavy] = PadsOutExclusionZone(voxelMapLight, voxelMapHeavy, thresholdPadCharge);
+        int nPadsOutExclusionZone = nPadsLight + nPadsHeavy; // same value as before
         hPads->Fill(nPadsOutExclusionZone);
         if(nPadsOutExclusionZone < em.nPadsThreshold)
             continue;
@@ -1002,6 +1017,8 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
             vertexX_tree = vertex.X();
             vertexY_tree = vertex.Y();
             nPadsOut_tree = nPadsOutExclusionZone;
+            nPadsOutLight_tree = nPadsLight;
+            nPadsOutHeavy_tree = nPadsHeavy;
             theta3Lab_tree = theta3Lab * TMath::RadToDeg();
             phi3CM_tree = phi3CM;
             theta4Lab_tree = theta4Lab;

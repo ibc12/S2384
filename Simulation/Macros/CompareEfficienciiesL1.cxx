@@ -83,6 +83,7 @@ void CompareEfficienciiesL1()
     std::vector<std::string> files = {
         "../../Simulation/Outputs/11Li/test_triggerChange/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_BeforeTrigger.root",
         "../../Simulation/Outputs/11Li/test_triggerChange/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_PostTrigger.root",
+        "../../Simulation/Outputs/11Li/test_triggerChange/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_BothTrigger.root",
     };
 
     std::vector<TEfficiency*> efficiencies;

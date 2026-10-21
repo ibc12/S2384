@@ -43,9 +43,12 @@ void GetSigma(const std::string& beam, const std::string& light, const std::stri
     {
         double ex = Exs[i];
 
-        TString fname =
-            TString::Format("./Outputs/%s/test_ang_straggling/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s.root", beam.c_str(),
-                            target.c_str(), light.c_str(), ex, neutronPS, protonPS, angStr.c_str());
+        // TString fname =
+        //     TString::Format("./Outputs/%s/test_ang_straggling/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s.root",
+        //     beam.c_str(),
+        //                     target.c_str(), light.c_str(), ex, neutronPS, protonPS, angStr.c_str());
+        TString fname = TString::Format("./Outputs/%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d.root", beam.c_str(),
+                                        target.c_str(), light.c_str(), ex, neutronPS, protonPS);
 
         hVec.push_back(nullptr);
         fVec.push_back(nullptr);
@@ -184,8 +187,10 @@ void GetSigma(const std::string& beam, const std::string& light, const std::stri
     grSigma->SetMarkerColor(kBlue + 1);
     grSigma->SetLineColor(kBlue + 1);
 
-    TString outName = TString::Format("./Outputs/%s/test_ang_straggling/sigmas_%s_%s_%s%s.root", beam.c_str(),
-                                      beam.c_str(), target.c_str(), light.c_str(), angStr.c_str());
+    // TString outName = TString::Format("./Outputs/%s/test_ang_straggling/sigmas_%s_%s_%s%s.root", beam.c_str(),
+    //                                   beam.c_str(), target.c_str(), light.c_str(), angStr.c_str());
+    TString outName = TString::Format("./Outputs/%s/sigmas_%s_%s_%s.root", beam.c_str(),
+                                      beam.c_str(), target.c_str(), light.c_str());
 
     TFile* fout = TFile::Open(outName, "RECREATE");
     if(!fout || fout->IsZombie())

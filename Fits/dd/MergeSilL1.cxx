@@ -28,7 +28,7 @@
 
 void MergeSilL1()
 {
-    PrettyStyle();
+    PrettyStyle(true, false);
     // Sil xs
     TGraphErrors* g_sil_xs {new TGraphErrors()};
     {
@@ -84,6 +84,8 @@ void MergeSilL1()
     }
 
     Angular::Comparator comp {"Merged g.s", g_merged};
+    comp.Add("Haixia", "./Inputs/gsH/fort.201");
+    comp.Add("Daehnick", "./Inputs/gsD/fort.201");
     comp.Add("DA1pcorr", "./Inputs/gsDA1p/fort.201");
     comp.Add("full OP1", "../../../Tese/L11-Li12/full_OP1.dat");
     comp.Add("full OP2", "../../../Tese/L11-Li12/full_OP2.dat");
@@ -92,6 +94,8 @@ void MergeSilL1()
     comp.Fit();
     comp.Draw("", true);
     Angular::Comparator compSil {"Sil g.s", g_sil_xs};
+    comp.Add("Haixia", "./Inputs/gsH/fort.201");
+    comp.Add("Daehnick", "./Inputs/gsD/fort.201");
     compSil.Add("DA1pcorr", "./Inputs/gsDA1p/fort.201");
     compSil.Add("full OP1", "../../../Tese/L11-Li12/full_OP1.dat");
     compSil.Add("full OP2", "../../../Tese/L11-Li12/full_OP2.dat");
@@ -100,6 +104,8 @@ void MergeSilL1()
     compSil.Fit();
     compSil.Draw("", true);
     Angular::Comparator compL1 {"L1 g.s", g_L1_xs};
+    comp.Add("Haixia", "./Inputs/gsH/fort.201");
+    comp.Add("Daehnick", "./Inputs/gsD/fort.201");
     compL1.Add("DA1pcorr", "../7Li_dd/Inputs/gsDA1p/fort.201");
     compL1.Add("full OP1", "../../../Tese/L11-Li12/full_OP1.dat");
     compL1.Add("full OP2", "../../../Tese/L11-Li12/full_OP2.dat");

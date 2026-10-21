@@ -36,7 +36,7 @@ void Ang()
     // Filter on some runs
     // auto def {
     //     df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; }, {"MergerData"})
-    //         .Filter([](ActRoot::MergerData& m) { return m.fRun < 57; }, {"MergerData"})}; // false is for L1 events
+    //         .Filter([](ActRoot::MergerData& m) { return m.fRun > 58; }, {"MergerData"})}; // false is for L1 events
 
     // Book histograms
     auto hEx {def.Histo1D(S2384Fit::Exdd, "Ex")};
@@ -76,12 +76,18 @@ void Ang()
     //         "../../Simulation/Outputs/11Li/test_triggerChange/"
     //         "2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_BeforeTrigger.root",
     //         "effCM");
+    // eff.Add("g0",
+    //         "../../Simulation/Outputs/11Li/test_triggerChange/"
+    //         "2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_PostTrigger.root",
+    //         "effCM");
     eff.Scale(0.931);
     // Draw to check is fine
     eff.Draw();
 
     // Set experiment info
     PhysUtils::Experiment exp {"../norm/11Li_norm_L1.dat"};
+    // PhysUtils::Experiment exp {"../norm/norm_per_run_interval/11Li_norm_L1_runs59-122.dat"};
+    // PhysUtils::Experiment exp {"../norm/norm_per_run_interval/11Li_norm_L1_runs19-58.dat"};
     // And compute differential xs!
     Angular::DifferentialXS xs {&ivs, &fitter, &eff, &exp};
     xs.DoFor(peaks);
