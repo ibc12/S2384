@@ -6,9 +6,11 @@
 
 #include "FitInterface.h"
 #include "FitModel.h"
+#include "FitRunner.h"
 #include "FitUtils.h"
 #include "Interpolators.h"
 
+#include <cmath>
 #include <string>
 #include <vector>
 
@@ -20,16 +22,20 @@ void Fit()
     ROOT::EnableImplicitMT();
 
     // Analysis
-    ROOT::RDataFrame df {"Final_Tree", "./Inputs/tree_ex_F_7Li_d_p_filtered.root"}; // Data with all events L1 inside cut to get all protons
-    // ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_F_7Li_d_p_filtered.root"};
-    auto def {df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; },
-                        {"MergerData"})}; // == false is for L1 events
-    // Ex
+    ROOT::RDataFrame df {"Final_Tree", "../../PostAnalysis/Outputs/tree_ex_F_7Li_d_p_filtered.root"};
+    auto def {df.Filter([](ActRoot::MergerData& m) { return m.fLight.IsFilled() == false; }, {"MergerData"})};
+    // auto def {df.Filter([](ActRoot::MergerData& m) { return (m.fLight.IsFilled() && m.fHeavy.GetNLayers() == 2) ==
+    // true; }, {"MergerData"})}; Ex
     auto hEx {def.Histo1D(S2384Fit::Exdp_7Li, "Ex")};
     // Phase space
-    // ROOT::RDataFrame phase {"SimulationTTree",
-    // "../../../Simulations/TRIUNF/11Li(d,p)/Outputs/7.5MeV/2H_1H_TRIUMF_Eex_0.000_nPS_1_pPS_0_silspecs_spacer_7Li.root"};
-    // auto hPS {phase.Histo1D(S2384Fit::Exdp_7Li, "Eex", "weight")};
+    ROOT::RDataFrame phase {"SimulationTTree", "../../Simulation/Outputs/7Li/test_rpCut/"
+                                               "2H_1H_TRIUMF_Eex_0.000_nPS_1_pPS_0_L1_240rpCut_paralelization.root"};
+    auto hPS {phase.Histo1D(S2384Fit::Exdp_7Li, "Eex", "weight")};
+    hPS->SetNameTitle("hPS", "1n PS");
+    // Histogram of contamination
+    ROOT::RDataFrame phase2 {"Final_Tree", "../../Macros/SimulationExp Comparison/Outputs/tree_ex_F_7Li_d_as_p.root"};
+    auto hPS2 {phase2.Histo1D(S2384Fit::Exdp_7Li, "Ex_d_as_p")};
+    hPS2->SetNameTitle("hPS2", "1n PS2");
 
     // Sigmas (how to for L1 ?¿)
     Interpolators::Sigmas sigmas;
@@ -49,6 +55,16 @@ void Fit()
     double sigma_g1 {0.167294};
     inter.AddState("g0", {240, 0, sigma_g0});
     inter.AddState("g1", {30, 0.981, sigma_g1});
+    double sigma {0.1};
+    inter.AddState("v0", {60, 2.2, sigma, 0.1});
+    inter.AddState("v1", {20, 3.3, sigma, 1});
+    inter.AddState("v2", {15, 4.1, sigma, 0.65});
+    inter.AddState("v3", {15, 5.4, sigma, 0.65});
+    inter.AddState("v4", {15, 6.1, sigma, 1});
+    inter.AddState("v5", {10, 6.5, sigma, 0.035});
+    inter.AddState("v6", {5, 7.1, sigma, 0.4});
+    inter.AddState("ps0", {0.005});
+    inter.AddState("ps1", {0.005});
 
     inter.EndAddingStates();
     // inter.SetFixAll(2, true);
@@ -61,7 +77,7 @@ void Fit()
     inter.Write("./Outputs/interface.root");
 
     // Model
-    Fitters::Model model {inter.GetNGauss(), inter.GetNVoigt(), {}};
+    Fitters::Model model {inter.GetNGauss(), inter.GetNVoigt(), {*hPS, *hPS2}};
 
     // Fitting range
     double exmin {-1};

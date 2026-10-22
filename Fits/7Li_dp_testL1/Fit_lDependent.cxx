@@ -18,7 +18,7 @@
 #include "../Histos.h"
 void Fit_lDependent()
 {
-    PrettyStyle(false, false);
+    PrettyStyle(false, true);
     ROOT::EnableImplicitMT();
 
     // Analysis
@@ -63,10 +63,26 @@ void Fit_lDependent()
     inter.AddState("v4", {15, 6.1, sigma, 1});
     inter.AddState("v5", {10, 6.5, sigma, 0.035});
     inter.AddState("v6", {5, 7.1, sigma, 0.4});
+    inter.AddState("v7", {5, 7.8, sigma, 0.4});
+    inter.AddState("v8", {5, 8.6, sigma, 0.4});
+    inter.AddState("v9", {5, 2.7, sigma, 0.4});
     inter.AddState("ps0", {0.005});
     inter.AddState("ps1", {0.005});
-
     inter.EndAddingStates();
+    inter.EvalSigma(sigmas.GetGraph());
+    inter.SetFixAll(2, true); // fix all sigmas
+    inter.SetFixAll(2, true);
+    inter.SetBounds("v0", 3, {0.005, 0.3}); // gamma bounds
+    inter.SetBounds("v1", 3, {0.5, 1.5});   // gamma bounds
+    inter.SetBounds("v2", 3, {0.01, 1});
+    inter.SetBounds("v3", 3, {0.3, 1});
+    inter.SetBounds("v4", 3, {0.5, 1.5});
+    inter.SetBounds("v5", 3, {0.01, 0.1});
+    inter.SetBounds("v6", 3, {0.1, 0.8});
+    inter.SetBounds("v7", 3, {0.1, 0.8});
+    inter.SetBounds("v8", 3, {0.1, 0.8});
+    inter.SetBounds("v9", 3, {0.1, 0.8});
+    inter.SetOffsetMeanBounds(0.3);
     // inter.SetFixAll(2, true);
     // inter.EvalSigma(sigmas.GetGraph());
     // inter.SetFix("g1", 2, true); // fix all sigmas
@@ -74,7 +90,7 @@ void Fit_lDependent()
     //  inter.SetBounds("g1", 1, {0.4, 0.55});
     //  Save to be used later
     //  inter.SetFix("g1", 1, true);
-    inter.Write("./Outputs/interface.root");
+    inter.Write("./Outputs/interface_lDependent.root");
 
     // Model
     Fitters::Model model {inter.GetNGauss(), inter.GetNVoigt(), {*hPS, *hPS2}};
@@ -85,7 +101,20 @@ void Fit_lDependent()
     // double exmin {-0.8};
     // double exmax {1};
 
+    double R {(std::pow(7, 1. / 3.) + std::pow(1, 1. / 3.)) * 1.25}; // interaction radius in fm, with r0 = 1.25 fm
+    double mu {7 * 1. / (7 + 1) * 931.5};                            // reduced mass in MeV/c^2
+    model.AddBWL(0, 1, 2.03262, mu, R);
+    model.AddBWL(1, 1, 2.03262, mu, R);
+    model.AddBWL(2, 1, 2.03262, mu, R);
+    model.AddBWL(3, 2, 2.03262, mu, R);
+    model.AddBWL(4, 2, 2.03262, mu, R);
+    model.AddBWL(5, 1, 2.03262, mu, R);
+    model.AddBWL(6, 2, 2.03262, mu, R);
+    model.AddBWL(7, 2, 2.03262, mu, R);
+    model.AddBWL(8, 2, 2.03262, mu, R);
+    model.AddBWL(9, 1, 2.03262, mu, R);
+
     // Run!
     Fitters::RunFit(hEx.GetPtr(), exmin, exmax, model, inter.GetInitial(), inter.GetBounds(), inter.GetFixed(),
-                    ("./Outputs/fit.root"), "7Li(d,p) fit", {{"g0", "g.s"}, {"g1", "1st"}}, false);
+                    ("./Outputs/fit_lDependent.root"), "7Li(d,p) fit", {{"g0", "g.s"}, {"g1", "1st"}}, false);
 }
