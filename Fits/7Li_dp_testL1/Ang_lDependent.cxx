@@ -123,52 +123,52 @@ void Ang_lDependent(bool isLab = false)
     //         "2H_1H_TRIUMF_Eex_0.981_nPS_0_pPS_0_L1_3-5AngStr_14pads.root",
     //         isLab ? "effLab" : "effCM");
     eff.Add("g0",
-            "../../Simulation/Outputs/7Li/test_rpCut/"
-            "2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_240rpCut_paralelization.root",
+            "../../Simulation/Outputs/7Li/test_ang_straggling_L1/"
+            "2H_1H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1_6AngStr.root",
             isLab ? "effLab" : "effCM");
     eff.Add("g1",
-            "../../Simulation/Outputs/7Li/test_rpCut/"
-            "2H_1H_TRIUMF_Eex_0.981_nPS_0_pPS_0_L1_240rpCut_paralelization.root",
+            "../../Simulation/Outputs/7Li/test_ang_straggling_L1/"
+            "2H_1H_TRIUMF_Eex_0.981_nPS_0_pPS_0_L1_6AngStr.root",
             isLab ? "effLab" : "effCM");
     eff.Add("v0",
-            "../../Simulation/Outputs/7Li/test_rpCut/"
-            "2H_1H_TRIUMF_Eex_2.255_nPS_0_pPS_0_L1_240rpCut_paralelization.root",
+            "../../Simulation/Outputs/7Li/test_ang_straggling_L1/"
+            "2H_1H_TRIUMF_Eex_2.255_nPS_0_pPS_0_L1_6AngStr.root",
             isLab ? "effLab" : "effCM");
     eff.Add("v1",
-            "../../Simulation/Outputs/7Li/test_rpCut/"
-            "2H_1H_TRIUMF_Eex_3.210_nPS_0_pPS_0_L1_240rpCut_paralelization.root",
+            "../../Simulation/Outputs/7Li/test_ang_straggling_L1/"
+            "2H_1H_TRIUMF_Eex_2.700_nPS_0_pPS_0_L1_6AngStr.root",
             isLab ? "effLab" : "effCM");
     eff.Add("v2",
-            "../../Simulation/Outputs/7Li/test_rpCut/"
-            "2H_1H_TRIUMF_Eex_4.100_nPS_0_pPS_0_L1_240rpCut_paralelization.root",
+            "../../Simulation/Outputs/7Li/test_ang_straggling_L1/"
+            "2H_1H_TRIUMF_Eex_3.210_nPS_0_pPS_0_L1_6AngStr.root",
             isLab ? "effLab" : "effCM");
     eff.Add("v3",
-            "../../Simulation/Outputs/7Li/test_rpCut/"
-            "2H_1H_TRIUMF_Eex_5.400_nPS_0_pPS_0_L1_240rpCut_paralelization.root",
+            "../../Simulation/Outputs/7Li/test_ang_straggling_L1/"
+            "2H_1H_TRIUMF_Eex_4.100_nPS_0_pPS_0_L1_6AngStr.root",
             isLab ? "effLab" : "effCM");
     eff.Add("v4",
-            "../../Simulation/Outputs/7Li/test_rpCut/"
-            "2H_1H_TRIUMF_Eex_6.100_nPS_0_pPS_0_L1_240rpCut_paralelization.root",
+            "../../Simulation/Outputs/7Li/test_ang_straggling_L1/"
+            "2H_1H_TRIUMF_Eex_5.400_nPS_0_pPS_0_L1_6AngStr.root",
             isLab ? "effLab" : "effCM");
     eff.Add("v5",
-            "../../Simulation/Outputs/7Li/test_rpCut/"
-            "2H_1H_TRIUMF_Eex_6.530_nPS_0_pPS_0_L1_240rpCut_paralelization.root",
+            "../../Simulation/Outputs/7Li/test_ang_straggling_L1/"
+            "2H_1H_TRIUMF_Eex_6.100_nPS_0_pPS_0_L1_6AngStr.root",
             isLab ? "effLab" : "effCM");
     eff.Add("v6",
-            "../../Simulation/Outputs/7Li/test_rpCut/"
-            "2H_1H_TRIUMF_Eex_7.100_nPS_0_pPS_0_L1_240rpCut_paralelization.root",
+            "../../Simulation/Outputs/7Li/test_ang_straggling_L1/"
+            "2H_1H_TRIUMF_Eex_6.530_nPS_0_pPS_0_L1_6AngStr.root",
             isLab ? "effLab" : "effCM");
     eff.Add("v7",
-            "../../Simulation/Outputs/7Li/test_rpCut/"
-            "2H_1H_TRIUMF_Eex_7.100_nPS_0_pPS_0_L1_240rpCut_paralelization.root",
+            "../../Simulation/Outputs/7Li/test_ang_straggling_L1/"
+            "2H_1H_TRIUMF_Eex_7.100_nPS_0_pPS_0_L1_6AngStr.root",
             isLab ? "effLab" : "effCM");
     eff.Add("v8",
-            "../../Simulation/Outputs/7Li/test_rpCut/"
-            "2H_1H_TRIUMF_Eex_7.100_nPS_0_pPS_0_L1_240rpCut_paralelization.root",
+            "../../Simulation/Outputs/7Li/test_ang_straggling_L1/"
+            "2H_1H_TRIUMF_Eex_8.000_nPS_0_pPS_0_L1_6AngStr.root",
             isLab ? "effLab" : "effCM");
     eff.Add("v9",
-            "../../Simulation/Outputs/7Li/test_rpCut/"
-            "2H_1H_TRIUMF_Eex_2.255_nPS_0_pPS_0_L1_240rpCut_paralelization.root",
+            "../../Simulation/Outputs/7Li/test_ang_straggling_L1/"
+            "2H_1H_TRIUMF_Eex_8.600_nPS_0_pPS_0_L1_6AngStr.root",
             isLab ? "effLab" : "effCM");
     eff.Scale(0.931);
     // Draw to check is fine
@@ -185,18 +185,18 @@ void Ang_lDependent(bool isLab = false)
     xs.TrimX("g1", 10, true);
     xs.TrimX("v0", 23, false);
     xs.TrimX("v0", 13, true);
-    xs.TrimX("v1", 25, false);
-    xs.TrimX("v1", 18, true);
-    xs.TrimX("v2", 28, false);
+    xs.TrimX("v2", 25, false);
     xs.TrimX("v2", 18, true);
-    xs.TrimX("v3", 31, false);
-    xs.TrimX("v3", 23, true);
-    xs.TrimX("v4", 32, false);
-    xs.TrimX("v4", 25, true);
-    xs.TrimX("v5", 33, false);
+    xs.TrimX("v3", 28, false);
+    xs.TrimX("v3", 18, true);
+    xs.TrimX("v4", 31, false);
+    xs.TrimX("v4", 23, true);
+    xs.TrimX("v5", 32, false);
     xs.TrimX("v5", 25, true);
-    xs.TrimX("v6", 35, false);
-    xs.TrimX("v6", 28, true);
+    xs.TrimX("v6", 33, false);
+    xs.TrimX("v6", 25, true);
+    xs.TrimX("v7", 35, false);
+    xs.TrimX("v7", 28, true);
     if(!isLab)
         xs.Write("./Outputs/", "xs_lDependent");
 

@@ -43,7 +43,7 @@ void Fit_lDependent()
     // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_2H_1-25AngStr.root", "grSigma");
     // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_2H_1-3AngStr.root", "grsigmas");
     // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_2H_1-35AngStr.root", "grsigmas");
-    sigmas.Read("../../Simulation/Outputs/7Li/sigmas_7Li_2H_1H_L1.root", "grsigmas");
+    sigmas.Read("../../Simulation/Outputs/7Li/sigmas_7Li_2H_1H_L1.root", "gsigmas");
     // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_2H_1-45AngStr.root", "grsigmas");
     // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_2H_1-5AngStr.root", "grSigma");
     // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_2H_1-65AngStr.root", "grSigma");
@@ -57,27 +57,27 @@ void Fit_lDependent()
     inter.AddState("g1", {30, 0.981, sigma_g1});
     double sigma {0.1};
     inter.AddState("v0", {60, 2.2, sigma, 0.1});
-    inter.AddState("v1", {20, 3.3, sigma, 1});
-    inter.AddState("v2", {15, 4.1, sigma, 0.65});
-    inter.AddState("v3", {15, 5.4, sigma, 0.65});
-    inter.AddState("v4", {15, 6.1, sigma, 1});
-    inter.AddState("v5", {10, 6.5, sigma, 0.035});
-    inter.AddState("v6", {5, 7.1, sigma, 0.4});
-    inter.AddState("v7", {5, 7.8, sigma, 0.4});
-    inter.AddState("v8", {5, 8.6, sigma, 0.4});
-    inter.AddState("v9", {5, 2.7, sigma, 0.4});
+    inter.AddState("v1", {5, 2.8, sigma, 0.4});
+    inter.AddState("v2", {20, 3.3, sigma, 1});
+    inter.AddState("v3", {15, 4.1, sigma, 0.65});
+    inter.AddState("v4", {15, 5.4, sigma, 0.65});
+    inter.AddState("v5", {15, 6.1, sigma, 1});
+    inter.AddState("v6", {10, 6.5, sigma, 0.035});
+    inter.AddState("v7", {5, 7.1, sigma, 0.4});
+    inter.AddState("v8", {5, 7.8, sigma, 0.4});
+    inter.AddState("v9", {5, 8.6, sigma, 0.4});
     inter.AddState("ps0", {0.005});
     inter.AddState("ps1", {0.005});
     inter.EndAddingStates();
     inter.EvalSigma(sigmas.GetGraph());
     inter.SetFixAll(2, true); // fix all sigmas
     inter.SetBounds("v0", 3, {0.005, 0.3}); // gamma bounds
-    inter.SetBounds("v1", 3, {0.5, 1.5});   // gamma bounds
-    inter.SetBounds("v2", 3, {0.01, 1});
-    inter.SetBounds("v3", 3, {0.3, 1});
-    inter.SetBounds("v4", 3, {0.5, 1.5});
-    inter.SetBounds("v5", 3, {0.01, 0.1});
-    inter.SetBounds("v6", 3, {0.1, 0.8});
+    inter.SetBounds("v1", 3, {0.005, 0.3});
+    inter.SetBounds("v2", 3, {0.5, 1.5});   // gamma bounds
+    inter.SetBounds("v3", 3, {0.01, 1});
+    inter.SetBounds("v4", 3, {0.3, 1});
+    inter.SetBounds("v5", 3, {0.5, 1.5});
+    inter.SetBounds("v6", 3, {0.01, 0.1});
     inter.SetBounds("v7", 3, {0.1, 0.8});
     inter.SetBounds("v8", 3, {0.1, 0.8});
     inter.SetBounds("v9", 3, {0.1, 0.8});

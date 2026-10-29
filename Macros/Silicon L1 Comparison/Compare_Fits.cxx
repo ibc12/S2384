@@ -4,6 +4,8 @@
 //
 // Uso:
 //   root -l 'Compare_Fits.C("./Outputs/fit_A.root", "./Outputs/fit_B.root", "Fit A", "Fit B")'
+//   Ultimo argumento (showRelative, por defecto true): anade la fila con la diferencia relativa en %.
+//   Para solo la diferencia bruta: Compare_Fits.C("a.root", "b.root", "Fit A", "Fit B", false)
 //
 // Se espera en cada fichero:
 //   ParNames    -> std::vector<std::string>  (nombre del parametro; la clave del estado es lo anterior al primer '_')
@@ -17,7 +19,9 @@
 #include "TGraph.h"
 #include "TGraphErrors.h"
 #include "TH1.h"
+#include "TLatex.h"
 #include "TLegend.h"
+#include "TLine.h"
 #include "TString.h"
 #include "TStyle.h"
 
@@ -80,6 +84,19 @@ std::string ParName(const std::string& key, int i)
         return "Scale";
     static const std::vector<std::string> names {"Amplitude", "Mean", "Sigma", "Gamma"};
     return i < (int)names.size() ? names[i] : ("p" + std::to_string(i));
+}
+
+// Draws a title at the top of the current pad. Done with a TLatex (not the histogram title)
+// so it is shown even if the style (PrettyStyle, SetOptTitle(0)...) hides histogram titles.
+void SetPadTitle(const TString& text)
+{
+    gPad->SetTopMargin(0.12);
+    auto* l {new TLatex {0.5, 0.95, text.Data()}};
+    l->SetNDC();
+    l->SetTextAlign(22); // centered
+    l->SetTextSize(0.05);
+    l->SetTextFont(42);
+    l->Draw();
 }
 
 // ---------- Read ----------
@@ -291,6 +308,8 @@ void DrawParameters(const FitData& a, const FitData& b, const std::vector<std::s
         frame->SetMinimum(ymin - pad);
         frame->SetMaximum(ymax + pad);
         frame->Draw("axis");
+        // Title AFTER drawing the frame: TH1::Draw (without "same") clears the pad
+        SetPadTitle(parTitles[ip].c_str());
         for(auto* g : {ga, gb})
         {
             g->SetMarkerStyle(20);
@@ -315,13 +334,123 @@ void DrawParameters(const FitData& a, const FitData& b, const std::vector<std::s
     }
     c->Update();
 }
+
+// One pad with the difference (B - A) of parameter ip, per state.
+// relative = false -> raw difference (B - A)
+// relative = true  -> percentage difference 100 * (B - A) / A   (A is the reference)
+void DrawDiffPad(const FitData& a, const FitData& b, const std::vector<std::string>& keys, int ip, bool relative)
+{
+    // States that actually have this parameter (e.g. gamma only exists for voigts)
+    std::vector<std::string> states;
+    for(const auto& k : keys)
+        if(Group(k) != 2 && (int)a.fVals.at(k).size() > ip)
+            states.push_back(k);
+    if(states.empty())
+        return;
+
+    auto* g {new TGraphErrors};
+    double ymin {0};
+    double ymax {0};
+    for(size_t is = 0; is < states.size(); is++)
+    {
+        const auto& k {states[is]};
+        double va {a.fVals.at(k)[ip]};
+        double vb {b.fVals.at(k)[ip]};
+        double ua {a.fUncs.at(k)[ip]};
+        double ub {b.fUncs.at(k)[ip]};
+        double y {};
+        double ey {};
+        if(!relative)
+        {
+            y = vb - va;
+            ey = std::sqrt(ua * ua + ub * ub);
+        }
+        else
+        {
+            if(std::abs(va) < 1e-9)
+                continue; // reference is zero (e.g. g.s. mean fixed at 0): relative difference undefined
+            y = 100. * (vb - va) / va;
+            // (B - A) / A = B / A - 1  ->  uncorrelated error propagation
+            ey = 100. * std::sqrt(std::pow(ub / va, 2) + std::pow(vb * ua / (va * va), 2));
+        }
+        int n {g->GetN()};
+        g->SetPoint(n, is + 0.5, y);
+        g->SetPointError(n, 0, ey);
+        ymin = std::min(ymin, y - ey);
+        ymax = std::max(ymax, y + ey);
+    }
+    if(g->GetN() == 0)
+    {
+        std::cout << "Compare_Fits: nothing to draw for " << ParName(states.front(), ip) << (relative ? " (rel)" : "")
+                  << '\n';
+        return;
+    }
+    double pad {0.15 * (ymax - ymin)};
+    if(pad <= 0)
+        pad = 1;
+
+    // Titles
+    TString parName {ParName(states.front(), ip).c_str()};
+    TString yTitle;
+    if(relative)
+        yTitle = TString::Format("100 #times (%s - %s) / %s  (%%)", b.fLabel.c_str(), a.fLabel.c_str(),
+                                 a.fLabel.c_str());
+    else
+        yTitle = TString::Format("%s - %s  (MeV)", b.fLabel.c_str(), a.fLabel.c_str());
+    // Frame with state labels
+    auto* frame {new TH1F {TString::Format("frameDiff%d%d", ip, (int)relative), TString::Format(";;%s", yTitle.Data()),
+                           (int)states.size(), 0, (double)states.size()}};
+    frame->SetDirectory(nullptr);
+    frame->SetStats(false);
+    for(size_t is = 0; is < states.size(); is++)
+        frame->GetXaxis()->SetBinLabel(is + 1, states[is].c_str());
+    frame->GetXaxis()->SetLabelSize(0.06);
+    frame->SetMinimum(ymin - pad);
+    frame->SetMaximum(ymax + pad);
+    frame->Draw("axis");
+    // Title AFTER drawing the frame: TH1::Draw (without "same") clears the pad
+    SetPadTitle(parName + (relative ? ": relative difference (%)" : ": raw difference"));
+    // Zero line
+    auto* zero {new TLine {0, 0, (double)states.size(), 0}};
+    zero->SetLineStyle(2);
+    zero->SetLineColor(kGray + 2);
+    zero->Draw();
+    // Points
+    g->SetMarkerStyle(20);
+    g->SetMarkerSize(1.2);
+    g->SetMarkerColor(kBlack);
+    g->SetLineColor(kBlack);
+    g->SetLineWidth(2);
+    g->Draw("pz same");
+}
+
+// Canvas with the differences of mean and gamma.
+// Top row: raw difference. Bottom row (if showRelative): percentage difference.
+void DrawDifferences(const FitData& a, const FitData& b, const std::vector<std::string>& keys, bool showRelative)
+{
+    const std::vector<int> pars {1, 3}; // 1 = mean, 3 = gamma
+    auto* c {new TCanvas {"cCmpDiff", "Differences (mean, gamma)", 1300, showRelative ? 900 : 500}};
+    c->Divide(2, showRelative ? 2 : 1);
+    int pad {1};
+    for(int ip : pars)
+    {
+        c->cd(pad);
+        DrawDiffPad(a, b, keys, ip, false);
+        if(showRelative)
+        {
+            c->cd(pad + 2);
+            DrawDiffPad(a, b, keys, ip, true);
+        }
+        pad++;
+    }
+    c->Update();
+}
 } // namespace CompareFits
 
-// This is a macro to compare the result of the Ex spectrum fitting between the silicon and L1 spectra
-
 void Compare_Fits(const std::string& file1 = "../../Fits/7Li_dp/Outputs/fit_lDependent.root",
-                  const std::string& file2 = "../../Fits/7Li_dp_testL1/Outputs/fit_lDependent.root", const std::string& label1 = "Fit silicon",
-                  const std::string& label2 = "Fit L1")
+                  const std::string& file2 = "../../Fits/7Li_dp_testL1/Outputs/fit_lDependent.root",
+                  const std::string& label1 = "Fit sil", const std::string& label2 = "Fit L1",
+                  bool showRelative = true)
 {
     using namespace CompareFits;
     gStyle->SetOptStat(0);
@@ -342,4 +471,5 @@ void Compare_Fits(const std::string& file1 = "../../Fits/7Li_dp/Outputs/fit_lDep
     PrintTable(a, b, keys);
     DrawGlobal(a, b);
     DrawParameters(a, b, keys);
+    DrawDifferences(a, b, keys, showRelative);
 }

@@ -52,14 +52,14 @@ void Fit_lDependent()
     inter.AddState("g0", {100, 0, sigma});
     inter.AddState("g1", {30, 0.98, sigma});
     inter.AddState("v0", {60, 2.2, sigma, 0.1});
-    inter.AddState("v1", {20, 3.3, sigma, 1});
-    inter.AddState("v2", {15, 4.1, sigma, 0.65});
-    inter.AddState("v3", {15, 5.4, sigma, 0.65});
-    inter.AddState("v4", {15, 6.1, sigma, 1});
-    inter.AddState("v5", {10, 6.5, sigma, 0.035});
-    inter.AddState("v6", {5, 7.1, sigma, 0.4});
-    // inter.AddState("v8", {5, 7.6, sigma, 0.4});
-    // inter.AddState("v7", {5, 2.7, sigma, 0.4});
+    inter.AddState("v1", {5, 2.85, sigma, 0.4});
+    inter.AddState("v2", {20, 3.3, sigma, 1});
+    inter.AddState("v3", {15, 3.9, sigma, 0.65});
+    inter.AddState("v4", {15, 5.2, sigma, 0.65});
+    inter.AddState("v5", {15, 5.7, sigma, 1});
+    inter.AddState("v6", {10, 6.3, sigma, 0.035});
+    inter.AddState("v7", {5, 7., sigma, 0.4});
+    inter.AddState("v8", {5, 7.6, sigma, 0.4});
     inter.AddState("ps0", {0.0005});
     // inter.AddState("ps1", {1e-6});
     inter.EndAddingStates();
@@ -75,13 +75,15 @@ void Fit_lDependent()
     // inter.SetBounds("v0", 0, {20, 30});
     // inter.SetFix("ps0", 0, true);
     inter.SetBounds("v0", 3, {0.005, 0.3}); // gamma bounds
-    inter.SetBounds("v1", 3, {0.5, 1.5});   // gamma bounds
-    inter.SetBounds("v2", 3, {0.01, 1});
-    inter.SetBounds("v3", 3, {0.3, 1});
-    inter.SetBounds("v4", 3, {0.5, 1.5});
-    inter.SetBounds("v5", 3, {0.01, 0.1});
-    inter.SetBounds("v6", 3, {0.1, 0.8});
-    inter.SetOffsetMeanBounds(0.4);
+    inter.SetBounds("v1", 3, {0.1, 0.8});
+    inter.SetBounds("v2", 3, {0.5, 1.5}); // gamma bounds
+    inter.SetBounds("v3", 3, {0.01, 1});
+    inter.SetBounds("v4", 3, {0.3, 1});
+    inter.SetBounds("v5", 3, {0.5, 1.5});
+    inter.SetBounds("v6", 3, {0.01, 0.1});
+    inter.SetBounds("v7", 3, {0.1, 0.8});
+    inter.SetBounds("v8", 3, {0.1, 0.8});
+    inter.SetOffsetMeanBounds(0.25);
     // inter.SetBounds("v7", 3, {0.1, 0.8});
 
     // Save to be used later
@@ -99,12 +101,12 @@ void Fit_lDependent()
     model.AddBWL(0, 1, 2.03262, mu, R);
     model.AddBWL(1, 1, 2.03262, mu, R);
     model.AddBWL(2, 1, 2.03262, mu, R);
-    model.AddBWL(3, 2, 2.03262, mu, R);
+    model.AddBWL(3, 1, 2.03262, mu, R);
     model.AddBWL(4, 2, 2.03262, mu, R);
-    model.AddBWL(5, 1, 2.03262, mu, R);
+    model.AddBWL(5, 2, 2.03262, mu, R);
     model.AddBWL(6, 2, 2.03262, mu, R);
-    // model.AddBWL(7, 1, 2.03262, mu, R);
-    // model.AddBWL(8, 1, 2.03262, mu, R);
+    model.AddBWL(7, 1, 2.03262, mu, R);
+    model.AddBWL(8, 1, 2.03262, mu, R);
 
     // Fitters::ToggleIsLogL();
 

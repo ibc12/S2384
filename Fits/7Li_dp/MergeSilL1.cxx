@@ -32,7 +32,7 @@ void MergeSilL1()
     // Sil xs
     TGraphErrors* g_sil_xs {new TGraphErrors()};
     {
-        std::ifstream in("./Outputs/xs/g0_xs.dat");
+        std::ifstream in("./Outputs/xs/g0_xs_lDependent.dat");
 
         double x, y, sy;
         while(in >> x >> y >> sy)
@@ -46,7 +46,7 @@ void MergeSilL1()
     // L1 xs
     TGraphErrors* g_L1_xs {new TGraphErrors()};
     {
-        std::ifstream in("../7Li_dp_testL1/Outputs/xs/g0_xs.dat");
+        std::ifstream in("../7Li_dp_testL1/Outputs/xs/g0_xs_lDependent.dat");
 
         double x, y, sy;
         while(in >> x >> y >> sy)
@@ -86,7 +86,7 @@ void MergeSilL1()
     // Do the same for the 1st excited state
     TGraphErrors* g_sil_xs_1st {new TGraphErrors()};
     {
-        std::ifstream in("./Outputs/xs/g1_xs.dat");
+        std::ifstream in("./Outputs/xs/g1_xs_lDependent.dat");
 
         double x, y, sy;
         while(in >> x >> y >> sy)
@@ -99,7 +99,7 @@ void MergeSilL1()
 
     TGraphErrors* g_L1_xs_1st {new TGraphErrors()};
     {
-        std::ifstream in("../7Li_dp_testL1/Outputs/xs/g1_xs.dat");
+        std::ifstream in("../7Li_dp_testL1/Outputs/xs/g1_xs_lDependent.dat");
 
         double x, y, sy;
         while(in >> x >> y >> sy)
