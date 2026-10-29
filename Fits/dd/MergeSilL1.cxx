@@ -87,10 +87,10 @@ void MergeSilL1()
     comp.Add("Haixia", "./Inputs/gsH/fort.201");
     comp.Add("Daehnick", "./Inputs/gsD/fort.201");
     comp.Add("DA1pcorr", "./Inputs/gsDA1p/fort.201");
-    comp.Add("full OP1", "../../../Tese/L11-Li12/full_OP1.dat");
-    comp.Add("full OP2", "../../../Tese/L11-Li12/full_OP2.dat");
-    comp.Add("no cont OP1", "../../../Tese/L11-Li12/no_cont_OP1.dat");
-    comp.Add("no cont OP2", "../../../Tese/L11-Li12/no_cont_OP2.dat");
+    // comp.Add("full OP1", "../../../Tese/L11-Li12/full_OP1.dat");
+    // comp.Add("full OP2", "../../../Tese/L11-Li12/full_OP2.dat");
+    // comp.Add("no cont OP1", "../../../Tese/L11-Li12/no_cont_OP1.dat");
+    // comp.Add("no cont OP2", "../../../Tese/L11-Li12/no_cont_OP2.dat");
     comp.Fit();
     comp.Draw("", true);
     Angular::Comparator compSil {"Sil g.s", g_sil_xs};

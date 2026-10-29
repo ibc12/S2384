@@ -16,7 +16,7 @@
 #include <vector>
 
 void GetSigma(const std::string& beam, const std::string& light, const std::string& target,
-              const std::vector<double>& Exs, int neutronPS = 0, int protonPS = 0)
+              const std::vector<double>& Exs, int neutronPS = 0, int protonPS = 0, bool isL1 = false)
 {
     const int N = static_cast<int>(Exs.size());
     if(N == 0)
@@ -31,7 +31,8 @@ void GetSigma(const std::string& beam, const std::string& light, const std::stri
     gStyle->SetOptFit(1111);
     gStyle->SetOptStat("emr");
 
-    std::string angStr {"_2-1AngStr"};
+    std::string angStr {"_6AngStr"};
+    std::string suffixL1 = isL1 ? "_L1" : "";
 
     std::vector<TH1D*> hVec;
     std::vector<TF1*> fVec;
@@ -47,8 +48,9 @@ void GetSigma(const std::string& beam, const std::string& light, const std::stri
         //     TString::Format("./Outputs/%s/test_ang_straggling/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s.root",
         //     beam.c_str(),
         //                     target.c_str(), light.c_str(), ex, neutronPS, protonPS, angStr.c_str());
-        TString fname = TString::Format("./Outputs/%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d.root", beam.c_str(),
-                                        target.c_str(), light.c_str(), ex, neutronPS, protonPS);
+        TString fname = TString::Format(
+            "./Outputs/%s/test_ang_straggling_L1/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d%s%s.root", beam.c_str(),
+            target.c_str(), light.c_str(), ex, neutronPS, protonPS, suffixL1.c_str(), angStr.c_str());
 
         hVec.push_back(nullptr);
         fVec.push_back(nullptr);
@@ -82,8 +84,8 @@ void GetSigma(const std::string& beam, const std::string& light, const std::stri
         tree->SetBranchAddress("Eex", &eexVal);
         Long64_t nEntries = tree->GetEntries();
 
-        double hMin = ex - 0.25;
-        double hMax = ex + 0.25;
+        double hMin = ex - 0.45;
+        double hMax = ex + 0.45;
 
         TString hname = TString::Format("hEex_%d", i);
         TString htitle = TString::Format("E_{ex} = %.3f MeV;E_{ex} (MeV);Counts", ex);
@@ -189,8 +191,8 @@ void GetSigma(const std::string& beam, const std::string& light, const std::stri
 
     // TString outName = TString::Format("./Outputs/%s/test_ang_straggling/sigmas_%s_%s_%s%s.root", beam.c_str(),
     //                                   beam.c_str(), target.c_str(), light.c_str(), angStr.c_str());
-    TString outName = TString::Format("./Outputs/%s/sigmas_%s_%s_%s.root", beam.c_str(),
-                                      beam.c_str(), target.c_str(), light.c_str());
+    TString outName = TString::Format("./Outputs/%s/sigmas_%s_%s_%s%s.root", beam.c_str(), beam.c_str(), target.c_str(),
+                                      light.c_str(), suffixL1.c_str());
 
     TFile* fout = TFile::Open(outName, "RECREATE");
     if(!fout || fout->IsZombie())

@@ -9,6 +9,7 @@
 
 #include "./do_simuL1.cxx"
 #include "./plotter.cxx"
+#include "./GetSigma.cxx"
 
 void runnerL1(TString what = "simu", bool inspect = false)
 {
@@ -19,8 +20,8 @@ void runnerL1(TString what = "simu", bool inspect = false)
     // Particles
     std::string beam {"7Li"};
     std::string target {"2H"};
-    std::string light {"2H"};
-    std::string heavy {"7Li"};
+    std::string light {"1H"};
+    std::string heavy {"8Li"};
     // Beam energy
     double Tbeam {};
     if(beam == "7Li")
@@ -39,7 +40,9 @@ void runnerL1(TString what = "simu", bool inspect = false)
             // Exs = {0, 0.981};
             // Exs = {4.100, 5.400, 6.100, 6.530, 7.100};
         // Exs = {2.255};
-         Exs = {0, 0.981, 2.255, 3.210, 5.400, 6.100, 6.530, 7.100};
+        // Exs = {0.};
+        Exs = {0, 0.981, 2.255, 3.210, 4.100, 5.400, 6.100, 6.530, 7.100, 8.000, 9.000, 10.000};
+        // Exs = {4.100, 8.000, 9.000, 10.000};
     }
 
     else if(neutronPS == 0 && protonPS == 0 && target == "2H" && light == "2H") // Elastic and Inelastic scattering
@@ -65,11 +68,11 @@ void runnerL1(TString what = "simu", bool inspect = false)
         throw std::runtime_error("No confs with neutronPS and protonPS enabled at the same time");
 
     // Output directory and file naming (single source of truth)
-    const TString outDir {TString::Format("./Outputs/%s/test_rpCut", beam.c_str())};
+    const TString outDir {TString::Format("./Outputs/%s/test_ang_straggling_L1", beam.c_str())};
     // suffix = "" -> final file; suffix = "_part<i>" -> partial file of job i
     auto outName {[&](double ex, const TString& suffix = "")
                   {
-                      return TString::Format("%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_L1_240rpCut_paralelization%s.root",
+                      return TString::Format("%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_L1_6AngStr%s.root",
                                              outDir.Data(), target.c_str(), light.c_str(), ex, neutronPS, protonPS,
                                              suffix.Data());
                   }};
@@ -89,7 +92,7 @@ void runnerL1(TString what = "simu", bool inspect = false)
         else
         {
             // Number of parallel jobs per Ex
-            const int ncores {isPS ? 8 : 4};
+            const int ncores {isPS ? 8 : 2};
 
             // Process each Ex splitting the work in ncores jobs
             for(const auto& ex : Exs)
@@ -124,6 +127,10 @@ void runnerL1(TString what = "simu", bool inspect = false)
     else if(what.Contains("plot"))
     {
         Plotter(Exs, beam, target, light, Tbeam, neutronPS, protonPS);
+    }
+    else if(what.Contains("sigma"))
+    {
+        GetSigma(beam, light, target, Exs, neutronPS, protonPS, true);
     }
     else
     {

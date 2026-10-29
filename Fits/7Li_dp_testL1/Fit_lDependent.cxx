@@ -43,7 +43,7 @@ void Fit_lDependent()
     // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_2H_1-25AngStr.root", "grSigma");
     // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_2H_1-3AngStr.root", "grsigmas");
     // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_2H_1-35AngStr.root", "grsigmas");
-    sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_2H_1-4AngStr.root", "grsigmas");
+    sigmas.Read("../../Simulation/Outputs/7Li/sigmas_7Li_2H_1H_L1.root", "grsigmas");
     // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_2H_1-45AngStr.root", "grsigmas");
     // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_2H_1-5AngStr.root", "grSigma");
     // sigmas.Read("../../Simulation/Outputs/7Li/test_ang_straggling/sigmas_7Li_2H_2H_1-65AngStr.root", "grSigma");
@@ -71,7 +71,6 @@ void Fit_lDependent()
     inter.EndAddingStates();
     inter.EvalSigma(sigmas.GetGraph());
     inter.SetFixAll(2, true); // fix all sigmas
-    inter.SetFixAll(2, true);
     inter.SetBounds("v0", 3, {0.005, 0.3}); // gamma bounds
     inter.SetBounds("v1", 3, {0.5, 1.5});   // gamma bounds
     inter.SetBounds("v2", 3, {0.01, 1});

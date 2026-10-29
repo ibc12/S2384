@@ -73,7 +73,7 @@ constexpr int nPadsThresholdDefault =
 constexpr int nPadsThresholdPreBeforeL1 = 19; // Minimum number of pads outside the exclusion zone to consider an event
                                               // valid just for the 11Li runs before the L1 trigger change
 constexpr int validationZone = 8; // Minimum distance from the last voxel to the TPC borders in mm (from detector.conf)
-constexpr double thetaResFWHM = 3.5; // FWHM of theta resolution in degrees (in the begining was 1.5)
+constexpr double thetaResFWHM = 6; // FWHM of theta resolution in degrees (in the begining was 3.5)
 constexpr double rpXcut = 240.0;     // Cut in rp.x for the dp channel in mm (in the begining was 240.0)
 constexpr std::pair<double, double> phiRangePositive {16., 160.};   // Range of positive phi in deg for the experiment
 constexpr std::pair<double, double> phiRangeNegative {-160., -16.}; // Range of negative phi in deg for the experiment
@@ -476,6 +476,21 @@ double ComputeTL(ActRoot::Cluster& cluster, const PointF& rp)
     return (line.ProjectionPointOnLine(rp) - line.ProjectionPointOnLine(end)).R();
 }
 
+double ComputeThetaFitted(ActRoot::Cluster& cluster, const XYZPoint& vertex, const XYZVector& beamDir)
+{
+    const auto& vox = cluster.GetVoxels();
+    if(vox.empty())
+        return std::nan("");
+    auto line = cluster.GetLine();
+    line.Scale(voxelSizeXY, voxelSizeZ);
+    XYZVector dir {line.GetDirection()};
+    auto end = VoxelToMM(vox.back().GetPosition());
+    XYZVector toEnd {end.X() - vertex.X(), end.Y() - vertex.Y(), end.Z() - vertex.Z()};
+    if(dir.Dot(toEnd) < 0)
+        dir = -dir;
+    return std::acos(beamDir.Unit().Dot(dir.Unit())); // rad; ×RadToDeg if you want deg like GetTheta3D
+}
+
 void do_simuL1(const std::string& beam, const std::string& target, const std::string& light, const std::string& heavy,
                int neutronPS, int protonPS, double Tbeam, double Ex, bool inspect, const std::string& outFileName)
 {
@@ -727,12 +742,16 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
     outTree->Branch("theta3Lab", &theta3Lab_tree);
     double phi3CM_tree {};
     outTree->Branch("phi3CM", &phi3CM_tree);
+    // double ExFitted_tree {};
+    // outTree->Branch("EexFitted", &ExFitted_tree);
+    // double theta3LabFitted_tree {};
+    // outTree->Branch("theta3LabFitted", &theta3LabFitted_tree);
     double weight_tree {};
+    outTree->Branch("weight", &weight_tree);
     double theta4Lab_tree {};
     outTree->Branch("theta4Lab", &theta4Lab_tree);
     double phi4Lab_tree {};
     outTree->Branch("phi4Lab", &phi4Lab_tree);
-    outTree->Branch("weight", &weight_tree);
 
     // ---- SIMU STARTS HERE ----
     ROOT::EnableImplicitMT();
@@ -991,6 +1010,8 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
             nBadTL++;
             continue;
         }
+        // Compute angle with the fir to the line
+        // double theta3LabFit = ComputeThetaFitted(clusterRaw, vertex, beamDir); // in rad for kinematics
 
         // Reconstruct Ex!
         bool isOk {true}; // no punchthrouhg
@@ -998,7 +1019,8 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
         {
             double T3Rec {srim->EvalEnergy("light", TL)};
             auto ExRec {kin->ReconstructExcitationEnergy(T3Rec, theta3Lab)};
-            // Fill
+            // double ExFit = kin->ReconstructExcitationEnergy(T3Rec, theta3LabFit);
+            //  Fill
             hKinRec->Fill(theta3Lab * TMath::RadToDeg(), T3Rec); // after reconstruction
             hEx->Fill(ExRec, weight);                            // To get real counts weigth * alpha
             hRP_X->Fill(vertex.X());
@@ -1007,6 +1029,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
             hTheta3Lab->Fill(theta3Lab * TMath::RadToDeg());
             // write to TTree
             Eex_tree = ExRec;
+            // ExFitted_tree = ExFit;
             theta3CM_tree = theta3CM * TMath::RadToDeg();
             EVertex_tree = T3Rec;
             TL_tree = TL;
@@ -1020,6 +1043,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
             nPadsOutLight_tree = nPadsLight;
             nPadsOutHeavy_tree = nPadsHeavy;
             theta3Lab_tree = theta3Lab * TMath::RadToDeg();
+            // theta3LabFitted_tree = theta3LabFit * TMath::RadToDeg();
             phi3CM_tree = phi3CM;
             theta4Lab_tree = theta4Lab;
             phi4Lab_tree = phi4Lab;
