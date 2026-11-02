@@ -1,7 +1,7 @@
 1********************DWUCK4 AT YOUR SERVICE********************
 
  installed         Mon May 21 11:05:50 1990                
- today is          Fri Oct 30 16:53:35 2026
+ today is          Mon Nov  2 13:35:44 2026
 
 
 
@@ -40,9 +40,9 @@
  7Li(d,p)8Li(gs) 2+ 7.266 AMeV ADKD-KD LEA                   
  Adwck4 entered
 0ANGLE DATA          THETN= 180.0000   THET1=   0.0000   DTHET=   1.0000   A-ANG=   0.0000   B-ANG=   0.0000
-0CARD SET 3 DATA     LMAX =  50          LTR=   1
+0CARD SET 3 DATA     LMAX =  65          LTR=   1
                      NLTR =   1        2*JTR=   3
-0CARD SET 4 DATA     DRF  =   0.1000   RZ   =   0.0000   RMAX =  65.0000   VCE  =   0.0000   FNRNG=   0.7457
+0CARD SET 4 DATA     DRF  =   0.1000   RZ   =   0.0000   RMAX =  50.0000   VCE  =   0.0000   FNRNG=   0.7457
  PARTICLE DATA 
 0PARTICLE 1*******************************************************************************************************************
  INPUT DATA          ELAB =  14.5320   RC0  =   1.3000   AC   =   0.0000   2*STR=   2.0000

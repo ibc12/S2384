@@ -1,20 +1,24 @@
 // =============================================================================
-//  compare_calc.C
+//  Compare_automatic_calculations_R_PartialWaves.C
 //
-//  Macro de ROOT para comparar gráficamente distribuciones angulares
-//  (ángulo - sección eficaz) calculadas con DWUCK4 y/o FRESCO.
+//  Dibuja las distribuciones angulares de DWUCK4 (xs_dw4.n: dos columnas
+//  "angulo  seccion_eficaz", sin cabecera) producidas por MakeDwuckConv.C.
 //
-//  Formatos de entrada:
-//    DWUCK4 : dos columnas "angulo  seccion_eficaz", sin cabecera.
-//    FRESCO : mismo formato, pero con 10 líneas de título al principio
-//             y una línea "END" al final.
+//  Se le pasan LISTAS de Ex, de Rmax y de Lmax y la macro genera, para cada Ex,
+//  un canvas con todas las combinaciones (Rmax x Lmax) y lo guarda en png.
+//
+//     color        -> Lmax
+//     tipo de línea -> Rmax
+//
+//  Rutas que lee (las mismas que escribe MakeDwuckConv.C):
+//     <kDirPrefix><tag>/R<R>_L<L>/xs_dw4.n        tag = "gs"  o  "Ex3.000", ...
 //
 //  Uso:
-//    root -l compare_calc.C            // ejecuta compare_calc() con el ejemplo
-//    root -l 'compare_calc.C+'         // compilada (más rápido y más estricto)
+//     root -l 'Compare_automatic_calculations_R_PartialWaves.C+'
+//     root -l 'Compare_automatic_calculations_R_PartialWaves.C+({0.,3.},{30,35,45},{40,50})'
+//     root -l 'Compare_automatic_calculations_R_PartialWaves.C+({0.},{20,25,30},{30,40,50,60},false)'  // Y lineal
 //
-//  Para tus propios archivos, edita la función compare_calc() al final
-//  (o llama a CompCalc::DrawComparison(...) desde otra macro).
+//  Si falta algún archivo (p.ej. esa combinación no se calculó) se avisa y se omite.
 // =============================================================================
 
 #include "Rtypes.h"
@@ -29,268 +33,141 @@
 #include <TStyle.h>
 #include <TSystem.h>
 
-#include <algorithm>
+#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
 
-namespace CompCalc
+namespace CompDW
 {
 
-// -----------------------------------------------------------------------------
-//  Tipos
-// -----------------------------------------------------------------------------
+// ----------------------------- CONFIGURACIÓN ---------------------------------
+// Carpeta de cada Ex = kDirPrefix + tag   (como crea MakeDwuckConv.C)
+const char* const kDirPrefix = "./conv_0p3-2_2+_";
+const char* const kXsFile = "xs_dw4.n";
+const char* const kFigDir = "./Figures";
 
-enum class Format
+// Texto del eje Y / X
+const char* const kXTitle = "#theta_{cm} (deg)";
+const char* const kYTitle = "d#sigma/d#Omega (mb/sr)";
+
+// ------------------------------ utilidades -----------------------------------
+struct Entry
 {
-    DWUCK4,
-    FRESCO
+    TString path;
+    TString label;
+    Color_t color;
+    Style_t style;
 };
 
-// Descripción de un cálculo (un archivo) a dibujar
-struct Calc
+// Mismo criterio que MakeDwuckConv.C: "gs" para Ex=0, "Ex3.000" para Ex=3
+inline TString Tag(double ex)
 {
-    TString path;      // ruta al archivo
-    TString label;     // texto de la leyenda
-    Format format;     // DWUCK4 o FRESCO
-    Color_t color;     // -1 => se asigna automáticamente
-    Style_t lineStyle; // 1 = continua, 2 = discontinua, ...
-    Width_t lineWidth;
-    TString tag; // texto que distingue este cálculo de otros
-                 // del mismo código (p.ej. "pot. Koning", "r0=1.25")
-
-    Calc(const TString& p, const TString& l, Format f, Color_t c = -1, Style_t ls = 1, Width_t lw = 2,
-         const TString& t = "")
-        : path(p),
-          label(l),
-          format(f),
-          color(c),
-          lineStyle(ls),
-          lineWidth(lw),
-          tag(t)
-    {
-    }
-
-    // Setter encadenable:  Calc(...).Tag("CCBA, sin spin-orbita")
-    Calc& Tag(const TString& t)
-    {
-        tag = t;
-        return *this;
-    }
-
-    // Texto final de la leyenda:
-    //   label vacío  -> nombre del código ("DWUCK4" / "FRESCO")
-    //   tag no vacío -> se añade entre paréntesis: "FRESCO (pot. Koning)"
-    TString LegendText() const
-    {
-        TString s = label;
-        if(s.IsNull())
-            s = (format == Format::FRESCO) ? "FRESCO" : "DWUCK4";
-        if(!tag.IsNull())
-            s += " (" + tag + ")";
-        return s;
-    }
-};
-
-// Opciones globales de la figura
-struct PlotOptions
-{
-    TString title = "";
-    TString xTitle = "#theta_{cm} (deg)";
-    TString yTitle = "d#sigma/d#Omega (mb/sr)";
-    bool logY = true; // escala logarítmica en Y
-    TString canvasName = "cComp";
-    int width = 900;
-    int height = 650;
-    TString saveAs = ""; // p.ej. "comparacion.png" o ".pdf"
-};
-
-// Parámetros de cada formato
-constexpr int kFrescoHeaderLines = 10;
-
-inline int HeaderLines(Format f)
-{
-    return f == Format::FRESCO ? kFrescoHeaderLines : 0;
-}
-inline bool HasEndMarker(Format f)
-{
-    return f == Format::FRESCO;
+    if(std::fabs(ex) < 1e-9)
+        return "gs";
+    return TString(Form("Ex%.3f", ex));
 }
 
-// -----------------------------------------------------------------------------
-//  Utilidades de texto
-// -----------------------------------------------------------------------------
-
-inline std::string Trim(const std::string& s)
+inline TString ExTitle(double ex)
 {
-    const char* ws = " \t\r\n";
-    const auto a = s.find_first_not_of(ws);
-    if(a == std::string::npos)
-        return "";
-    const auto b = s.find_last_not_of(ws);
-    return s.substr(a, b - a + 1);
+    if(std::fabs(ex) < 1e-9)
+        return "g.s.";
+    return TString(Form("E_{x} = %g MeV", ex));
 }
 
-inline bool IsEndMarker(const std::string& line)
+inline Color_t ColorL(size_t i)
 {
-    std::string t = Trim(line);
-    std::transform(t.begin(), t.end(), t.begin(), ::toupper);
-    return t == "END";
+    static const Color_t pal[] = {kBlack,       kRed + 1,    kBlue + 1, kGreen + 2,
+                                  kMagenta + 1, kOrange + 7, kCyan + 2, kViolet + 1};
+    return pal[i % (sizeof(pal) / sizeof(pal[0]))];
 }
 
-// Lee dos números de una línea. Acepta exponentes estilo Fortran (1.0D-03).
-inline bool ParseLine(std::string line, double& x, double& y)
+inline Style_t StyleR(size_t i)
 {
-    for(auto& c : line)
-        if(c == 'D' || c == 'd')
-            c = 'E';
-    std::istringstream ss(line);
-    return static_cast<bool>(ss >> x >> y);
+    static const Style_t sty[] = {1, 2, 7, 3, 9, 5};
+    return sty[i % (sizeof(sty) / sizeof(sty[0]))];
 }
 
-// -----------------------------------------------------------------------------
-//  Lectura de archivos
-// -----------------------------------------------------------------------------
-
-// Devuelve true si se ha leído al menos un punto.
-inline bool ReadData(const Calc& calc, std::vector<double>& x, std::vector<double>& y)
+// Lee "angulo xs" (acepta exponentes Fortran 1.0D-03). Líneas no numéricas se ignoran.
+// Con logY se descartan los puntos con xs <= 0.
+inline bool ReadXs(const TString& path, std::vector<double>& x, std::vector<double>& y, bool logY)
 {
-    std::ifstream in(calc.path.Data());
+    std::ifstream in(path.Data());
     if(!in)
-    {
-        std::cerr << "[ERROR] No se puede abrir: " << calc.path << std::endl;
         return false;
-    }
-
-    const int skip = HeaderLines(calc.format);
-    const bool useEnd = HasEndMarker(calc.format);
     std::string line;
-    int nLine = 0, nBad = 0;
-
     while(std::getline(in, line))
     {
-        ++nLine;
-        if(nLine <= skip)
-            continue; // cabecera
-        if(useEnd && IsEndMarker(line))
-            break; // fin de datos
-        if(Trim(line).empty())
-            continue; // línea vacía
-
+        for(size_t i = 0; i < line.size(); ++i)
+            if(line[i] == 'D' || line[i] == 'd')
+                line[i] = 'E';
+        std::istringstream ss(line);
         double a, b;
-        if(!ParseLine(line, a, b))
-        {
-            ++nBad;
+        if(!(ss >> a >> b))
             continue;
-        }
+        if(logY && b <= 0.)
+            continue;
         x.push_back(a);
         y.push_back(b);
     }
-
-    if(nBad > 0)
-        std::cerr << "[AVISO] " << calc.path << ": " << nBad << " línea(s) no numérica(s) ignorada(s)." << std::endl;
-    if(x.empty())
-    {
-        std::cerr << "[ERROR] Sin datos válidos en: " << calc.path << std::endl;
-        return false;
-    }
-    return true;
+    return !x.empty();
 }
 
-// -----------------------------------------------------------------------------
-//  Construcción del TGraph
-// -----------------------------------------------------------------------------
-
-// Si logY == true, se descartan los puntos con y <= 0 (no representables).
-inline TGraph* MakeGraph(const Calc& calc, Color_t color, bool logY)
-{
-    std::vector<double> x, y;
-    if(!ReadData(calc, x, y))
-        return nullptr;
-
-    if(logY)
-    {
-        std::vector<double> xf, yf;
-        for(size_t i = 0; i < x.size(); ++i)
-            if(y[i] > 0)
-            {
-                xf.push_back(x[i]);
-                yf.push_back(y[i]);
-            }
-        if(xf.size() != x.size())
-            std::cerr << "[AVISO] " << calc.path << ": " << (x.size() - xf.size())
-                      << " punto(s) con y<=0 descartado(s) por escala log." << std::endl;
-        x.swap(xf);
-        y.swap(yf);
-        if(x.empty())
-            return nullptr;
-    }
-
-    auto* g = new TGraph(static_cast<int>(x.size()), x.data(), y.data());
-    g->SetName(Form("g_%s", gSystem->BaseName(calc.path)));
-    g->SetTitle(calc.LegendText());
-    g->SetLineColor(color);
-    g->SetLineStyle(calc.lineStyle);
-    g->SetLineWidth(calc.lineWidth);
-    g->SetMarkerStyle(0);
-    g->SetFillStyle(0);
-    return g;
-}
-
-// -----------------------------------------------------------------------------
-//  Figura completa
-// -----------------------------------------------------------------------------
-
-inline Color_t AutoColor(size_t i)
-{
-    static const Color_t palette[] = {kBlack,      kRed + 1,  kBlue + 1,   kGreen + 2, kMagenta + 1,
-                                      kOrange + 7, kCyan + 2, kViolet + 1, kGray + 2,  kYellow + 2};
-    return palette[i % (sizeof(palette) / sizeof(palette[0]))];
-}
-
-// Dibuja todos los cálculos en un único canvas. Devuelve el canvas.
-inline TCanvas* DrawComparison(const std::vector<Calc>& calcs, const PlotOptions& opt = PlotOptions())
+// ------------------------- canvas con una lista de curvas ---------------------
+inline TCanvas* DrawEntries(const std::vector<Entry>& entries, const TString& title, const TString& name,
+                            const TString& saveAs, bool logY)
 {
     gStyle->SetOptStat(0);
 
-    auto* c = new TCanvas(opt.canvasName, opt.canvasName, opt.width, opt.height);
+    auto* c = new TCanvas(name, name, 900, 650);
     c->SetLeftMargin(0.13);
     c->SetGrid();
-    if(opt.logY)
+    if(logY)
         c->SetLogy();
 
-    // El TMultiGraph es el propietario de los TGraph que se le añaden
-    auto* mg = new TMultiGraph(Form("mg_%s", opt.canvasName.Data()), "");
-    // Ancho de la leyenda según el texto más largo (entre 25% y 70% del canvas)
-    size_t maxLen = 0;
-    for(const auto& cc : calcs)
-        maxLen = std::max<size_t>(maxLen, cc.LegendText().Length());
-    const double legW = std::min(0.70, std::max(0.25, 0.10 + 0.012 * maxLen));
-    auto* leg = new TLegend(0.88 - legW, 0.88 - 0.05 * calcs.size(), 0.88, 0.88);
-    leg->SetBorderSize(0);
-    leg->SetFillStyle(0);
+    auto* mg = new TMultiGraph(Form("mg_%s", name.Data()), ""); // es el propietario de los TGraph
 
-    int nOk = 0;
-    for(size_t i = 0; i < calcs.size(); ++i)
+    std::vector<TGraph*> gs;
+    for(size_t i = 0; i < entries.size(); ++i)
     {
-        const Color_t col = (calcs[i].color >= 0) ? calcs[i].color : AutoColor(i);
-        TGraph* g = MakeGraph(calcs[i], col, opt.logY);
-        if(!g)
+        std::vector<double> x, y;
+        if(!ReadXs(entries[i].path, x, y, logY))
+        {
+            std::cerr << "[AVISO] sin datos / no existe: " << entries[i].path << " (se omite)" << std::endl;
             continue;
+        }
+        auto* g = new TGraph(static_cast<int>(x.size()), x.data(), y.data());
+        g->SetName(Form("g_%s_%d", name.Data(), static_cast<int>(i)));
+        g->SetTitle(entries[i].label);
+        g->SetLineColor(entries[i].color);
+        g->SetLineStyle(entries[i].style);
+        g->SetLineWidth(2);
+        g->SetMarkerStyle(0);
+        g->SetFillStyle(0);
         mg->Add(g, "L");
-        leg->AddEntry(g, calcs[i].LegendText(), "L");
-        ++nOk;
+        gs.push_back(g);
     }
 
-    if(nOk == 0)
+    if(gs.empty())
     {
-        std::cerr << "[ERROR] Ningún archivo pudo leerse; no hay nada que dibujar." << std::endl;
+        std::cerr << "[ERROR] " << name << ": ningún archivo pudo leerse, no hay nada que dibujar." << std::endl;
         return c;
     }
 
-    mg->SetTitle(Form("%s;%s;%s", opt.title.Data(), opt.xTitle.Data(), opt.yTitle.Data()));
+    // Leyenda: 2 columnas si hay muchas curvas
+    const int n = static_cast<int>(gs.size());
+    const int ncol = (n > 8) ? 2 : 1;
+    const int rows = (n + ncol - 1) / ncol;
+    auto* leg = new TLegend(0.88 - 0.27 * ncol, 0.88 - 0.045 * rows, 0.88, 0.88);
+    leg->SetNColumns(ncol);
+    leg->SetBorderSize(0);
+    leg->SetFillStyle(0);
+    for(size_t i = 0; i < gs.size(); ++i)
+        leg->AddEntry(gs[i], gs[i]->GetTitle(), "L");
+
+    mg->SetTitle(Form("%s;%s;%s", title.Data(), kXTitle, kYTitle));
     mg->Draw("A");
     mg->GetXaxis()->SetTitleOffset(1.1);
     mg->GetYaxis()->SetTitleOffset(1.3);
@@ -298,49 +175,43 @@ inline TCanvas* DrawComparison(const std::vector<Calc>& calcs, const PlotOptions
 
     c->Modified();
     c->Update();
-    if(opt.saveAs.Length() > 0)
-        c->SaveAs(opt.saveAs);
+    if(saveAs.Length() > 0)
+        c->SaveAs(saveAs);
     return c;
 }
 
-} // namespace CompCalc
+} // namespace CompDW
 
 // -----------------------------------------------------------------------------
-//  Punto de entrada: EDITA AQUÍ tus archivos
+//  Punto de entrada: listas de Ex, Rmax y Lmax
 // -----------------------------------------------------------------------------
-void Compare_automatic_calculations_R_PartialWaves()
+void Compare_automatic_calculations_R_PartialWaves(const std::vector<double>& exList = {0.0, 3.0},
+                                                   const std::vector<int>& rList = {30, 35, 40, 45, 50, 55, 60},
+                                                   const std::vector<int>& lList = {40, 45, 50, 55, 60, 65, 70}, bool logY = true)
 {
-    using namespace CompCalc;
+    using namespace CompDW;
 
-    // --- Estado fundamental ---
-    std::vector<Calc> gs = {
-        Calc("./conv_0p3-2_2+_gs/R30_L40/xs_dw4.n", "DWUCK4", Format::DWUCK4, kPink + 1, 1).Tag("R=30, L=40"),
-        Calc("./conv_0p3-2_2+_gs/R35_L40/xs_dw4.n", "DWUCK4", Format::DWUCK4, kBlue + 1, 1).Tag("R=35, L=40"),
-        Calc("./conv_0p3-2_2+_gs/R45_L40/xs_dw4.n", "DWUCK4", Format::DWUCK4, kGreen + 1, 1).Tag("R=45, L=40"),
-        Calc("./conv_0p3-2_2+_gs/R30_L50/xs_dw4.n", "DWUCK4", Format::DWUCK4, kRed + 1, 1).Tag("R=30, L=50"),
-        Calc("./conv_0p3-2_2+_gs/R35_L50/xs_dw4.n", "DWUCK4", Format::DWUCK4, kMagenta + 1, 1).Tag("R=35, L=50"),
-        Calc("./conv_0p3-2_2+_gs/R45_L50/xs_dw4.n", "DWUCK4", Format::DWUCK4, kBlack + 1, 1).Tag("R=45, L=50"),
+    gSystem->mkdir(kFigDir, true);
 
-    };
-    PlotOptions optGS;
-    optGS.title = "g.s.";
-    optGS.canvasName = "cGS";
-    optGS.saveAs = "./Figures/compare_gs.png";
-    DrawComparison(gs, optGS);
+    for(size_t k = 0; k < exList.size(); ++k)
+    {
+        const double ex = exList[k];
+        const TString tag = Tag(ex);
+        const TString dir = TString(kDirPrefix) + tag;
 
-    // ---- 3.0 MEV excitation ---
-    std::vector<Calc> ex3_0 = {
-        Calc("./conv_0p3-2_2+_Ex3.000/R30_L40/xs_dw4.n", "DWUCK4", Format::DWUCK4, kPink + 1, 1).Tag("R=30, L=40"),
-        Calc("./conv_0p3-2_2+_Ex3.000/R35_L40/xs_dw4.n", "DWUCK4", Format::DWUCK4, kBlue + 1, 1).Tag("R=35, L=40"),
-        Calc("./conv_0p3-2_2+_Ex3.000/R45_L40/xs_dw4.n", "DWUCK4", Format::DWUCK4, kGreen + 1, 1).Tag("R=45, L=40"),
-        Calc("./conv_0p3-2_2+_Ex3.000/R30_L50/xs_dw4.n", "DWUCK4", Format::DWUCK4, kRed + 1, 1).Tag("R=30, L=50"),
-        Calc("./conv_0p3-2_2+_Ex3.000/R35_L50/xs_dw4.n", "DWUCK4", Format::DWUCK4, kMagenta + 1, 1).Tag("R=35, L=50"),
-        Calc("./conv_0p3-2_2+_Ex3.000/R45_L50/xs_dw4.n", "DWUCK4", Format::DWUCK4, kBlack + 1, 1).Tag("R=45, L=50"),
-    };
-    PlotOptions opt3_0;
-    opt3_0.title = "Ex 3.0 MeV";
-    opt3_0.canvasName = "cEx3_0";
-    opt3_0.saveAs = "./Figures/compare_Ex3.000.png";
-    DrawComparison(ex3_0, opt3_0);
+        // L en el bucle externo, R en el interno -> la leyenda agrupa por color (Lmax)
+        std::vector<Entry> entries;
+        for(size_t j = 0; j < lList.size(); ++j)
+            for(size_t i = 0; i < rList.size(); ++i)
+            {
+                Entry e;
+                e.path = Form("%s/R%d_L%d/%s", dir.Data(), rList[i], lList[j], kXsFile);
+                e.label = Form("R_{max}=%d fm, L_{max}=%d", rList[i], lList[j]);
+                e.color = ColorL(j);
+                e.style = StyleR(i);
+                entries.push_back(e);
+            }
 
+        DrawEntries(entries, ExTitle(ex), TString("cConv_") + tag, TString(kFigDir) + "/compare_" + tag + ".png", logY);
+    }
 }

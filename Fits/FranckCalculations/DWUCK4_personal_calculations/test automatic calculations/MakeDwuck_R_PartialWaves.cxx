@@ -8,8 +8,8 @@
 //  is not explicitly changed stays byte-identical.
 //
 //  What changes between runs (Ex, OMP, Q, Sn, normalisation are the same in all):
-//     - integration radius R (fm) : line 5, cols 1-3  (I3, the "30" of " 30  1  1  3")
-//     - maximum partial wave Lmax : line 6, cols 17-24 (F8.0, the "40.0")
+//     - integration radius R (RMAX, fm) : line 6, cols 17-24 (F8.0, the "40.0")   [card set 4]
+//     - maximum partial wave Lmax       : line 5, cols 1-3   (I3, the "30" of " 30  1  1  3") [card set 3]
 //     - tabulated distorted-wave potentials (the four "300." blocks): resized to
 //       N = R/DR points (300 = 30 fm / 0.1 fm in your template), see kResizeTables.
 //
@@ -51,13 +51,13 @@ const std::string kSuffix = "ADKDKD_LEA";
 const std::string kOutRoot = "."; // folders are created here
 
 // The ONE final state of this study (default values; can be passed as arguments)
-const int kTwoJf = 4;      // 2*Jf of the final state (4 -> 2)
-const double kEx = 3.0;    // MeV
+const int kTwoJf = 4;   // 2*Jf of the final state (4 -> 2)
+const double kEx = 0.0; // MeV
 
 // Scan lists (default values; can be passed as arguments).  The largest R and the
 // largest Lmax are taken as the reference for the relative differences.
 const std::vector<int> kRList = {30, 35, 40, 45, 50, 55, 60}; // fm   (integer: the field is I3)
-const std::vector<int> kLList = {40, 45, 50, 55, 60, 65, 70};     // Lmax
+const std::vector<int> kLList = {40, 45, 50, 55, 60, 65, 70}; // Lmax
 
 // Resize the four tabulated-potential blocks to N = R/DR points in every run.
 // (Your template has 300 points = 30 fm / DR=0.1.)  Set to false if DWUCK4 does not
@@ -66,8 +66,8 @@ const bool kResizeTables = true;
 
 // Transferred neutron (written in the quantum-number line and in line 5)
 const int kN = 0;
-const int kL = 1;     // p
-const int kTwoJ = 3;  // 2*j  (3 -> p3/2)   -> same as the template: " 30  1  1  3" and "0. 1. 3. 1. 50. 0."
+const int kL = 1;    // p
+const int kTwoJ = 3; // 2*j  (3 -> p3/2)   -> same as the template: " 30  1  1  3" and "0. 1. 3. 1. 50. 0."
 const int kTwoS = 1;
 const int kTwoJi = 3;
 const int kParityI = -1;
@@ -78,12 +78,12 @@ const std::string kTitleOld = "8Li(gs) 2+";
 const std::string kTitleNucl = "8Li";
 
 // Template line numbers (1-based, as in your editor)
-const int kLnTransfer = 5; // " 30  1  1  3"
-const int kLnRmax = 5;     // integration radius, cols 1-3 (I3)
-const int kColRmax = 1;
-const int kLnLmax = 6;     // "     0.1     0.0    40.0          0.7457": DR, ?, Lmax, ?, finite range
-const int kColLmax = 17;   //   Lmax = 3rd field (F8.0)
-const int kLnDR = 6;       //   DR   = 1st field (cols 1-8), only read
+const int kLnTransfer = 5; // " 30  1  1  3": card set 3 = LMAX, NLTR, LTR, 2*JTR   (18I3)
+const int kLnLmax = 5;     // maximum partial wave LMAX, cols 1-3 (I3)
+const int kColLmax = 1;
+const int kLnRmax = 6; // "     0.1     0.0    40.0          0.7457": card set 4 = DRF, RZ, RMAX, VCE, FNRNG   (10F8.4)
+const int kColRmax = 17; //   RMAX = 3rd field (F8.0)
+const int kLnDR = 6;     //   DR   = 1st field (cols 1-8), only read
 const int kLnQ = 257;
 const int kLnOMP1 = 258;
 const int kLnOMP2 = 259;
@@ -376,7 +376,7 @@ std::string Build(const Lines& tpl, double ex, int twoJf, int rmax, int lmax, co
 
     // ---- sanity checks: are we really editing the lines we think? -------------
     Require(L, 1, {"NOM="});
-    Require(L, kLnLmax, {"0.7457"});
+    Require(L, kLnRmax, {"0.7457"});
     Require(L, kLnQ, {"1.0073", "8.0208"});
     Require(L, kLnOMP1, {"+1."});
     Require(L, kLnOMP2, {"+2."});
@@ -417,8 +417,8 @@ std::string Build(const Lines& tpl, double ex, int twoJf, int rmax, int lmax, co
             t.replace(pos, kTitleOld.size(), nw);
     }
 
-    // ---- line 5: (R, 1, L, 2J) -----------------------------------------------
-    PutInt(L, kLnRmax, kColRmax, rmax);
+    // ---- line 5 (card set 3): (LMAX, 1, L, 2J) -------------------------------
+    PutInt(L, kLnLmax, kColLmax, lmax);
     {
         std::string& s5 = L.at(kLnTransfer);
         char b[8];
@@ -428,8 +428,8 @@ std::string Build(const Lines& tpl, double ex, int twoJf, int rmax, int lmax, co
         s5.replace(9, 3, b);
     }
 
-    // ---- line 6: Lmax ---------------------------------------------------------
-    Put(L, kLnLmax, kColLmax, lmax, 1);
+    // ---- line 6 (card set 4): RMAX --------------------------------------------
+    Put(L, kLnRmax, kColRmax, rmax, 1);
 
     // ---- lines 257 / 261: Ex ---------------------------------------------------
     PutEx(L, kLnQ, -ex);
@@ -562,7 +562,8 @@ void Summary(std::vector<Row>& rows, const std::string& baseDir)
 
     std::ofstream out((baseDir + "/convergence.dat").c_str());
     char b[256];
-    std::snprintf(b, sizeof b, "# reference: R=%d fm, Lmax=%d%s", rRef, lRef, ref ? "" : "   (NOT available: no differences)");
+    std::snprintf(b, sizeof b, "# reference: R=%d fm, Lmax=%d%s", rRef, lRef,
+                  ref ? "" : "   (NOT available: no differences)");
     out << b << "\n# R[fm]  Lmax   sigma_max     theta_max   sigma_int    d_max[%]   d_int[%]\n";
     std::cout << "\n" << b << "\n  R[fm]  Lmax   sigma_max   theta_max   sigma_int   d_max[%]  d_int[%]\n";
     for(size_t i = 0; i < rows.size(); ++i)
@@ -576,8 +577,8 @@ void Summary(std::vector<Row>& rows, const std::string& baseDir)
         {
             const double dm = ref ? 100. * (r.pk - ref->pk) / ref->pk : 0.;
             const double di = ref ? 100. * (r.integ - ref->integ) / ref->integ : 0.;
-            std::snprintf(b, sizeof b, "%7d %5d  %12.5E %8.1f  %12.5E %9.3f %9.3f", r.R, r.L, r.pk, r.thpk, r.integ,
-                          dm, di);
+            std::snprintf(b, sizeof b, "%7d %5d  %12.5E %8.1f  %12.5E %9.3f %9.3f", r.R, r.L, r.pk, r.thpk, r.integ, dm,
+                          di);
         }
         out << b << "\n";
         std::cout << b << "\n";
@@ -588,8 +589,9 @@ void Summary(std::vector<Row>& rows, const std::string& baseDir)
 } // namespace dwc
 
 // ROOT entry point (function name = file name).  One Jf, one Ex, lists of R and Lmax.
-void MakeDwuck_R_PartialWaves(int twoJf = dwc::kTwoJf, double ex = dwc::kEx, const std::vector<int>& rIn = std::vector<int>(),
-                   const std::vector<int>& lIn = std::vector<int>(), bool run = true)
+void MakeDwuck_R_PartialWaves(int twoJf = dwc::kTwoJf, double ex = dwc::kEx,
+                              const std::vector<int>& rIn = std::vector<int>(),
+                              const std::vector<int>& lIn = std::vector<int>(), bool run = true)
 {
     const std::vector<int> rList = rIn.empty() ? dwc::kRList : rIn;
     const std::vector<int> lList = lIn.empty() ? dwc::kLList : lIn;

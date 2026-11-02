@@ -1,26 +1,26 @@
 # reference: R=60 fm, Lmax=70   (NOT available: no differences)
 # R[fm]  Lmax   sigma_max     theta_max   sigma_int    d_max[%]   d_int[%]
-     30    40   1.31474E+02      0.0   4.92844E+01     0.000     0.000
-     30    45   (no xs_dw4.n yet / not readable)
-     30    50   (no xs_dw4.n yet / not readable)
-     30    55   (no xs_dw4.n yet / not readable)
-     30    60   (no xs_dw4.n yet / not readable)
-     30    65   (no xs_dw4.n yet / not readable)
-     30    70   (no xs_dw4.n yet / not readable)
-     35    40   1.30945E+02      0.0   4.92851E+01     0.000     0.000
-     35    45   (no xs_dw4.n yet / not readable)
-     35    50   (no xs_dw4.n yet / not readable)
-     35    55   (no xs_dw4.n yet / not readable)
-     35    60   (no xs_dw4.n yet / not readable)
-     35    65   (no xs_dw4.n yet / not readable)
-     35    70   (no xs_dw4.n yet / not readable)
+     30    40   1.60777E+06      2.0   3.31302E+05     0.000     0.000
+     30    45   1.28903E+18    179.0   2.20142E+17     0.000     0.000
+     30    50   1.26444E+32    179.0   3.43930E+31     0.000     0.000
+     30    55           INF      0.0          -NAN     0.000     0.000
+     30    60           INF      0.0          -NAN     0.000     0.000
+     30    65           INF      0.0          -NAN     0.000     0.000
+     30    70           INF      0.0          -NAN     0.000     0.000
+     35    40   4.89845E+04      0.0   9.82627E+03     0.000     0.000
+     35    45   1.54923E+08      0.0   1.25802E+07     0.000     0.000
+     35    50   4.53552E+19      0.0   6.10826E+18     0.000     0.000
+     35    55   1.59175E+32      0.0   1.81332E+31     0.000     0.000
+     35    60           INF      0.0          -NAN     0.000     0.000
+     35    65           INF      0.0          -NAN     0.000     0.000
+     35    70           INF      0.0          -NAN     0.000     0.000
      40    40   2.13190E+02      4.0   6.90183E+01     0.000     0.000
-     40    45   (no xs_dw4.n yet / not readable)
-     40    50   (no xs_dw4.n yet / not readable)
-     40    55   (no xs_dw4.n yet / not readable)
-     40    60   (no xs_dw4.n yet / not readable)
-     40    65   (no xs_dw4.n yet / not readable)
-     40    70   (no xs_dw4.n yet / not readable)
+     40    45   5.25849E+05      0.0   7.99020E+04     0.000     0.000
+     40    50   4.39876E+09      0.0   7.06714E+08     0.000     0.000
+     40    55   9.91936E+20    179.0   1.91852E+20     0.000     0.000
+     40    60   7.41282E+33      0.0   7.97671E+32     0.000     0.000
+     40    65           INF      0.0          -NAN     0.000     0.000
+     40    70           INF      0.0          -NAN     0.000     0.000
      45    40   5.25849E+05      0.0   7.99020E+04     0.000     0.000
      45    45   (no xs_dw4.n yet / not readable)
      45    50   (no xs_dw4.n yet / not readable)
