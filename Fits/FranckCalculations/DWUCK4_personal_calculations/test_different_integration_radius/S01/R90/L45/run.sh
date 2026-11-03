@@ -1,6 +1,6 @@
 NOM=Li7_dp_Ex3.000_S01_R90_L45_ADKDKD_LEA
 dwuck4 <<EOF >${NOM}.res
-200101003000211     7Li(d,p)8Li(3.000) 2+ 7.266 AMeV ADKD-KD LEA
+200101003000211     7Li(d,p)8Li(3.000) 2- 7.266 AMeV ADKD-KD LEA
    180.0     0.0     1.0
  45  1  1  3
      0.1     0.0 90.0000          0.7457

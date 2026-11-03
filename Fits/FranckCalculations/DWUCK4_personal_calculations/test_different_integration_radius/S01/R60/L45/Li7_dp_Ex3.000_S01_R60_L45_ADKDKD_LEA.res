@@ -1,7 +1,7 @@
 1********************DWUCK4 AT YOUR SERVICE********************
 
  installed         Mon May 21 11:05:50 1990                
- today is          Mon Nov  2 18:53:27 2026
+ today is          Tue Nov  3 10:19:54 2026
 
 
 
@@ -36,8 +36,8 @@
  Elapsed time in seconds =   0.00
 0CONTROL INTEGERS
   1 2 3 4 5 6 7 8 9 A B C D E F G H I J K    RUN IDENTIFICATION                                             0/00/00   0.00.00
-  2 0 0 1 0 1 0 0 3 0 0 0 2 1 1 0 0 0 0 0    7Li(d,p)8Li(3.000) 2+ 7.266 AMeV ADKD-KD LEA                
- 7Li(d,p)8Li(3.000) 2+ 7.266 AMeV ADKD-KD LEA                
+  2 0 0 1 0 1 0 0 3 0 0 0 2 1 1 0 0 0 0 0    7Li(d,p)8Li(3.000) 2- 7.266 AMeV ADKD-KD LEA                
+ 7Li(d,p)8Li(3.000) 2- 7.266 AMeV ADKD-KD LEA                
  Adwck4 entered
 0ANGLE DATA          THETN= 180.0000   THET1=   0.0000   DTHET=   1.0000   A-ANG=   0.0000   B-ANG=   0.0000
 0CARD SET 3 DATA     LMAX =  45          LTR=   1
@@ -76,7 +76,7 @@
                      V IM =  38.1080   R0IM =   1.3110   A IM =   0.5230   R IM =   2.6243   VSOI =   0.0000   POWR =   0.0000
  NX=4 L*S VOLUME     V RL = -22.1840   R0RL =   0.8620   A RL =   0.5900   R RL =   1.7255   VSOR =   0.0000
                      V IM =   0.1450   R0IM =   0.8620   A IM =   0.5900   R IM =   1.7255   VSOI =   0.0000   POWR =   0.0000
-17Li(d,p)8Li(3.000) 2+ 7.266 AMeV ADKD-KD LEA                   0/ 0/ 0
+17Li(d,p)8Li(3.000) 2- 7.266 AMeV ADKD-KD LEA                   0/ 0/ 0
 0FORM FACTOR DATA 
 0PARTICLE 3*******************************************************************************************************************
  INPUT DATA          ELAB =   0.9670   RC0  =   0.0000   AC   =   0.0000   2*STR=   1.0000
@@ -97,7 +97,7 @@
 0SINGLE PARTICLE WIDTH = 3.8780E -3  MEV     VOLUME TERM =  2.4995E+03     SURFACE TERM = -3.0632E+01
                      V    =   5.0000   DET  =  -0.5410   NODES=   2.0000   RM   =  40.0500   E    =   0.9670   ITER.=  33
 0                    LMAX =  45        NSTEP= 600        NLTR =   1
-17Li(d,p)8Li(3.000) 2+ 7.266 AMeV ADKD-KD LEA                   0/ 0/ 0
+17Li(d,p)8Li(3.000) 2- 7.266 AMeV ADKD-KD LEA                   0/ 0/ 0
 0Central    K(R)**2 FOR DISTORTED WAVE 1
    0.10  7.2443E+00  2.3751E-01  7.2196E+00  2.4271E-01  7.1791E+00  2.5148E-01  7.1258E+00  2.6399E-01  7.0611E+00  2.8044E-01
    0.60  6.9830E+00  3.0101E-01  6.8894E+00  3.2586E-01  6.7794E+00  3.5510E-01  6.6533E+00  3.8885E-01  6.5117E+00  4.2713E-01

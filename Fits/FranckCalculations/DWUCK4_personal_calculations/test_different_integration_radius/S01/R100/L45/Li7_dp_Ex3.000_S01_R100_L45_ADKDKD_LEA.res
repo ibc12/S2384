@@ -1,7 +1,7 @@
 1********************DWUCK4 AT YOUR SERVICE********************
 
  installed         Mon May 21 11:05:50 1990                
- today is          Mon Nov  2 18:53:31 2026
+ today is          Tue Nov  3 10:19:58 2026
 
 
 
@@ -36,8 +36,8 @@
  Elapsed time in seconds =   0.00
 0CONTROL INTEGERS
   1 2 3 4 5 6 7 8 9 A B C D E F G H I J K    RUN IDENTIFICATION                                             0/00/00   0.00.00
-  2 0 0 1 0 1 0 0 3 0 0 0 2 1 1 0 0 0 0 0    7Li(d,p)8Li(3.000) 2+ 7.266 AMeV ADKD-KD LEA                
- 7Li(d,p)8Li(3.000) 2+ 7.266 AMeV ADKD-KD LEA                
+  2 0 0 1 0 1 0 0 3 0 0 0 2 1 1 0 0 0 0 0    7Li(d,p)8Li(3.000) 2- 7.266 AMeV ADKD-KD LEA                
+ 7Li(d,p)8Li(3.000) 2- 7.266 AMeV ADKD-KD LEA                
  Adwck4 entered
 0ANGLE DATA          THETN= 180.0000   THET1=   0.0000   DTHET=   1.0000   A-ANG=   0.0000   B-ANG=   0.0000
 0CARD SET 3 DATA     LMAX =  45          LTR=   1

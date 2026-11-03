@@ -2,22 +2,22 @@
 Program received signal SIGSEGV: Segmentation fault - invalid memory reference.
 
 Backtrace for this error:
-#0  0x7c09fd023e59 in ???
-#1  0x7c09fd022e75 in ???
-#2  0x7c09fcc4532f in ???
+#0  0x7e4ebae23e59 in ???
+#1  0x7e4ebae22e75 in ???
+#2  0x7e4ebaa4532f in ???
 	at ./signal/../sysdeps/unix/sysv/linux/x86_64/libc_sigaction.c:0
-#3  0x5613566e1977 in ???
-#4  0x5613566e718a in ???
-#5  0x5613566f40e8 in ???
-#6  0x5613566f41bf in ???
-#7  0x7c09fcc2a1c9 in __libc_start_call_main
+#3  0x5d983b799977 in ???
+#4  0x5d983b79f18a in ???
+#5  0x5d983b7ac0e8 in ???
+#6  0x5d983b7ac1bf in ???
+#7  0x7e4ebaa2a1c9 in __libc_start_call_main
 	at ../sysdeps/nptl/libc_start_call_main.h:58
-#8  0x7c09fcc2a28a in __libc_start_main_impl
+#8  0x7e4ebaa2a28a in __libc_start_main_impl
 	at ../csu/libc-start.c:360
-#9  0x5613566e02f4 in ???
+#9  0x5d983b7982f4 in ???
 #10  0xffffffffffffffff in ???
-run.sh: line 666: 190488 Segmentation fault      (core dumped) dwuck4 <<EOF > ${NOM}.res
-200101003000211     7Li(d,p)8Li(3.000) 2+ 7.266 AMeV ADKD-KD LEA
+run.sh: line 666: 58202 Segmentation fault      (core dumped) dwuck4 <<EOF > ${NOM}.res
+200101003000211     7Li(d,p)8Li(3.000) 2- 7.266 AMeV ADKD-KD LEA
    180.0     0.0     1.0
  50  1  1  3
      0.1     0.0 80.0000          0.7457

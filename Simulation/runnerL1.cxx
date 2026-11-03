@@ -20,8 +20,8 @@ void runnerL1(TString what = "simu", bool inspect = false)
     // Particles
     std::string beam {"7Li"};
     std::string target {"2H"};
-    std::string light {"1H"};
-    std::string heavy {"8Li"};
+    std::string light {"2H"};
+    std::string heavy {"7Li"};
     // Beam energy
     double Tbeam {};
     if(beam == "7Li")
@@ -68,11 +68,11 @@ void runnerL1(TString what = "simu", bool inspect = false)
         throw std::runtime_error("No confs with neutronPS and protonPS enabled at the same time");
 
     // Output directory and file naming (single source of truth)
-    const TString outDir {TString::Format("./Outputs/%s/test_ang_straggling_L1", beam.c_str())};
+    const TString outDir {TString::Format("./Outputs/%s", beam.c_str())};
     // suffix = "" -> final file; suffix = "_part<i>" -> partial file of job i
     auto outName {[&](double ex, const TString& suffix = "")
                   {
-                      return TString::Format("%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_L1_6AngStr%s.root",
+                      return TString::Format("%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_L1%s.root",
                                              outDir.Data(), target.c_str(), light.c_str(), ex, neutronPS, protonPS,
                                              suffix.Data());
                   }};

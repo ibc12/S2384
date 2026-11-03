@@ -73,7 +73,7 @@ constexpr int nPadsThresholdDefault =
 constexpr int nPadsThresholdPreBeforeL1 = 19; // Minimum number of pads outside the exclusion zone to consider an event
                                               // valid just for the 11Li runs before the L1 trigger change
 constexpr int validationZone = 8; // Minimum distance from the last voxel to the TPC borders in mm (from detector.conf)
-constexpr double thetaResFWHM = 6; // FWHM of theta resolution in degrees (in the begining was 3.5)
+constexpr double thetaResFWHM = 3.5; // 3.5 for deuteriums, 6 for protons
 constexpr double rpXcut = 240.0;     // Cut in rp.x for the dp channel in mm (in the begining was 240.0)
 constexpr std::pair<double, double> phiRangePositive {16., 160.};   // Range of positive phi in deg for the experiment
 constexpr std::pair<double, double> phiRangeNegative {-160., -16.}; // Range of negative phi in deg for the experiment

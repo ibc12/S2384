@@ -64,6 +64,7 @@ struct Step
     double step;     // DRF (fm)
 };
 
+// const std::vector<Step> kSteps = {{"S01", 0.1}};
 const std::vector<Step> kSteps = {{"S01", 0.1}, {"S02", 0.2}, {"S03", 0.3}};
 
 // Default scans (can be passed as arguments).  The largest L is the reference inside each (step,R).
@@ -77,7 +78,7 @@ const std::string kSuffix = "ADKDKD_LEA";
 const std::string kOutRoot = "."; // the step folders live here
 
 const int kTwoJf = 4;   // 2*Jf of the final state
-const double kEx = 3.0; // MeV
+const double kEx = 3.; // MeV
 
 // Resize the four tabulated-potential blocks to N points in every run.
 const bool kResizeTables = true;
@@ -91,8 +92,8 @@ const bool kEnforceKmax = false;
 
 // Transferred neutron
 const int kN = 0;
-const int kL = 1;
-const int kTwoJ = 3;
+const int kL = 1; // It was 1
+const int kTwoJ = 3; // It was 3 for p3/2
 const int kTwoS = 1;
 const int kTwoJi = 3;
 const int kParityI = -1;

@@ -48,6 +48,7 @@ void Fit()
     double sigma_g1 {0.167294};
     inter.AddState("g0", {240, 0, sigma_g0});
     inter.AddState("g1", {30, 0.477, sigma_g1});
+    inter.AddState("g2", {10, 5.8, 0.2});
     inter.EndAddingStates();
 
     inter.EvalSigma(sigmas.GetGraph());
@@ -63,7 +64,7 @@ void Fit()
 
     // Fitting range
     double exmin {-2};
-    double exmax {3};
+    double exmax {7};
     // double exmin {-0.8};
     // double exmax {1};
 
