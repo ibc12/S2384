@@ -371,4 +371,13 @@ void Compare_goodCals_DWUCK_FRESCO()
     // optv3_SOboth.saveAs = "./Figures/compare_v3.png";
     DrawComparison(v3_SOboth, optv3_SOboth);
 
+    // --- Estado excitado Franck ---
+    std::vector<Calc> v4_SOboth = {
+        Calc("../../DWUCK4_examples_Franck/unbound no SO/xs_dw4.n", "DWUCK4", Format::DWUCK4, kRed + 1, 1).Tag("Frank example, no SO"),
+    };
+    PlotOptions optv4_SOboth;
+    optv4_SOboth.title = "v4 Franck input";
+    optv4_SOboth.canvasName = "cv4";
+    DrawComparison(v4_SOboth, optv4_SOboth);
+
 }
