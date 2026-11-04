@@ -26,7 +26,7 @@
 
 void Ang(bool isLab = false)
 {
-    PrettyStyle(false);
+    // PrettyStyle(false);
     if(isLab)
         Angular::ToggleIsLab();
 
@@ -46,9 +46,9 @@ void Ang(bool isLab = false)
         hKin = def.Histo2D({"hCM", "CM;#theta_{CM};E [MeV]", 300, 0, 120, 300, 0, 60}, "ThetaCM", "EVertex");
 
     // Init intervals
-    double thetaMin = isLab ? 70.0 : 18;
-    double thetaMax = isLab ? 80.0 : 26;
-    double thetaStep = isLab ? 2.5 : 2.0;
+    double thetaMin = isLab ? 70.0 : 14;
+    double thetaMax = isLab ? 80.0 : 24;
+    double thetaStep = isLab ? 2.5 : 3.0;
     Angular::Intervals ivs {thetaMin, thetaMax, S2384Fit::Exdd_7Li, thetaStep, 0};
     if(isLab)
         def.Foreach([&](float thetalab, double ex) { ivs.Fill(thetalab, ex); }, {"fThetaLight", "Ex"});
@@ -96,10 +96,10 @@ void Ang(bool isLab = false)
         "../../Simulation/Outputs/7Li/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1.root",
         isLab ? "effLab" : "effCM");
     eff.Add("g1",
-            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_0.000_nPS_0_pPS_0_L1.root",
+            "../../Simulation/Outputs/7Li/2H_2H_TRIUMF_Eex_0.477_nPS_0_pPS_0_L1.root",
             isLab ? "effLab" : "effCM");
     eff.Add("g2",
-            "../../Simulation/Outputs/7Li/test_charge_threshold/2H_2H_TRIUMF_Eex_5.800_nPS_0_pPS_0_L1.root",
+            "../../Simulation/Outputs/7Li/2H_2H_TRIUMF_Eex_5.800_nPS_0_pPS_0_L1.root",
             isLab ? "effLab" : "effCM");
     eff.Scale(0.931);
     // Draw to check is fine
@@ -124,6 +124,7 @@ void Ang(bool isLab = false)
     Angular::Comparator comp1 {"1st Ex", xs.Get("g1")};
     comp1.Add("DA1p BE2 deformation", "./Inputs/g1_DA1p/fort.202");
     comp1.Add("DA1pcorr BE2 deformation", "./Inputs/g1_DA1p_corr/fort.202");
+    Angular::Comparator comp2 {"2nd Ex", xs.Get("g2")};
     // Plot
     if(isLab)
     {
@@ -145,21 +146,22 @@ void Ang(bool isLab = false)
     comp1.Fit();
     comp1.Draw("", true);
     comp1.DrawTheo();
+    comp2.Draw("", true);
     std::cout << "Scale factor for DA1pcorr: " << comp.GetSF("DA1pcorr") << std::endl;
     // Papers data
     // Paper japones 14,7 MeV Ed
     TGraphErrors* gExp_14_7MeV_Ed {new TGraphErrors("./re-ana_exp_7MeVEd/Inputs/14-7MeVEd.dat", "%lg %lg")};
-    Angular::Comparator comp2 {"g.s", gExp_14_7MeV_Ed};
-    comp2.Add("DA1pcorr - data paper 14,7MeV", "./Inputs/gsDA1p_corr/fort.201");
+    Angular::Comparator comp3 {"g.s", gExp_14_7MeV_Ed};
+    comp3.Add("DA1pcorr - data paper 14,7MeV", "./Inputs/gsDA1p_corr/fort.201");
     // comp2.Add("OMP paper - data paper 14,7MeV", "./Inputs/gsPaperJapones/fort.201");
-    comp2.Fit();
-    comp2.Draw("", true);
-    // paper ruso 14,5 Ed
-    TGraphErrors* gExp_14_5MeV_Ed_rus {new TGraphErrors("./re-ana_exp_7MeVEd/Inputs/14-5MeVEd.dat", "%lg %lg")};
-    Angular::Comparator comp3 {"g.s", gExp_14_5MeV_Ed_rus};
-    comp3.Add("DA1pcorr - data paper 14,5MeV", "./Inputs/gsDA1p_corr/fort.201");
     comp3.Fit();
     comp3.Draw("", true);
+    // paper ruso 14,5 Ed
+    TGraphErrors* gExp_14_5MeV_Ed_rus {new TGraphErrors("./re-ana_exp_7MeVEd/Inputs/14-5MeVEd.dat", "%lg %lg")};
+    Angular::Comparator comp4 {"g.s", gExp_14_5MeV_Ed_rus};
+    comp4.Add("DA1pcorr - data paper 14,5MeV", "./Inputs/gsDA1p_corr/fort.201");
+    comp4.Fit();
+    comp4.Draw("", true);
 
     // comp.ScaleToExp("DA1pcorr", &exp, xs.Get("g0"), eff.GetTEfficiency("g0"), 0.080);
     comp.QuotientPerPoint();
