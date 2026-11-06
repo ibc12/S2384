@@ -1,0 +1,1680 @@
+# Grace project file
+#
+@version 50125
+@page size 792, 612
+@page scroll 5%
+@page inout 5%
+@link page off
+@map font 8 to "Courier", "Courier"
+@map font 10 to "Courier-Bold", "Courier-Bold"
+@map font 11 to "Courier-BoldOblique", "Courier-BoldOblique"
+@map font 9 to "Courier-Oblique", "Courier-Oblique"
+@map font 14 to "Courier-Regular", "Courier-Regular"
+@map font 15 to "D050000L-Regular", "D050000L-Regular"
+@map font 4 to "Helvetica", "Helvetica"
+@map font 6 to "Helvetica-Bold", "Helvetica-Bold"
+@map font 7 to "Helvetica-BoldOblique", "Helvetica-BoldOblique"
+@map font 5 to "Helvetica-Oblique", "Helvetica-Oblique"
+@map font 20 to "NimbusMonoPS-Bold", "NimbusMonoPS-Bold"
+@map font 21 to "NimbusMonoPS-BoldItalic", "NimbusMonoPS-BoldItalic"
+@map font 22 to "NimbusMonoPS-Italic", "NimbusMonoPS-Italic"
+@map font 23 to "NimbusMonoPS-Regular", "NimbusMonoPS-Regular"
+@map font 24 to "NimbusRoman-Bold", "NimbusRoman-Bold"
+@map font 25 to "NimbusRoman-BoldItalic", "NimbusRoman-BoldItalic"
+@map font 26 to "NimbusRoman-Italic", "NimbusRoman-Italic"
+@map font 27 to "NimbusRoman-Regular", "NimbusRoman-Regular"
+@map font 28 to "NimbusSans-Bold", "NimbusSans-Bold"
+@map font 29 to "NimbusSans-BoldItalic", "NimbusSans-BoldItalic"
+@map font 30 to "NimbusSans-Italic", "NimbusSans-Italic"
+@map font 31 to "NimbusSans-Regular", "NimbusSans-Regular"
+@map font 32 to "NimbusSansNarrow-Bold", "NimbusSansNarrow-Bold"
+@map font 33 to "NimbusSansNarrow-BoldOblique", "NimbusSansNarrow-BoldOblique"
+@map font 34 to "NimbusSansNarrow-Oblique", "NimbusSansNarrow-Oblique"
+@map font 35 to "NimbusSansNarrow-Regular", "NimbusSansNarrow-Regular"
+@map font 36 to "P052-Bold", "P052-Bold"
+@map font 37 to "P052-BoldItalic", "P052-BoldItalic"
+@map font 38 to "P052-Italic", "P052-Italic"
+@map font 39 to "P052-Roman", "P052-Roman"
+@map font 40 to "StandardSymbolsPS-Regular", "StandardSymbolsPS-Regular"
+@map font 12 to "Symbol", "Symbol"
+@map font 2 to "Times-Bold", "Times-Bold"
+@map font 3 to "Times-BoldItalic", "Times-BoldItalic"
+@map font 1 to "Times-Italic", "Times-Italic"
+@map font 0 to "Times-Roman", "Times-Roman"
+@map font 46 to "URWBookman-Demi", "URWBookman-Demi"
+@map font 47 to "URWBookman-DemiItalic", "URWBookman-DemiItalic"
+@map font 48 to "URWBookman-Light", "URWBookman-Light"
+@map font 49 to "URWBookman-LightItalic", "URWBookman-LightItalic"
+@map font 50 to "URWGothic-Book", "URWGothic-Book"
+@map font 51 to "URWGothic-BookOblique", "URWGothic-BookOblique"
+@map font 52 to "URWGothic-Demi", "URWGothic-Demi"
+@map font 53 to "URWGothic-DemiOblique", "URWGothic-DemiOblique"
+@map font 54 to "Utopia-Bold", "Utopia-Bold"
+@map font 55 to "Utopia-BoldItalic", "Utopia-BoldItalic"
+@map font 56 to "Utopia-Italic", "Utopia-Italic"
+@map font 57 to "Utopia-Regular", "Utopia-Regular"
+@map font 58 to "Z003-MediumItalic", "Z003-MediumItalic"
+@map font 13 to "ZapfDingbats", "ZapfDingbats"
+@map color 0 to (255, 255, 255), "white"
+@map color 1 to (0, 0, 0), "black"
+@map color 2 to (255, 0, 0), "red"
+@map color 3 to (0, 255, 0), "green"
+@map color 4 to (0, 0, 255), "blue"
+@map color 5 to (255, 255, 0), "yellow"
+@map color 6 to (188, 143, 143), "brown"
+@map color 7 to (220, 220, 220), "grey"
+@map color 8 to (148, 0, 211), "violet"
+@map color 9 to (0, 255, 255), "cyan"
+@map color 10 to (255, 0, 255), "magenta"
+@map color 11 to (255, 165, 0), "orange"
+@map color 12 to (114, 33, 188), "indigo"
+@map color 13 to (103, 7, 72), "maroon"
+@map color 14 to (64, 224, 208), "turquoise"
+@map color 15 to (0, 139, 0), "green4"
+@reference date 0
+@date wrap off
+@date wrap year 1950
+@default linewidth 1.0
+@default linestyle 1
+@default color 1
+@default pattern 1
+@default font 0
+@default char size 1.000000
+@default symbol size 1.000000
+@default sformat "%.8g"
+@background color 0
+@page background fill on
+@timestamp off
+@timestamp 0.03, 0.03
+@timestamp color 1
+@timestamp rot 0
+@timestamp font 0
+@timestamp char size 1.000000
+@timestamp def "Wed Nov  4 18:14:12 2026"
+@r0 off
+@link r0 to g0
+@r0 type above
+@r0 linestyle 1
+@r0 linewidth 1.0
+@r0 color 1
+@r0 line 0, 0, 0, 0
+@r1 off
+@link r1 to g0
+@r1 type above
+@r1 linestyle 1
+@r1 linewidth 1.0
+@r1 color 1
+@r1 line 0, 0, 0, 0
+@r2 off
+@link r2 to g0
+@r2 type above
+@r2 linestyle 1
+@r2 linewidth 1.0
+@r2 color 1
+@r2 line 0, 0, 0, 0
+@r3 off
+@link r3 to g0
+@r3 type above
+@r3 linestyle 1
+@r3 linewidth 1.0
+@r3 color 1
+@r3 line 0, 0, 0, 0
+@r4 off
+@link r4 to g0
+@r4 type above
+@r4 linestyle 1
+@r4 linewidth 1.0
+@r4 color 1
+@r4 line 0, 0, 0, 0
+@g0 on
+@g0 hidden false
+@g0 type XY
+@g0 stacked false
+@g0 bar hgap 0.000000
+@g0 fixedpoint off
+@g0 fixedpoint type 0
+@g0 fixedpoint xy 0.000000, 0.000000
+@g0 fixedpoint format general general
+@g0 fixedpoint prec 6, 6
+@with g0
+@    world 0, 0.01, 200, 100
+@    stack world 0, 0, 0, 0
+@    znorm 1
+@    view 0.150000, 0.150000, 1.150000, 0.850000
+@    title ""
+@    title font 0
+@    title size 1.500000
+@    title color 1
+@    subtitle "7Li(d,p)8Li @ 14.5 MeV;"
+@    subtitle font 0
+@    subtitle size 1.000000
+@    subtitle color 1
+@    xaxes scale Normal
+@    yaxes scale Logarithmic
+@    xaxes invert off
+@    yaxes invert off
+@    xaxis  on
+@    xaxis  type zero false
+@    xaxis  offset 0.000000 , 0.000000
+@    xaxis  bar on
+@    xaxis  bar color 1
+@    xaxis  bar linestyle 1
+@    xaxis  bar linewidth 1.0
+@    xaxis  label "\xq\f{} (deg)"
+@    xaxis  label layout para
+@    xaxis  label place auto
+@    xaxis  label char size 1.000000
+@    xaxis  label font 0
+@    xaxis  label color 1
+@    xaxis  label place normal
+@    xaxis  tick on
+@    xaxis  tick major 50
+@    xaxis  tick minor ticks 1
+@    xaxis  tick default 6
+@    xaxis  tick place rounded true
+@    xaxis  tick in
+@    xaxis  tick major size 1.000000
+@    xaxis  tick major color 1
+@    xaxis  tick major linewidth 1.0
+@    xaxis  tick major linestyle 1
+@    xaxis  tick major grid off
+@    xaxis  tick minor color 1
+@    xaxis  tick minor linewidth 1.0
+@    xaxis  tick minor linestyle 1
+@    xaxis  tick minor grid off
+@    xaxis  tick minor size 0.500000
+@    xaxis  ticklabel on
+@    xaxis  ticklabel format general
+@    xaxis  ticklabel prec 5
+@    xaxis  ticklabel formula ""
+@    xaxis  ticklabel append ""
+@    xaxis  ticklabel prepend ""
+@    xaxis  ticklabel angle 0
+@    xaxis  ticklabel skip 0
+@    xaxis  ticklabel stagger 0
+@    xaxis  ticklabel place normal
+@    xaxis  ticklabel offset auto
+@    xaxis  ticklabel offset 0.000000 , 0.010000
+@    xaxis  ticklabel start type auto
+@    xaxis  ticklabel start 0.000000
+@    xaxis  ticklabel stop type auto
+@    xaxis  ticklabel stop 0.000000
+@    xaxis  ticklabel char size 1.000000
+@    xaxis  ticklabel font 0
+@    xaxis  ticklabel color 1
+@    xaxis  tick place both
+@    xaxis  tick spec type none
+@    yaxis  on
+@    yaxis  type zero false
+@    yaxis  offset 0.000000 , 0.000000
+@    yaxis  bar on
+@    yaxis  bar color 1
+@    yaxis  bar linestyle 1
+@    yaxis  bar linewidth 1.0
+@    yaxis  label "d\xs\f{}/d\xW\f{} (mb/srad)"
+@    yaxis  label layout para
+@    yaxis  label place auto
+@    yaxis  label char size 1.000000
+@    yaxis  label font 0
+@    yaxis  label color 1
+@    yaxis  label place normal
+@    yaxis  tick on
+@    yaxis  tick major 10
+@    yaxis  tick minor ticks 1
+@    yaxis  tick default 6
+@    yaxis  tick place rounded true
+@    yaxis  tick in
+@    yaxis  tick major size 1.000000
+@    yaxis  tick major color 1
+@    yaxis  tick major linewidth 1.0
+@    yaxis  tick major linestyle 1
+@    yaxis  tick major grid off
+@    yaxis  tick minor color 1
+@    yaxis  tick minor linewidth 1.0
+@    yaxis  tick minor linestyle 1
+@    yaxis  tick minor grid off
+@    yaxis  tick minor size 0.500000
+@    yaxis  ticklabel on
+@    yaxis  ticklabel format power
+@    yaxis  ticklabel prec 5
+@    yaxis  ticklabel formula ""
+@    yaxis  ticklabel append ""
+@    yaxis  ticklabel prepend ""
+@    yaxis  ticklabel angle 0
+@    yaxis  ticklabel skip 0
+@    yaxis  ticklabel stagger 0
+@    yaxis  ticklabel place normal
+@    yaxis  ticklabel offset auto
+@    yaxis  ticklabel offset 0.000000 , 0.010000
+@    yaxis  ticklabel start type auto
+@    yaxis  ticklabel start 0.000000
+@    yaxis  ticklabel stop type auto
+@    yaxis  ticklabel stop 0.000000
+@    yaxis  ticklabel char size 1.000000
+@    yaxis  ticklabel font 0
+@    yaxis  ticklabel color 1
+@    yaxis  tick place both
+@    yaxis  tick spec type none
+@    altxaxis  off
+@    altyaxis  off
+@    legend on
+@    legend loctype view
+@    legend 0.299264706, 0.833088235
+@    legend box color 1
+@    legend box pattern 1
+@    legend box linewidth 1.0
+@    legend box linestyle 1
+@    legend box fill color 0
+@    legend box fill pattern 1
+@    legend font 0
+@    legend char size 1.000000
+@    legend color 1
+@    legend length 4
+@    legend vgap 1
+@    legend hgap 1
+@    legend invert false
+@    frame type 0
+@    frame linestyle 1
+@    frame linewidth 1.0
+@    frame color 1
+@    frame pattern 1
+@    frame background color 0
+@    frame background pattern 0
+@    s0 hidden false
+@    s0 type xy
+@    s0 symbol 0
+@    s0 symbol size 1.000000
+@    s0 symbol color 1
+@    s0 symbol pattern 1
+@    s0 symbol fill color 1
+@    s0 symbol fill pattern 0
+@    s0 symbol linewidth 1.0
+@    s0 symbol linestyle 1
+@    s0 symbol char 65
+@    s0 symbol char font 0
+@    s0 symbol skip 0
+@    s0 line type 1
+@    s0 line linestyle 1
+@    s0 line linewidth 1.0
+@    s0 line color 1
+@    s0 line pattern 1
+@    s0 baseline type 0
+@    s0 baseline off
+@    s0 dropline off
+@    s0 fill type 0
+@    s0 fill rule 0
+@    s0 fill color 1
+@    s0 fill pattern 1
+@    s0 avalue off
+@    s0 avalue type 2
+@    s0 avalue char size 1.000000
+@    s0 avalue font 0
+@    s0 avalue color 1
+@    s0 avalue rot 0
+@    s0 avalue format general
+@    s0 avalue prec 3
+@    s0 avalue prepend ""
+@    s0 avalue append ""
+@    s0 avalue offset 0.000000 , 0.000000
+@    s0 errorbar on
+@    s0 errorbar place both
+@    s0 errorbar color 1
+@    s0 errorbar pattern 1
+@    s0 errorbar size 1.000000
+@    s0 errorbar linewidth 1.0
+@    s0 errorbar linestyle 1
+@    s0 errorbar riser linewidth 1.0
+@    s0 errorbar riser linestyle 1
+@    s0 errorbar riser clip off
+@    s0 errorbar riser clip length 0.100000
+@    s0 comment "/home/mario/12Li_triumf/transfer/fort.202"
+@    s0 legend  "Post bin ADWA"
+@    s1 hidden true
+@    s1 type xy
+@    s1 symbol 0
+@    s1 symbol size 1.000000
+@    s1 symbol color 2
+@    s1 symbol pattern 1
+@    s1 symbol fill color 2
+@    s1 symbol fill pattern 0
+@    s1 symbol linewidth 1.0
+@    s1 symbol linestyle 1
+@    s1 symbol char 65
+@    s1 symbol char font 0
+@    s1 symbol skip 0
+@    s1 line type 1
+@    s1 line linestyle 1
+@    s1 line linewidth 1.0
+@    s1 line color 2
+@    s1 line pattern 1
+@    s1 baseline type 0
+@    s1 baseline off
+@    s1 dropline off
+@    s1 fill type 0
+@    s1 fill rule 0
+@    s1 fill color 1
+@    s1 fill pattern 1
+@    s1 avalue off
+@    s1 avalue type 2
+@    s1 avalue char size 1.000000
+@    s1 avalue font 0
+@    s1 avalue color 1
+@    s1 avalue rot 0
+@    s1 avalue format general
+@    s1 avalue prec 3
+@    s1 avalue prepend ""
+@    s1 avalue append ""
+@    s1 avalue offset 0.000000 , 0.000000
+@    s1 errorbar on
+@    s1 errorbar place both
+@    s1 errorbar color 2
+@    s1 errorbar pattern 1
+@    s1 errorbar size 1.000000
+@    s1 errorbar linewidth 1.0
+@    s1 errorbar linestyle 1
+@    s1 errorbar riser linewidth 1.0
+@    s1 errorbar riser linestyle 1
+@    s1 errorbar riser clip off
+@    s1 errorbar riser clip length 0.100000
+@    s1 comment "transfer07.dat"
+@    s1 legend  "Eres=0.738 MeV Width bin:0.2"
+@    s2 hidden true
+@    s2 type xy
+@    s2 symbol 0
+@    s2 symbol size 1.000000
+@    s2 symbol color 3
+@    s2 symbol pattern 1
+@    s2 symbol fill color 3
+@    s2 symbol fill pattern 0
+@    s2 symbol linewidth 1.0
+@    s2 symbol linestyle 1
+@    s2 symbol char 65
+@    s2 symbol char font 0
+@    s2 symbol skip 0
+@    s2 line type 1
+@    s2 line linestyle 1
+@    s2 line linewidth 1.0
+@    s2 line color 3
+@    s2 line pattern 1
+@    s2 baseline type 0
+@    s2 baseline off
+@    s2 dropline off
+@    s2 fill type 0
+@    s2 fill rule 0
+@    s2 fill color 1
+@    s2 fill pattern 1
+@    s2 avalue off
+@    s2 avalue type 2
+@    s2 avalue char size 1.000000
+@    s2 avalue font 0
+@    s2 avalue color 1
+@    s2 avalue rot 0
+@    s2 avalue format general
+@    s2 avalue prec 3
+@    s2 avalue prepend ""
+@    s2 avalue append ""
+@    s2 avalue offset 0.000000 , 0.000000
+@    s2 errorbar on
+@    s2 errorbar place both
+@    s2 errorbar color 3
+@    s2 errorbar pattern 1
+@    s2 errorbar size 1.000000
+@    s2 errorbar linewidth 1.0
+@    s2 errorbar linestyle 1
+@    s2 errorbar riser linewidth 1.0
+@    s2 errorbar riser linestyle 1
+@    s2 errorbar riser clip off
+@    s2 errorbar riser clip length 0.100000
+@    s2 comment "transfer0968.dat"
+@    s2 legend  "Eres=0.968 MeV Width bin 0.2 MeV"
+@    s3 hidden false
+@    s3 type xy
+@    s3 symbol 0
+@    s3 symbol size 1.000000
+@    s3 symbol color 4
+@    s3 symbol pattern 1
+@    s3 symbol fill color 4
+@    s3 symbol fill pattern 0
+@    s3 symbol linewidth 1.0
+@    s3 symbol linestyle 1
+@    s3 symbol char 65
+@    s3 symbol char font 0
+@    s3 symbol skip 0
+@    s3 line type 1
+@    s3 line linestyle 1
+@    s3 line linewidth 1.0
+@    s3 line color 4
+@    s3 line pattern 1
+@    s3 baseline type 0
+@    s3 baseline off
+@    s3 dropline off
+@    s3 fill type 0
+@    s3 fill rule 0
+@    s3 fill color 1
+@    s3 fill pattern 1
+@    s3 avalue off
+@    s3 avalue type 2
+@    s3 avalue char size 1.000000
+@    s3 avalue font 0
+@    s3 avalue color 1
+@    s3 avalue rot 0
+@    s3 avalue format general
+@    s3 avalue prec 3
+@    s3 avalue prepend ""
+@    s3 avalue append ""
+@    s3 avalue offset 0.000000 , 0.000000
+@    s3 errorbar on
+@    s3 errorbar place both
+@    s3 errorbar color 4
+@    s3 errorbar pattern 1
+@    s3 errorbar size 1.000000
+@    s3 errorbar linewidth 1.0
+@    s3 errorbar linestyle 1
+@    s3 errorbar riser linewidth 1.0
+@    s3 errorbar riser linestyle 1
+@    s3 errorbar riser clip off
+@    s3 errorbar riser clip length 0.100000
+@    s3 comment "/home/mario/12Li_triumf/transfer/fort.202"
+@    s3 legend  "Prior bin ADWA"
+@    s4 hidden false
+@    s4 type xy
+@    s4 symbol 0
+@    s4 symbol size 1.000000
+@    s4 symbol color 1
+@    s4 symbol pattern 1
+@    s4 symbol fill color 1
+@    s4 symbol fill pattern 0
+@    s4 symbol linewidth 1.0
+@    s4 symbol linestyle 1
+@    s4 symbol char 65
+@    s4 symbol char font 0
+@    s4 symbol skip 0
+@    s4 line type 1
+@    s4 line linestyle 4
+@    s4 line linewidth 2.0
+@    s4 line color 1
+@    s4 line pattern 1
+@    s4 baseline type 0
+@    s4 baseline off
+@    s4 dropline off
+@    s4 fill type 0
+@    s4 fill rule 0
+@    s4 fill color 1
+@    s4 fill pattern 1
+@    s4 avalue off
+@    s4 avalue type 2
+@    s4 avalue char size 1.000000
+@    s4 avalue font 0
+@    s4 avalue color 1
+@    s4 avalue rot 0
+@    s4 avalue format general
+@    s4 avalue prec 3
+@    s4 avalue prepend ""
+@    s4 avalue append ""
+@    s4 avalue offset 0.000000 , 0.000000
+@    s4 errorbar on
+@    s4 errorbar place both
+@    s4 errorbar color 1
+@    s4 errorbar pattern 1
+@    s4 errorbar size 1.000000
+@    s4 errorbar linewidth 1.0
+@    s4 errorbar linestyle 1
+@    s4 errorbar riser linewidth 1.0
+@    s4 errorbar riser linestyle 1
+@    s4 errorbar riser clip off
+@    s4 errorbar riser clip length 0.100000
+@    s4 comment "/home/mario/12Li_triumf/transfer/fort.202"
+@    s4 legend  "Post bin DWBA"
+@    s5 hidden false
+@    s5 type xy
+@    s5 symbol 0
+@    s5 symbol size 1.000000
+@    s5 symbol color 4
+@    s5 symbol pattern 1
+@    s5 symbol fill color 4
+@    s5 symbol fill pattern 0
+@    s5 symbol linewidth 1.0
+@    s5 symbol linestyle 1
+@    s5 symbol char 65
+@    s5 symbol char font 0
+@    s5 symbol skip 0
+@    s5 line type 1
+@    s5 line linestyle 3
+@    s5 line linewidth 2.0
+@    s5 line color 4
+@    s5 line pattern 1
+@    s5 baseline type 0
+@    s5 baseline off
+@    s5 dropline off
+@    s5 fill type 0
+@    s5 fill rule 0
+@    s5 fill color 1
+@    s5 fill pattern 1
+@    s5 avalue off
+@    s5 avalue type 2
+@    s5 avalue char size 1.000000
+@    s5 avalue font 0
+@    s5 avalue color 1
+@    s5 avalue rot 0
+@    s5 avalue format general
+@    s5 avalue prec 3
+@    s5 avalue prepend ""
+@    s5 avalue append ""
+@    s5 avalue offset 0.000000 , 0.000000
+@    s5 errorbar on
+@    s5 errorbar place both
+@    s5 errorbar color 4
+@    s5 errorbar pattern 1
+@    s5 errorbar size 1.000000
+@    s5 errorbar linewidth 1.0
+@    s5 errorbar linestyle 1
+@    s5 errorbar riser linewidth 1.0
+@    s5 errorbar riser linestyle 1
+@    s5 errorbar riser clip off
+@    s5 errorbar riser clip length 0.100000
+@    s5 comment "/home/mario/12Li_triumf/transfer/fort.202"
+@    s5 legend  "Prior bin DWBA"
+@target G0.S0
+@type xy
+0 28.52
+1 28.57
+2 28.71
+3 28.91
+4 29.13
+5 29.31
+6 29.39
+7 29.31
+8 29
+9 28.41
+10 27.5
+11 26.27
+12 24.72
+13 22.9
+14 20.86
+15 18.69
+16 16.47
+17 14.3
+18 12.25
+19 10.39
+20 8.775
+21 7.412
+22 6.307
+23 5.439
+24 4.774
+25 4.273
+26 3.894
+27 3.597
+28 3.351
+29 3.132
+30 2.924
+31 2.721
+32 2.519
+33 2.319
+34 2.125
+35 1.941
+36 1.771
+37 1.621
+38 1.493
+39 1.391
+40 1.315
+41 1.265
+42 1.238
+43 1.23
+44 1.235
+45 1.245
+46 1.253
+47 1.253
+48 1.241
+49 1.214
+50 1.174
+51 1.123
+52 1.066
+53 1.006
+54 0.9494
+55 0.8986
+56 0.8561
+57 0.8226
+58 0.7973
+59 0.7789
+60 0.7653
+61 0.7545
+62 0.7446
+63 0.7339
+64 0.7213
+65 0.7061
+66 0.6878
+67 0.6663
+68 0.6421
+69 0.6156
+70 0.5878
+71 0.5595
+72 0.5317
+73 0.5051
+74 0.4801
+75 0.4568
+76 0.435
+77 0.414
+78 0.3933
+79 0.3724
+80 0.3513
+81 0.3299
+82 0.3088
+83 0.2887
+84 0.27
+85 0.2533
+86 0.239
+87 0.2269
+88 0.2168
+89 0.2082
+90 0.2005
+91 0.1933
+92 0.1863
+93 0.1792
+94 0.172
+95 0.165
+96 0.1582
+97 0.1519
+98 0.1463
+99 0.1417
+100 0.1384
+101 0.1363
+102 0.1356
+103 0.1362
+104 0.1379
+105 0.14
+106 0.1423
+107 0.144
+108 0.1446
+109 0.1439
+110 0.1418
+111 0.1384
+112 0.1343
+113 0.1302
+114 0.1269
+115 0.1249
+116 0.1248
+117 0.1267
+118 0.1304
+119 0.1354
+120 0.1411
+121 0.1468
+122 0.1517
+123 0.1551
+124 0.1566
+125 0.156
+126 0.1532
+127 0.1484
+128 0.1421
+129 0.1349
+130 0.1275
+131 0.1208
+132 0.1155
+133 0.1121
+134 0.111
+135 0.1121
+136 0.115
+137 0.1191
+138 0.1235
+139 0.1272
+140 0.1293
+141 0.1293
+142 0.1269
+143 0.1219
+144 0.1148
+145 0.1062
+146 0.09701
+147 0.08793
+148 0.07982
+149 0.07332
+150 0.06888
+151 0.06673
+152 0.06683
+153 0.0689
+154 0.07245
+155 0.07683
+156 0.08125
+157 0.08494
+158 0.08716
+159 0.08738
+160 0.08528
+161 0.08087
+162 0.07446
+163 0.06666
+164 0.05828
+165 0.05025
+166 0.04351
+167 0.03886
+168 0.03691
+169 0.03802
+170 0.04226
+171 0.0494
+172 0.05901
+173 0.07042
+174 0.08284
+175 0.09541
+176 0.1072
+177 0.1174
+178 0.1253
+179 0.1303
+180 0.132
+&
+@target G0.S1
+@type xy
+0 22.68
+1 22.5
+2 21.95
+3 21.06
+4 19.85
+5 18.37
+6 16.67
+7 14.81
+8 12.87
+9 10.93
+10 9.067
+11 7.343
+12 5.813
+13 4.511
+14 3.45
+15 2.626
+16 2.016
+17 1.589
+18 1.309
+19 1.138
+20 1.045
+21 1.003
+22 0.993
+23 1.003
+24 1.023
+25 1.047
+26 1.07
+27 1.084
+28 1.084
+29 1.065
+30 1.023
+31 0.9594
+32 0.8764
+33 0.7808
+34 0.6813
+35 0.5869
+36 0.5058
+37 0.4436
+38 0.4025
+39 0.3815
+40 0.3765
+41 0.3816
+42 0.3905
+43 0.3974
+44 0.3981
+45 0.3903
+46 0.374
+47 0.3504
+48 0.3222
+49 0.2921
+50 0.263
+51 0.237
+52 0.2157
+53 0.2
+54 0.1902
+55 0.186
+56 0.1868
+57 0.1917
+58 0.1995
+59 0.2089
+60 0.2184
+61 0.2263
+62 0.2315
+63 0.2328
+64 0.2299
+65 0.2227
+66 0.2118
+67 0.1981
+68 0.183
+69 0.1676
+70 0.1531
+71 0.1402
+72 0.1295
+73 0.1211
+74 0.1148
+75 0.1101
+76 0.1068
+77 0.1042
+78 0.1019
+79 0.09962
+80 0.09702
+81 0.09393
+82 0.09023
+83 0.08591
+84 0.08103
+85 0.07575
+86 0.07031
+87 0.06498
+88 0.06008
+89 0.05585
+90 0.05247
+91 0.05
+92 0.04837
+93 0.0474
+94 0.04683
+95 0.0464
+96 0.04587
+97 0.04509
+98 0.04399
+99 0.04261
+100 0.04103
+101 0.03941
+102 0.03788
+103 0.03656
+104 0.03553
+105 0.03485
+106 0.03452
+107 0.03454
+108 0.03489
+109 0.03555
+110 0.03645
+111 0.03752
+112 0.03865
+113 0.0397
+114 0.04054
+115 0.04103
+116 0.04111
+117 0.04075
+118 0.04
+119 0.03899
+120 0.03786
+121 0.03677
+122 0.03587
+123 0.03522
+124 0.03485
+125 0.03473
+126 0.03477
+127 0.03489
+128 0.035
+129 0.03505
+130 0.03501
+131 0.03487
+132 0.03464
+133 0.0343
+134 0.03385
+135 0.03325
+136 0.0325
+137 0.03159
+138 0.03057
+139 0.02952
+140 0.02853
+141 0.02771
+142 0.02712
+143 0.0268
+144 0.02669
+145 0.0267
+146 0.02671
+147 0.02657
+148 0.02618
+149 0.02551
+150 0.02458
+151 0.02348
+152 0.0223
+153 0.02117
+154 0.02016
+155 0.01931
+156 0.0186
+157 0.01799
+158 0.01747
+159 0.01701
+160 0.01664
+161 0.01643
+162 0.01645
+163 0.01672
+164 0.01725
+165 0.01794
+166 0.01866
+167 0.01922
+168 0.01946
+169 0.01927
+170 0.01862
+171 0.0176
+172 0.01638
+173 0.01515
+174 0.01411
+175 0.01338
+176 0.01302
+177 0.01295
+178 0.01306
+179 0.01321
+180 0.01327
+&
+@target G0.S2
+@type xy
+0 10.34
+1 10.45
+2 10.75
+3 11.23
+4 11.83
+5 12.5
+6 13.16
+7 13.73
+8 14.12
+9 14.27
+10 14.12
+11 13.63
+12 12.82
+13 11.71
+14 10.38
+15 8.915
+16 7.408
+17 5.96
+18 4.652
+19 3.543
+20 2.666
+21 2.022
+22 1.588
+23 1.326
+24 1.189
+25 1.128
+26 1.103
+27 1.086
+28 1.058
+29 1.014
+30 0.9553
+31 0.8866
+32 0.8143
+33 0.7435
+34 0.6768
+35 0.615
+36 0.5581
+37 0.5061
+38 0.4597
+39 0.421
+40 0.3925
+41 0.3762
+42 0.3733
+43 0.3827
+44 0.4016
+45 0.4252
+46 0.4482
+47 0.4654
+48 0.4727
+49 0.4681
+50 0.4516
+51 0.4252
+52 0.3919
+53 0.3554
+54 0.3192
+55 0.286
+56 0.2575
+57 0.2347
+58 0.2176
+59 0.2059
+60 0.1988
+61 0.1956
+62 0.1954
+63 0.1974
+64 0.2006
+65 0.204
+66 0.2063
+67 0.2069
+68 0.205
+69 0.2003
+70 0.1931
+71 0.1837
+72 0.1731
+73 0.1619
+74 0.1508
+75 0.1404
+76 0.1308
+77 0.1221
+78 0.1141
+79 0.1067
+80 0.09975
+81 0.09326
+82 0.08726
+83 0.08182
+84 0.07699
+85 0.07274
+86 0.069
+87 0.06565
+88 0.06257
+89 0.05966
+90 0.05691
+91 0.05438
+92 0.05216
+93 0.05031
+94 0.04887
+95 0.04779
+96 0.04697
+97 0.04624
+98 0.04549
+99 0.04462
+100 0.04363
+101 0.0426
+102 0.04163
+103 0.04082
+104 0.04026
+105 0.03995
+106 0.03983
+107 0.03981
+108 0.03981
+109 0.03976
+110 0.03968
+111 0.03962
+112 0.03968
+113 0.03993
+114 0.04042
+115 0.04111
+116 0.04193
+117 0.04274
+118 0.04345
+119 0.04398
+120 0.04429
+121 0.04444
+122 0.04447
+123 0.04446
+124 0.04443
+125 0.04437
+126 0.04422
+127 0.04389
+128 0.04333
+129 0.04253
+130 0.04154
+131 0.04047
+132 0.03947
+133 0.03863
+134 0.03801
+135 0.0376
+136 0.0373
+137 0.03697
+138 0.03648
+139 0.03574
+140 0.03476
+141 0.03357
+142 0.03231
+143 0.03108
+144 0.02997
+145 0.02901
+146 0.02816
+147 0.02731
+148 0.0264
+149 0.02537
+150 0.02424
+151 0.02308
+152 0.02203
+153 0.02121
+154 0.02067
+155 0.02041
+156 0.02031
+157 0.02023
+158 0.01998
+159 0.01945
+160 0.0186
+161 0.0175
+162 0.0163
+163 0.01519
+164 0.01431
+165 0.01376
+166 0.01352
+167 0.01347
+168 0.01347
+169 0.01339
+170 0.01319
+171 0.01292
+172 0.01269
+173 0.01271
+174 0.01311
+175 0.01397
+176 0.0152
+177 0.01662
+178 0.01795
+179 0.01889
+180 0.01923
+&
+@target G0.S3
+@type xy
+0 27.74
+1 27.65
+2 27.38
+3 26.93
+4 26.32
+5 25.56
+6 24.67
+7 23.66
+8 22.56
+9 21.38
+10 20.15
+11 18.88
+12 17.61
+13 16.34
+14 15.09
+15 13.88
+16 12.72
+17 11.61
+18 10.57
+19 9.59
+20 8.683
+21 7.847
+22 7.079
+23 6.38
+24 5.744
+25 5.17
+26 4.653
+27 4.189
+28 3.774
+29 3.404
+30 3.075
+31 2.785
+32 2.529
+33 2.304
+34 2.108
+35 1.937
+36 1.79
+37 1.663
+38 1.555
+39 1.463
+40 1.385
+41 1.319
+42 1.264
+43 1.217
+44 1.177
+45 1.143
+46 1.113
+47 1.086
+48 1.062
+49 1.04
+50 1.018
+51 0.9979
+52 0.9777
+53 0.9575
+54 0.9373
+55 0.9168
+56 0.8961
+57 0.875
+58 0.8536
+59 0.8318
+60 0.8096
+61 0.7871
+62 0.7641
+63 0.7408
+64 0.7171
+65 0.6931
+66 0.6688
+67 0.6442
+68 0.6194
+69 0.5945
+70 0.5695
+71 0.5446
+72 0.5198
+73 0.4952
+74 0.471
+75 0.4473
+76 0.4241
+77 0.4016
+78 0.3798
+79 0.3588
+80 0.3387
+81 0.3196
+82 0.3014
+83 0.2842
+84 0.2681
+85 0.2529
+86 0.2388
+87 0.2257
+88 0.2136
+89 0.2025
+90 0.1923
+91 0.183
+92 0.1746
+93 0.1671
+94 0.1604
+95 0.1544
+96 0.1491
+97 0.1445
+98 0.1406
+99 0.1372
+100 0.1344
+101 0.132
+102 0.1301
+103 0.1286
+104 0.1275
+105 0.1267
+106 0.1262
+107 0.1259
+108 0.1258
+109 0.1259
+110 0.1261
+111 0.1264
+112 0.1268
+113 0.1272
+114 0.1277
+115 0.1281
+116 0.1285
+117 0.1288
+118 0.1291
+119 0.1292
+120 0.1293
+121 0.1293
+122 0.1291
+123 0.1288
+124 0.1284
+125 0.1278
+126 0.127
+127 0.1262
+128 0.1251
+129 0.124
+130 0.1227
+131 0.1213
+132 0.1197
+133 0.118
+134 0.1162
+135 0.1143
+136 0.1122
+137 0.1101
+138 0.1079
+139 0.1056
+140 0.1033
+141 0.1008
+142 0.09836
+143 0.09584
+144 0.09328
+145 0.0907
+146 0.0881
+147 0.0855
+148 0.08289
+149 0.0803
+150 0.07773
+151 0.07519
+152 0.07268
+153 0.07022
+154 0.06781
+155 0.06545
+156 0.06316
+157 0.06093
+158 0.05878
+159 0.0567
+160 0.0547
+161 0.05278
+162 0.05095
+163 0.0492
+164 0.04754
+165 0.04597
+166 0.0445
+167 0.04311
+168 0.04183
+169 0.04064
+170 0.03954
+171 0.03855
+172 0.03766
+173 0.03686
+174 0.03618
+175 0.03559
+176 0.03511
+177 0.03474
+178 0.03447
+179 0.03431
+180 0.03425
+&
+@target G0.S4
+@type xy
+0 29.19
+1 29.22
+2 29.32
+3 29.45
+4 29.58
+5 29.68
+6 29.67
+7 29.51
+8 29.14
+9 28.5
+10 27.57
+11 26.33
+12 24.77
+13 22.95
+14 20.91
+15 18.72
+16 16.47
+17 14.26
+18 12.15
+19 10.22
+20 8.522
+21 7.081
+22 5.904
+23 4.977
+24 4.272
+25 3.75
+26 3.371
+27 3.094
+28 2.882
+29 2.709
+30 2.552
+31 2.399
+32 2.243
+33 2.08
+34 1.914
+35 1.748
+36 1.587
+37 1.439
+38 1.309
+39 1.202
+40 1.123
+41 1.073
+42 1.051
+43 1.052
+44 1.07
+45 1.097
+46 1.123
+47 1.142
+48 1.147
+49 1.136
+50 1.106
+51 1.061
+52 1.006
+53 0.9444
+54 0.8831
+55 0.8263
+56 0.7777
+57 0.7389
+58 0.7102
+59 0.6905
+60 0.6778
+61 0.6697
+62 0.6636
+63 0.6571
+64 0.6483
+65 0.6358
+66 0.6186
+67 0.5965
+68 0.5698
+69 0.5394
+70 0.5067
+71 0.473
+72 0.44
+73 0.409
+74 0.381
+75 0.3564
+76 0.3348
+77 0.3159
+78 0.2985
+79 0.2818
+80 0.265
+81 0.2475
+82 0.2293
+83 0.2108
+84 0.1924
+85 0.1749
+86 0.1589
+87 0.1449
+88 0.1332
+89 0.1239
+90 0.1169
+91 0.112
+92 0.1087
+93 0.1069
+94 0.1061
+95 0.1059
+96 0.106
+97 0.1062
+98 0.1061
+99 0.1056
+100 0.1047
+101 0.1037
+102 0.1028
+103 0.1023
+104 0.1026
+105 0.1039
+106 0.1064
+107 0.1099
+108 0.1141
+109 0.1188
+110 0.1234
+111 0.1277
+112 0.1314
+113 0.1345
+114 0.1369
+115 0.1389
+116 0.1404
+117 0.1416
+118 0.1427
+119 0.1436
+120 0.1443
+121 0.1447
+122 0.145
+123 0.1449
+124 0.1447
+125 0.1442
+126 0.1435
+127 0.1426
+128 0.1412
+129 0.1393
+130 0.1367
+131 0.1335
+132 0.1296
+133 0.1252
+134 0.1203
+135 0.1153
+136 0.1102
+137 0.1053
+138 0.1005
+139 0.09589
+140 0.09135
+141 0.08681
+142 0.08222
+143 0.07759
+144 0.07299
+145 0.06854
+146 0.06435
+147 0.06053
+148 0.05711
+149 0.05407
+150 0.05133
+151 0.04878
+152 0.04634
+153 0.04395
+154 0.04163
+155 0.03944
+156 0.0375
+157 0.03592
+158 0.03475
+159 0.03403
+160 0.03372
+161 0.03373
+162 0.03397
+163 0.03436
+164 0.03487
+165 0.03552
+166 0.03636
+167 0.03746
+168 0.03885
+169 0.04049
+170 0.04228
+171 0.04404
+172 0.04558
+173 0.04669
+174 0.04725
+175 0.04726
+176 0.04679
+177 0.04604
+178 0.04525
+179 0.04466
+180 0.04444
+&
+@target G0.S5
+@type xy
+0 27.95
+1 27.85
+2 27.58
+3 27.12
+4 26.49
+5 25.71
+6 24.79
+7 23.75
+8 22.61
+9 21.39
+10 20.12
+11 18.82
+12 17.51
+13 16.2
+14 14.92
+15 13.68
+16 12.48
+17 11.35
+18 10.28
+19 9.286
+20 8.362
+21 7.513
+22 6.737
+23 6.031
+24 5.393
+25 4.819
+26 4.305
+27 3.846
+28 3.438
+29 3.077
+30 2.759
+31 2.48
+32 2.237
+33 2.025
+34 1.842
+35 1.686
+36 1.552
+37 1.44
+38 1.345
+39 1.266
+40 1.201
+41 1.148
+42 1.104
+43 1.068
+44 1.039
+45 1.015
+46 0.9937
+47 0.9755
+48 0.959
+49 0.9434
+50 0.9282
+51 0.9129
+52 0.8972
+53 0.8809
+54 0.8638
+55 0.8458
+56 0.827
+57 0.8072
+58 0.7866
+59 0.7652
+60 0.743
+61 0.72
+62 0.6963
+63 0.672
+64 0.6472
+65 0.6218
+66 0.596
+67 0.5699
+68 0.5435
+69 0.517
+70 0.4905
+71 0.4641
+72 0.438
+73 0.4122
+74 0.387
+75 0.3624
+76 0.3385
+77 0.3155
+78 0.2934
+79 0.2724
+80 0.2525
+81 0.2338
+82 0.2162
+83 0.2
+84 0.1849
+85 0.1712
+86 0.1586
+87 0.1473
+88 0.1372
+89 0.1283
+90 0.1206
+91 0.1139
+92 0.1082
+93 0.1035
+94 0.09979
+95 0.09692
+96 0.09486
+97 0.09354
+98 0.09291
+99 0.09289
+100 0.09342
+101 0.09444
+102 0.09588
+103 0.09769
+104 0.09979
+105 0.1021
+106 0.1046
+107 0.1073
+108 0.11
+109 0.1127
+110 0.1154
+111 0.118
+112 0.1205
+113 0.1229
+114 0.125
+115 0.1269
+116 0.1286
+117 0.13
+118 0.1311
+119 0.1319
+120 0.1324
+121 0.1325
+122 0.1323
+123 0.1317
+124 0.1309
+125 0.1297
+126 0.1281
+127 0.1263
+128 0.1242
+129 0.1218
+130 0.1192
+131 0.1164
+132 0.1133
+133 0.11
+134 0.1066
+135 0.1031
+136 0.09947
+137 0.09574
+138 0.09197
+139 0.08816
+140 0.08435
+141 0.08055
+142 0.0768
+143 0.07311
+144 0.06951
+145 0.06601
+146 0.06264
+147 0.0594
+148 0.05632
+149 0.0534
+150 0.05065
+151 0.04809
+152 0.04572
+153 0.04354
+154 0.04156
+155 0.03978
+156 0.03818
+157 0.03678
+158 0.03556
+159 0.03451
+160 0.03364
+161 0.03292
+162 0.03235
+163 0.03192
+164 0.03161
+165 0.03141
+166 0.03131
+167 0.0313
+168 0.03135
+169 0.03146
+170 0.03162
+171 0.0318
+172 0.03201
+173 0.03222
+174 0.03242
+175 0.03261
+176 0.03278
+177 0.03292
+178 0.03302
+179 0.03309
+180 0.03311
+&

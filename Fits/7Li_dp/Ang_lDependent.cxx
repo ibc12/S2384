@@ -25,7 +25,7 @@
 
 void Ang_lDependent(bool isLab = false)
 {
-    PrettyStyle(false);
+    // PrettyStyle(false);
     if(isLab)
         Angular::ToggleIsLab();
 
@@ -42,7 +42,7 @@ void Ang_lDependent(bool isLab = false)
     // Init intervals
     double thetaMin {32};
     double thetaMax {80}; // It was 80
-    double thetaStep {7.5};
+    double thetaStep {5};
     Angular::Intervals ivs {thetaMin, thetaMax, S2384Fit::Exdp_7Li, thetaStep, 1};
     def.Foreach([&](double thetacm, double ex) { ivs.Fill(thetacm, ex); }, {"ThetaCM", "Ex"});
     phase.Foreach([&](double thetacm, double ex, double weight) { ivs.FillPS(0, thetacm, ex, weight); },

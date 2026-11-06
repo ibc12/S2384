@@ -65,7 +65,7 @@ TH1D* ToyExpected(Fitters::Model& model, std::vector<double> pars, const TH1D& t
     return h;
 }
 
-void Toy_lDependent(bool fluctuate = true, int seed = 12345, double jitter = 0.1)
+void Toy_lDependent(bool fluctuate = true, int seed = 12345, double jitter = 0.)
 {
     PrettyStyle(false, false);
     TRandom3 rng {static_cast<unsigned int>(seed)};

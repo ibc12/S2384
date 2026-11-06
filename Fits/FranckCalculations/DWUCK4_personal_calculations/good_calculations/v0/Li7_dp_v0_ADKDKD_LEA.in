@@ -1,5 +1,5 @@
 NOM=Li7_dp_v0_ADKDKD_LEA
-dwuck4 <<EOF >${NOM}.res
+DWUCK4.exe <<EOF >${NOM}.res
 200101003000211     7Li(d,p)8Li(v0) 3+ 7.266 AMeV ADKD-KD LEA
    180.0     0.0     1.0
  30  1  1  3
