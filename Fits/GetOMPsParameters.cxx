@@ -31,13 +31,15 @@ void GetOMPsParameters()
     ActPhysics::Particle ph {heavy};
 
     // Excitation energy of the heavy particle (8Li)
-    double Ex {5}; // Excitation energy of the heavy particle (8Li)
+    double Ex {3}; // Excitation energy of the heavy particle (8Li)
     // double Ex {0.981};
     // double Ex {2.255};
     // double Ex {3.2};
     // double Ex {4};
     // double Ex {0};
     // double Ex {6};
+
+    bool showKoningDelarocheRemanent = true; // Show Koning-Delaroche remanent potential (for prior calculations)
 
     auto kin {ActPhysics::Kinematics(pt, pb, ph, pl, energy * 2, Ex)};
     auto equivalentEnergy {kin.ComputeEquivalentBeamEnergy()}; // Enegy for the protons potential (as incident proton)
@@ -77,14 +79,23 @@ void GetOMPsParameters()
     std::cout << "CH89 OMP parameters:" << std::endl;
     std::cout << " ------------------------------------------------" << std::endl;
     ch89.GetFrescoOutput(potIdx);
-    PhysOMP::KoningDelaroche koningDelaroche(Z, A_dp, equivalentEnergy);
-    std::cout << " ------------------------------------------------" << std::endl;
-    std::cout << "Koning-Delaroche OMP parameters:" << std::endl;
-    std::cout << " ------------------------------------------------" << std::endl;
-    koningDelaroche.GetFrescoOutput(potIdx);
     PhysOMP::Watson watson(Z, A_dp, equivalentEnergy);
     std::cout << " ------------------------------------------------" << std::endl;
     std::cout << "Watson OMP parameters:" << std::endl;
     std::cout << " ------------------------------------------------" << std::endl;
     watson.GetFrescoOutput(potIdx);
+    if(showKoningDelarocheRemanent)
+    {
+        PhysOMP::KoningDelaroche koningDelarocheRemanent(Z, A_dp - 1, equivalentEnergy);
+        std::cout << " ------------------------------------------------" << std::endl;
+        std::cout << "Koning-Delaroche Remanent OMP parameters:" << std::endl;
+        std::cout << " IS NOT THE KD POTENTIAL - IS REMANENT TERM FOR " << A_dp - 1 << " NUCLEONS + PROTON" << std::endl;
+        std::cout << " ------------------------------------------------" << std::endl;
+        koningDelarocheRemanent.GetFrescoOutput(potIdx);
+    }
+    PhysOMP::KoningDelaroche koningDelaroche(Z, A_dp, equivalentEnergy);
+    std::cout << " ------------------------------------------------" << std::endl;
+    std::cout << "Koning-Delaroche OMP parameters:" << std::endl;
+    std::cout << " ------------------------------------------------" << std::endl;
+    koningDelaroche.GetFrescoOutput(potIdx);
 }

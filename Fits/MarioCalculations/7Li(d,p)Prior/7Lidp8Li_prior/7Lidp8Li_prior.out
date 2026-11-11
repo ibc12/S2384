@@ -15,7 +15,7 @@
  Range of total J is     0.0 <= J <=    17.0 (at least     0.0) and Absorbtion =>    -1.0000 mb.
  Dry Run = F, CC set limits =  0  0, Relativistic kinematics =  , Both/Far/Near Analyses =  1                     
 
- Cross Sections (and up to T0 for 0=projectile) for Theta from   0.0 to 180.0 in steps of  1.0 degrees, DGAM=0,  Coordinates = 0 (Mads)
+ Cross Sections (and up to T0 for 0=projectile) for Theta from   0.0 to-180.0 in steps of  1.0 degrees, DGAM=0,  Coordinates = 0 (Mads)
 
  Lower Radial Cutoff = maximum of -1.60*L*h & Turn -8.0 fm.,  Lower Cutoff for Couplings =   0.0  fm.
 
@@ -128,7 +128,7 @@
    NLL,NLN,NLO =         699         701         301
 0File   9 needs RL =  420798    REAL*8 numbers, and NR =    25. i.e.    84.16 Megabytes
    File            9  RECL =     3371200
-0RECOMMENDED NON-LOCAL WIDTH IS GREATER THAN   18.20 FM.,  RECOMMENDED CENTRATION  -2.30, after    0.90 secs.
+0RECOMMENDED NON-LOCAL WIDTH IS GREATER THAN   18.20 FM.,  RECOMMENDED CENTRATION  -2.30, after    0.41 secs.
 0Relative non-local usages (rms) are
     0.007   0.008   0.008   0.009   0.009   0.010   0.011   0.011   0.012   0.013   0.014   0.015   0.016   0.017   0.018
     0.019   0.020   0.021   0.023   0.024   0.026   0.027   0.029   0.031   0.033   0.036   0.038   0.040   0.043   0.046
@@ -161,7 +161,7 @@
    from    0.00000     to   0.00000     in     0 intervals
 
  Largest real,imaginary parts of any form factor at R=   69.50 are   2.07E-02  4.70E-09 MeV
- Finished all Couplings @   0.977451026              13
+ Finished all Couplings @   0.436726987              13
 
  Non-symmetric Hamiltonian
 1***********************************************************************************************************************************
@@ -196,7 +196,7 @@
    S-matrix    3 =    0.00000  -0.00000 for L=    3, J=    2.0 channel on core I =   1.5 from L=    1,  Acc. loss =  0.0 D.
    S-matrix    4 =    0.01788   0.03153 for L=    2, J=    1.5 channel on core I =   2.0 from L=    1,  Acc. loss =  0.6 D.
    S-matrix    5 =   -0.00548  -0.00965 for L=    2, J=    2.5 channel on core I =   2.0 from L=    1,  Acc. loss =  0.6 D.
-       0.5 -0.22142353  0.04521352i: elastic S-matrix  @@      0.08  0   0 F  0
+       0.5 -0.22142353  0.04521352i: elastic S-matrix  @@      0.04  0   0 F  0
  Reaction Xsec     0.5+/ 1 @ 1 =   5.878 , Out:   0.000#   9.967/   5.868f
 
    S-matrix    2 =   -0.22142   0.04521 for L=    1, J=    2.0 channel on core I =   1.5 from L=    1,  Acc. loss =  0.0 D.
@@ -206,7 +206,7 @@
    S-matrix    3 =    0.00000  -0.00000 for L=    3, J=    2.0 channel on core I =   1.5 from L=    1,  Acc. loss =  0.0 D.
    S-matrix    4 =    0.00400   0.00705 for L=    2, J=    1.5 channel on core I =   2.0 from L=    1,  Acc. loss =  0.6 D.
    S-matrix    5 =    0.01714   0.03022 for L=    2, J=    2.5 channel on core I =   2.0 from L=    1,  Acc. loss =  0.6 D.
-       0.5 -0.22142353  0.04521352i: elastic S-matrix  @@      0.02  0   0 F  0
+       0.5 -0.22142353  0.04521352i: elastic S-matrix  @@      0.01  0   0 F  0
  Reaction Xsec     0.5+/ 1 @ 2 =   5.878 , Out:   0.000#   8.828/   5.869f
 
    S-matrix    3 =    0.31240  -0.11641 for L=    3, J=    2.0 channel on core I =   1.5 from L=    3,  Acc. loss =  0.0 D.
@@ -216,7 +216,7 @@
    S-matrix    3 =    0.31240  -0.11641 for L=    3, J=    2.0 channel on core I =   1.5 from L=    3,  Acc. loss =  0.0 D.
    S-matrix    4 =   -0.04300   0.00512 for L=    2, J=    1.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.4 D.
    S-matrix    5 =    0.03511  -0.00418 for L=    2, J=    2.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.4 D.
-       0.5  0.31239870 -0.11641401i: elastic S-matrix  @@      0.02  0   0 F  0
+       0.5  0.31239870 -0.11641401i: elastic S-matrix  @@      0.01  0   0 F  0
  Reaction Xsec     0.5+/ 3 @ 3 =   5.506 , Out:   0.000#   0.022    5.484f
 
 
@@ -234,7 +234,7 @@
    S-matrix    3 =   -0.00000   0.00000 for L=    2, J=    2.0 channel on core I =   1.5 from L=    0,  Acc. loss =  0.0 D.
    S-matrix    4 =    0.04755  -0.02458 for L=    1, J=    1.5 channel on core I =   2.0 from L=    0,  Acc. loss =  0.3 D.
    S-matrix    5 =    0.00000   0.00000 for L=    3, J=    2.5 channel on core I =   2.0 from L=    0,  Acc. loss =  0.0 D.
-       0.5 -0.07788525 -0.09511385i: elastic S-matrix  @@      0.05  0   0 F  0
+       0.5 -0.07788525 -0.09511385i: elastic S-matrix  @@      0.03  0   0 F  0
  Reaction Xsec     0.5-/ 0 @ 1 =   6.101 , Out:   0.000#   0.020    6.081f
 
    S-matrix    2 =   -0.02069   0.01225 for L=    2, J=    1.0 channel on core I =   1.5 from L=    2,  Acc. loss =  0.0 D.
@@ -244,7 +244,7 @@
    S-matrix    3 =   -0.00000   0.00000 for L=    2, J=    2.0 channel on core I =   1.5 from L=    2,  Acc. loss =  0.0 D.
    S-matrix    4 =    0.00993  -0.03059 for L=    1, J=    1.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.0 D.
    S-matrix    5 =    0.00192  -0.01297 for L=    3, J=    2.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.7 D.
-       0.5 -0.02068554  0.01225137i: elastic S-matrix  @@      0.02  0   0 F  0
+       0.5 -0.02068554  0.01225137i: elastic S-matrix  @@      0.01  0   0 F  0
  Reaction Xsec     0.5-/ 2 @ 2 =   6.191 , Out:   0.000#   8.370/   6.183f
 
    S-matrix    3 =   -0.02069   0.01225 for L=    2, J=    2.0 channel on core I =   1.5 from L=    2,  Acc. loss =  0.0 D.
@@ -277,7 +277,7 @@
    S-matrix    7 =   -0.01581  -0.02786 for L=    2, J=    1.5 channel on core I =   2.0 from L=    1,  Acc. loss =  0.6 D.
    S-matrix    8 =    0.00000   0.00000 for L=    2, J=    2.5 channel on core I =   2.0 from L=    1,  Acc. loss =  0.0 D.
    S-matrix    9 =   -0.00000   0.00000 for L=    4, J=    3.5 channel on core I =   2.0 from L=    1,  Acc. loss =  0.0 D.
-       1.5 -0.22142353  0.04521352i: elastic S-matrix  @@      0.13  0   0 F  0
+       1.5 -0.22142353  0.04521352i: elastic S-matrix  @@      0.06  0   0 F  0
  Reaction Xsec     1.5+/ 1 @ 1 =  11.756 , Out:   0.000#   0.014   11.742f
 
    S-matrix    2 =   -0.22142   0.04521 for L=    1, J=    1.0 channel on core I =   1.5 from L=    1,  Acc. loss =  0.0 D.
@@ -291,7 +291,7 @@
    S-matrix    7 =    0.00400   0.00705 for L=    2, J=    1.5 channel on core I =   2.0 from L=    1,  Acc. loss =  0.6 D.
    S-matrix    8 =   -0.00916  -0.01615 for L=    2, J=    2.5 channel on core I =   2.0 from L=    1,  Acc. loss =  0.6 D.
    S-matrix    9 =   -0.00000   0.00000 for L=    4, J=    3.5 channel on core I =   2.0 from L=    1,  Acc. loss =  0.0 D.
-       1.5 -0.22142353  0.04521352i: elastic S-matrix  @@      0.03  0   0 F  0
+       1.5 -0.22142353  0.04521352i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     1.5+/ 1 @ 2 =  11.756 , Out:   0.000#   0.036   11.720f
 
    S-matrix    3 =   -0.22142   0.04521 for L=    1, J=    2.0 channel on core I =   1.5 from L=    1,  Acc. loss =  0.0 D.
@@ -305,7 +305,7 @@
    S-matrix    7 =    0.00600   0.01057 for L=    2, J=    1.5 channel on core I =   2.0 from L=    1,  Acc. loss =  0.6 D.
    S-matrix    8 =    0.00916   0.01615 for L=    2, J=    2.5 channel on core I =   2.0 from L=    1,  Acc. loss =  0.6 D.
    S-matrix    9 =   -0.00000   0.00000 for L=    4, J=    3.5 channel on core I =   2.0 from L=    1,  Acc. loss =  0.0 D.
-       1.5 -0.22142353  0.04521352i: elastic S-matrix  @@      0.03  0   0 F  0
+       1.5 -0.22142353  0.04521352i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     1.5+/ 1 @ 3 =  11.756 , Out:   0.000#   0.037   11.719f
 
    S-matrix    4 =    0.31240  -0.11641 for L=    3, J=    2.0 channel on core I =   1.5 from L=    3,  Acc. loss =  0.0 D.
@@ -319,7 +319,7 @@
    S-matrix    7 =   -0.06450   0.00767 for L=    2, J=    1.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.4 D.
    S-matrix    8 =    0.01877  -0.00223 for L=    2, J=    2.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.4 D.
    S-matrix    9 =    0.00233  -0.00603 for L=    4, J=    3.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.2 D.
-       1.5  0.31239870 -0.11641401i: elastic S-matrix  @@      0.03  0   0 F  0
+       1.5  0.31239870 -0.11641401i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     1.5+/ 3 @ 4 =  11.012 , Out:   0.000#   0.064   10.948f
 
    S-matrix    5 =    0.31240  -0.11641 for L=    3, J=    3.0 channel on core I =   1.5 from L=    3,  Acc. loss =  0.0 D.
@@ -333,7 +333,7 @@
    S-matrix    7 =   -0.04300   0.00512 for L=    2, J=    1.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.4 D.
    S-matrix    8 =   -0.01877   0.00223 for L=    2, J=    2.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.4 D.
    S-matrix    9 =   -0.00233   0.00603 for L=    4, J=    3.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.2 D.
-       1.5  0.31239870 -0.11641401i: elastic S-matrix  @@      0.03  0   0 F  0
+       1.5  0.31239870 -0.11641401i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     1.5+/ 3 @ 5 =  11.012 , Out:   0.000#   0.032   10.980f
 
 
@@ -355,7 +355,7 @@
    S-matrix    7 =    0.01064  -0.00551 for L=    1, J=    1.5 channel on core I =   2.0 from L=    0,  Acc. loss =  0.3 D.
    S-matrix    8 =    0.00000   0.00000 for L=    3, J=    2.5 channel on core I =   2.0 from L=    0,  Acc. loss =  0.0 D.
    S-matrix    9 =    0.00000   0.00000 for L=    3, J=    3.5 channel on core I =   2.0 from L=    0,  Acc. loss =  0.0 D.
-       1.5 -0.07788525 -0.09511385i: elastic S-matrix  @@      0.14  0   0 F  0
+       1.5 -0.07788525 -0.09511385i: elastic S-matrix  @@      0.07  0   0 F  0
  Reaction Xsec     1.5-/ 0 @ 1 =  12.202 , Out:   0.000#   0.034   12.168f
 
    S-matrix    2 =   -0.02069   0.01225 for L=    2, J=    1.0 channel on core I =   1.5 from L=    2,  Acc. loss =  0.0 D.
@@ -369,7 +369,7 @@
    S-matrix    7 =    0.00222  -0.00684 for L=    1, J=    1.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.0 D.
    S-matrix    8 =    0.00322  -0.02171 for L=    3, J=    2.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.7 D.
    S-matrix    9 =    0.00000   0.00000 for L=    3, J=    3.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.0 D.
-       1.5 -0.02068554  0.01225137i: elastic S-matrix  @@      0.03  0   0 F  0
+       1.5 -0.02068554  0.01225137i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     1.5-/ 2 @ 2 =  12.382 , Out:   0.000#   0.025   12.356f
 
    S-matrix    3 =   -0.02069   0.01225 for L=    2, J=    2.0 channel on core I =   1.5 from L=    2,  Acc. loss =  0.0 D.
@@ -383,7 +383,7 @@
    S-matrix    7 =    0.00000  -0.00000 for L=    1, J=    1.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.0 D.
    S-matrix    8 =   -0.00171   0.01156 for L=    3, J=    2.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.7 D.
    S-matrix    9 =    0.00168  -0.01132 for L=    3, J=    3.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.7 D.
-       1.5 -0.02068554  0.01225137i: elastic S-matrix  @@      0.03  0   0 F  0
+       1.5 -0.02068554  0.01225137i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     1.5-/ 2 @ 3 =  12.382 , Out:   0.000#   0.036   12.346f
 
    S-matrix    4 =   -0.02069   0.01225 for L=    2, J=    3.0 channel on core I =   1.5 from L=    2,  Acc. loss =  0.0 D.
@@ -397,7 +397,7 @@
    S-matrix    7 =   -0.01246   0.03839 for L=    1, J=    1.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.0 D.
    S-matrix    8 =   -0.00066   0.00442 for L=    3, J=    2.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.7 D.
    S-matrix    9 =   -0.00301   0.02030 for L=    3, J=    3.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.7 D.
-       1.5 -0.02068554  0.01225137i: elastic S-matrix  @@      0.03  0   0 F  0
+       1.5 -0.02068554  0.01225137i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     1.5-/ 2 @ 4 =  12.382 , Out:   0.000#   0.029   12.353f
 
    S-matrix    5 =    0.55666   0.09802 for L=    4, J=    3.0 channel on core I =   1.5 from L=    4,  Acc. loss =  0.0 D.
@@ -411,7 +411,7 @@
    S-matrix    7 =    0.00000  -0.00000 for L=    1, J=    1.5 channel on core I =   2.0 from L=    4,  Acc. loss =  0.0 D.
    S-matrix    8 =   -0.07458  -0.01217 for L=    3, J=    2.5 channel on core I =   2.0 from L=    4,  Acc. loss =  0.5 D.
    S-matrix    9 =    0.03045   0.00497 for L=    3, J=    3.5 channel on core I =   2.0 from L=    4,  Acc. loss =  0.5 D.
-       1.5  0.55665815  0.09801763i: elastic S-matrix  @@      0.03  0   0 F  0
+       1.5  0.55665815  0.09801763i: elastic S-matrix  @@      0.01  0   0 F  0
  Reaction Xsec     1.5-/ 4 @ 5 =   8.431 , Out:   0.000#   0.092    8.339f
 
  Allocate arrays for           11  channels, of which            6  need wfs.
@@ -436,7 +436,7 @@
    S-matrix    9 =   -0.00917  -0.01614 for L=    2, J=    2.5 channel on core I =   2.0 from L=    1,  Acc. loss =  0.6 D.
    S-matrix   10 =   -0.00000   0.00000 for L=    4, J=    3.5 channel on core I =   2.0 from L=    1,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=    4, J=    4.5 channel on core I =   2.0 from L=    1,  Acc. loss =  0.0 D.
-       2.5 -0.22142353  0.04521352i: elastic S-matrix  @@      0.19  0   0 F  0
+       2.5 -0.22142353  0.04521352i: elastic S-matrix  @@      0.09  0   0 F  0
  Reaction Xsec     2.5+/ 1 @ 1 =  17.634 , Out:   0.000#   0.028   17.607f
 
    S-matrix    2 =   -0.22142   0.04521 for L=    1, J=    2.0 channel on core I =   1.5 from L=    1,  Acc. loss =  0.0 D.
@@ -452,7 +452,7 @@
    S-matrix    9 =   -0.00200  -0.00352 for L=    2, J=    2.5 channel on core I =   2.0 from L=    1,  Acc. loss =  0.6 D.
    S-matrix   10 =   -0.00000   0.00000 for L=    4, J=    3.5 channel on core I =   2.0 from L=    1,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=    4, J=    4.5 channel on core I =   2.0 from L=    1,  Acc. loss =  0.0 D.
-       2.5 -0.22142353  0.04521352i: elastic S-matrix  @@      0.04  0   0 F  0
+       2.5 -0.22142353  0.04521352i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     2.5+/ 1 @ 2 =  17.634 , Out:   0.000#   0.162   17.472f
 
    S-matrix    3 =    0.31240  -0.11641 for L=    3, J=    2.0 channel on core I =   1.5 from L=    3,  Acc. loss =  0.0 D.
@@ -468,7 +468,7 @@
    S-matrix    9 =   -0.00410   0.00049 for L=    2, J=    2.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.4 D.
    S-matrix   10 =    0.00304  -0.00790 for L=    4, J=    3.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.2 D.
    S-matrix   11 =   -0.00000   0.00000 for L=    4, J=    4.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.0 D.
-       2.5  0.31239870 -0.11641401i: elastic S-matrix  @@      0.04  0   0 F  0
+       2.5  0.31239870 -0.11641401i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     2.5+/ 3 @ 3 =  16.518 , Out:   0.000#   0.041   16.477f
 
    S-matrix    4 =    0.31240  -0.11641 for L=    3, J=    3.0 channel on core I =   1.5 from L=    3,  Acc. loss =  0.0 D.
@@ -484,7 +484,7 @@
    S-matrix    9 =   -0.02107   0.00251 for L=    2, J=    2.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.4 D.
    S-matrix   10 =   -0.00095   0.00246 for L=    4, J=    3.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.2 D.
    S-matrix   11 =    0.00168  -0.00435 for L=    4, J=    4.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.2 D.
-       2.5  0.31239870 -0.11641401i: elastic S-matrix  @@      0.05  0   0 F  0
+       2.5  0.31239870 -0.11641401i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     2.5+/ 3 @ 4 =  16.518 , Out:   0.000#   0.188   16.330f
 
    S-matrix    5 =    0.31240  -0.11641 for L=    3, J=    4.0 channel on core I =   1.5 from L=    3,  Acc. loss =  0.0 D.
@@ -500,7 +500,7 @@
    S-matrix    9 =   -0.07285   0.00867 for L=    2, J=    2.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.4 D.
    S-matrix   10 =   -0.00045   0.00116 for L=    4, J=    3.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.2 D.
    S-matrix   11 =   -0.00243   0.00629 for L=    4, J=    4.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.2 D.
-       2.5  0.31239870 -0.11641401i: elastic S-matrix  @@      0.04  0   0 F  0
+       2.5  0.31239870 -0.11641401i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     2.5+/ 3 @ 5 =  16.518 , Out:   0.000#   0.113   16.405f
 
    S-matrix    6 =    0.90013   0.08488 for L=    5, J=    4.0 channel on core I =   1.5 from L=    5,  Acc. loss =  0.0 D.
@@ -516,7 +516,7 @@
    S-matrix    9 =    0.00000   0.00000 for L=    2, J=    2.5 channel on core I =   2.0 from L=    5,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.06046  -0.00301 for L=    4, J=    3.5 channel on core I =   2.0 from L=    5,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.01710   0.00085 for L=    4, J=    4.5 channel on core I =   2.0 from L=    5,  Acc. loss =  0.0 D.
-       2.5  0.90013021  0.08487705i: elastic S-matrix  @@      0.03  0   0 F  0
+       2.5  0.90013021  0.08487705i: elastic S-matrix  @@      0.01  0   0 F  0
  Reaction Xsec     2.5+/ 5 @ 6 =   3.393 , Out:   0.000#   0.082    3.310f
 
 
@@ -540,7 +540,7 @@
    S-matrix    9 =    0.00000   0.00000 for L=    3, J=    2.5 channel on core I =   2.0 from L=    0,  Acc. loss =  0.0 D.
    S-matrix   10 =    0.00000   0.00000 for L=    3, J=    3.5 channel on core I =   2.0 from L=    0,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=    5, J=    4.5 channel on core I =   2.0 from L=    0,  Acc. loss =  0.0 D.
-       2.5 -0.07788525 -0.09511385i: elastic S-matrix  @@      0.13  0   0 F  0
+       2.5 -0.07788525 -0.09511385i: elastic S-matrix  @@      0.06  0   0 F  0
  Reaction Xsec     2.5-/ 0 @ 1 =  18.303 , Out:   0.000#   0.037   18.266f
 
    S-matrix    2 =   -0.02069   0.01225 for L=    2, J=    1.0 channel on core I =   1.5 from L=    2,  Acc. loss =  0.0 D.
@@ -556,7 +556,7 @@
    S-matrix    9 =    0.00322  -0.02171 for L=    3, J=    2.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.7 D.
    S-matrix   10 =    0.00000   0.00000 for L=    3, J=    3.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=    5, J=    4.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.0 D.
-       2.5 -0.02068554  0.01225137i: elastic S-matrix  @@      0.04  0   0 F  0
+       2.5 -0.02068554  0.01225137i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     2.5-/ 2 @ 2 =  18.573 , Out:   0.000#   0.025   18.548f
 
    S-matrix    3 =   -0.02069   0.01225 for L=    2, J=    2.0 channel on core I =   1.5 from L=    2,  Acc. loss =  0.0 D.
@@ -572,7 +572,7 @@
    S-matrix    9 =    0.00037  -0.00252 for L=    3, J=    2.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.7 D.
    S-matrix   10 =    0.00220  -0.01483 for L=    3, J=    3.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.7 D.
    S-matrix   11 =    0.00000   0.00000 for L=    5, J=    4.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.0 D.
-       2.5 -0.02068554  0.01225137i: elastic S-matrix  @@      0.04  0   0 F  0
+       2.5 -0.02068554  0.01225137i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     2.5-/ 2 @ 3 =  18.573 , Out:   0.000#   0.174   18.398f
 
    S-matrix    4 =   -0.02069   0.01225 for L=    2, J=    3.0 channel on core I =   1.5 from L=    2,  Acc. loss =  0.0 D.
@@ -588,7 +588,7 @@
    S-matrix    9 =   -0.00074   0.00496 for L=    3, J=    2.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.7 D.
    S-matrix   10 =   -0.00123   0.00829 for L=    3, J=    3.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.7 D.
    S-matrix   11 =    0.00000   0.00000 for L=    5, J=    4.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.0 D.
-       2.5 -0.02068554  0.01225137i: elastic S-matrix  @@      0.04  0   0 F  0
+       2.5 -0.02068554  0.01225137i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     2.5-/ 2 @ 4 =  18.573 , Out:   0.000#   0.157   18.416f
 
    S-matrix    5 =    0.55666   0.09802 for L=    4, J=    3.0 channel on core I =   1.5 from L=    4,  Acc. loss =  0.0 D.
@@ -604,7 +604,7 @@
    S-matrix    9 =   -0.08373  -0.01367 for L=    3, J=    2.5 channel on core I =   2.0 from L=    4,  Acc. loss =  0.5 D.
    S-matrix   10 =    0.01243   0.00203 for L=    3, J=    3.5 channel on core I =   2.0 from L=    4,  Acc. loss =  0.5 D.
    S-matrix   11 =    0.00057  -0.00149 for L=    5, J=    4.5 channel on core I =   2.0 from L=    4,  Acc. loss =  3.1 D.
-       2.5  0.55665815  0.09801763i: elastic S-matrix  @@      0.04  0   0 F  0
+       2.5  0.55665815  0.09801763i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     2.5-/ 4 @ 5 =  12.646 , Out:   0.000#   0.153   12.493f
 
    S-matrix    6 =    0.55666   0.09802 for L=    4, J=    4.0 channel on core I =   1.5 from L=    4,  Acc. loss =  0.0 D.
@@ -620,7 +620,7 @@
    S-matrix    9 =   -0.06592  -0.01076 for L=    3, J=    2.5 channel on core I =   2.0 from L=    4,  Acc. loss =  0.5 D.
    S-matrix   10 =   -0.03588  -0.00586 for L=    3, J=    3.5 channel on core I =   2.0 from L=    4,  Acc. loss =  0.5 D.
    S-matrix   11 =   -0.00046   0.00121 for L=    5, J=    4.5 channel on core I =   2.0 from L=    4,  Acc. loss =  3.1 D.
-       2.5  0.55665815  0.09801763i: elastic S-matrix  @@      0.04  0   0 F  0
+       2.5  0.55665815  0.09801763i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     2.5-/ 4 @ 6 =  12.646 , Out:   0.000#   0.120   12.526f
 
 
@@ -644,7 +644,7 @@
    S-matrix    9 =   -0.00000   0.00000 for L=    4, J=    3.5 channel on core I =   2.0 from L=    1,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.00000   0.00000 for L=    4, J=    4.5 channel on core I =   2.0 from L=    1,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=    6, J=    5.5 channel on core I =   2.0 from L=    1,  Acc. loss =  0.0 D.
-       3.5 -0.22142353  0.04521352i: elastic S-matrix  @@      0.14  0   0 F  0
+       3.5 -0.22142353  0.04521352i: elastic S-matrix  @@      0.06  0   0 F  0
  Reaction Xsec     3.5+/ 1 @ 1 =  23.512 , Out:   0.000#   0.018   23.494f
 
    S-matrix    2 =    0.31240  -0.11641 for L=    3, J=    2.0 channel on core I =   1.5 from L=    3,  Acc. loss =  0.0 D.
@@ -660,7 +660,7 @@
    S-matrix    9 =    0.00269  -0.00698 for L=    4, J=    3.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.2 D.
    S-matrix   10 =   -0.00000   0.00000 for L=    4, J=    4.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=    6, J=    5.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.0 D.
-       3.5  0.31239870 -0.11641401i: elastic S-matrix  @@      0.04  0   0 F  0
+       3.5  0.31239870 -0.11641401i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     3.5+/ 3 @ 2 =  22.024 , Out:   0.000#   0.071   21.953f
 
    S-matrix    3 =    0.31240  -0.11641 for L=    3, J=    3.0 channel on core I =   1.5 from L=    3,  Acc. loss =  0.0 D.
@@ -676,7 +676,7 @@
    S-matrix    9 =    0.00061  -0.00159 for L=    4, J=    3.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.2 D.
    S-matrix   10 =    0.00203  -0.00527 for L=    4, J=    4.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.2 D.
    S-matrix   11 =    0.00000   0.00000 for L=    6, J=    5.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.0 D.
-       3.5  0.31239870 -0.11641401i: elastic S-matrix  @@      0.05  0   0 F  0
+       3.5  0.31239870 -0.11641401i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     3.5+/ 3 @ 3 =  22.024 , Out:   0.000#   0.450   21.574f
 
    S-matrix    4 =    0.31240  -0.11641 for L=    3, J=    4.0 channel on core I =   1.5 from L=    3,  Acc. loss =  0.0 D.
@@ -692,7 +692,7 @@
    S-matrix    9 =   -0.00045   0.00116 for L=    4, J=    3.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.2 D.
    S-matrix   10 =   -0.00080   0.00208 for L=    4, J=    4.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.2 D.
    S-matrix   11 =    0.00000   0.00000 for L=    6, J=    5.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.0 D.
-       3.5  0.31239870 -0.11641401i: elastic S-matrix  @@      0.04  0   0 F  0
+       3.5  0.31239870 -0.11641401i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     3.5+/ 3 @ 4 =  22.024 , Out:   0.000#   0.498   21.526f
 
    S-matrix    5 =    0.90013   0.08488 for L=    5, J=    4.0 channel on core I =   1.5 from L=    5,  Acc. loss =  0.0 D.
@@ -708,7 +708,7 @@
    S-matrix    9 =   -0.06089  -0.00303 for L=    4, J=    3.5 channel on core I =   2.0 from L=    5,  Acc. loss =  0.0 D.
    S-matrix   10 =    0.00565   0.00028 for L=    4, J=    4.5 channel on core I =   2.0 from L=    5,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00006  -0.00020 for L=    6, J=    5.5 channel on core I =   2.0 from L=    5,  Acc. loss =  3.8 D.
-       3.5  0.90013021  0.08487705i: elastic S-matrix  @@      0.04  0   0 F  0
+       3.5  0.90013021  0.08487705i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     3.5+/ 5 @ 5 =   4.523 , Out:   0.000#   0.104    4.419f
 
    S-matrix    6 =    0.90013   0.08488 for L=    5, J=    5.0 channel on core I =   1.5 from L=    5,  Acc. loss =  0.0 D.
@@ -724,7 +724,7 @@
    S-matrix    9 =   -0.05257  -0.00262 for L=    4, J=    3.5 channel on core I =   2.0 from L=    5,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.03170  -0.00158 for L=    4, J=    4.5 channel on core I =   2.0 from L=    5,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00005   0.00014 for L=    6, J=    5.5 channel on core I =   2.0 from L=    5,  Acc. loss =  3.8 D.
-       3.5  0.90013021  0.08487705i: elastic S-matrix  @@      0.04  0   0 F  0
+       3.5  0.90013021  0.08487705i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     3.5+/ 5 @ 6 =   4.523 , Out:   0.000#   0.105    4.419f
 
 
@@ -748,7 +748,7 @@
    S-matrix    9 =    0.00194  -0.01311 for L=    3, J=    3.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.7 D.
    S-matrix   10 =    0.00000   0.00000 for L=    5, J=    4.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=    5, J=    5.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.0 D.
-       3.5 -0.02068554  0.01225137i: elastic S-matrix  @@      0.13  0   0 F  0
+       3.5 -0.02068554  0.01225137i: elastic S-matrix  @@      0.06  0   0 F  0
  Reaction Xsec     3.5-/ 2 @ 1 =  24.764 , Out:   0.000#   0.011   24.752f
 
    S-matrix    2 =   -0.02069   0.01225 for L=    2, J=    3.0 channel on core I =   1.5 from L=    2,  Acc. loss =  0.0 D.
@@ -764,7 +764,7 @@
    S-matrix    9 =    0.00079  -0.00535 for L=    3, J=    3.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.7 D.
    S-matrix   10 =    0.00000   0.00000 for L=    5, J=    4.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=    5, J=    5.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.0 D.
-       3.5 -0.02068554  0.01225137i: elastic S-matrix  @@      0.04  0   0 F  0
+       3.5 -0.02068554  0.01225137i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     3.5-/ 2 @ 2 =  24.764 , Out:   0.000#   0.389   24.375f
 
    S-matrix    3 =    0.55666   0.09802 for L=    4, J=    3.0 channel on core I =   1.5 from L=    4,  Acc. loss =  0.0 D.
@@ -780,7 +780,7 @@
    S-matrix    9 =   -0.00802  -0.00131 for L=    3, J=    3.5 channel on core I =   2.0 from L=    4,  Acc. loss =  0.5 D.
    S-matrix   10 =    0.00069  -0.00181 for L=    5, J=    4.5 channel on core I =   2.0 from L=    4,  Acc. loss =  3.1 D.
    S-matrix   11 =    0.00000   0.00000 for L=    5, J=    5.5 channel on core I =   2.0 from L=    4,  Acc. loss =  0.0 D.
-       3.5  0.55665815  0.09801763i: elastic S-matrix  @@      0.04  0   0 F  0
+       3.5  0.55665815  0.09801763i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     3.5-/ 4 @ 3 =  16.862 , Out:   0.000#   0.051   16.811f
 
    S-matrix    4 =    0.55666   0.09802 for L=    4, J=    4.0 channel on core I =   1.5 from L=    4,  Acc. loss =  0.0 D.
@@ -796,7 +796,7 @@
    S-matrix    9 =   -0.03613  -0.00590 for L=    3, J=    3.5 channel on core I =   2.0 from L=    4,  Acc. loss =  0.5 D.
    S-matrix   10 =   -0.00015   0.00040 for L=    5, J=    4.5 channel on core I =   2.0 from L=    4,  Acc. loss =  3.1 D.
    S-matrix   11 =    0.00040  -0.00104 for L=    5, J=    5.5 channel on core I =   2.0 from L=    4,  Acc. loss =  3.1 D.
-       3.5  0.55665815  0.09801763i: elastic S-matrix  @@      0.05  0   0 F  0
+       3.5  0.55665815  0.09801763i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     3.5-/ 4 @ 4 =  16.862 , Out:   0.000#   0.450   16.412f
 
    S-matrix    5 =    0.55666   0.09802 for L=    4, J=    5.0 channel on core I =   1.5 from L=    4,  Acc. loss =  0.0 D.
@@ -812,7 +812,7 @@
    S-matrix    9 =   -0.09857  -0.01609 for L=    3, J=    3.5 channel on core I =   2.0 from L=    4,  Acc. loss =  0.5 D.
    S-matrix   10 =   -0.00008   0.00021 for L=    5, J=    4.5 channel on core I =   2.0 from L=    4,  Acc. loss =  3.1 D.
    S-matrix   11 =   -0.00051   0.00134 for L=    5, J=    5.5 channel on core I =   2.0 from L=    4,  Acc. loss =  3.1 D.
-       3.5  0.55665815  0.09801763i: elastic S-matrix  @@      0.04  0   0 F  0
+       3.5  0.55665815  0.09801763i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     3.5-/ 4 @ 5 =  16.862 , Out:   0.000#   0.277   16.585f
 
    S-matrix    6 =    0.97995   0.02386 for L=    6, J=    5.0 channel on core I =   1.5 from L=    6,  Acc. loss =  0.0 D.
@@ -828,7 +828,7 @@
    S-matrix    9 =    0.00000   0.00000 for L=    3, J=    3.5 channel on core I =   2.0 from L=    6,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.03719  -0.00039 for L=    5, J=    4.5 channel on core I =   2.0 from L=    6,  Acc. loss =  0.8 D.
    S-matrix   11 =    0.00812   0.00008 for L=    5, J=    5.5 channel on core I =   2.0 from L=    6,  Acc. loss =  0.8 D.
-       3.5  0.97994996  0.02386017i: elastic S-matrix  @@      0.03  0   0 F  0
+       3.5  0.97994996  0.02386017i: elastic S-matrix  @@      0.01  0   0 F  0
  Reaction Xsec     3.5-/ 6 @ 6 =   0.970 , Out:   0.000#   0.040    0.929f
 
 
@@ -852,7 +852,7 @@
    S-matrix    9 =    0.00170  -0.00441 for L=    4, J=    4.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.2 D.
    S-matrix   10 =    0.00000   0.00000 for L=    6, J=    5.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=    6, J=    6.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.0 D.
-       4.5  0.31239870 -0.11641401i: elastic S-matrix  @@      0.15  0   0 F  0
+       4.5  0.31239870 -0.11641401i: elastic S-matrix  @@      0.07  0   0 F  0
  Reaction Xsec     4.5+/ 3 @ 1 =  27.530 , Out:   0.000#   0.011   27.519f
 
    S-matrix    2 =    0.31240  -0.11641 for L=    3, J=    4.0 channel on core I =   1.5 from L=    3,  Acc. loss =  0.0 D.
@@ -868,7 +868,7 @@
    S-matrix    9 =    0.00085  -0.00222 for L=    4, J=    4.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.2 D.
    S-matrix   10 =    0.00000   0.00000 for L=    6, J=    5.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=    6, J=    6.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.0 D.
-       4.5  0.31239870 -0.11641401i: elastic S-matrix  @@      0.04  0   0 F  0
+       4.5  0.31239870 -0.11641401i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     4.5+/ 3 @ 2 =  27.530 , Out:   0.000#   0.959   26.571f
 
    S-matrix    3 =    0.90013   0.08488 for L=    5, J=    4.0 channel on core I =   1.5 from L=    5,  Acc. loss =  0.0 D.
@@ -884,7 +884,7 @@
    S-matrix    9 =   -0.00602  -0.00030 for L=    4, J=    4.5 channel on core I =   2.0 from L=    5,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.00007  -0.00023 for L=    6, J=    5.5 channel on core I =   2.0 from L=    5,  Acc. loss =  3.9 D.
    S-matrix   11 =    0.00000   0.00000 for L=    6, J=    6.5 channel on core I =   2.0 from L=    5,  Acc. loss =  0.0 D.
-       4.5  0.90013021  0.08487705i: elastic S-matrix  @@      0.04  0   0 F  0
+       4.5  0.90013021  0.08487705i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     4.5+/ 5 @ 3 =   5.654 , Out:   0.000#   0.023    5.632f
 
    S-matrix    4 =    0.90013   0.08488 for L=    5, J=    5.0 channel on core I =   1.5 from L=    5,  Acc. loss =  0.0 D.
@@ -900,7 +900,7 @@
    S-matrix    9 =   -0.02996  -0.00149 for L=    4, J=    4.5 channel on core I =   2.0 from L=    5,  Acc. loss =  0.0 D.
    S-matrix   10 =    0.00001   0.00004 for L=    6, J=    5.5 channel on core I =   2.0 from L=    5,  Acc. loss =  3.9 D.
    S-matrix   11 =   -0.00004  -0.00014 for L=    6, J=    6.5 channel on core I =   2.0 from L=    5,  Acc. loss =  3.9 D.
-       4.5  0.90013021  0.08487705i: elastic S-matrix  @@      0.05  0   0 F  0
+       4.5  0.90013021  0.08487705i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     4.5+/ 5 @ 4 =   5.654 , Out:   0.000#   0.311    5.344f
 
    S-matrix    5 =    0.90013   0.08488 for L=    5, J=    6.0 channel on core I =   1.5 from L=    5,  Acc. loss =  0.0 D.
@@ -916,7 +916,7 @@
    S-matrix    9 =   -0.07567  -0.00377 for L=    4, J=    4.5 channel on core I =   2.0 from L=    5,  Acc. loss =  0.0 D.
    S-matrix   10 =    0.00001   0.00002 for L=    6, J=    5.5 channel on core I =   2.0 from L=    5,  Acc. loss =  3.9 D.
    S-matrix   11 =    0.00005   0.00016 for L=    6, J=    6.5 channel on core I =   2.0 from L=    5,  Acc. loss =  3.9 D.
-       4.5  0.90013021  0.08487705i: elastic S-matrix  @@      0.04  0   0 F  0
+       4.5  0.90013021  0.08487705i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     4.5+/ 5 @ 5 =   5.654 , Out:   0.000#   0.199    5.455f
 
    S-matrix    6 =    0.99558   0.00597 for L=    7, J=    6.0 channel on core I =   1.5 from L=    7,  Acc. loss =  0.0 D.
@@ -932,7 +932,7 @@
    S-matrix    9 =   -0.00000   0.00000 for L=    4, J=    4.5 channel on core I =   2.0 from L=    7,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.02182  -0.00005 for L=    6, J=    5.5 channel on core I =   2.0 from L=    7,  Acc. loss =  0.5 D.
    S-matrix   11 =    0.00389   0.00001 for L=    6, J=    6.5 channel on core I =   2.0 from L=    7,  Acc. loss =  0.5 D.
-       4.5  0.99557732  0.00596618i: elastic S-matrix  @@      0.03  0   0 F  0
+       4.5  0.99557732  0.00596618i: elastic S-matrix  @@      0.01  0   0 F  0
  Reaction Xsec     4.5+/ 7 @ 6 =   0.272 , Out:   0.000#   0.017    0.255f
 
 
@@ -956,7 +956,7 @@
    S-matrix    9 =    0.00000   0.00000 for L=    5, J=    4.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.0 D.
    S-matrix   10 =    0.00000   0.00000 for L=    5, J=    5.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=    7, J=    6.5 channel on core I =   2.0 from L=    2,  Acc. loss =  0.0 D.
-       4.5 -0.02068554  0.01225137i: elastic S-matrix  @@      0.14  0   0 F  0
+       4.5 -0.02068554  0.01225137i: elastic S-matrix  @@      0.06  0   0 F  0
  Reaction Xsec     4.5-/ 2 @ 1 =  30.955 , Out:   0.000#   9.470/  30.945f
 
    S-matrix    2 =    0.55666   0.09802 for L=    4, J=    3.0 channel on core I =   1.5 from L=    4,  Acc. loss =  0.0 D.
@@ -972,7 +972,7 @@
    S-matrix    9 =    0.00058  -0.00151 for L=    5, J=    4.5 channel on core I =   2.0 from L=    4,  Acc. loss =  3.1 D.
    S-matrix   10 =    0.00000   0.00000 for L=    5, J=    5.5 channel on core I =   2.0 from L=    4,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=    7, J=    6.5 channel on core I =   2.0 from L=    4,  Acc. loss =  0.0 D.
-       4.5  0.55665815  0.09801763i: elastic S-matrix  @@      0.04  0   0 F  0
+       4.5  0.55665815  0.09801763i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     4.5-/ 4 @ 2 =  21.077 , Out:   0.000#   0.175   20.902f
 
    S-matrix    3 =    0.55666   0.09802 for L=    4, J=    4.0 channel on core I =   1.5 from L=    4,  Acc. loss =  0.0 D.
@@ -988,7 +988,7 @@
    S-matrix    9 =    0.00016  -0.00043 for L=    5, J=    4.5 channel on core I =   2.0 from L=    4,  Acc. loss =  3.1 D.
    S-matrix   10 =    0.00046  -0.00121 for L=    5, J=    5.5 channel on core I =   2.0 from L=    4,  Acc. loss =  3.1 D.
    S-matrix   11 =   -0.00000   0.00000 for L=    7, J=    6.5 channel on core I =   2.0 from L=    4,  Acc. loss =  0.0 D.
-       4.5  0.55665815  0.09801763i: elastic S-matrix  @@      0.05  0   0 F  0
+       4.5  0.55665815  0.09801763i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     4.5-/ 4 @ 3 =  21.077 , Out:   0.000#   0.802   20.275f
 
    S-matrix    4 =    0.55666   0.09802 for L=    4, J=    5.0 channel on core I =   1.5 from L=    4,  Acc. loss =  0.0 D.
@@ -1004,7 +1004,7 @@
    S-matrix    9 =   -0.00008   0.00020 for L=    5, J=    4.5 channel on core I =   2.0 from L=    4,  Acc. loss =  3.1 D.
    S-matrix   10 =   -0.00014   0.00037 for L=    5, J=    5.5 channel on core I =   2.0 from L=    4,  Acc. loss =  3.1 D.
    S-matrix   11 =   -0.00000   0.00000 for L=    7, J=    6.5 channel on core I =   2.0 from L=    4,  Acc. loss =  0.0 D.
-       4.5  0.55665815  0.09801763i: elastic S-matrix  @@      0.04  0   0 F  0
+       4.5  0.55665815  0.09801763i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     4.5-/ 4 @ 4 =  21.077 , Out:   0.000#   1.007   20.071f
 
    S-matrix    5 =    0.97995   0.02386 for L=    6, J=    5.0 channel on core I =   1.5 from L=    6,  Acc. loss =  0.0 D.
@@ -1020,7 +1020,7 @@
    S-matrix    9 =   -0.03514  -0.00037 for L=    5, J=    4.5 channel on core I =   2.0 from L=    6,  Acc. loss =  0.8 D.
    S-matrix   10 =    0.00225   0.00002 for L=    5, J=    5.5 channel on core I =   2.0 from L=    6,  Acc. loss =  0.8 D.
    S-matrix   11 =   -0.00037  -0.00003 for L=    7, J=    6.5 channel on core I =   2.0 from L=    6,  Acc. loss =  5.2 D.
-       4.5  0.97994996  0.02386017i: elastic S-matrix  @@      0.04  0   0 F  0
+       4.5  0.97994996  0.02386017i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     4.5-/ 6 @ 5 =   1.212 , Out:   0.000#   0.043    1.169f
 
    S-matrix    6 =    0.97995   0.02386 for L=    6, J=    6.0 channel on core I =   1.5 from L=    6,  Acc. loss =  0.0 D.
@@ -1036,7 +1036,7 @@
    S-matrix    9 =   -0.03221  -0.00033 for L=    5, J=    4.5 channel on core I =   2.0 from L=    6,  Acc. loss =  0.8 D.
    S-matrix   10 =   -0.02063  -0.00021 for L=    5, J=    5.5 channel on core I =   2.0 from L=    6,  Acc. loss =  0.8 D.
    S-matrix   11 =    0.00024   0.00002 for L=    7, J=    6.5 channel on core I =   2.0 from L=    6,  Acc. loss =  5.2 D.
-       4.5  0.97994996  0.02386017i: elastic S-matrix  @@      0.04  0   0 F  0
+       4.5  0.97994996  0.02386017i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     4.5-/ 6 @ 6 =   1.212 , Out:   0.000#   0.051    1.161f
 
 
@@ -1060,7 +1060,7 @@
    S-matrix    9 =    0.00000   0.00000 for L=    6, J=    5.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.0 D.
    S-matrix   10 =    0.00000   0.00000 for L=    6, J=    6.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=    8, J=    7.5 channel on core I =   2.0 from L=    3,  Acc. loss =  0.0 D.
-       5.5  0.31239862 -0.11641780i: elastic S-matrix  @@      0.13  0   0 F  0
+       5.5  0.31239862 -0.11641780i: elastic S-matrix  @@      0.06  0   0 F  0
  Reaction Xsec     5.5+/ 3 @ 1 =  33.036 , Out:   0.000#   1.352/  33.035f
 
    S-matrix    2 =    0.90013   0.08488 for L=    5, J=    4.0 channel on core I =   1.5 from L=    5,  Acc. loss =  0.0 D.
@@ -1076,7 +1076,7 @@
    S-matrix    9 =   -0.00006  -0.00019 for L=    6, J=    5.5 channel on core I =   2.0 from L=    5,  Acc. loss =  3.9 D.
    S-matrix   10 =    0.00000   0.00000 for L=    6, J=    6.5 channel on core I =   2.0 from L=    5,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=    8, J=    7.5 channel on core I =   2.0 from L=    5,  Acc. loss =  0.0 D.
-       5.5  0.90013021  0.08487705i: elastic S-matrix  @@      0.04  0   0 F  0
+       5.5  0.90013021  0.08487705i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     5.5+/ 5 @ 2 =   6.785 , Out:   0.000#   0.128    6.657f
 
    S-matrix    3 =    0.90013   0.08488 for L=    5, J=    5.0 channel on core I =   1.5 from L=    5,  Acc. loss =  0.0 D.
@@ -1092,7 +1092,7 @@
    S-matrix    9 =   -0.00002  -0.00006 for L=    6, J=    5.5 channel on core I =   2.0 from L=    5,  Acc. loss =  3.9 D.
    S-matrix   10 =   -0.00005  -0.00015 for L=    6, J=    6.5 channel on core I =   2.0 from L=    5,  Acc. loss =  3.9 D.
    S-matrix   11 =   -0.00000   0.00000 for L=    8, J=    7.5 channel on core I =   2.0 from L=    5,  Acc. loss =  0.0 D.
-       5.5  0.90013021  0.08487705i: elastic S-matrix  @@      0.05  0   0 F  0
+       5.5  0.90013021  0.08487705i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     5.5+/ 5 @ 3 =   6.785 , Out:   0.000#   0.472    6.313f
 
    S-matrix    4 =    0.90013   0.08488 for L=    5, J=    6.0 channel on core I =   1.5 from L=    5,  Acc. loss =  0.0 D.
@@ -1108,7 +1108,7 @@
    S-matrix    9 =    0.00001   0.00002 for L=    6, J=    5.5 channel on core I =   2.0 from L=    5,  Acc. loss =  3.9 D.
    S-matrix   10 =    0.00001   0.00004 for L=    6, J=    6.5 channel on core I =   2.0 from L=    5,  Acc. loss =  3.9 D.
    S-matrix   11 =   -0.00000   0.00000 for L=    8, J=    7.5 channel on core I =   2.0 from L=    5,  Acc. loss =  0.0 D.
-       5.5  0.90013021  0.08487705i: elastic S-matrix  @@      0.04  0   0 F  0
+       5.5  0.90013021  0.08487705i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     5.5+/ 5 @ 4 =   6.785 , Out:   0.000#   0.643    6.142f
 
    S-matrix    5 =    0.99558   0.00597 for L=    7, J=    6.0 channel on core I =   1.5 from L=    7,  Acc. loss =  0.0 D.
@@ -1124,7 +1124,7 @@
    S-matrix    9 =   -0.01975  -0.00004 for L=    6, J=    5.5 channel on core I =   2.0 from L=    7,  Acc. loss =  0.5 D.
    S-matrix   10 =    0.00093   0.00000 for L=    6, J=    6.5 channel on core I =   2.0 from L=    7,  Acc. loss =  0.5 D.
    S-matrix   11 =   -0.00042  -0.00000 for L=    8, J=    7.5 channel on core I =   2.0 from L=    7,  Acc. loss =  6.2 D.
-       5.5  0.99557732  0.00596618i: elastic S-matrix  @@      0.04  0   0 F  0
+       5.5  0.99557732  0.00596618i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     5.5+/ 7 @ 5 =   0.327 , Out:   0.000#   0.016    0.310f
 
    S-matrix    6 =    0.99558   0.00597 for L=    7, J=    7.0 channel on core I =   1.5 from L=    7,  Acc. loss =  0.0 D.
@@ -1140,7 +1140,7 @@
    S-matrix    9 =   -0.01887  -0.00004 for L=    6, J=    5.5 channel on core I =   2.0 from L=    7,  Acc. loss =  0.5 D.
    S-matrix   10 =   -0.01258  -0.00003 for L=    6, J=    6.5 channel on core I =   2.0 from L=    7,  Acc. loss =  0.5 D.
    S-matrix   11 =    0.00026   0.00000 for L=    8, J=    7.5 channel on core I =   2.0 from L=    7,  Acc. loss =  6.2 D.
-       5.5  0.99557732  0.00596618i: elastic S-matrix  @@      0.04  0   0 F  0
+       5.5  0.99557732  0.00596618i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     5.5+/ 7 @ 6 =   0.327 , Out:   0.000#   0.021    0.305f
 
 
@@ -1164,7 +1164,7 @@
    S-matrix    9 =    0.00037  -0.00098 for L=    5, J=    5.5 channel on core I =   2.0 from L=    4,  Acc. loss =  3.2 D.
    S-matrix   10 =   -0.00000   0.00000 for L=    7, J=    6.5 channel on core I =   2.0 from L=    4,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=    7, J=    7.5 channel on core I =   2.0 from L=    4,  Acc. loss =  0.0 D.
-       5.5  0.55665815  0.09801763i: elastic S-matrix  @@      0.14  0   0 F  0
+       5.5  0.55665815  0.09801763i: elastic S-matrix  @@      0.07  0   0 F  0
  Reaction Xsec     5.5-/ 4 @ 1 =  25.293 , Out:   0.000#   0.043   25.250f
 
    S-matrix    2 =    0.55666   0.09802 for L=    4, J=    5.0 channel on core I =   1.5 from L=    4,  Acc. loss =  0.0 D.
@@ -1180,7 +1180,7 @@
    S-matrix    9 =    0.00021  -0.00055 for L=    5, J=    5.5 channel on core I =   2.0 from L=    4,  Acc. loss =  3.2 D.
    S-matrix   10 =   -0.00000   0.00000 for L=    7, J=    6.5 channel on core I =   2.0 from L=    4,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=    7, J=    7.5 channel on core I =   2.0 from L=    4,  Acc. loss =  0.0 D.
-       5.5  0.55665815  0.09801763i: elastic S-matrix  @@      0.04  0   0 F  0
+       5.5  0.55665815  0.09801763i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     5.5-/ 4 @ 2 =  25.293 , Out:   0.000#   1.682   23.611f
 
    S-matrix    3 =    0.97995   0.02386 for L=    6, J=    5.0 channel on core I =   1.5 from L=    6,  Acc. loss =  0.0 D.
@@ -1196,7 +1196,7 @@
    S-matrix    9 =   -0.00334  -0.00003 for L=    5, J=    5.5 channel on core I =   2.0 from L=    6,  Acc. loss =  0.8 D.
    S-matrix   10 =   -0.00041  -0.00003 for L=    7, J=    6.5 channel on core I =   2.0 from L=    6,  Acc. loss =  4.4 D.
    S-matrix   11 =   -0.00000   0.00000 for L=    7, J=    7.5 channel on core I =   2.0 from L=    6,  Acc. loss =  0.0 D.
-       5.5  0.97994996  0.02386017i: elastic S-matrix  @@      0.04  0   0 F  0
+       5.5  0.97994996  0.02386017i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     5.5-/ 6 @ 3 =   1.454 , Out:   0.000#   6.640/   1.448f
 
    S-matrix    4 =    0.97995   0.02386 for L=    6, J=    6.0 channel on core I =   1.5 from L=    6,  Acc. loss =  0.0 D.
@@ -1212,7 +1212,7 @@
    S-matrix    9 =   -0.01867  -0.00019 for L=    5, J=    5.5 channel on core I =   2.0 from L=    6,  Acc. loss =  0.8 D.
    S-matrix   10 =    0.00006   0.00000 for L=    7, J=    6.5 channel on core I =   2.0 from L=    6,  Acc. loss =  4.4 D.
    S-matrix   11 =   -0.00025  -0.00002 for L=    7, J=    7.5 channel on core I =   2.0 from L=    6,  Acc. loss =  4.4 D.
-       5.5  0.97994996  0.02386017i: elastic S-matrix  @@      0.05  0   0 F  0
+       5.5  0.97994996  0.02386017i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     5.5-/ 6 @ 4 =   1.454 , Out:   0.000#   0.131    1.324f
 
    S-matrix    5 =    0.97995   0.02386 for L=    6, J=    7.0 channel on core I =   1.5 from L=    6,  Acc. loss =  0.0 D.
@@ -1228,7 +1228,7 @@
    S-matrix    9 =   -0.04565  -0.00047 for L=    5, J=    5.5 channel on core I =   2.0 from L=    6,  Acc. loss =  0.8 D.
    S-matrix   10 =    0.00003   0.00000 for L=    7, J=    6.5 channel on core I =   2.0 from L=    6,  Acc. loss =  4.4 D.
    S-matrix   11 =    0.00028   0.00002 for L=    7, J=    7.5 channel on core I =   2.0 from L=    6,  Acc. loss =  4.4 D.
-       5.5  0.97994996  0.02386017i: elastic S-matrix  @@      0.04  0   0 F  0
+       5.5  0.97994996  0.02386017i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     5.5-/ 6 @ 5 =   1.454 , Out:   0.000#   0.087    1.368f
 
    S-matrix    6 =    0.99898   0.00146 for L=    8, J=    7.0 channel on core I =   1.5 from L=    8,  Acc. loss =  0.0 D.
@@ -1244,7 +1244,7 @@
    S-matrix    9 =    0.00000   0.00000 for L=    5, J=    5.5 channel on core I =   2.0 from L=    8,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.01270  -0.00001 for L=    7, J=    6.5 channel on core I =   2.0 from L=    8,  Acc. loss =  1.6 D.
    S-matrix   11 =    0.00191   0.00000 for L=    7, J=    7.5 channel on core I =   2.0 from L=    8,  Acc. loss =  1.6 D.
-       5.5  0.99898237  0.00145905i: elastic S-matrix  @@      0.03  0   0 F  0
+       5.5  0.99898237  0.00145905i: elastic S-matrix  @@      0.01  0   0 F  0
  Reaction Xsec     5.5-/ 8 @ 6 =   0.076 , Out:   0.000#   6.865/   0.069f
 
 
@@ -1268,7 +1268,7 @@
    S-matrix    9 =   -0.00004  -0.00012 for L=    6, J=    6.5 channel on core I =   2.0 from L=    5,  Acc. loss =  3.8 D.
    S-matrix   10 =   -0.00000   0.00000 for L=    8, J=    7.5 channel on core I =   2.0 from L=    5,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=    8, J=    8.5 channel on core I =   2.0 from L=    5,  Acc. loss =  0.0 D.
-       6.5  0.90013021  0.08487705i: elastic S-matrix  @@      0.14  0   0 F  0
+       6.5  0.90013021  0.08487705i: elastic S-matrix  @@      0.07  0   0 F  0
  Reaction Xsec     6.5+/ 5 @ 1 =   7.916 , Out:   0.000#   0.039    7.877f
 
    S-matrix    2 =    0.90013   0.08488 for L=    5, J=    6.0 channel on core I =   1.5 from L=    5,  Acc. loss =  0.0 D.
@@ -1284,7 +1284,7 @@
    S-matrix    9 =   -0.00002  -0.00007 for L=    6, J=    6.5 channel on core I =   2.0 from L=    5,  Acc. loss =  3.8 D.
    S-matrix   10 =   -0.00000   0.00000 for L=    8, J=    7.5 channel on core I =   2.0 from L=    5,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=    8, J=    8.5 channel on core I =   2.0 from L=    5,  Acc. loss =  0.0 D.
-       6.5  0.90013021  0.08487705i: elastic S-matrix  @@      0.04  0   0 F  0
+       6.5  0.90013021  0.08487705i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     6.5+/ 5 @ 2 =   7.916 , Out:   0.000#   0.983    6.933f
 
    S-matrix    3 =    0.99558   0.00597 for L=    7, J=    6.0 channel on core I =   1.5 from L=    7,  Acc. loss =  0.0 D.
@@ -1300,7 +1300,7 @@
    S-matrix    9 =   -0.00176  -0.00000 for L=    6, J=    6.5 channel on core I =   2.0 from L=    7,  Acc. loss =  0.5 D.
    S-matrix   10 =   -0.00047  -0.00000 for L=    8, J=    7.5 channel on core I =   2.0 from L=    7,  Acc. loss =  3.5 D.
    S-matrix   11 =   -0.00000   0.00000 for L=    8, J=    8.5 channel on core I =   2.0 from L=    7,  Acc. loss =  0.0 D.
-       6.5  0.99557732  0.00596618i: elastic S-matrix  @@      0.04  0   0 F  0
+       6.5  0.99557732  0.00596618i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     6.5+/ 7 @ 3 =   0.381 , Out:   0.000#   1.892/   0.379f
 
    S-matrix    4 =    0.99558   0.00597 for L=    7, J=    7.0 channel on core I =   1.5 from L=    7,  Acc. loss =  0.0 D.
@@ -1316,7 +1316,7 @@
    S-matrix    9 =   -0.01103  -0.00002 for L=    6, J=    6.5 channel on core I =   2.0 from L=    7,  Acc. loss =  0.5 D.
    S-matrix   10 =    0.00005   0.00000 for L=    8, J=    7.5 channel on core I =   2.0 from L=    7,  Acc. loss =  3.5 D.
    S-matrix   11 =   -0.00029  -0.00000 for L=    8, J=    8.5 channel on core I =   2.0 from L=    7,  Acc. loss =  3.5 D.
-       6.5  0.99557732  0.00596618i: elastic S-matrix  @@      0.04  0   0 F  0
+       6.5  0.99557732  0.00596618i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     6.5+/ 7 @ 4 =   0.381 , Out:   0.000#   0.050    0.331f
 
    S-matrix    5 =    0.99558   0.00597 for L=    7, J=    8.0 channel on core I =   1.5 from L=    7,  Acc. loss =  0.0 D.
@@ -1332,7 +1332,7 @@
    S-matrix    9 =   -0.02656  -0.00006 for L=    6, J=    6.5 channel on core I =   2.0 from L=    7,  Acc. loss =  0.5 D.
    S-matrix   10 =    0.00003   0.00000 for L=    8, J=    7.5 channel on core I =   2.0 from L=    7,  Acc. loss =  3.5 D.
    S-matrix   11 =    0.00032   0.00000 for L=    8, J=    8.5 channel on core I =   2.0 from L=    7,  Acc. loss =  3.5 D.
-       6.5  0.99557732  0.00596618i: elastic S-matrix  @@      0.04  0   0 F  0
+       6.5  0.99557732  0.00596618i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     6.5+/ 7 @ 5 =   0.381 , Out:   0.000#   0.034    0.347f
 
    S-matrix    6 =    0.99976   0.00035 for L=    9, J=    8.0 channel on core I =   1.5 from L=    9,  Acc. loss =  0.0 D.
@@ -1348,7 +1348,7 @@
    S-matrix    9 =    0.00000   0.00000 for L=    6, J=    6.5 channel on core I =   2.0 from L=    9,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.00742  -0.00000 for L=    8, J=    7.5 channel on core I =   2.0 from L=    9,  Acc. loss =  2.6 D.
    S-matrix   11 =    0.00097   0.00000 for L=    8, J=    8.5 channel on core I =   2.0 from L=    9,  Acc. loss =  2.6 D.
-       6.5  0.99976213  0.00035379i: elastic S-matrix  @@      0.03  0   0 F  0
+       6.5  0.99976213  0.00035379i: elastic S-matrix  @@      0.01  0   0 F  0
  Reaction Xsec     6.5+/ 9 @ 6 =   0.021 , Out:   0.000#   2.718/   0.018f
 
 
@@ -1372,7 +1372,7 @@
    S-matrix    9 =   -0.00000   0.00000 for L=    7, J=    6.5 channel on core I =   2.0 from L=    4,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.00000   0.00000 for L=    7, J=    7.5 channel on core I =   2.0 from L=    4,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=    9, J=    8.5 channel on core I =   2.0 from L=    4,  Acc. loss =  0.0 D.
-       6.5  0.55665664  0.09801921i: elastic S-matrix  @@      0.13  0   0 F  0
+       6.5  0.55665664  0.09801921i: elastic S-matrix  @@      0.06  0   0 F  0
  Reaction Xsec     6.5-/ 4 @ 1 =  29.509 , Out:   0.000#   0.076/  29.508f
 
    S-matrix    2 =    0.97995   0.02386 for L=    6, J=    5.0 channel on core I =   1.5 from L=    6,  Acc. loss =  0.0 D.
@@ -1388,7 +1388,7 @@
    S-matrix    9 =   -0.00033  -0.00003 for L=    7, J=    6.5 channel on core I =   2.0 from L=    6,  Acc. loss =  3.9 D.
    S-matrix   10 =   -0.00000   0.00000 for L=    7, J=    7.5 channel on core I =   2.0 from L=    6,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=    9, J=    8.5 channel on core I =   2.0 from L=    6,  Acc. loss =  0.0 D.
-       6.5  0.97994996  0.02386017i: elastic S-matrix  @@      0.04  0   0 F  0
+       6.5  0.97994996  0.02386017i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     6.5-/ 6 @ 2 =   1.697 , Out:   0.000#   0.056    1.640f
 
    S-matrix    3 =    0.97995   0.02386 for L=    6, J=    6.0 channel on core I =   1.5 from L=    6,  Acc. loss =  0.0 D.
@@ -1404,7 +1404,7 @@
    S-matrix    9 =   -0.00011  -0.00001 for L=    7, J=    6.5 channel on core I =   2.0 from L=    6,  Acc. loss =  3.9 D.
    S-matrix   10 =   -0.00028  -0.00002 for L=    7, J=    7.5 channel on core I =   2.0 from L=    6,  Acc. loss =  3.9 D.
    S-matrix   11 =    0.00000   0.00000 for L=    9, J=    8.5 channel on core I =   2.0 from L=    6,  Acc. loss =  0.0 D.
-       6.5  0.97994996  0.02386017i: elastic S-matrix  @@      0.05  0   0 F  0
+       6.5  0.97994996  0.02386017i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     6.5-/ 6 @ 3 =   1.697 , Out:   0.000#   0.179    1.517f
 
    S-matrix    4 =    0.97995   0.02386 for L=    6, J=    7.0 channel on core I =   1.5 from L=    6,  Acc. loss =  0.0 D.
@@ -1420,7 +1420,7 @@
    S-matrix    9 =    0.00003   0.00000 for L=    7, J=    6.5 channel on core I =   2.0 from L=    6,  Acc. loss =  3.9 D.
    S-matrix   10 =    0.00006   0.00000 for L=    7, J=    7.5 channel on core I =   2.0 from L=    6,  Acc. loss =  3.9 D.
    S-matrix   11 =    0.00000   0.00000 for L=    9, J=    8.5 channel on core I =   2.0 from L=    6,  Acc. loss =  0.0 D.
-       6.5  0.97994996  0.02386017i: elastic S-matrix  @@      0.04  0   0 F  0
+       6.5  0.97994996  0.02386017i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     6.5-/ 6 @ 4 =   1.697 , Out:   0.000#   0.259    1.438f
 
    S-matrix    5 =    0.99898   0.00146 for L=    8, J=    7.0 channel on core I =   1.5 from L=    8,  Acc. loss =  0.0 D.
@@ -1436,7 +1436,7 @@
    S-matrix    9 =   -0.01114  -0.00001 for L=    7, J=    6.5 channel on core I =   2.0 from L=    8,  Acc. loss =  1.1 D.
    S-matrix   10 =    0.00040   0.00000 for L=    7, J=    7.5 channel on core I =   2.0 from L=    8,  Acc. loss =  1.1 D.
    S-matrix   11 =   -0.00036  -0.00000 for L=    9, J=    8.5 channel on core I =   2.0 from L=    8,  Acc. loss =  5.6 D.
-       6.5  0.99898237  0.00145905i: elastic S-matrix  @@      0.04  0   0 F  0
+       6.5  0.99898237  0.00145905i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     6.5-/ 8 @ 5 =   0.088 , Out:   0.000#   6.038/   0.082f
 
    S-matrix    6 =    0.99898   0.00146 for L=    8, J=    8.0 channel on core I =   1.5 from L=    8,  Acc. loss =  0.0 D.
@@ -1452,7 +1452,7 @@
    S-matrix    9 =   -0.01098  -0.00001 for L=    7, J=    6.5 channel on core I =   2.0 from L=    8,  Acc. loss =  1.1 D.
    S-matrix   10 =   -0.00753  -0.00000 for L=    7, J=    7.5 channel on core I =   2.0 from L=    8,  Acc. loss =  1.1 D.
    S-matrix   11 =    0.00021   0.00000 for L=    9, J=    8.5 channel on core I =   2.0 from L=    8,  Acc. loss =  5.6 D.
-       6.5  0.99898237  0.00145905i: elastic S-matrix  @@      0.04  0   0 F  0
+       6.5  0.99898237  0.00145905i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     6.5-/ 8 @ 6 =   0.088 , Out:   0.000#   8.615/   0.079f
 
 
@@ -1476,7 +1476,7 @@
    S-matrix    9 =   -0.00000   0.00000 for L=    8, J=    7.5 channel on core I =   2.0 from L=    5,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.00000   0.00000 for L=    8, J=    8.5 channel on core I =   2.0 from L=    5,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=   10, J=    9.5 channel on core I =   2.0 from L=    5,  Acc. loss =  0.0 D.
-       7.5  0.90013061  0.08487736i: elastic S-matrix  @@      0.14  0   0 F  0
+       7.5  0.90013061  0.08487736i: elastic S-matrix  @@      0.06  0   0 F  0
  Reaction Xsec     7.5+/ 5 @ 1 =   9.047 , Out:   0.000#   1.278#   9.047f
 
    S-matrix    2 =    0.99558   0.00597 for L=    7, J=    6.0 channel on core I =   1.5 from L=    7,  Acc. loss =  0.0 D.
@@ -1492,7 +1492,7 @@
    S-matrix    9 =   -0.00037  -0.00000 for L=    8, J=    7.5 channel on core I =   2.0 from L=    7,  Acc. loss =  4.1 D.
    S-matrix   10 =   -0.00000   0.00000 for L=    8, J=    8.5 channel on core I =   2.0 from L=    7,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=   10, J=    9.5 channel on core I =   2.0 from L=    7,  Acc. loss =  0.0 D.
-       7.5  0.99557732  0.00596618i: elastic S-matrix  @@      0.04  0   0 F  0
+       7.5  0.99557732  0.00596618i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     7.5+/ 7 @ 2 =   0.436 , Out:   0.000#   0.022    0.413f
 
    S-matrix    3 =    0.99558   0.00597 for L=    7, J=    7.0 channel on core I =   1.5 from L=    7,  Acc. loss =  0.0 D.
@@ -1508,7 +1508,7 @@
    S-matrix    9 =   -0.00013  -0.00000 for L=    8, J=    7.5 channel on core I =   2.0 from L=    7,  Acc. loss =  4.1 D.
    S-matrix   10 =   -0.00032  -0.00000 for L=    8, J=    8.5 channel on core I =   2.0 from L=    7,  Acc. loss =  4.1 D.
    S-matrix   11 =    0.00000   0.00000 for L=   10, J=    9.5 channel on core I =   2.0 from L=    7,  Acc. loss =  0.0 D.
-       7.5  0.99557732  0.00596618i: elastic S-matrix  @@      0.05  0   0 F  0
+       7.5  0.99557732  0.00596618i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     7.5+/ 7 @ 3 =   0.436 , Out:   0.000#   0.064    0.372f
 
    S-matrix    4 =    0.99558   0.00597 for L=    7, J=    8.0 channel on core I =   1.5 from L=    7,  Acc. loss =  0.0 D.
@@ -1524,7 +1524,7 @@
    S-matrix    9 =    0.00003   0.00000 for L=    8, J=    7.5 channel on core I =   2.0 from L=    7,  Acc. loss =  4.1 D.
    S-matrix   10 =    0.00006   0.00000 for L=    8, J=    8.5 channel on core I =   2.0 from L=    7,  Acc. loss =  4.1 D.
    S-matrix   11 =    0.00000   0.00000 for L=   10, J=    9.5 channel on core I =   2.0 from L=    7,  Acc. loss =  0.0 D.
-       7.5  0.99557732  0.00596618i: elastic S-matrix  @@      0.04  0   0 F  0
+       7.5  0.99557732  0.00596618i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     7.5+/ 7 @ 4 =   0.436 , Out:   0.000#   0.097    0.339f
 
    S-matrix    5 =    0.99976   0.00035 for L=    9, J=    8.0 channel on core I =   1.5 from L=    9,  Acc. loss =  0.0 D.
@@ -1540,7 +1540,7 @@
    S-matrix    9 =   -0.00635  -0.00000 for L=    8, J=    7.5 channel on core I =   2.0 from L=    9,  Acc. loss =  2.0 D.
    S-matrix   10 =    0.00018   0.00000 for L=    8, J=    8.5 channel on core I =   2.0 from L=    9,  Acc. loss =  2.0 D.
    S-matrix   11 =   -0.00035  -0.00000 for L=   10, J=    9.5 channel on core I =   2.0 from L=    9,  Acc. loss =  7.0 D.
-       7.5  0.99976213  0.00035379i: elastic S-matrix  @@      0.04  0   0 F  0
+       7.5  0.99976213  0.00035379i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     7.5+/ 9 @ 5 =   0.024 , Out:   0.000#   2.247/   0.021f
 
    S-matrix    6 =    0.99976   0.00035 for L=    9, J=    9.0 channel on core I =   1.5 from L=    9,  Acc. loss =  0.0 D.
@@ -1556,7 +1556,7 @@
    S-matrix    9 =   -0.00641  -0.00000 for L=    8, J=    7.5 channel on core I =   2.0 from L=    9,  Acc. loss =  2.0 D.
    S-matrix   10 =   -0.00450  -0.00000 for L=    8, J=    8.5 channel on core I =   2.0 from L=    9,  Acc. loss =  2.0 D.
    S-matrix   11 =    0.00020   0.00000 for L=   10, J=    9.5 channel on core I =   2.0 from L=    9,  Acc. loss =  7.0 D.
-       7.5  0.99976213  0.00035379i: elastic S-matrix  @@      0.04  0   0 F  0
+       7.5  0.99976213  0.00035379i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     7.5+/ 9 @ 6 =   0.024 , Out:   0.000#   3.408/   0.020f
 
 
@@ -1580,7 +1580,7 @@
    S-matrix    9 =   -0.00022  -0.00002 for L=    7, J=    7.5 channel on core I =   2.0 from L=    6,  Acc. loss =  3.9 D.
    S-matrix   10 =    0.00000   0.00000 for L=    9, J=    8.5 channel on core I =   2.0 from L=    6,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=    9, J=    9.5 channel on core I =   2.0 from L=    6,  Acc. loss =  0.0 D.
-       7.5  0.97994996  0.02386017i: elastic S-matrix  @@      0.14  0   0 F  0
+       7.5  0.97994996  0.02386017i: elastic S-matrix  @@      0.07  0   0 F  0
  Reaction Xsec     7.5-/ 6 @ 1 =   1.939 , Out:   0.000#   0.019    1.920f
 
    S-matrix    2 =    0.97995   0.02386 for L=    6, J=    7.0 channel on core I =   1.5 from L=    6,  Acc. loss =  0.0 D.
@@ -1596,7 +1596,7 @@
    S-matrix    9 =   -0.00014  -0.00001 for L=    7, J=    7.5 channel on core I =   2.0 from L=    6,  Acc. loss =  3.9 D.
    S-matrix   10 =    0.00000   0.00000 for L=    9, J=    8.5 channel on core I =   2.0 from L=    6,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=    9, J=    9.5 channel on core I =   2.0 from L=    6,  Acc. loss =  0.0 D.
-       7.5  0.97994996  0.02386017i: elastic S-matrix  @@      0.04  0   0 F  0
+       7.5  0.97994996  0.02386017i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     7.5-/ 6 @ 2 =   1.939 , Out:   0.000#   0.372    1.567f
 
    S-matrix    3 =    0.99898   0.00146 for L=    8, J=    7.0 channel on core I =   1.5 from L=    8,  Acc. loss =  0.0 D.
@@ -1612,7 +1612,7 @@
    S-matrix    9 =   -0.00093  -0.00000 for L=    7, J=    7.5 channel on core I =   2.0 from L=    8,  Acc. loss =  1.2 D.
    S-matrix   10 =   -0.00040  -0.00000 for L=    9, J=    8.5 channel on core I =   2.0 from L=    8,  Acc. loss =  4.8 D.
    S-matrix   11 =    0.00000   0.00000 for L=    9, J=    9.5 channel on core I =   2.0 from L=    8,  Acc. loss =  0.0 D.
-       7.5  0.99898237  0.00145905i: elastic S-matrix  @@      0.04  0   0 F  0
+       7.5  0.99898237  0.00145905i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     7.5-/ 8 @ 3 =   0.101 , Out:   0.000#   0.553/   0.100f
 
    S-matrix    4 =    0.99898   0.00146 for L=    8, J=    8.0 channel on core I =   1.5 from L=    8,  Acc. loss =  0.0 D.
@@ -1628,7 +1628,7 @@
    S-matrix    9 =   -0.00645  -0.00000 for L=    7, J=    7.5 channel on core I =   2.0 from L=    8,  Acc. loss =  1.2 D.
    S-matrix   10 =    0.00004   0.00000 for L=    9, J=    8.5 channel on core I =   2.0 from L=    8,  Acc. loss =  4.8 D.
    S-matrix   11 =   -0.00025  -0.00000 for L=    9, J=    9.5 channel on core I =   2.0 from L=    8,  Acc. loss =  4.8 D.
-       7.5  0.99898237  0.00145905i: elastic S-matrix  @@      0.04  0   0 F  0
+       7.5  0.99898237  0.00145905i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     7.5-/ 8 @ 4 =   0.101 , Out:   0.000#   0.019    0.082f
 
    S-matrix    5 =    0.99898   0.00146 for L=    8, J=    9.0 channel on core I =   1.5 from L=    8,  Acc. loss =  0.0 D.
@@ -1644,7 +1644,7 @@
    S-matrix    9 =   -0.01540  -0.00001 for L=    7, J=    7.5 channel on core I =   2.0 from L=    8,  Acc. loss =  1.2 D.
    S-matrix   10 =    0.00003   0.00000 for L=    9, J=    8.5 channel on core I =   2.0 from L=    8,  Acc. loss =  4.8 D.
    S-matrix   11 =    0.00026   0.00000 for L=    9, J=    9.5 channel on core I =   2.0 from L=    8,  Acc. loss =  4.8 D.
-       7.5  0.99898237  0.00145905i: elastic S-matrix  @@      0.04  0   0 F  0
+       7.5  0.99898237  0.00145905i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     7.5-/ 8 @ 5 =   0.101 , Out:   0.000#   0.013    0.088f
 
    S-matrix    6 =    0.99994   0.00009 for L=   10, J=    9.0 channel on core I =   1.5 from L=   10,  Acc. loss =  0.0 D.
@@ -1660,7 +1660,7 @@
    S-matrix    9 =   -0.00000   0.00000 for L=    7, J=    7.5 channel on core I =   2.0 from L=   10,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.00433  -0.00000 for L=    9, J=    8.5 channel on core I =   2.0 from L=   10,  Acc. loss =  3.7 D.
    S-matrix   11 =    0.00050   0.00000 for L=    9, J=    9.5 channel on core I =   2.0 from L=   10,  Acc. loss =  3.7 D.
-       7.5  0.99994405  0.00008534i: elastic S-matrix  @@      0.03  0   0 F  0
+       7.5  0.99994405  0.00008534i: elastic S-matrix  @@      0.01  0   0 F  0
  Reaction Xsec     7.5-/10 @ 6 =   5.545/, Out:   0.000#   1.056/   0.004f
 
 
@@ -1684,7 +1684,7 @@
    S-matrix    9 =   -0.00025  -0.00000 for L=    8, J=    8.5 channel on core I =   2.0 from L=    7,  Acc. loss =  3.9 D.
    S-matrix   10 =    0.00000   0.00000 for L=   10, J=    9.5 channel on core I =   2.0 from L=    7,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=   10, J=   10.5 channel on core I =   2.0 from L=    7,  Acc. loss =  0.0 D.
-       8.5  0.99557732  0.00596618i: elastic S-matrix  @@      0.14  0   0 F  0
+       8.5  0.99557732  0.00596618i: elastic S-matrix  @@      0.07  0   0 F  0
  Reaction Xsec     8.5+/ 7 @ 1 =   0.490 , Out:   0.000#   8.312/   0.482f
 
    S-matrix    2 =    0.99558   0.00597 for L=    7, J=    8.0 channel on core I =   1.5 from L=    7,  Acc. loss =  0.0 D.
@@ -1700,7 +1700,7 @@
    S-matrix    9 =   -0.00016  -0.00000 for L=    8, J=    8.5 channel on core I =   2.0 from L=    7,  Acc. loss =  3.9 D.
    S-matrix   10 =    0.00000   0.00000 for L=   10, J=    9.5 channel on core I =   2.0 from L=    7,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=   10, J=   10.5 channel on core I =   2.0 from L=    7,  Acc. loss =  0.0 D.
-       8.5  0.99557732  0.00596618i: elastic S-matrix  @@      0.04  0   0 F  0
+       8.5  0.99557732  0.00596618i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     8.5+/ 7 @ 2 =   0.490 , Out:   0.000#   0.133    0.358f
 
    S-matrix    3 =    0.99976   0.00035 for L=    9, J=    8.0 channel on core I =   1.5 from L=    9,  Acc. loss =  0.0 D.
@@ -1716,7 +1716,7 @@
    S-matrix    9 =   -0.00049  -0.00000 for L=    8, J=    8.5 channel on core I =   2.0 from L=    9,  Acc. loss =  1.6 D.
    S-matrix   10 =   -0.00038  -0.00000 for L=   10, J=    9.5 channel on core I =   2.0 from L=    9,  Acc. loss =  6.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=   10, J=   10.5 channel on core I =   2.0 from L=    9,  Acc. loss =  0.0 D.
-       8.5  0.99976213  0.00035379i: elastic S-matrix  @@      0.04  0   0 F  0
+       8.5  0.99976213  0.00035379i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     8.5+/ 9 @ 3 =   0.027 , Out:   0.000#   0.171/   0.026f
 
    S-matrix    4 =    0.99976   0.00035 for L=    9, J=    9.0 channel on core I =   1.5 from L=    9,  Acc. loss =  0.0 D.
@@ -1732,7 +1732,7 @@
    S-matrix    9 =   -0.00378  -0.00000 for L=    8, J=    8.5 channel on core I =   2.0 from L=    9,  Acc. loss =  1.6 D.
    S-matrix   10 =    0.00003   0.00000 for L=   10, J=    9.5 channel on core I =   2.0 from L=    9,  Acc. loss =  6.0 D.
    S-matrix   11 =   -0.00024  -0.00000 for L=   10, J=   10.5 channel on core I =   2.0 from L=    9,  Acc. loss =  6.0 D.
-       8.5  0.99976213  0.00035379i: elastic S-matrix  @@      0.04  0   0 F  0
+       8.5  0.99976213  0.00035379i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     8.5+/ 9 @ 4 =   0.027 , Out:   0.000#   7.075/   0.019f
 
    S-matrix    5 =    0.99976   0.00035 for L=    9, J=   10.0 channel on core I =   1.5 from L=    9,  Acc. loss =  0.0 D.
@@ -1748,7 +1748,7 @@
    S-matrix    9 =   -0.00898  -0.00000 for L=    8, J=    8.5 channel on core I =   2.0 from L=    9,  Acc. loss =  1.6 D.
    S-matrix   10 =    0.00002   0.00000 for L=   10, J=    9.5 channel on core I =   2.0 from L=    9,  Acc. loss =  6.0 D.
    S-matrix   11 =    0.00025   0.00000 for L=   10, J=   10.5 channel on core I =   2.0 from L=    9,  Acc. loss =  6.0 D.
-       8.5  0.99976213  0.00035379i: elastic S-matrix  @@      0.04  0   0 F  0
+       8.5  0.99976213  0.00035379i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     8.5+/ 9 @ 5 =   0.027 , Out:   0.000#   5.039/   0.021f
 
    S-matrix    6 =    0.99999   0.00002 for L=   11, J=   10.0 channel on core I =   1.5 from L=   11,  Acc. loss =  0.0 D.
@@ -1764,7 +1764,7 @@
    S-matrix    9 =   -0.00000   0.00000 for L=    8, J=    8.5 channel on core I =   2.0 from L=   11,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.00255  -0.00000 for L=   10, J=    9.5 channel on core I =   2.0 from L=   11,  Acc. loss =  4.7 D.
    S-matrix   11 =    0.00026   0.00000 for L=   10, J=   10.5 channel on core I =   2.0 from L=   11,  Acc. loss =  4.7 D.
-       8.5  0.99998679  0.00002052i: elastic S-matrix  @@      0.03  0   0 F  0
+       8.5  0.99998679  0.00002052i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     8.5+/11 @ 6 =   1.472/, Out:   0.000#   0.409/   0.001f
 
 
@@ -1788,7 +1788,7 @@
    S-matrix    9 =    0.00000   0.00000 for L=    9, J=    8.5 channel on core I =   2.0 from L=    6,  Acc. loss =  0.0 D.
    S-matrix   10 =    0.00000   0.00000 for L=    9, J=    9.5 channel on core I =   2.0 from L=    6,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=   11, J=   10.5 channel on core I =   2.0 from L=    6,  Acc. loss =  0.0 D.
-       8.5  0.97995005  0.02386016i: elastic S-matrix  @@      0.13  0   0 F  0
+       8.5  0.97995005  0.02386016i: elastic S-matrix  @@      0.07  0   0 F  0
  Reaction Xsec     8.5-/ 6 @ 1 =   2.181 , Out:   0.000#   4.160#   2.181f
 
    S-matrix    2 =    0.99898   0.00146 for L=    8, J=    7.0 channel on core I =   1.5 from L=    8,  Acc. loss =  0.0 D.
@@ -1804,7 +1804,7 @@
    S-matrix    9 =   -0.00031  -0.00000 for L=    9, J=    8.5 channel on core I =   2.0 from L=    8,  Acc. loss =  3.8 D.
    S-matrix   10 =    0.00000   0.00000 for L=    9, J=    9.5 channel on core I =   2.0 from L=    8,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=   11, J=   10.5 channel on core I =   2.0 from L=    8,  Acc. loss =  0.0 D.
-       8.5  0.99898237  0.00145905i: elastic S-matrix  @@      0.04  0   0 F  0
+       8.5  0.99898237  0.00145905i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     8.5-/ 8 @ 2 =   0.113 , Out:   0.000#   8.650/   0.105f
 
    S-matrix    3 =    0.99898   0.00146 for L=    8, J=    8.0 channel on core I =   1.5 from L=    8,  Acc. loss =  0.0 D.
@@ -1820,7 +1820,7 @@
    S-matrix    9 =   -0.00011  -0.00000 for L=    9, J=    8.5 channel on core I =   2.0 from L=    8,  Acc. loss =  3.8 D.
    S-matrix   10 =   -0.00027  -0.00000 for L=    9, J=    9.5 channel on core I =   2.0 from L=    8,  Acc. loss =  3.8 D.
    S-matrix   11 =    0.00000   0.00000 for L=   11, J=   10.5 channel on core I =   2.0 from L=    8,  Acc. loss =  0.0 D.
-       8.5  0.99898237  0.00145905i: elastic S-matrix  @@      0.04  0   0 F  0
+       8.5  0.99898237  0.00145905i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     8.5-/ 8 @ 3 =   0.113 , Out:   0.000#   0.023    0.090f
 
    S-matrix    4 =    0.99898   0.00146 for L=    8, J=    9.0 channel on core I =   1.5 from L=    8,  Acc. loss =  0.0 D.
@@ -1836,7 +1836,7 @@
    S-matrix    9 =    0.00002   0.00000 for L=    9, J=    8.5 channel on core I =   2.0 from L=    8,  Acc. loss =  3.8 D.
    S-matrix   10 =    0.00004   0.00000 for L=    9, J=    9.5 channel on core I =   2.0 from L=    8,  Acc. loss =  3.8 D.
    S-matrix   11 =    0.00000   0.00000 for L=   11, J=   10.5 channel on core I =   2.0 from L=    8,  Acc. loss =  0.0 D.
-       8.5  0.99898237  0.00145905i: elastic S-matrix  @@      0.04  0   0 F  0
+       8.5  0.99898237  0.00145905i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     8.5-/ 8 @ 4 =   0.113 , Out:   0.000#   0.036    0.078f
 
    S-matrix    5 =    0.99994   0.00009 for L=   10, J=    9.0 channel on core I =   1.5 from L=   10,  Acc. loss =  0.0 D.
@@ -1852,7 +1852,7 @@
    S-matrix    9 =   -0.00364  -0.00000 for L=    9, J=    8.5 channel on core I =   2.0 from L=   10,  Acc. loss =  2.7 D.
    S-matrix   10 =    0.00008   0.00000 for L=    9, J=    9.5 channel on core I =   2.0 from L=   10,  Acc. loss =  2.7 D.
    S-matrix   11 =   -0.00034   0.00000 for L=   11, J=   10.5 channel on core I =   2.0 from L=   10,  Acc. loss =  6.2 D.
-       8.5  0.99994405  0.00008534i: elastic S-matrix  @@      0.04  0   0 F  0
+       8.5  0.99994405  0.00008534i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     8.5-/10 @ 5 =   6.238/, Out:   0.000#   0.834/   0.005f
 
    S-matrix    6 =    0.99994   0.00009 for L=   10, J=   10.0 channel on core I =   1.5 from L=   10,  Acc. loss =  0.0 D.
@@ -1868,7 +1868,7 @@
    S-matrix    9 =   -0.00375  -0.00000 for L=    9, J=    8.5 channel on core I =   2.0 from L=   10,  Acc. loss =  2.7 D.
    S-matrix   10 =   -0.00267  -0.00000 for L=    9, J=    9.5 channel on core I =   2.0 from L=   10,  Acc. loss =  2.7 D.
    S-matrix   11 =    0.00019  -0.00000 for L=   11, J=   10.5 channel on core I =   2.0 from L=   10,  Acc. loss =  6.2 D.
-       8.5  0.99994405  0.00008534i: elastic S-matrix  @@      0.04  0   0 F  0
+       8.5  0.99994405  0.00008534i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     8.5-/10 @ 6 =   6.238/, Out:   0.000#   1.324/   0.005f
 
 
@@ -1892,7 +1892,7 @@
    S-matrix    9 =    0.00000   0.00000 for L=   10, J=    9.5 channel on core I =   2.0 from L=    7,  Acc. loss =  0.0 D.
    S-matrix   10 =    0.00000   0.00000 for L=   10, J=   10.5 channel on core I =   2.0 from L=    7,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   12, J=   11.5 channel on core I =   2.0 from L=    7,  Acc. loss =  0.0 D.
-       9.5  0.99557734  0.00596617i: elastic S-matrix  @@      0.14  0   0 F  0
+       9.5  0.99557734  0.00596617i: elastic S-matrix  @@      0.06  0   0 F  0
  Reaction Xsec     9.5+/ 7 @ 1 =   0.545 , Out:   0.000#   5.848#   0.544f
 
    S-matrix    2 =    0.99976   0.00035 for L=    9, J=    8.0 channel on core I =   1.5 from L=    9,  Acc. loss =  0.0 D.
@@ -1908,7 +1908,7 @@
    S-matrix    9 =   -0.00029  -0.00000 for L=   10, J=    9.5 channel on core I =   2.0 from L=    9,  Acc. loss =  5.0 D.
    S-matrix   10 =    0.00000   0.00000 for L=   10, J=   10.5 channel on core I =   2.0 from L=    9,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   12, J=   11.5 channel on core I =   2.0 from L=    9,  Acc. loss =  0.0 D.
-       9.5  0.99976213  0.00035379i: elastic S-matrix  @@      0.04  0   0 F  0
+       9.5  0.99976213  0.00035379i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     9.5+/ 9 @ 2 =   0.029 , Out:   0.000#   3.322/   0.026f
 
    S-matrix    3 =    0.99976   0.00035 for L=    9, J=    9.0 channel on core I =   1.5 from L=    9,  Acc. loss =  0.0 D.
@@ -1924,7 +1924,7 @@
    S-matrix    9 =   -0.00011  -0.00000 for L=   10, J=    9.5 channel on core I =   2.0 from L=    9,  Acc. loss =  5.0 D.
    S-matrix   10 =   -0.00026  -0.00000 for L=   10, J=   10.5 channel on core I =   2.0 from L=    9,  Acc. loss =  5.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   12, J=   11.5 channel on core I =   2.0 from L=    9,  Acc. loss =  0.0 D.
-       9.5  0.99976213  0.00035379i: elastic S-matrix  @@      0.05  0   0 F  0
+       9.5  0.99976213  0.00035379i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     9.5+/ 9 @ 3 =   0.029 , Out:   0.000#   8.226/   0.021f
 
    S-matrix    4 =    0.99976   0.00035 for L=    9, J=   10.0 channel on core I =   1.5 from L=    9,  Acc. loss =  0.0 D.
@@ -1940,7 +1940,7 @@
    S-matrix    9 =    0.00002   0.00000 for L=   10, J=    9.5 channel on core I =   2.0 from L=    9,  Acc. loss =  5.0 D.
    S-matrix   10 =    0.00004   0.00000 for L=   10, J=   10.5 channel on core I =   2.0 from L=    9,  Acc. loss =  5.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   12, J=   11.5 channel on core I =   2.0 from L=    9,  Acc. loss =  0.0 D.
-       9.5  0.99976213  0.00035379i: elastic S-matrix  @@      0.04  0   0 F  0
+       9.5  0.99976213  0.00035379i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     9.5+/ 9 @ 4 =   0.029 , Out:   0.000#   0.013    0.016f
 
    S-matrix    5 =    0.99999   0.00002 for L=   11, J=   10.0 channel on core I =   1.5 from L=   11,  Acc. loss =  0.0 D.
@@ -1956,7 +1956,7 @@
    S-matrix    9 =   -0.00211  -0.00000 for L=   10, J=    9.5 channel on core I =   2.0 from L=   11,  Acc. loss =  3.7 D.
    S-matrix   10 =    0.00004   0.00000 for L=   10, J=   10.5 channel on core I =   2.0 from L=   11,  Acc. loss =  3.7 D.
    S-matrix   11 =   -0.00023   0.00000 for L=   12, J=   11.5 channel on core I =   2.0 from L=   11,  Acc. loss =  7.5 D.
-       9.5  0.99998679  0.00002052i: elastic S-matrix  @@      0.04  0   0 F  0
+       9.5  0.99998679  0.00002052i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     9.5+/11 @ 5 =   1.636/, Out:   0.000#   0.311/   0.001f
 
    S-matrix    6 =    0.99999   0.00002 for L=   11, J=   11.0 channel on core I =   1.5 from L=   11,  Acc. loss =  0.0 D.
@@ -1972,7 +1972,7 @@
    S-matrix    9 =   -0.00220  -0.00000 for L=   10, J=    9.5 channel on core I =   2.0 from L=   11,  Acc. loss =  3.7 D.
    S-matrix   10 =   -0.00159  -0.00000 for L=   10, J=   10.5 channel on core I =   2.0 from L=   11,  Acc. loss =  3.7 D.
    S-matrix   11 =    0.00012  -0.00000 for L=   12, J=   11.5 channel on core I =   2.0 from L=   11,  Acc. loss =  7.5 D.
-       9.5  0.99998679  0.00002052i: elastic S-matrix  @@      0.04  0   0 F  0
+       9.5  0.99998679  0.00002052i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     9.5+/11 @ 6 =   1.636/, Out:   0.000#   0.513/   0.001f
 
 
@@ -1996,7 +1996,7 @@
    S-matrix    9 =   -0.00021  -0.00000 for L=    9, J=    9.5 channel on core I =   2.0 from L=    8,  Acc. loss =  3.7 D.
    S-matrix   10 =    0.00000   0.00000 for L=   11, J=   10.5 channel on core I =   2.0 from L=    8,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=   11, J=   11.5 channel on core I =   2.0 from L=    8,  Acc. loss =  0.0 D.
-       9.5  0.99898237  0.00145905i: elastic S-matrix  @@      0.14  0   0 F  0
+       9.5  0.99898237  0.00145905i: elastic S-matrix  @@      0.07  0   0 F  0
  Reaction Xsec     9.5-/ 8 @ 1 =   0.126 , Out:   0.000#   3.371/   0.123f
 
    S-matrix    2 =    0.99898   0.00146 for L=    8, J=    9.0 channel on core I =   1.5 from L=    8,  Acc. loss =  0.0 D.
@@ -2012,7 +2012,7 @@
    S-matrix    9 =   -0.00014  -0.00000 for L=    9, J=    9.5 channel on core I =   2.0 from L=    8,  Acc. loss =  3.7 D.
    S-matrix   10 =    0.00000   0.00000 for L=   11, J=   10.5 channel on core I =   2.0 from L=    8,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=   11, J=   11.5 channel on core I =   2.0 from L=    8,  Acc. loss =  0.0 D.
-       9.5  0.99898237  0.00145905i: elastic S-matrix  @@      0.04  0   0 F  0
+       9.5  0.99898237  0.00145905i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     9.5-/ 8 @ 2 =   0.126 , Out:   0.000#   0.047    0.079f
 
    S-matrix    3 =    0.99994   0.00009 for L=   10, J=    9.0 channel on core I =   1.5 from L=   10,  Acc. loss =  0.0 D.
@@ -2028,7 +2028,7 @@
    S-matrix    9 =   -0.00026  -0.00000 for L=    9, J=    9.5 channel on core I =   2.0 from L=   10,  Acc. loss =  1.8 D.
    S-matrix   10 =   -0.00037   0.00000 for L=   11, J=   10.5 channel on core I =   2.0 from L=   10,  Acc. loss =  5.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=   11, J=   11.5 channel on core I =   2.0 from L=   10,  Acc. loss =  0.0 D.
-       9.5  0.99994405  0.00008534i: elastic S-matrix  @@      0.04  0   0 F  0
+       9.5  0.99994405  0.00008534i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     9.5-/10 @ 3 =   6.931/, Out:   0.000#   0.059/   0.007f
 
    S-matrix    4 =    0.99994   0.00009 for L=   10, J=   10.0 channel on core I =   1.5 from L=   10,  Acc. loss =  0.0 D.
@@ -2044,7 +2044,7 @@
    S-matrix    9 =   -0.00221  -0.00000 for L=    9, J=    9.5 channel on core I =   2.0 from L=   10,  Acc. loss =  1.8 D.
    S-matrix   10 =    0.00003  -0.00000 for L=   11, J=   10.5 channel on core I =   2.0 from L=   10,  Acc. loss =  5.0 D.
    S-matrix   11 =   -0.00024   0.00000 for L=   11, J=   11.5 channel on core I =   2.0 from L=   10,  Acc. loss =  5.0 D.
-       9.5  0.99994405  0.00008534i: elastic S-matrix  @@      0.04  0   0 F  0
+       9.5  0.99994405  0.00008534i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     9.5-/10 @ 4 =   6.931/, Out:   0.000#   2.638/   0.004f
 
    S-matrix    5 =    0.99994   0.00009 for L=   10, J=   11.0 channel on core I =   1.5 from L=   10,  Acc. loss =  0.0 D.
@@ -2060,7 +2060,7 @@
    S-matrix    9 =   -0.00524  -0.00000 for L=    9, J=    9.5 channel on core I =   2.0 from L=   10,  Acc. loss =  1.8 D.
    S-matrix   10 =    0.00002  -0.00000 for L=   11, J=   10.5 channel on core I =   2.0 from L=   10,  Acc. loss =  5.0 D.
    S-matrix   11 =    0.00024  -0.00000 for L=   11, J=   11.5 channel on core I =   2.0 from L=   10,  Acc. loss =  5.0 D.
-       9.5  0.99994405  0.00008534i: elastic S-matrix  @@      0.04  0   0 F  0
+       9.5  0.99994405  0.00008534i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec     9.5-/10 @ 5 =   6.931/, Out:   0.000#   1.909/   0.005f
 
    S-matrix    6 =    1.00000   0.00000 for L=   12, J=   11.0 channel on core I =   1.5 from L=   12,  Acc. loss =  0.0 D.
@@ -2076,7 +2076,7 @@
    S-matrix    9 =    0.00000   0.00000 for L=    9, J=    9.5 channel on core I =   2.0 from L=   12,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.00155   0.00000 for L=   11, J=   10.5 channel on core I =   2.0 from L=   12,  Acc. loss =  3.8 D.
    S-matrix   11 =    0.00015  -0.00000 for L=   11, J=   11.5 channel on core I =   2.0 from L=   12,  Acc. loss =  3.8 D.
-       9.5  0.99999687  0.00000494i: elastic S-matrix  @@      0.03  0   0 F  0
+       9.5  0.99999687  0.00000494i: elastic S-matrix  @@      0.01  0   0 F  0
  Reaction Xsec     9.5-/12 @ 6 =   0.388/, Out:   0.000#   0.169/   0.000f
 
 
@@ -2100,7 +2100,7 @@
    S-matrix    9 =   -0.00020  -0.00000 for L=   10, J=   10.5 channel on core I =   2.0 from L=    9,  Acc. loss =  4.3 D.
    S-matrix   10 =   -0.00000   0.00000 for L=   12, J=   11.5 channel on core I =   2.0 from L=    9,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   12, J=   12.5 channel on core I =   2.0 from L=    9,  Acc. loss =  0.0 D.
-      10.5  0.99976213  0.00035379i: elastic S-matrix  @@      0.14  0   0 F  0
+      10.5  0.99976213  0.00035379i: elastic S-matrix  @@      0.06  0   0 F  0
  Reaction Xsec    10.5+/ 9 @ 1 =   0.032 , Out:   0.000#   1.343/   0.031f
 
    S-matrix    2 =    0.99976   0.00035 for L=    9, J=   10.0 channel on core I =   1.5 from L=    9,  Acc. loss =  0.0 D.
@@ -2116,7 +2116,7 @@
    S-matrix    9 =   -0.00014  -0.00000 for L=   10, J=   10.5 channel on core I =   2.0 from L=    9,  Acc. loss =  4.3 D.
    S-matrix   10 =   -0.00000   0.00000 for L=   12, J=   11.5 channel on core I =   2.0 from L=    9,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   12, J=   12.5 channel on core I =   2.0 from L=    9,  Acc. loss =  0.0 D.
-      10.5  0.99976213  0.00035379i: elastic S-matrix  @@      0.04  0   0 F  0
+      10.5  0.99976213  0.00035379i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    10.5+/ 9 @ 2 =   0.032 , Out:   0.000#   0.017    0.015f
 
    S-matrix    3 =    0.99999   0.00002 for L=   11, J=   10.0 channel on core I =   1.5 from L=   11,  Acc. loss =  0.0 D.
@@ -2132,7 +2132,7 @@
    S-matrix    9 =   -0.00014  -0.00000 for L=   10, J=   10.5 channel on core I =   2.0 from L=   11,  Acc. loss =  2.8 D.
    S-matrix   10 =   -0.00025   0.00000 for L=   12, J=   11.5 channel on core I =   2.0 from L=   11,  Acc. loss =  6.5 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   12, J=   12.5 channel on core I =   2.0 from L=   11,  Acc. loss =  0.0 D.
-      10.5  0.99998679  0.00002052i: elastic S-matrix  @@      0.04  0   0 F  0
+      10.5  0.99998679  0.00002052i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    10.5+/11 @ 3 =   1.800/, Out:   0.000#   0.020/   0.002f
 
    S-matrix    4 =    0.99999   0.00002 for L=   11, J=   11.0 channel on core I =   1.5 from L=   11,  Acc. loss =  0.0 D.
@@ -2148,7 +2148,7 @@
    S-matrix    9 =   -0.00130  -0.00000 for L=   10, J=   10.5 channel on core I =   2.0 from L=   11,  Acc. loss =  2.8 D.
    S-matrix   10 =    0.00002  -0.00000 for L=   12, J=   11.5 channel on core I =   2.0 from L=   11,  Acc. loss =  6.5 D.
    S-matrix   11 =   -0.00016   0.00000 for L=   12, J=   12.5 channel on core I =   2.0 from L=   11,  Acc. loss =  6.5 D.
-      10.5  0.99998679  0.00002052i: elastic S-matrix  @@      0.05  0   0 F  0
+      10.5  0.99998679  0.00002052i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    10.5+/11 @ 4 =   1.800/, Out:   0.000#   0.989/   0.001f
 
    S-matrix    5 =    0.99999   0.00002 for L=   11, J=   12.0 channel on core I =   1.5 from L=   11,  Acc. loss =  0.0 D.
@@ -2164,7 +2164,7 @@
    S-matrix    9 =   -0.00308  -0.00000 for L=   10, J=   10.5 channel on core I =   2.0 from L=   11,  Acc. loss =  2.8 D.
    S-matrix   10 =    0.00001  -0.00000 for L=   12, J=   11.5 channel on core I =   2.0 from L=   11,  Acc. loss =  6.5 D.
    S-matrix   11 =    0.00016  -0.00000 for L=   12, J=   12.5 channel on core I =   2.0 from L=   11,  Acc. loss =  6.5 D.
-      10.5  0.99998679  0.00002052i: elastic S-matrix  @@      0.04  0   0 F  0
+      10.5  0.99998679  0.00002052i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    10.5+/11 @ 5 =   1.800/, Out:   0.000#   0.726/   0.001f
 
    S-matrix    6 =    1.00000   0.00000 for L=   13, J=   12.0 channel on core I =   1.5 from L=   13,  Acc. loss =  0.0 D.
@@ -2180,7 +2180,7 @@
    S-matrix    9 =    0.00000   0.00000 for L=   10, J=   10.5 channel on core I =   2.0 from L=   13,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.00099   0.00000 for L=   12, J=   11.5 channel on core I =   2.0 from L=   13,  Acc. loss =  5.1 D.
    S-matrix   11 =    0.00008  -0.00000 for L=   12, J=   12.5 channel on core I =   2.0 from L=   13,  Acc. loss =  5.1 D.
-      10.5  0.99999924  0.00000121i: elastic S-matrix  @@      0.03  0   0 F  0
+      10.5  0.99999924  0.00000121i: elastic S-matrix  @@      0.01  0   0 F  0
  Reaction Xsec    10.5+/13 @ 6 =   0.103/, Out:   0.000#   0.075/   0.000f
 
 
@@ -2204,7 +2204,7 @@
    S-matrix    9 =    0.00000   0.00000 for L=   11, J=   10.5 channel on core I =   2.0 from L=    8,  Acc. loss =  0.0 D.
    S-matrix   10 =    0.00000   0.00000 for L=   11, J=   11.5 channel on core I =   2.0 from L=    8,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   13, J=   12.5 channel on core I =   2.0 from L=    8,  Acc. loss =  0.0 D.
-      10.5  0.99898237  0.00145904i: elastic S-matrix  @@      0.13  0   0 F  0
+      10.5  0.99898237  0.00145904i: elastic S-matrix  @@      0.06  0   0 F  0
  Reaction Xsec    10.5-/ 8 @ 1 =   0.138 , Out:   0.000#   4.517#   0.138f
 
    S-matrix    2 =    0.99994   0.00009 for L=   10, J=    9.0 channel on core I =   1.5 from L=   10,  Acc. loss =  0.0 D.
@@ -2220,7 +2220,7 @@
    S-matrix    9 =   -0.00028   0.00000 for L=   11, J=   10.5 channel on core I =   2.0 from L=   10,  Acc. loss =  4.1 D.
    S-matrix   10 =    0.00000   0.00000 for L=   11, J=   11.5 channel on core I =   2.0 from L=   10,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   13, J=   12.5 channel on core I =   2.0 from L=   10,  Acc. loss =  0.0 D.
-      10.5  0.99994405  0.00008534i: elastic S-matrix  @@      0.04  0   0 F  0
+      10.5  0.99994405  0.00008534i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    10.5-/10 @ 2 =   7.624/, Out:   0.000#   1.264/   0.006f
 
    S-matrix    3 =    0.99994   0.00009 for L=   10, J=   10.0 channel on core I =   1.5 from L=   10,  Acc. loss =  0.0 D.
@@ -2236,7 +2236,7 @@
    S-matrix    9 =   -0.00010   0.00000 for L=   11, J=   10.5 channel on core I =   2.0 from L=   10,  Acc. loss =  4.1 D.
    S-matrix   10 =   -0.00026   0.00000 for L=   11, J=   11.5 channel on core I =   2.0 from L=   10,  Acc. loss =  4.1 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   13, J=   12.5 channel on core I =   2.0 from L=   10,  Acc. loss =  0.0 D.
-      10.5  0.99994405  0.00008534i: elastic S-matrix  @@      0.04  0   0 F  0
+      10.5  0.99994405  0.00008534i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    10.5-/10 @ 3 =   7.624/, Out:   0.000#   2.972/   0.005f
 
    S-matrix    4 =    0.99994   0.00009 for L=   10, J=   11.0 channel on core I =   1.5 from L=   10,  Acc. loss =  0.0 D.
@@ -2252,7 +2252,7 @@
    S-matrix    9 =    0.00002  -0.00000 for L=   11, J=   10.5 channel on core I =   2.0 from L=   10,  Acc. loss =  4.1 D.
    S-matrix   10 =    0.00003  -0.00000 for L=   11, J=   11.5 channel on core I =   2.0 from L=   10,  Acc. loss =  4.1 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   13, J=   12.5 channel on core I =   2.0 from L=   10,  Acc. loss =  0.0 D.
-      10.5  0.99994405  0.00008534i: elastic S-matrix  @@      0.04  0   0 F  0
+      10.5  0.99994405  0.00008534i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    10.5-/10 @ 4 =   7.624/, Out:   0.000#   4.860/   0.003f
 
    S-matrix    5 =    1.00000   0.00000 for L=   12, J=   11.0 channel on core I =   1.5 from L=   12,  Acc. loss =  0.0 D.
@@ -2268,7 +2268,7 @@
    S-matrix    9 =   -0.00127   0.00000 for L=   11, J=   10.5 channel on core I =   2.0 from L=   12,  Acc. loss =  2.9 D.
    S-matrix   10 =    0.00002  -0.00000 for L=   11, J=   11.5 channel on core I =   2.0 from L=   12,  Acc. loss =  2.9 D.
    S-matrix   11 =   -0.00006   0.00000 for L=   13, J=   12.5 channel on core I =   2.0 from L=   12,  Acc. loss =  8.1 D.
-      10.5  0.99999687  0.00000494i: elastic S-matrix  @@      0.04  0   0 F  0
+      10.5  0.99999687  0.00000494i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    10.5-/12 @ 5 =   0.427/, Out:   0.000#   0.123/   0.000f
 
    S-matrix    6 =    1.00000   0.00000 for L=   12, J=   12.0 channel on core I =   1.5 from L=   12,  Acc. loss =  0.0 D.
@@ -2284,7 +2284,7 @@
    S-matrix    9 =   -0.00135   0.00000 for L=   11, J=   10.5 channel on core I =   2.0 from L=   12,  Acc. loss =  2.9 D.
    S-matrix   10 =   -0.00098   0.00000 for L=   11, J=   11.5 channel on core I =   2.0 from L=   12,  Acc. loss =  2.9 D.
    S-matrix   11 =    0.00003  -0.00000 for L=   13, J=   12.5 channel on core I =   2.0 from L=   12,  Acc. loss =  8.1 D.
-      10.5  0.99999687  0.00000494i: elastic S-matrix  @@      0.04  0   0 F  0
+      10.5  0.99999687  0.00000494i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    10.5-/12 @ 6 =   0.427/, Out:   0.000#   0.212/   0.000f
 
 
@@ -2308,7 +2308,7 @@
    S-matrix    9 =   -0.00000   0.00000 for L=   12, J=   11.5 channel on core I =   2.0 from L=    9,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.00000   0.00000 for L=   12, J=   12.5 channel on core I =   2.0 from L=    9,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=   14, J=   13.5 channel on core I =   2.0 from L=    9,  Acc. loss =  0.0 D.
-      11.5  0.99976214  0.00035379i: elastic S-matrix  @@      0.13  0   0 F  0
+      11.5  0.99976214  0.00035379i: elastic S-matrix  @@      0.06  0   0 F  0
  Reaction Xsec    11.5+/ 9 @ 1 =   0.035 , Out:   0.000#   4.502#   0.035f
 
    S-matrix    2 =    0.99999   0.00002 for L=   11, J=   10.0 channel on core I =   1.5 from L=   11,  Acc. loss =  0.0 D.
@@ -2324,7 +2324,7 @@
    S-matrix    9 =   -0.00019   0.00000 for L=   12, J=   11.5 channel on core I =   2.0 from L=   11,  Acc. loss =  5.4 D.
    S-matrix   10 =   -0.00000   0.00000 for L=   12, J=   12.5 channel on core I =   2.0 from L=   11,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=   14, J=   13.5 channel on core I =   2.0 from L=   11,  Acc. loss =  0.0 D.
-      11.5  0.99998679  0.00002052i: elastic S-matrix  @@      0.04  0   0 F  0
+      11.5  0.99998679  0.00002052i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    11.5+/11 @ 2 =   1.963/, Out:   0.000#   0.482/   0.001f
 
    S-matrix    3 =    0.99999   0.00002 for L=   11, J=   11.0 channel on core I =   1.5 from L=   11,  Acc. loss =  0.0 D.
@@ -2340,7 +2340,7 @@
    S-matrix    9 =   -0.00007   0.00000 for L=   12, J=   11.5 channel on core I =   2.0 from L=   11,  Acc. loss =  5.4 D.
    S-matrix   10 =   -0.00017   0.00000 for L=   12, J=   12.5 channel on core I =   2.0 from L=   11,  Acc. loss =  5.4 D.
    S-matrix   11 =    0.00000   0.00000 for L=   14, J=   13.5 channel on core I =   2.0 from L=   11,  Acc. loss =  0.0 D.
-      11.5  0.99998679  0.00002052i: elastic S-matrix  @@      0.04  0   0 F  0
+      11.5  0.99998679  0.00002052i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    11.5+/11 @ 3 =   1.963/, Out:   0.000#   1.086/   0.001f
 
    S-matrix    4 =    0.99999   0.00002 for L=   11, J=   12.0 channel on core I =   1.5 from L=   11,  Acc. loss =  0.0 D.
@@ -2356,7 +2356,7 @@
    S-matrix    9 =    0.00001  -0.00000 for L=   12, J=   11.5 channel on core I =   2.0 from L=   11,  Acc. loss =  5.4 D.
    S-matrix   10 =    0.00002  -0.00000 for L=   12, J=   12.5 channel on core I =   2.0 from L=   11,  Acc. loss =  5.4 D.
    S-matrix   11 =    0.00000   0.00000 for L=   14, J=   13.5 channel on core I =   2.0 from L=   11,  Acc. loss =  0.0 D.
-      11.5  0.99998679  0.00002052i: elastic S-matrix  @@      0.04  0   0 F  0
+      11.5  0.99998679  0.00002052i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    11.5+/11 @ 4 =   1.963/, Out:   0.000#   1.807/   0.000f
 
    S-matrix    5 =    1.00000   0.00000 for L=   13, J=   12.0 channel on core I =   1.5 from L=   13,  Acc. loss =  0.0 D.
@@ -2372,7 +2372,7 @@
    S-matrix    9 =   -0.00080   0.00000 for L=   12, J=   11.5 channel on core I =   2.0 from L=   13,  Acc. loss =  4.1 D.
    S-matrix   10 =    0.00001  -0.00000 for L=   12, J=   12.5 channel on core I =   2.0 from L=   13,  Acc. loss =  4.1 D.
    S-matrix   11 =    0.00005   0.00000 for L=   14, J=   13.5 channel on core I =   2.0 from L=   13,  Acc. loss =  8.6 D.
-      11.5  0.99999924  0.00000121i: elastic S-matrix  @@      0.04  0   0 F  0
+      11.5  0.99999924  0.00000121i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    11.5+/13 @ 5 =   0.112/, Out:   0.000#   0.053/   0.000f
 
    S-matrix    6 =    1.00000   0.00000 for L=   13, J=   13.0 channel on core I =   1.5 from L=   13,  Acc. loss =  0.0 D.
@@ -2388,7 +2388,7 @@
    S-matrix    9 =   -0.00086   0.00000 for L=   12, J=   11.5 channel on core I =   2.0 from L=   13,  Acc. loss =  4.1 D.
    S-matrix   10 =   -0.00063   0.00000 for L=   12, J=   12.5 channel on core I =   2.0 from L=   13,  Acc. loss =  4.1 D.
    S-matrix   11 =   -0.00003   0.00000 for L=   14, J=   13.5 channel on core I =   2.0 from L=   13,  Acc. loss =  8.6 D.
-      11.5  0.99999924  0.00000121i: elastic S-matrix  @@      0.04  0   0 F  0
+      11.5  0.99999924  0.00000121i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    11.5+/13 @ 6 =   0.112/, Out:   0.000#   0.094/   0.000f
 
 
@@ -2412,7 +2412,7 @@
    S-matrix    9 =   -0.00019   0.00000 for L=   11, J=   11.5 channel on core I =   2.0 from L=   10,  Acc. loss =  3.0 D.
    S-matrix   10 =   -0.00000   0.00000 for L=   13, J=   12.5 channel on core I =   2.0 from L=   10,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   13, J=   13.5 channel on core I =   2.0 from L=   10,  Acc. loss =  0.0 D.
-      11.5  0.99994405  0.00008534i: elastic S-matrix  @@      0.14  0   0 F  0
+      11.5  0.99994405  0.00008534i: elastic S-matrix  @@      0.06  0   0 F  0
  Reaction Xsec    11.5-/10 @ 1 =   8.317/, Out:   0.000#   0.527/   0.008f
 
    S-matrix    2 =    0.99994   0.00009 for L=   10, J=   11.0 channel on core I =   1.5 from L=   10,  Acc. loss =  0.0 D.
@@ -2428,7 +2428,7 @@
    S-matrix    9 =   -0.00013   0.00000 for L=   11, J=   11.5 channel on core I =   2.0 from L=   10,  Acc. loss =  3.0 D.
    S-matrix   10 =   -0.00000   0.00000 for L=   13, J=   12.5 channel on core I =   2.0 from L=   10,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   13, J=   13.5 channel on core I =   2.0 from L=   10,  Acc. loss =  0.0 D.
-      11.5  0.99994405  0.00008534i: elastic S-matrix  @@      0.04  0   0 F  0
+      11.5  0.99994405  0.00008534i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    11.5-/10 @ 2 =   8.317/, Out:   0.000#   6.106/   0.002f
 
    S-matrix    3 =    1.00000   0.00000 for L=   12, J=   11.0 channel on core I =   1.5 from L=   12,  Acc. loss =  0.0 D.
@@ -2444,7 +2444,7 @@
    S-matrix    9 =   -0.00008   0.00000 for L=   11, J=   11.5 channel on core I =   2.0 from L=   12,  Acc. loss =  1.9 D.
    S-matrix   10 =   -0.00007   0.00000 for L=   13, J=   12.5 channel on core I =   2.0 from L=   12,  Acc. loss =  7.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   13, J=   13.5 channel on core I =   2.0 from L=   12,  Acc. loss =  0.0 D.
-      11.5  0.99999687  0.00000494i: elastic S-matrix  @@      0.04  0   0 F  0
+      11.5  0.99999687  0.00000494i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    11.5-/12 @ 3 =   0.466/, Out:   0.000#   5.554#   0.000f
 
    S-matrix    4 =    1.00000   0.00000 for L=   12, J=   12.0 channel on core I =   1.5 from L=   12,  Acc. loss =  0.0 D.
@@ -2460,7 +2460,7 @@
    S-matrix    9 =   -0.00079   0.00000 for L=   11, J=   11.5 channel on core I =   2.0 from L=   12,  Acc. loss =  1.9 D.
    S-matrix   10 =    0.00000  -0.00000 for L=   13, J=   12.5 channel on core I =   2.0 from L=   12,  Acc. loss =  7.0 D.
    S-matrix   11 =   -0.00004   0.00000 for L=   13, J=   13.5 channel on core I =   2.0 from L=   12,  Acc. loss =  7.0 D.
-      11.5  0.99999687  0.00000494i: elastic S-matrix  @@      0.04  0   0 F  0
+      11.5  0.99999687  0.00000494i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    11.5-/12 @ 4 =   0.466/, Out:   0.000#   0.397/   0.000f
 
    S-matrix    5 =    1.00000   0.00000 for L=   12, J=   13.0 channel on core I =   1.5 from L=   12,  Acc. loss =  0.0 D.
@@ -2476,7 +2476,7 @@
    S-matrix    9 =   -0.00188   0.00000 for L=   11, J=   11.5 channel on core I =   2.0 from L=   12,  Acc. loss =  1.9 D.
    S-matrix   10 =    0.00000  -0.00000 for L=   13, J=   12.5 channel on core I =   2.0 from L=   12,  Acc. loss =  7.0 D.
    S-matrix   11 =    0.00004  -0.00000 for L=   13, J=   13.5 channel on core I =   2.0 from L=   12,  Acc. loss =  7.0 D.
-      11.5  0.99999687  0.00000494i: elastic S-matrix  @@      0.04  0   0 F  0
+      11.5  0.99999687  0.00000494i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    11.5-/12 @ 5 =   0.466/, Out:   0.000#   0.295/   0.000f
 
    S-matrix    6 =    1.00000   0.00000 for L=   14, J=   13.0 channel on core I =   1.5 from L=   14,  Acc. loss =  0.0 D.
@@ -2492,7 +2492,7 @@
    S-matrix    9 =    0.00000   0.00000 for L=   11, J=   11.5 channel on core I =   2.0 from L=   14,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.00062   0.00000 for L=   13, J=   12.5 channel on core I =   2.0 from L=   14,  Acc. loss =  5.3 D.
    S-matrix   11 =    0.00005  -0.00000 for L=   13, J=   13.5 channel on core I =   2.0 from L=   14,  Acc. loss =  5.3 D.
-      11.5  0.99999980  0.00000032i: elastic S-matrix  @@      0.03  0   0 F  0
+      11.5  0.99999980  0.00000032i: elastic S-matrix  @@      0.01  0   0 F  0
  Reaction Xsec    11.5-/14 @ 6 =   0.029/, Out:   0.000#   0.032/  -0.000f
 
 
@@ -2516,7 +2516,7 @@
    S-matrix    9 =   -0.00013   0.00000 for L=   12, J=   12.5 channel on core I =   2.0 from L=   11,  Acc. loss =  4.7 D.
    S-matrix   10 =    0.00000   0.00000 for L=   14, J=   13.5 channel on core I =   2.0 from L=   11,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=   14, J=   14.5 channel on core I =   2.0 from L=   11,  Acc. loss =  0.0 D.
-      12.5  0.99998679  0.00002052i: elastic S-matrix  @@      0.14  0   0 F  0
+      12.5  0.99998679  0.00002052i: elastic S-matrix  @@      0.07  0   0 F  0
  Reaction Xsec    12.5+/11 @ 1 =   2.127/, Out:   0.000#   0.205/   0.002f
 
    S-matrix    2 =    0.99999   0.00002 for L=   11, J=   12.0 channel on core I =   1.5 from L=   11,  Acc. loss =  0.0 D.
@@ -2532,7 +2532,7 @@
    S-matrix    9 =   -0.00009   0.00000 for L=   12, J=   12.5 channel on core I =   2.0 from L=   11,  Acc. loss =  4.7 D.
    S-matrix   10 =    0.00000   0.00000 for L=   14, J=   13.5 channel on core I =   2.0 from L=   11,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=   14, J=   14.5 channel on core I =   2.0 from L=   11,  Acc. loss =  0.0 D.
-      12.5  0.99998679  0.00002052i: elastic S-matrix  @@      0.04  0   0 F  0
+      12.5  0.99998679  0.00002052i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    12.5+/11 @ 2 =   2.127/, Out:   0.000#   2.227/  -0.000f
 
    S-matrix    3 =    1.00000   0.00000 for L=   13, J=   12.0 channel on core I =   1.5 from L=   13,  Acc. loss =  0.0 D.
@@ -2548,7 +2548,7 @@
    S-matrix    9 =   -0.00005   0.00000 for L=   12, J=   12.5 channel on core I =   2.0 from L=   13,  Acc. loss =  3.5 D.
    S-matrix   10 =    0.00005   0.00000 for L=   14, J=   13.5 channel on core I =   2.0 from L=   13,  Acc. loss =  7.5 D.
    S-matrix   11 =    0.00000   0.00000 for L=   14, J=   14.5 channel on core I =   2.0 from L=   13,  Acc. loss =  0.0 D.
-      12.5  0.99999924  0.00000121i: elastic S-matrix  @@      0.04  0   0 F  0
+      12.5  0.99999924  0.00000121i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    12.5+/13 @ 3 =   0.122/, Out:   0.000#   2.175#   0.000f
 
    S-matrix    4 =    1.00000   0.00000 for L=   13, J=   13.0 channel on core I =   1.5 from L=   13,  Acc. loss =  0.0 D.
@@ -2564,7 +2564,7 @@
    S-matrix    9 =   -0.00050   0.00000 for L=   12, J=   12.5 channel on core I =   2.0 from L=   13,  Acc. loss =  3.5 D.
    S-matrix   10 =   -0.00000  -0.00000 for L=   14, J=   13.5 channel on core I =   2.0 from L=   13,  Acc. loss =  7.5 D.
    S-matrix   11 =    0.00003   0.00000 for L=   14, J=   14.5 channel on core I =   2.0 from L=   13,  Acc. loss =  7.5 D.
-      12.5  0.99999924  0.00000121i: elastic S-matrix  @@      0.04  0   0 F  0
+      12.5  0.99999924  0.00000121i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    12.5+/13 @ 4 =   0.122/, Out:   0.000#   0.172/  -0.000f
 
    S-matrix    5 =    1.00000   0.00000 for L=   13, J=   14.0 channel on core I =   1.5 from L=   13,  Acc. loss =  0.0 D.
@@ -2580,7 +2580,7 @@
    S-matrix    9 =   -0.00120   0.00000 for L=   12, J=   12.5 channel on core I =   2.0 from L=   13,  Acc. loss =  3.5 D.
    S-matrix   10 =   -0.00000  -0.00000 for L=   14, J=   13.5 channel on core I =   2.0 from L=   13,  Acc. loss =  7.5 D.
    S-matrix   11 =   -0.00003  -0.00000 for L=   14, J=   14.5 channel on core I =   2.0 from L=   13,  Acc. loss =  7.5 D.
-      12.5  0.99999924  0.00000121i: elastic S-matrix  @@      0.04  0   0 F  0
+      12.5  0.99999924  0.00000121i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    12.5+/13 @ 5 =   0.122/, Out:   0.000#   0.129/  -0.000f
 
    S-matrix    6 =    1.00000   0.00000 for L=   15, J=   14.0 channel on core I =   1.5 from L=   15,  Acc. loss =  0.0 D.
@@ -2596,7 +2596,7 @@
    S-matrix    9 =   -0.00000   0.00000 for L=   12, J=   12.5 channel on core I =   2.0 from L=   15,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.00035   0.00000 for L=   14, J=   13.5 channel on core I =   2.0 from L=   15,  Acc. loss =  5.7 D.
    S-matrix   11 =    0.00003  -0.00000 for L=   14, J=   14.5 channel on core I =   2.0 from L=   15,  Acc. loss =  5.7 D.
-      12.5  0.99999994  0.00000011i: elastic S-matrix  @@      0.03  0   0 F  0
+      12.5  0.99999994  0.00000011i: elastic S-matrix  @@      0.01  0   0 F  0
  Reaction Xsec    12.5+/15 @ 6 =   0.010/, Out:   0.000#   0.011/  -0.000f
 
 
@@ -2620,7 +2620,7 @@
    S-matrix    9 =   -0.00000   0.00000 for L=   13, J=   12.5 channel on core I =   2.0 from L=   10,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.00000   0.00000 for L=   13, J=   13.5 channel on core I =   2.0 from L=   10,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=   15, J=   14.5 channel on core I =   2.0 from L=   10,  Acc. loss =  0.0 D.
-      12.5  0.99994405  0.00008533i: elastic S-matrix  @@      0.13  0   0 F  0
+      12.5  0.99994405  0.00008533i: elastic S-matrix  @@      0.07  0   0 F  0
  Reaction Xsec    12.5-/10 @ 1 =   9.010/, Out:   0.000#   4.507#   0.009f
 
    S-matrix    2 =    1.00000   0.00000 for L=   12, J=   11.0 channel on core I =   1.5 from L=   12,  Acc. loss =  0.0 D.
@@ -2636,7 +2636,7 @@
    S-matrix    9 =   -0.00005   0.00000 for L=   13, J=   12.5 channel on core I =   2.0 from L=   12,  Acc. loss =  6.2 D.
    S-matrix   10 =   -0.00000   0.00000 for L=   13, J=   13.5 channel on core I =   2.0 from L=   12,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=   15, J=   14.5 channel on core I =   2.0 from L=   12,  Acc. loss =  0.0 D.
-      12.5  0.99999687  0.00000494i: elastic S-matrix  @@      0.04  0   0 F  0
+      12.5  0.99999687  0.00000494i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    12.5-/12 @ 2 =   0.505/, Out:   0.000#   0.195/   0.000f
 
    S-matrix    3 =    1.00000   0.00000 for L=   12, J=   12.0 channel on core I =   1.5 from L=   12,  Acc. loss =  0.0 D.
@@ -2652,7 +2652,7 @@
    S-matrix    9 =   -0.00002   0.00000 for L=   13, J=   12.5 channel on core I =   2.0 from L=   12,  Acc. loss =  6.2 D.
    S-matrix   10 =   -0.00005   0.00000 for L=   13, J=   13.5 channel on core I =   2.0 from L=   12,  Acc. loss =  6.2 D.
    S-matrix   11 =    0.00000   0.00000 for L=   15, J=   14.5 channel on core I =   2.0 from L=   12,  Acc. loss =  0.0 D.
-      12.5  0.99999687  0.00000494i: elastic S-matrix  @@      0.04  0   0 F  0
+      12.5  0.99999687  0.00000494i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    12.5-/12 @ 3 =   0.505/, Out:   0.000#   0.427/   0.000f
 
    S-matrix    4 =    1.00000   0.00000 for L=   12, J=   13.0 channel on core I =   1.5 from L=   12,  Acc. loss =  0.0 D.
@@ -2668,7 +2668,7 @@
    S-matrix    9 =    0.00000  -0.00000 for L=   13, J=   12.5 channel on core I =   2.0 from L=   12,  Acc. loss =  6.2 D.
    S-matrix   10 =    0.00001  -0.00000 for L=   13, J=   13.5 channel on core I =   2.0 from L=   12,  Acc. loss =  6.2 D.
    S-matrix   11 =    0.00000   0.00000 for L=   15, J=   14.5 channel on core I =   2.0 from L=   12,  Acc. loss =  0.0 D.
-      12.5  0.99999687  0.00000494i: elastic S-matrix  @@      0.04  0   0 F  0
+      12.5  0.99999687  0.00000494i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    12.5-/12 @ 4 =   0.505/, Out:   0.000#   0.722/  -0.000f
 
    S-matrix    5 =    1.00000   0.00000 for L=   14, J=   13.0 channel on core I =   1.5 from L=   14,  Acc. loss =  0.0 D.
@@ -2684,7 +2684,7 @@
    S-matrix    9 =   -0.00049   0.00000 for L=   13, J=   12.5 channel on core I =   2.0 from L=   14,  Acc. loss =  4.4 D.
    S-matrix   10 =    0.00001  -0.00000 for L=   13, J=   13.5 channel on core I =   2.0 from L=   14,  Acc. loss =  4.4 D.
    S-matrix   11 =    0.00008   0.00000 for L=   15, J=   14.5 channel on core I =   2.0 from L=   14,  Acc. loss =  8.6 D.
-      12.5  0.99999980  0.00000032i: elastic S-matrix  @@      0.04  0   0 F  0
+      12.5  0.99999980  0.00000032i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    12.5-/14 @ 5 =   0.032/, Out:   0.000#   0.023/   0.000f
 
    S-matrix    6 =    1.00000   0.00000 for L=   14, J=   14.0 channel on core I =   1.5 from L=   14,  Acc. loss =  0.0 D.
@@ -2700,7 +2700,7 @@
    S-matrix    9 =   -0.00053   0.00000 for L=   13, J=   12.5 channel on core I =   2.0 from L=   14,  Acc. loss =  4.4 D.
    S-matrix   10 =   -0.00040   0.00000 for L=   13, J=   13.5 channel on core I =   2.0 from L=   14,  Acc. loss =  4.4 D.
    S-matrix   11 =   -0.00004  -0.00000 for L=   15, J=   14.5 channel on core I =   2.0 from L=   14,  Acc. loss =  8.6 D.
-      12.5  0.99999980  0.00000032i: elastic S-matrix  @@      0.04  0   0 F  0
+      12.5  0.99999980  0.00000032i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    12.5-/14 @ 6 =   0.032/, Out:   0.000#   0.040/  -0.000f
 
 
@@ -2724,7 +2724,7 @@
    S-matrix    9 =    0.00000   0.00000 for L=   14, J=   13.5 channel on core I =   2.0 from L=   11,  Acc. loss =  0.0 D.
    S-matrix   10 =    0.00000   0.00000 for L=   14, J=   14.5 channel on core I =   2.0 from L=   11,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=   16, J=   15.5 channel on core I =   2.0 from L=   11,  Acc. loss =  0.0 D.
-      13.5  0.99998679  0.00002051i: elastic S-matrix  @@      0.13  0   0 F  0
+      13.5  0.99998679  0.00002051i: elastic S-matrix  @@      0.06  0   0 F  0
  Reaction Xsec    13.5+/11 @ 1 =   2.290/, Out:   0.000#   2.124#   0.002f
 
    S-matrix    2 =    1.00000   0.00000 for L=   13, J=   12.0 channel on core I =   1.5 from L=   13,  Acc. loss =  0.0 D.
@@ -2740,7 +2740,7 @@
    S-matrix    9 =    0.00004   0.00000 for L=   14, J=   13.5 channel on core I =   2.0 from L=   13,  Acc. loss =  6.4 D.
    S-matrix   10 =    0.00000   0.00000 for L=   14, J=   14.5 channel on core I =   2.0 from L=   13,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=   16, J=   15.5 channel on core I =   2.0 from L=   13,  Acc. loss =  0.0 D.
-      13.5  0.99999924  0.00000121i: elastic S-matrix  @@      0.04  0   0 F  0
+      13.5  0.99999924  0.00000121i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    13.5+/13 @ 2 =   0.131/, Out:   0.000#   0.086/   0.000f
 
    S-matrix    3 =    1.00000   0.00000 for L=   13, J=   13.0 channel on core I =   1.5 from L=   13,  Acc. loss =  0.0 D.
@@ -2756,7 +2756,7 @@
    S-matrix    9 =    0.00001   0.00000 for L=   14, J=   13.5 channel on core I =   2.0 from L=   13,  Acc. loss =  6.4 D.
    S-matrix   10 =    0.00004   0.00000 for L=   14, J=   14.5 channel on core I =   2.0 from L=   13,  Acc. loss =  6.4 D.
    S-matrix   11 =    0.00000   0.00000 for L=   16, J=   15.5 channel on core I =   2.0 from L=   13,  Acc. loss =  0.0 D.
-      13.5  0.99999924  0.00000121i: elastic S-matrix  @@      0.04  0   0 F  0
+      13.5  0.99999924  0.00000121i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    13.5+/13 @ 3 =   0.131/, Out:   0.000#   0.182/  -0.000f
 
    S-matrix    4 =    1.00000   0.00000 for L=   13, J=   14.0 channel on core I =   1.5 from L=   13,  Acc. loss =  0.0 D.
@@ -2772,7 +2772,7 @@
    S-matrix    9 =   -0.00000  -0.00000 for L=   14, J=   13.5 channel on core I =   2.0 from L=   13,  Acc. loss =  6.4 D.
    S-matrix   10 =   -0.00000  -0.00000 for L=   14, J=   14.5 channel on core I =   2.0 from L=   13,  Acc. loss =  6.4 D.
    S-matrix   11 =    0.00000   0.00000 for L=   16, J=   15.5 channel on core I =   2.0 from L=   13,  Acc. loss =  0.0 D.
-      13.5  0.99999924  0.00000121i: elastic S-matrix  @@      0.04  0   0 F  0
+      13.5  0.99999924  0.00000121i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    13.5+/13 @ 4 =   0.131/, Out:   0.000#   0.311/  -0.000f
 
    S-matrix    5 =    1.00000   0.00000 for L=   15, J=   14.0 channel on core I =   1.5 from L=   15,  Acc. loss =  0.0 D.
@@ -2788,7 +2788,7 @@
    S-matrix    9 =   -0.00028   0.00000 for L=   14, J=   13.5 channel on core I =   2.0 from L=   15,  Acc. loss =  4.4 D.
    S-matrix   10 =    0.00000  -0.00000 for L=   14, J=   14.5 channel on core I =   2.0 from L=   15,  Acc. loss =  4.4 D.
    S-matrix   11 =    0.00006   0.00000 for L=   16, J=   15.5 channel on core I =   2.0 from L=   15,  Acc. loss =  7.6 D.
-      13.5  0.99999994  0.00000011i: elastic S-matrix  @@      0.04  0   0 F  0
+      13.5  0.99999994  0.00000011i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    13.5+/15 @ 5 =   0.011/, Out:   0.000#   8.011#   0.000f
 
    S-matrix    6 =    1.00000   0.00000 for L=   15, J=   15.0 channel on core I =   1.5 from L=   15,  Acc. loss =  0.0 D.
@@ -2804,7 +2804,7 @@
    S-matrix    9 =   -0.00031   0.00000 for L=   14, J=   13.5 channel on core I =   2.0 from L=   15,  Acc. loss =  4.4 D.
    S-matrix   10 =   -0.00023   0.00000 for L=   14, J=   14.5 channel on core I =   2.0 from L=   15,  Acc. loss =  4.4 D.
    S-matrix   11 =   -0.00003  -0.00000 for L=   16, J=   15.5 channel on core I =   2.0 from L=   15,  Acc. loss =  7.6 D.
-      13.5  0.99999994  0.00000011i: elastic S-matrix  @@      0.04  0   0 F  0
+      13.5  0.99999994  0.00000011i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    13.5+/15 @ 6 =   0.011/, Out:   0.000#   0.014/  -0.000f
 
 
@@ -2828,7 +2828,7 @@
    S-matrix    9 =   -0.00003   0.00000 for L=   13, J=   13.5 channel on core I =   2.0 from L=   12,  Acc. loss =  5.4 D.
    S-matrix   10 =    0.00000   0.00000 for L=   15, J=   14.5 channel on core I =   2.0 from L=   12,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=   15, J=   15.5 channel on core I =   2.0 from L=   12,  Acc. loss =  0.0 D.
-      13.5  0.99999687  0.00000494i: elastic S-matrix  @@      0.14  0   0 F  0
+      13.5  0.99999687  0.00000494i: elastic S-matrix  @@      0.06  0   0 F  0
  Reaction Xsec    13.5-/12 @ 1 =   0.543/, Out:   0.000#   0.084/   0.000f
 
    S-matrix    2 =    1.00000   0.00000 for L=   12, J=   13.0 channel on core I =   1.5 from L=   12,  Acc. loss =  0.0 D.
@@ -2844,7 +2844,7 @@
    S-matrix    9 =   -0.00002   0.00000 for L=   13, J=   13.5 channel on core I =   2.0 from L=   12,  Acc. loss =  5.4 D.
    S-matrix   10 =    0.00000   0.00000 for L=   15, J=   14.5 channel on core I =   2.0 from L=   12,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=   15, J=   15.5 channel on core I =   2.0 from L=   12,  Acc. loss =  0.0 D.
-      13.5  0.99999687  0.00000494i: elastic S-matrix  @@      0.04  0   0 F  0
+      13.5  0.99999687  0.00000494i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    13.5-/12 @ 2 =   0.543/, Out:   0.000#   0.875/  -0.000f
 
    S-matrix    3 =    1.00000   0.00000 for L=   14, J=   13.0 channel on core I =   1.5 from L=   14,  Acc. loss =  0.0 D.
@@ -2860,7 +2860,7 @@
    S-matrix    9 =   -0.00003   0.00000 for L=   13, J=   13.5 channel on core I =   2.0 from L=   14,  Acc. loss =  3.5 D.
    S-matrix   10 =    0.00008   0.00000 for L=   15, J=   14.5 channel on core I =   2.0 from L=   14,  Acc. loss =  7.4 D.
    S-matrix   11 =    0.00000   0.00000 for L=   15, J=   15.5 channel on core I =   2.0 from L=   14,  Acc. loss =  0.0 D.
-      13.5  0.99999980  0.00000032i: elastic S-matrix  @@      0.04  0   0 F  0
+      13.5  0.99999980  0.00000032i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    13.5-/14 @ 3 =   0.034/, Out:   0.000#   1.326#   0.000f
 
    S-matrix    4 =    1.00000   0.00000 for L=   14, J=   14.0 channel on core I =   1.5 from L=   14,  Acc. loss =  0.0 D.
@@ -2876,7 +2876,7 @@
    S-matrix    9 =   -0.00031   0.00000 for L=   13, J=   13.5 channel on core I =   2.0 from L=   14,  Acc. loss =  3.5 D.
    S-matrix   10 =   -0.00000  -0.00000 for L=   15, J=   14.5 channel on core I =   2.0 from L=   14,  Acc. loss =  7.4 D.
    S-matrix   11 =    0.00005   0.00000 for L=   15, J=   15.5 channel on core I =   2.0 from L=   14,  Acc. loss =  7.4 D.
-      13.5  0.99999980  0.00000032i: elastic S-matrix  @@      0.04  0   0 F  0
+      13.5  0.99999980  0.00000032i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    13.5-/14 @ 4 =   0.034/, Out:   0.000#   0.072/  -0.000f
 
    S-matrix    5 =    1.00000   0.00000 for L=   14, J=   15.0 channel on core I =   1.5 from L=   14,  Acc. loss =  0.0 D.
@@ -2892,7 +2892,7 @@
    S-matrix    9 =   -0.00075   0.00000 for L=   13, J=   13.5 channel on core I =   2.0 from L=   14,  Acc. loss =  3.5 D.
    S-matrix   10 =   -0.00000  -0.00000 for L=   15, J=   14.5 channel on core I =   2.0 from L=   14,  Acc. loss =  7.4 D.
    S-matrix   11 =   -0.00005  -0.00000 for L=   15, J=   15.5 channel on core I =   2.0 from L=   14,  Acc. loss =  7.4 D.
-      13.5  0.99999980  0.00000032i: elastic S-matrix  @@      0.04  0   0 F  0
+      13.5  0.99999980  0.00000032i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    13.5-/14 @ 5 =   0.034/, Out:   0.000#   0.055/  -0.000f
 
    S-matrix    6 =    1.00000   0.00000 for L=   16, J=   15.0 channel on core I =   1.5 from L=   16,  Acc. loss =  0.0 D.
@@ -2908,7 +2908,7 @@
    S-matrix    9 =   -0.00000   0.00000 for L=   13, J=   13.5 channel on core I =   2.0 from L=   16,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.00018   0.00000 for L=   15, J=   14.5 channel on core I =   2.0 from L=   16,  Acc. loss =  5.7 D.
    S-matrix   11 =    0.00001  -0.00000 for L=   15, J=   15.5 channel on core I =   2.0 from L=   16,  Acc. loss =  5.7 D.
-      13.5  0.99999997  0.00000006i: elastic S-matrix  @@      0.03  0   0 F  0
+      13.5  0.99999997  0.00000006i: elastic S-matrix  @@      0.01  0   0 F  0
  Reaction Xsec    13.5-/16 @ 6 =   5.965#, Out:   0.000#   3.230#   0.000f
 
 
@@ -2932,7 +2932,7 @@
    S-matrix    9 =    0.00003   0.00000 for L=   14, J=   14.5 channel on core I =   2.0 from L=   13,  Acc. loss =  5.1 D.
    S-matrix   10 =    0.00000   0.00000 for L=   16, J=   15.5 channel on core I =   2.0 from L=   13,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=   16, J=   16.5 channel on core I =   2.0 from L=   13,  Acc. loss =  0.0 D.
-      14.5  0.99999924  0.00000121i: elastic S-matrix  @@      0.14  0   0 F  0
+      14.5  0.99999924  0.00000121i: elastic S-matrix  @@      0.06  0   0 F  0
  Reaction Xsec    14.5+/13 @ 1 =   0.140/, Out:   0.000#   0.037/   0.000f
 
    S-matrix    2 =    1.00000   0.00000 for L=   13, J=   14.0 channel on core I =   1.5 from L=   13,  Acc. loss =  0.0 D.
@@ -2948,7 +2948,7 @@
    S-matrix    9 =    0.00002   0.00000 for L=   14, J=   14.5 channel on core I =   2.0 from L=   13,  Acc. loss =  5.1 D.
    S-matrix   10 =    0.00000   0.00000 for L=   16, J=   15.5 channel on core I =   2.0 from L=   13,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=   16, J=   16.5 channel on core I =   2.0 from L=   13,  Acc. loss =  0.0 D.
-      14.5  0.99999924  0.00000121i: elastic S-matrix  @@      0.04  0   0 F  0
+      14.5  0.99999924  0.00000121i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    14.5+/13 @ 2 =   0.140/, Out:   0.000#   0.372/  -0.000f
 
    S-matrix    3 =    1.00000   0.00000 for L=   15, J=   14.0 channel on core I =   1.5 from L=   15,  Acc. loss =  0.0 D.
@@ -2964,7 +2964,7 @@
    S-matrix    9 =   -0.00002   0.00000 for L=   14, J=   14.5 channel on core I =   2.0 from L=   15,  Acc. loss =  3.6 D.
    S-matrix   10 =    0.00006   0.00000 for L=   16, J=   15.5 channel on core I =   2.0 from L=   15,  Acc. loss =  5.8 D.
    S-matrix   11 =    0.00000   0.00000 for L=   16, J=   16.5 channel on core I =   2.0 from L=   15,  Acc. loss =  0.0 D.
-      14.5  0.99999994  0.00000011i: elastic S-matrix  @@      0.04  0   0 F  0
+      14.5  0.99999994  0.00000011i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    14.5+/15 @ 3 =   0.012/, Out:   0.000#   0.579#   0.000f
 
    S-matrix    4 =    1.00000   0.00000 for L=   15, J=   15.0 channel on core I =   1.5 from L=   15,  Acc. loss =  0.0 D.
@@ -2980,7 +2980,7 @@
    S-matrix    9 =   -0.00018   0.00000 for L=   14, J=   14.5 channel on core I =   2.0 from L=   15,  Acc. loss =  3.6 D.
    S-matrix   10 =   -0.00000  -0.00000 for L=   16, J=   15.5 channel on core I =   2.0 from L=   15,  Acc. loss =  5.8 D.
    S-matrix   11 =    0.00004   0.00000 for L=   16, J=   16.5 channel on core I =   2.0 from L=   15,  Acc. loss =  5.8 D.
-      14.5  0.99999994  0.00000011i: elastic S-matrix  @@      0.04  0   0 F  0
+      14.5  0.99999994  0.00000011i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    14.5+/15 @ 4 =   0.012/, Out:   0.000#   0.025/  -0.000f
 
    S-matrix    5 =    1.00000   0.00000 for L=   15, J=   16.0 channel on core I =   1.5 from L=   15,  Acc. loss =  0.0 D.
@@ -2996,7 +2996,7 @@
    S-matrix    9 =   -0.00043   0.00000 for L=   14, J=   14.5 channel on core I =   2.0 from L=   15,  Acc. loss =  3.6 D.
    S-matrix   10 =   -0.00000  -0.00000 for L=   16, J=   15.5 channel on core I =   2.0 from L=   15,  Acc. loss =  5.8 D.
    S-matrix   11 =   -0.00004  -0.00000 for L=   16, J=   16.5 channel on core I =   2.0 from L=   15,  Acc. loss =  5.8 D.
-      14.5  0.99999994  0.00000011i: elastic S-matrix  @@      0.04  0   0 F  0
+      14.5  0.99999994  0.00000011i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    14.5+/15 @ 5 =   0.012/, Out:   0.000#   0.019/  -0.000f
 
    S-matrix    6 =    1.00000   0.00000 for L=   17, J=   16.0 channel on core I =   1.5 from L=   17,  Acc. loss =  0.0 D.
@@ -3012,7 +3012,7 @@
    S-matrix    9 =    0.00000   0.00000 for L=   14, J=   14.5 channel on core I =   2.0 from L=   17,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.00008  -0.00000 for L=   16, J=   15.5 channel on core I =   2.0 from L=   17,  Acc. loss =  5.7 D.
    S-matrix   11 =    0.00001   0.00000 for L=   16, J=   16.5 channel on core I =   2.0 from L=   17,  Acc. loss =  5.7 D.
-      14.5  0.99999997  0.00000005i: elastic S-matrix  @@      0.03  0   0 F  0
+      14.5  0.99999997  0.00000005i: elastic S-matrix  @@      0.01  0   0 F  0
  Reaction Xsec    14.5+/17 @ 6 =   5.147#, Out:   0.000#   0.721#   0.000f
 
 
@@ -3036,7 +3036,7 @@
    S-matrix    9 =    0.00000   0.00000 for L=   15, J=   14.5 channel on core I =   2.0 from L=   12,  Acc. loss =  0.0 D.
    S-matrix   10 =    0.00000   0.00000 for L=   15, J=   15.5 channel on core I =   2.0 from L=   12,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   17, J=   16.5 channel on core I =   2.0 from L=   12,  Acc. loss =  0.0 D.
-      14.5  0.99999687  0.00000493i: elastic S-matrix  @@      0.13  0   0 F  0
+      14.5  0.99999687  0.00000493i: elastic S-matrix  @@      0.06  0   0 F  0
  Reaction Xsec    14.5-/12 @ 1 =   0.582/, Out:   0.000#   0.165#   0.001f
 
    S-matrix    2 =    1.00000   0.00000 for L=   14, J=   13.0 channel on core I =   1.5 from L=   14,  Acc. loss =  0.0 D.
@@ -3052,7 +3052,7 @@
    S-matrix    9 =    0.00006   0.00000 for L=   15, J=   14.5 channel on core I =   2.0 from L=   14,  Acc. loss =  5.8 D.
    S-matrix   10 =    0.00000   0.00000 for L=   15, J=   15.5 channel on core I =   2.0 from L=   14,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   17, J=   16.5 channel on core I =   2.0 from L=   14,  Acc. loss =  0.0 D.
-      14.5  0.99999980  0.00000032i: elastic S-matrix  @@      0.04  0   0 F  0
+      14.5  0.99999980  0.00000032i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    14.5-/14 @ 2 =   0.036/, Out:   0.000#   0.036/   0.000f
 
    S-matrix    3 =    1.00000   0.00000 for L=   14, J=   14.0 channel on core I =   1.5 from L=   14,  Acc. loss =  0.0 D.
@@ -3068,7 +3068,7 @@
    S-matrix    9 =    0.00002   0.00000 for L=   15, J=   14.5 channel on core I =   2.0 from L=   14,  Acc. loss =  5.8 D.
    S-matrix   10 =    0.00006   0.00000 for L=   15, J=   15.5 channel on core I =   2.0 from L=   14,  Acc. loss =  5.8 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   17, J=   16.5 channel on core I =   2.0 from L=   14,  Acc. loss =  0.0 D.
-      14.5  0.99999980  0.00000032i: elastic S-matrix  @@      0.05  0   0 F  0
+      14.5  0.99999980  0.00000032i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    14.5-/14 @ 3 =   0.036/, Out:   0.000#   0.075/  -0.000f
 
    S-matrix    4 =    1.00000   0.00000 for L=   14, J=   15.0 channel on core I =   1.5 from L=   14,  Acc. loss =  0.0 D.
@@ -3084,7 +3084,7 @@
    S-matrix    9 =   -0.00000  -0.00000 for L=   15, J=   14.5 channel on core I =   2.0 from L=   14,  Acc. loss =  5.8 D.
    S-matrix   10 =   -0.00001  -0.00000 for L=   15, J=   15.5 channel on core I =   2.0 from L=   14,  Acc. loss =  5.8 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   17, J=   16.5 channel on core I =   2.0 from L=   14,  Acc. loss =  0.0 D.
-      14.5  0.99999980  0.00000032i: elastic S-matrix  @@      0.04  0   0 F  0
+      14.5  0.99999980  0.00000032i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    14.5-/14 @ 4 =   0.036/, Out:   0.000#   0.129/  -0.000f
 
    S-matrix    5 =    1.00000   0.00000 for L=   16, J=   15.0 channel on core I =   1.5 from L=   16,  Acc. loss =  0.0 D.
@@ -3100,7 +3100,7 @@
    S-matrix    9 =   -0.00014  -0.00000 for L=   15, J=   14.5 channel on core I =   2.0 from L=   16,  Acc. loss =  5.2 D.
    S-matrix   10 =    0.00000   0.00000 for L=   15, J=   15.5 channel on core I =   2.0 from L=   16,  Acc. loss =  5.2 D.
    S-matrix   11 =    0.00003  -0.00000 for L=   17, J=   16.5 channel on core I =   2.0 from L=   16,  Acc. loss =  8.0 D.
-      14.5  0.99999997  0.00000006i: elastic S-matrix  @@      0.04  0   0 F  0
+      14.5  0.99999997  0.00000006i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    14.5-/16 @ 5 =   6.391#, Out:   0.000#   2.229#   0.000f
 
    S-matrix    6 =    1.00000   0.00000 for L=   16, J=   16.0 channel on core I =   1.5 from L=   16,  Acc. loss =  0.0 D.
@@ -3116,7 +3116,7 @@
    S-matrix    9 =   -0.00016  -0.00000 for L=   15, J=   14.5 channel on core I =   2.0 from L=   16,  Acc. loss =  5.2 D.
    S-matrix   10 =   -0.00012  -0.00000 for L=   15, J=   15.5 channel on core I =   2.0 from L=   16,  Acc. loss =  5.2 D.
    S-matrix   11 =   -0.00001   0.00000 for L=   17, J=   16.5 channel on core I =   2.0 from L=   16,  Acc. loss =  8.0 D.
-      14.5  0.99999997  0.00000006i: elastic S-matrix  @@      0.04  0   0 F  0
+      14.5  0.99999997  0.00000006i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    14.5-/16 @ 6 =   6.391#, Out:   0.000#   4.062#   0.000f
 
 
@@ -3140,7 +3140,7 @@
    S-matrix    9 =    0.00000   0.00000 for L=   16, J=   15.5 channel on core I =   2.0 from L=   13,  Acc. loss =  0.0 D.
    S-matrix   10 =    0.00000   0.00000 for L=   16, J=   16.5 channel on core I =   2.0 from L=   13,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   18, J=   17.5 channel on core I =   2.0 from L=   13,  Acc. loss =  0.0 D.
-      15.5  0.99999924  0.00000120i: elastic S-matrix  @@      0.13  0   0 F  0
+      15.5  0.99999924  0.00000120i: elastic S-matrix  @@      0.06  0   0 F  0
  Reaction Xsec    15.5+/13 @ 1 =   0.150/, Out:   0.000#   0.111#   0.000f
 
    S-matrix    2 =    1.00000   0.00000 for L=   15, J=   14.0 channel on core I =   1.5 from L=   15,  Acc. loss =  0.0 D.
@@ -3156,7 +3156,7 @@
    S-matrix    9 =    0.00004   0.00000 for L=   16, J=   15.5 channel on core I =   2.0 from L=   15,  Acc. loss =  5.2 D.
    S-matrix   10 =    0.00000   0.00000 for L=   16, J=   16.5 channel on core I =   2.0 from L=   15,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   18, J=   17.5 channel on core I =   2.0 from L=   15,  Acc. loss =  0.0 D.
-      15.5  0.99999994  0.00000011i: elastic S-matrix  @@      0.04  0   0 F  0
+      15.5  0.99999994  0.00000011i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    15.5+/15 @ 2 =   0.013/, Out:   0.000#   0.013/  -0.000f
 
    S-matrix    3 =    1.00000   0.00000 for L=   15, J=   15.0 channel on core I =   1.5 from L=   15,  Acc. loss =  0.0 D.
@@ -3172,7 +3172,7 @@
    S-matrix    9 =    0.00002   0.00000 for L=   16, J=   15.5 channel on core I =   2.0 from L=   15,  Acc. loss =  5.2 D.
    S-matrix   10 =    0.00004   0.00000 for L=   16, J=   16.5 channel on core I =   2.0 from L=   15,  Acc. loss =  5.2 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   18, J=   17.5 channel on core I =   2.0 from L=   15,  Acc. loss =  0.0 D.
-      15.5  0.99999994  0.00000011i: elastic S-matrix  @@      0.04  0   0 F  0
+      15.5  0.99999994  0.00000011i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    15.5+/15 @ 3 =   0.013/, Out:   0.000#   0.026/  -0.000f
 
    S-matrix    4 =    1.00000   0.00000 for L=   15, J=   16.0 channel on core I =   1.5 from L=   15,  Acc. loss =  0.0 D.
@@ -3188,7 +3188,7 @@
    S-matrix    9 =   -0.00000  -0.00000 for L=   16, J=   15.5 channel on core I =   2.0 from L=   15,  Acc. loss =  5.2 D.
    S-matrix   10 =   -0.00000  -0.00000 for L=   16, J=   16.5 channel on core I =   2.0 from L=   15,  Acc. loss =  5.2 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   18, J=   17.5 channel on core I =   2.0 from L=   15,  Acc. loss =  0.0 D.
-      15.5  0.99999994  0.00000011i: elastic S-matrix  @@      0.03  0   0 F  0
+      15.5  0.99999994  0.00000011i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    15.5+/15 @ 4 =   0.013/, Out:   0.000#   0.045/  -0.000f
 
    S-matrix    5 =    1.00000   0.00000 for L=   17, J=   16.0 channel on core I =   1.5 from L=   17,  Acc. loss =  0.0 D.
@@ -3204,7 +3204,7 @@
    S-matrix    9 =   -0.00006  -0.00000 for L=   16, J=   15.5 channel on core I =   2.0 from L=   17,  Acc. loss =  4.8 D.
    S-matrix   10 =    0.00000  -0.00000 for L=   16, J=   16.5 channel on core I =   2.0 from L=   17,  Acc. loss =  4.8 D.
    S-matrix   11 =    0.00001  -0.00000 for L=   18, J=   17.5 channel on core I =   2.0 from L=   17,  Acc. loss =  8.7 D.
-      15.5  0.99999997  0.00000005i: elastic S-matrix  @@      0.03  0   0 F  0
+      15.5  0.99999997  0.00000005i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    15.5+/17 @ 5 =   5.490#, Out:   0.000#   0.484#   0.000f
 
    S-matrix    6 =    1.00000   0.00000 for L=   17, J=   17.0 channel on core I =   1.5 from L=   17,  Acc. loss =  0.0 D.
@@ -3220,7 +3220,7 @@
    S-matrix    9 =   -0.00007   0.00000 for L=   16, J=   15.5 channel on core I =   2.0 from L=   17,  Acc. loss =  4.8 D.
    S-matrix   10 =   -0.00005  -0.00000 for L=   16, J=   16.5 channel on core I =   2.0 from L=   17,  Acc. loss =  4.8 D.
    S-matrix   11 =   -0.00001   0.00000 for L=   18, J=   17.5 channel on core I =   2.0 from L=   17,  Acc. loss =  8.7 D.
-      15.5  0.99999997  0.00000005i: elastic S-matrix  @@      0.03  0   0 F  0
+      15.5  0.99999997  0.00000005i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    15.5+/17 @ 6 =   5.490#, Out:   0.000#   0.905#   0.000f
 
 
@@ -3244,7 +3244,7 @@
    S-matrix    9 =    0.00004   0.00000 for L=   15, J=   15.5 channel on core I =   2.0 from L=   14,  Acc. loss =  4.7 D.
    S-matrix   10 =   -0.00000   0.00000 for L=   17, J=   16.5 channel on core I =   2.0 from L=   14,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   17, J=   17.5 channel on core I =   2.0 from L=   14,  Acc. loss =  0.0 D.
-      15.5  0.99999980  0.00000032i: elastic S-matrix  @@      0.13  0   0 F  0
+      15.5  0.99999980  0.00000032i: elastic S-matrix  @@      0.08  0   0 F  0
  Reaction Xsec    15.5-/14 @ 1 =   0.039/, Out:   0.000#   0.016/   0.000f
 
    S-matrix    2 =    1.00000   0.00000 for L=   14, J=   15.0 channel on core I =   1.5 from L=   14,  Acc. loss =  0.0 D.
@@ -3260,7 +3260,7 @@
    S-matrix    9 =    0.00003   0.00000 for L=   15, J=   15.5 channel on core I =   2.0 from L=   14,  Acc. loss =  4.7 D.
    S-matrix   10 =   -0.00000   0.00000 for L=   17, J=   16.5 channel on core I =   2.0 from L=   14,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   17, J=   17.5 channel on core I =   2.0 from L=   14,  Acc. loss =  0.0 D.
-      15.5  0.99999980  0.00000032i: elastic S-matrix  @@      0.04  0   0 F  0
+      15.5  0.99999980  0.00000032i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    15.5-/14 @ 2 =   0.039/, Out:   0.000#   0.153/  -0.000f
 
    S-matrix    3 =    1.00000   0.00000 for L=   16, J=   15.0 channel on core I =   1.5 from L=   16,  Acc. loss =  0.0 D.
@@ -3276,7 +3276,7 @@
    S-matrix    9 =   -0.00001  -0.00000 for L=   15, J=   15.5 channel on core I =   2.0 from L=   16,  Acc. loss =  4.4 D.
    S-matrix   10 =    0.00003  -0.00000 for L=   17, J=   16.5 channel on core I =   2.0 from L=   16,  Acc. loss =  7.1 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   17, J=   17.5 channel on core I =   2.0 from L=   16,  Acc. loss =  0.0 D.
-      15.5  0.99999997  0.00000006i: elastic S-matrix  @@      0.04  0   0 F  0
+      15.5  0.99999997  0.00000006i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    15.5-/16 @ 3 =   6.817#, Out:   0.000#   0.160#   0.000f
 
    S-matrix    4 =    1.00000   0.00000 for L=   16, J=   16.0 channel on core I =   1.5 from L=   16,  Acc. loss =  0.0 D.
@@ -3292,7 +3292,7 @@
    S-matrix    9 =   -0.00009  -0.00000 for L=   15, J=   15.5 channel on core I =   2.0 from L=   16,  Acc. loss =  4.4 D.
    S-matrix   10 =   -0.00000   0.00000 for L=   17, J=   16.5 channel on core I =   2.0 from L=   16,  Acc. loss =  7.1 D.
    S-matrix   11 =    0.00002  -0.00000 for L=   17, J=   17.5 channel on core I =   2.0 from L=   16,  Acc. loss =  7.1 D.
-      15.5  0.99999997  0.00000006i: elastic S-matrix  @@      0.04  0   0 F  0
+      15.5  0.99999997  0.00000006i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    15.5-/16 @ 4 =   6.817#, Out:   0.000#   7.077#  -0.000f
 
    S-matrix    5 =    1.00000   0.00000 for L=   16, J=   17.0 channel on core I =   1.5 from L=   16,  Acc. loss =  0.0 D.
@@ -3308,7 +3308,7 @@
    S-matrix    9 =   -0.00022  -0.00000 for L=   15, J=   15.5 channel on core I =   2.0 from L=   16,  Acc. loss =  4.4 D.
    S-matrix   10 =   -0.00000   0.00000 for L=   17, J=   16.5 channel on core I =   2.0 from L=   16,  Acc. loss =  7.1 D.
    S-matrix   11 =   -0.00002  -0.00000 for L=   17, J=   17.5 channel on core I =   2.0 from L=   16,  Acc. loss =  7.1 D.
-      15.5  0.99999997  0.00000006i: elastic S-matrix  @@      0.03  0   0 F  0
+      15.5  0.99999997  0.00000006i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    15.5-/16 @ 5 =   6.817#, Out:   0.000#   5.431#   0.000f
 
    S-matrix    6 =    1.00000   0.00000 for L=   18, J=   17.0 channel on core I =   1.5 from L=   18,  Acc. loss =  0.0 D.
@@ -3324,7 +3324,7 @@
    S-matrix    9 =    0.00000   0.00000 for L=   15, J=   15.5 channel on core I =   2.0 from L=   18,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.00003   0.00000 for L=   17, J=   16.5 channel on core I =   2.0 from L=   18,  Acc. loss =  6.6 D.
    S-matrix   11 =    0.00000   0.00000 for L=   17, J=   17.5 channel on core I =   2.0 from L=   18,  Acc. loss =  6.6 D.
-      15.5  0.99999997  0.00000004i: elastic S-matrix  @@      0.03  0   0 F  0
+      15.5  0.99999997  0.00000004i: elastic S-matrix  @@      0.01  0   0 F  0
  Reaction Xsec    15.5-/18 @ 6 =   5.116#, Out:   0.000#   0.130#   0.000f
 
 
@@ -3348,7 +3348,7 @@
    S-matrix    9 =    0.00003   0.00000 for L=   16, J=   16.5 channel on core I =   2.0 from L=   15,  Acc. loss =  4.2 D.
    S-matrix   10 =   -0.00000   0.00000 for L=   18, J=   17.5 channel on core I =   2.0 from L=   15,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   18, J=   18.5 channel on core I =   2.0 from L=   15,  Acc. loss =  0.0 D.
-      16.5  0.99999994  0.00000011i: elastic S-matrix  @@      0.17  0   0 F  0
+      16.5  0.99999994  0.00000011i: elastic S-matrix  @@      0.08  0   0 F  0
  Reaction Xsec    16.5+/15 @ 1 =   0.014/, Out:   0.000#   5.873#   0.000f
 
    S-matrix    2 =    1.00000   0.00000 for L=   15, J=   16.0 channel on core I =   1.5 from L=   15,  Acc. loss =  0.0 D.
@@ -3364,7 +3364,7 @@
    S-matrix    9 =    0.00002   0.00000 for L=   16, J=   16.5 channel on core I =   2.0 from L=   15,  Acc. loss =  4.2 D.
    S-matrix   10 =   -0.00000   0.00000 for L=   18, J=   17.5 channel on core I =   2.0 from L=   15,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   18, J=   18.5 channel on core I =   2.0 from L=   15,  Acc. loss =  0.0 D.
-      16.5  0.99999994  0.00000011i: elastic S-matrix  @@      0.03  0   0 F  0
+      16.5  0.99999994  0.00000011i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    16.5+/15 @ 2 =   0.014/, Out:   0.000#   0.053/  -0.000f
 
    S-matrix    3 =    1.00000   0.00000 for L=   17, J=   16.0 channel on core I =   1.5 from L=   17,  Acc. loss =  0.0 D.
@@ -3380,7 +3380,7 @@
    S-matrix    9 =   -0.00000  -0.00000 for L=   16, J=   16.5 channel on core I =   2.0 from L=   17,  Acc. loss =  3.7 D.
    S-matrix   10 =    0.00001  -0.00000 for L=   18, J=   17.5 channel on core I =   2.0 from L=   17,  Acc. loss =  7.5 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   18, J=   18.5 channel on core I =   2.0 from L=   17,  Acc. loss =  0.0 D.
-      16.5  0.99999997  0.00000005i: elastic S-matrix  @@      0.03  0   0 F  0
+      16.5  0.99999997  0.00000005i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    16.5+/17 @ 3 =   5.833#, Out:   0.000#   0.028#   0.000f
 
    S-matrix    4 =    1.00000   0.00000 for L=   17, J=   17.0 channel on core I =   1.5 from L=   17,  Acc. loss =  0.0 D.
@@ -3396,7 +3396,7 @@
    S-matrix    9 =   -0.00004  -0.00000 for L=   16, J=   16.5 channel on core I =   2.0 from L=   17,  Acc. loss =  3.7 D.
    S-matrix   10 =   -0.00000  -0.00000 for L=   18, J=   17.5 channel on core I =   2.0 from L=   17,  Acc. loss =  7.5 D.
    S-matrix   11 =    0.00001   0.00000 for L=   18, J=   18.5 channel on core I =   2.0 from L=   17,  Acc. loss =  7.5 D.
-      16.5  0.99999997  0.00000005i: elastic S-matrix  @@      0.04  0   0 F  0
+      16.5  0.99999997  0.00000005i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    16.5+/17 @ 4 =   5.833#, Out:   0.000#   1.555#   0.000f
 
    S-matrix    5 =    1.00000   0.00000 for L=   17, J=   18.0 channel on core I =   1.5 from L=   17,  Acc. loss =  0.0 D.
@@ -3412,7 +3412,7 @@
    S-matrix    9 =   -0.00010  -0.00000 for L=   16, J=   16.5 channel on core I =   2.0 from L=   17,  Acc. loss =  3.7 D.
    S-matrix   10 =   -0.00000   0.00000 for L=   18, J=   17.5 channel on core I =   2.0 from L=   17,  Acc. loss =  7.5 D.
    S-matrix   11 =   -0.00001   0.00000 for L=   18, J=   18.5 channel on core I =   2.0 from L=   17,  Acc. loss =  7.5 D.
-      16.5  0.99999997  0.00000005i: elastic S-matrix  @@      0.03  0   0 F  0
+      16.5  0.99999997  0.00000005i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    16.5+/17 @ 5 =   5.833#, Out:   0.000#   1.200#   0.000f
 
    S-matrix    6 =    1.00000   0.00000 for L=   19, J=   18.0 channel on core I =   1.5 from L=   19,  Acc. loss =  0.0 D.
@@ -3428,7 +3428,7 @@
    S-matrix    9 =    0.00000   0.00000 for L=   16, J=   16.5 channel on core I =   2.0 from L=   19,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.00001  -0.00000 for L=   18, J=   17.5 channel on core I =   2.0 from L=   19,  Acc. loss =  6.9 D.
    S-matrix   11 =    0.00000   0.00000 for L=   18, J=   18.5 channel on core I =   2.0 from L=   19,  Acc. loss =  6.9 D.
-      16.5  0.99999997  0.00000004i: elastic S-matrix  @@      0.03  0   0 F  0
+      16.5  0.99999997  0.00000004i: elastic S-matrix  @@      0.01  0   0 F  0
  Reaction Xsec    16.5+/19 @ 6 =   5.441#, Out:   0.000#   0.021#   0.000f
 
 
@@ -3452,7 +3452,7 @@
    S-matrix    9 =   -0.00000   0.00000 for L=   17, J=   16.5 channel on core I =   2.0 from L=   14,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.00000   0.00000 for L=   17, J=   17.5 channel on core I =   2.0 from L=   14,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   19, J=   18.5 channel on core I =   2.0 from L=   14,  Acc. loss =  0.0 D.
-      16.5  0.99999980  0.00000032i: elastic S-matrix  @@      0.14  0   0 F  0
+      16.5  0.99999980  0.00000032i: elastic S-matrix  @@      0.06  0   0 F  0
  Reaction Xsec    16.5-/14 @ 1 =   0.041/, Out:   0.000#   0.273#   0.000f
 
    S-matrix    2 =    1.00000   0.00000 for L=   16, J=   15.0 channel on core I =   1.5 from L=   16,  Acc. loss =  0.0 D.
@@ -3468,7 +3468,7 @@
    S-matrix    9 =    0.00002   0.00000 for L=   17, J=   16.5 channel on core I =   2.0 from L=   16,  Acc. loss =  5.9 D.
    S-matrix   10 =   -0.00000   0.00000 for L=   17, J=   17.5 channel on core I =   2.0 from L=   16,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   19, J=   18.5 channel on core I =   2.0 from L=   16,  Acc. loss =  0.0 D.
-      16.5  0.99999997  0.00000006i: elastic S-matrix  @@      0.04  0   0 F  0
+      16.5  0.99999997  0.00000006i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    16.5-/16 @ 2 =   7.244#, Out:   0.000#   3.642#   0.000f
 
    S-matrix    3 =    1.00000   0.00000 for L=   16, J=   16.0 channel on core I =   1.5 from L=   16,  Acc. loss =  0.0 D.
@@ -3484,7 +3484,7 @@
    S-matrix    9 =    0.00001  -0.00000 for L=   17, J=   16.5 channel on core I =   2.0 from L=   16,  Acc. loss =  5.9 D.
    S-matrix   10 =    0.00002   0.00000 for L=   17, J=   17.5 channel on core I =   2.0 from L=   16,  Acc. loss =  5.9 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   19, J=   18.5 channel on core I =   2.0 from L=   16,  Acc. loss =  0.0 D.
-      16.5  0.99999997  0.00000006i: elastic S-matrix  @@      0.04  0   0 F  0
+      16.5  0.99999997  0.00000006i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    16.5-/16 @ 3 =   7.244#, Out:   0.000#   7.187#   0.000f
 
    S-matrix    4 =    1.00000   0.00000 for L=   16, J=   17.0 channel on core I =   1.5 from L=   16,  Acc. loss =  0.0 D.
@@ -3500,7 +3500,7 @@
    S-matrix    9 =   -0.00000  -0.00000 for L=   17, J=   16.5 channel on core I =   2.0 from L=   16,  Acc. loss =  5.9 D.
    S-matrix   10 =   -0.00000  -0.00000 for L=   17, J=   17.5 channel on core I =   2.0 from L=   16,  Acc. loss =  5.9 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   19, J=   18.5 channel on core I =   2.0 from L=   16,  Acc. loss =  0.0 D.
-      16.5  0.99999997  0.00000006i: elastic S-matrix  @@      0.04  0   0 F  0
+      16.5  0.99999997  0.00000006i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    16.5-/16 @ 4 =   7.244#, Out:   0.000#   0.013/  -0.000f
 
    S-matrix    5 =    1.00000   0.00000 for L=   18, J=   17.0 channel on core I =   1.5 from L=   18,  Acc. loss =  0.0 D.
@@ -3516,7 +3516,7 @@
    S-matrix    9 =   -0.00003  -0.00000 for L=   17, J=   16.5 channel on core I =   2.0 from L=   18,  Acc. loss =  5.3 D.
    S-matrix   10 =    0.00000   0.00000 for L=   17, J=   17.5 channel on core I =   2.0 from L=   18,  Acc. loss =  5.3 D.
    S-matrix   11 =    0.00000  -0.00000 for L=   19, J=   18.5 channel on core I =   2.0 from L=   18,  Acc. loss =  6.4 D.
-      16.5  0.99999997  0.00000004i: elastic S-matrix  @@      0.04  0   0 F  0
+      16.5  0.99999997  0.00000004i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    16.5-/18 @ 5 =   5.436#, Out:   0.000#   0.085#   0.000f
 
    S-matrix    6 =    1.00000   0.00000 for L=   18, J=   18.0 channel on core I =   1.5 from L=   18,  Acc. loss =  0.0 D.
@@ -3532,7 +3532,7 @@
    S-matrix    9 =   -0.00003  -0.00000 for L=   17, J=   16.5 channel on core I =   2.0 from L=   18,  Acc. loss =  5.3 D.
    S-matrix   10 =   -0.00002  -0.00000 for L=   17, J=   17.5 channel on core I =   2.0 from L=   18,  Acc. loss =  5.3 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   19, J=   18.5 channel on core I =   2.0 from L=   18,  Acc. loss =  6.4 D.
-      16.5  0.99999997  0.00000004i: elastic S-matrix  @@      0.04  0   0 F  0
+      16.5  0.99999997  0.00000004i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    16.5-/18 @ 6 =   5.436#, Out:   0.000#   0.162#   0.000f
 
 
@@ -3556,7 +3556,7 @@
    S-matrix    9 =   -0.00000   0.00000 for L=   18, J=   17.5 channel on core I =   2.0 from L=   15,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.00000   0.00000 for L=   18, J=   18.5 channel on core I =   2.0 from L=   15,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=   20, J=   19.5 channel on core I =   2.0 from L=   15,  Acc. loss =  0.0 D.
-      17.5  0.99999994  0.00000010i: elastic S-matrix  @@      0.13  0   0 F  0
+      17.5  0.99999994  0.00000010i: elastic S-matrix  @@      0.06  0   0 F  0
  Reaction Xsec    17.5+/15 @ 1 =   0.014/, Out:   0.000#   0.156#   0.000f
 
    S-matrix    2 =    1.00000   0.00000 for L=   17, J=   16.0 channel on core I =   1.5 from L=   17,  Acc. loss =  0.0 D.
@@ -3572,7 +3572,7 @@
    S-matrix    9 =    0.00001  -0.00000 for L=   18, J=   17.5 channel on core I =   2.0 from L=   17,  Acc. loss =  6.4 D.
    S-matrix   10 =   -0.00000   0.00000 for L=   18, J=   18.5 channel on core I =   2.0 from L=   17,  Acc. loss =  0.0 D.
    S-matrix   11 =    0.00000   0.00000 for L=   20, J=   19.5 channel on core I =   2.0 from L=   17,  Acc. loss =  0.0 D.
-      17.5  0.99999997  0.00000005i: elastic S-matrix  @@      0.04  0   0 F  0
+      17.5  0.99999997  0.00000005i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    17.5+/17 @ 2 =   6.177#, Out:   0.000#   0.803#   0.000f
 
    S-matrix    3 =    1.00000   0.00000 for L=   17, J=   17.0 channel on core I =   1.5 from L=   17,  Acc. loss =  0.0 D.
@@ -3588,7 +3588,7 @@
    S-matrix    9 =    0.00000  -0.00000 for L=   18, J=   17.5 channel on core I =   2.0 from L=   17,  Acc. loss =  6.4 D.
    S-matrix   10 =    0.00001  -0.00000 for L=   18, J=   18.5 channel on core I =   2.0 from L=   17,  Acc. loss =  6.4 D.
    S-matrix   11 =    0.00000   0.00000 for L=   20, J=   19.5 channel on core I =   2.0 from L=   17,  Acc. loss =  0.0 D.
-      17.5  0.99999997  0.00000005i: elastic S-matrix  @@      0.04  0   0 F  0
+      17.5  0.99999997  0.00000005i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    17.5+/17 @ 3 =   6.177#, Out:   0.000#   1.563#   0.000f
 
    S-matrix    4 =    1.00000   0.00000 for L=   17, J=   18.0 channel on core I =   1.5 from L=   17,  Acc. loss =  0.0 D.
@@ -3604,7 +3604,7 @@
    S-matrix    9 =   -0.00000   0.00000 for L=   18, J=   17.5 channel on core I =   2.0 from L=   17,  Acc. loss =  6.4 D.
    S-matrix   10 =   -0.00000   0.00000 for L=   18, J=   18.5 channel on core I =   2.0 from L=   17,  Acc. loss =  6.4 D.
    S-matrix   11 =    0.00000   0.00000 for L=   20, J=   19.5 channel on core I =   2.0 from L=   17,  Acc. loss =  0.0 D.
-      17.5  0.99999997  0.00000005i: elastic S-matrix  @@      0.03  0   0 F  0
+      17.5  0.99999997  0.00000005i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    17.5+/17 @ 4 =   6.177#, Out:   0.000#   2.759#   0.000f
 
    S-matrix    5 =    1.00000   0.00000 for L=   19, J=   18.0 channel on core I =   1.5 from L=   19,  Acc. loss =  0.0 D.
@@ -3620,7 +3620,7 @@
    S-matrix    9 =   -0.00001  -0.00000 for L=   18, J=   17.5 channel on core I =   2.0 from L=   19,  Acc. loss =  5.7 D.
    S-matrix   10 =    0.00000   0.00000 for L=   18, J=   18.5 channel on core I =   2.0 from L=   19,  Acc. loss =  5.7 D.
    S-matrix   11 =    0.00000   0.00000 for L=   20, J=   19.5 channel on core I =   2.0 from L=   19,  Acc. loss =  9.6 D.
-      17.5  0.99999997  0.00000004i: elastic S-matrix  @@      0.03  0   0 F  0
+      17.5  0.99999997  0.00000004i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    17.5+/19 @ 5 =   5.761#, Out:   0.000#   0.013#   0.000f
 
    S-matrix    6 =    1.00000   0.00000 for L=   19, J=   19.0 channel on core I =   1.5 from L=   19,  Acc. loss =  0.0 D.
@@ -3636,7 +3636,7 @@
    S-matrix    9 =   -0.00001  -0.00000 for L=   18, J=   17.5 channel on core I =   2.0 from L=   19,  Acc. loss =  5.7 D.
    S-matrix   10 =   -0.00001  -0.00000 for L=   18, J=   18.5 channel on core I =   2.0 from L=   19,  Acc. loss =  5.7 D.
    S-matrix   11 =   -0.00000  -0.00000 for L=   20, J=   19.5 channel on core I =   2.0 from L=   19,  Acc. loss =  9.6 D.
-      17.5  0.99999997  0.00000004i: elastic S-matrix  @@      0.03  0   0 F  0
+      17.5  0.99999997  0.00000004i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    17.5+/19 @ 6 =   5.761#, Out:   0.000#   0.026#   0.000f
 
 
@@ -3660,7 +3660,7 @@
    S-matrix    9 =    0.00002  -0.00000 for L=   17, J=   17.5 channel on core I =   2.0 from L=   16,  Acc. loss =  4.1 D.
    S-matrix   10 =   -0.00000   0.00000 for L=   19, J=   18.5 channel on core I =   2.0 from L=   16,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   19, J=   19.5 channel on core I =   2.0 from L=   16,  Acc. loss =  0.0 D.
-      17.5  0.99999997  0.00000006i: elastic S-matrix  @@      0.13  0   0 F  0
+      17.5  0.99999997  0.00000006i: elastic S-matrix  @@      0.06  0   0 F  0
  Reaction Xsec    17.5-/16 @ 1 =   7.670#, Out:   0.000#   1.663#   0.000f
 
    S-matrix    2 =    1.00000   0.00000 for L=   16, J=   17.0 channel on core I =   1.5 from L=   16,  Acc. loss =  0.0 D.
@@ -3676,7 +3676,7 @@
    S-matrix    9 =    0.00001  -0.00000 for L=   17, J=   17.5 channel on core I =   2.0 from L=   16,  Acc. loss =  4.1 D.
    S-matrix   10 =   -0.00000   0.00000 for L=   19, J=   18.5 channel on core I =   2.0 from L=   16,  Acc. loss =  0.0 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   19, J=   19.5 channel on core I =   2.0 from L=   16,  Acc. loss =  0.0 D.
-      17.5  0.99999997  0.00000006i: elastic S-matrix  @@      0.03  0   0 F  0
+      17.5  0.99999997  0.00000006i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    17.5-/16 @ 2 =   7.670#, Out:   0.000#   0.015/  -0.000f
 
    S-matrix    3 =    1.00000   0.00000 for L=   18, J=   17.0 channel on core I =   1.5 from L=   18,  Acc. loss =  0.0 D.
@@ -3692,7 +3692,7 @@
    S-matrix    9 =   -0.00000  -0.00000 for L=   17, J=   17.5 channel on core I =   2.0 from L=   18,  Acc. loss =  4.1 D.
    S-matrix   10 =    0.00000  -0.00000 for L=   19, J=   18.5 channel on core I =   2.0 from L=   18,  Acc. loss =  5.2 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   19, J=   19.5 channel on core I =   2.0 from L=   18,  Acc. loss =  0.0 D.
-      17.5  0.99999997  0.00000004i: elastic S-matrix  @@      0.03  0   0 F  0
+      17.5  0.99999997  0.00000004i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    17.5-/18 @ 3 =   5.755#, Out:   0.000#   0.003#   0.000f
 
    S-matrix    4 =    1.00000   0.00000 for L=   18, J=   18.0 channel on core I =   1.5 from L=   18,  Acc. loss =  0.0 D.
@@ -3708,7 +3708,7 @@
    S-matrix    9 =   -0.00002  -0.00000 for L=   17, J=   17.5 channel on core I =   2.0 from L=   18,  Acc. loss =  4.1 D.
    S-matrix   10 =   -0.00000   0.00000 for L=   19, J=   18.5 channel on core I =   2.0 from L=   18,  Acc. loss =  5.2 D.
    S-matrix   11 =    0.00000  -0.00000 for L=   19, J=   19.5 channel on core I =   2.0 from L=   18,  Acc. loss =  5.2 D.
-      17.5  0.99999997  0.00000004i: elastic S-matrix  @@      0.04  0   0 F  0
+      17.5  0.99999997  0.00000004i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    17.5-/18 @ 4 =   5.755#, Out:   0.000#   0.276#   0.000f
 
    S-matrix    5 =    1.00000   0.00000 for L=   18, J=   19.0 channel on core I =   1.5 from L=   18,  Acc. loss =  0.0 D.
@@ -3724,7 +3724,7 @@
    S-matrix    9 =   -0.00004  -0.00000 for L=   17, J=   17.5 channel on core I =   2.0 from L=   18,  Acc. loss =  4.1 D.
    S-matrix   10 =   -0.00000   0.00000 for L=   19, J=   18.5 channel on core I =   2.0 from L=   18,  Acc. loss =  5.2 D.
    S-matrix   11 =   -0.00000   0.00000 for L=   19, J=   19.5 channel on core I =   2.0 from L=   18,  Acc. loss =  5.2 D.
-      17.5  0.99999997  0.00000004i: elastic S-matrix  @@      0.03  0   0 F  0
+      17.5  0.99999997  0.00000004i: elastic S-matrix  @@      0.02  0   0 F  0
  Reaction Xsec    17.5-/18 @ 5 =   5.755#, Out:   0.000#   0.214#   0.000f
 
    S-matrix    6 =    1.00000   0.00000 for L=   20, J=   19.0 channel on core I =   1.5 from L=   20,  Acc. loss =  0.0 D.
@@ -3740,10 +3740,10 @@
    S-matrix    9 =   -0.00000   0.00000 for L=   17, J=   17.5 channel on core I =   2.0 from L=   20,  Acc. loss =  0.0 D.
    S-matrix   10 =   -0.00001   0.00000 for L=   19, J=   18.5 channel on core I =   2.0 from L=   20,  Acc. loss =  4.3 D.
    S-matrix   11 =    0.00000  -0.00000 for L=   19, J=   19.5 channel on core I =   2.0 from L=   20,  Acc. loss =  4.3 D.
-      17.5  0.99999997  0.00000004i: elastic S-matrix  @@      0.03  0   0 F  0
+      17.5  0.99999997  0.00000004i: elastic S-matrix  @@      0.01  0   0 F  0
  Reaction Xsec    17.5-/20 @ 6 =   5.634#, Out:   0.000#   0.003#   0.000f
 
- Finished all CC sets @    12.0725451    
+ Finished all CC sets @    5.77519369    
 0CUMULATIVE REACTION cross section                 =  887.20943  <L> =     3.61  <L**2> =     15.8
 0CUMULATIVE outgoing cross sections in partition 1 :    0.00000
 0CUMULATIVE outgoing cross sections in partition 2 :   13.64770
@@ -4304,7 +4304,7 @@
    179.00 deg.: X-S =     0.034309 mb/sr,
    180.00 deg.: X-S =     0.034255 mb/sr,
                                            Integrated   13.6433 mb, over [   0.000, 180.000] at    14.5320 MeV 
- Finished all xsecs @    12.0904293    
+ Finished all xsecs @    5.78390694    
 
   The following files have been created:
    3:local copy of User input.            6:standard output.                   
@@ -4339,4 +4339,4 @@
  1: Recommended RNL: non-local width >  18.20 cf:  30.00 fm: OK      
     Recommended CENTRE: centration   ~  -2.30 cf:   0.00 fm
 
- Total CPU  0 time =      12.10 seconds
+ Total CPU  0 time =       5.79 seconds

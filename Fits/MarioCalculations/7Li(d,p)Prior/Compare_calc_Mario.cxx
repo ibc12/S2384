@@ -312,26 +312,151 @@ void Compare_calc_Mario()
 {
     using namespace CompCalc;
 
-    // --- Estado fundamental no SO implementation---
-    std::vector<Calc> gs = {
+    // --- All Mario calculations---
+    std::vector<Calc> calc_Mario = {
         Calc("../../FranckCalculations/DWUCK4_personal_calculations/good_calculations/v1/xs_dw4.n", "DWUCK4",
-             Format::DWUCK4, kPink + 1, 1)
+             Format::DWUCK4, AutoColor(0), 1)
             .Tag("both SO - my version 3 MeV"),
         Calc("../../FranckCalculations/DWUCK4_examples_Franck/3MeV_Ex_pwave_noOscilation/xs_dw4.n", "DWUCK4",
-             Format::DWUCK4, kRed + 2, 1)
+             Format::DWUCK4, AutoColor(1), 1)
             .Tag("no SO - Franck's version 3 MeV"),
-        Calc("./7Lidp8Li/fort.202", "FRESCO", Format::FRESCO, kGreen + 2, 1)
+        Calc("./7Lidp8Li/fort.202", "FRESCO", Format::FRESCO, AutoColor(2), 1)
             .Tag("ADWA post - Mario's version near 3 MeV"),
-        Calc("./7Lidp8Li_prior/fort.202", "FRESCO", Format::FRESCO, kBlue + 2, 1)
+        Calc("./7Lidp8Li_prior/fort.202", "FRESCO", Format::FRESCO, AutoColor(3), 1)
             .Tag("ADWA prior - Mario's version near 3 MeV"),
-        Calc("./7Lidp8Li_DWBA/fort.202", "FRESCO", Format::FRESCO, kBlack + 2, 1)
-            .Tag("DWBA - Mario's version near 3 MeV"),
-        Calc("./7Lidp8Li_DWBA_prior/fort.202", "FRESCO", Format::FRESCO, kYellow + 2, 1)
-            .Tag("DWBA - Mario's version near 3 MeV"),
+        Calc("./7Lidp8Li_DWBA/fort.202", "FRESCO", Format::FRESCO, AutoColor(4), 1)
+            .Tag("DWBA post - Mario's version near 3 MeV"),
+        Calc("./7Lidp8Li_DWBA_prior/fort.202", "FRESCO", Format::FRESCO, AutoColor(5), 1)
+            .Tag("DWBA prior - Mario's version near 3 MeV"),
     };
-    PlotOptions optGS;
-    optGS.title = "g.s.";
-    optGS.canvasName = "cGS";
-    optGS.saveAs = "./Figures/compare_gs.png";
-    DrawComparison(gs, optGS);
+    PlotOptions optMario;
+    optMario.title = "All Mario calculations";
+    optMario.canvasName = "cMario";
+    optMario.saveAs = "./Figures/compare_mario.png";
+    DrawComparison(calc_Mario, optMario);
+
+
+    // --- DWBA prior comparison---
+    std::vector<Calc> calc_DWBA_prior = {
+        Calc("./7Lidp8Li_DWBA_prior/fort.202", "FRESCO", Format::FRESCO, AutoColor(0), 1)
+            .Tag("DWBA prior - Mario's version near 3 MeV"),
+        Calc("./personal_calculations/DWBA/prior/DA1p_change/fort.202", "FRESCO", Format::FRESCO, AutoColor(1), 1)
+            .Tag("DWBA prior - DA1p change"),
+        Calc("./personal_calculations/DWBA/prior/Correct_exitOMP/fort.202", "FRESCO", Format::FRESCO, AutoColor(2), 1)
+            .Tag("DWBA prior - Correct exit OMP"),
+        Calc("./personal_calculations/DWBA/prior/Correct_remanentTerm/fort.202", "FRESCO", Format::FRESCO, AutoColor(3),
+             1)
+            .Tag("DWBA prior - Correct remanent term"),
+        Calc("./personal_calculations/DWBA/prior/LEA_ZR/fort.202", "FRESCO", Format::FRESCO, AutoColor(4), 1)
+            .Tag("DWBA prior - LEA ZR change"),
+        Calc("./personal_calculations/DWBA/prior/Change_to_ReidSoftCore/fort.202", "FRESCO", Format::FRESCO,
+             AutoColor(5), 1)
+            .Tag("DWBA prior - RedSoftCore"),
+    };
+    PlotOptions optDWBAprior;
+    optDWBAprior.title = "DWBA prior comparison";
+    optDWBAprior.canvasName = "cDWBAprior";
+    optDWBAprior.saveAs = "./Figures/compare_dwba_prior.png";
+    DrawComparison(calc_DWBA_prior, optDWBAprior);
+
+
+    // --- ADWA prior comparison---
+    std::vector<Calc> calc_ADWA_prior = {
+        Calc("./7Lidp8Li_prior/fort.202", "FRESCO", Format::FRESCO, AutoColor(0), 1)
+            .Tag("ADWA prior - Mario's version near 3 MeV"),
+        Calc("./personal_calculations/ADWA/prior/myAdiabatic/fort.202", "FRESCO", Format::FRESCO, AutoColor(1), 1)
+            .Tag("ADWA prior - my fort.4 from twofnr directly"),
+        Calc("./personal_calculations/ADWA/prior/twocols_changeWithMyAdiabatic/fort.202", "FRESCO", Format::FRESCO,
+             AutoColor(2), 1)
+            .Tag("ADWA prior - 2col change"),
+        Calc("./personal_calculations/ADWA/prior/Correct_exitOMP/fort.202", "FRESCO", Format::FRESCO, AutoColor(3), 1)
+            .Tag("ADWA prior - Correct exit OMP"),
+        Calc("./personal_calculations/ADWA/prior/Correct_remanentTerm/fort.202", "FRESCO", Format::FRESCO, AutoColor(4),
+             1)
+            .Tag("ADWA prior - Correct remanent term"),
+        Calc("./personal_calculations/ADWA/prior/LEA_ZR/fort.202", "FRESCO", Format::FRESCO, AutoColor(5), 1)
+            .Tag("ADWA prior - LEA ZR change"),
+        Calc("./personal_calculations/ADWA/prior/Change_to_ReidSoftCore/fort.202", "FRESCO", Format::FRESCO,
+             AutoColor(6), 1)
+            .Tag("ADWA prior - RedSoftCore"),
+    };
+    PlotOptions optADWAprior;
+    optADWAprior.title = "ADWA prior comparison";
+    optADWAprior.canvasName = "cADWAprior";
+    optADWAprior.saveAs = "./Figures/compare_adwa_prior.png";
+    DrawComparison(calc_ADWA_prior, optADWAprior);
+
+
+    // --- Check elastic calculations ---
+    std::vector<Calc> calc_elastic = {
+        Calc("../../7Li_dd/Inputs/gsDA1p_corr/fort.201", "FRESCO", Format::FRESCO, AutoColor(0), 1)
+            .Tag("elastic - my version - DA1p"),
+        Calc("./7Lidp8Li_DWBA_prior/fort.201", "FRESCO", Format::FRESCO, AutoColor(1), 1)
+            .Tag("elastic - Mario's DWBA prior"),
+        Calc("./7Lidp8Li_prior/fort.201", "FRESCO", Format::FRESCO, AutoColor(2), 1)
+            .Tag("elastic - Mario's ADWA prior"),
+        Calc("./7Lidp8Li_DWBA_prior/fort.201", "FRESCO", Format::FRESCO, AutoColor(3), 1)
+            .Tag("elastic - Mario's DWBA prior with DA1p"),
+        Calc("./personal_calculations/DWBA/prior/DA1p_change_sameInputPars(thMax)/fort.201", "FRESCO", Format::FRESCO,
+             AutoColor(4), 1)
+            .Tag("elastic - Mario's DWBA prior with DA1p and with -180 as thmax (no Rutherfor normalization)"),
+        Calc("./personal_calculations/ADWA/prior/Change_sameInputPars(thMax)/fort.201", "FRESCO", Format::FRESCO,
+             AutoColor(5), 1)
+            .Tag("elastic - Mario's ADWA prior with -180 as thmax (no Rutherfor normalization)"),
+    };
+    PlotOptions optElastic;
+    optElastic.title = "Elastic comparison";
+    optElastic.canvasName = "cElastic";
+    optElastic.saveAs = "./Figures/compare_elastic.png";
+    DrawComparison(calc_elastic, optElastic);
+
+    // --- Total comparison ---
+    std::vector<Calc> calc_comparison = {
+        Calc("../../FranckCalculations/DWUCK4_personal_calculations/good_calculations/v1/xs_dw4.n", "DWUCK4",
+             Format::DWUCK4, AutoColor(0), 1)
+            .Tag("both SO - my version 3 MeV"),
+        Calc("../../FranckCalculations/DWUCK4_examples_Franck/3MeV_Ex_pwave_noOscilation/xs_dw4.n", "DWUCK4",
+             Format::DWUCK4, AutoColor(1), 1)
+            .Tag("no SO - Franck's version 3 MeV"),
+        Calc("./7Lidp8Li_prior/fort.202", "FRESCO", Format::FRESCO, AutoColor(3), 1)
+            .Tag("ADWA prior - Mario's version near 3 MeV"),
+        Calc("./7Lidp8Li_DWBA_prior/fort.202", "FRESCO", Format::FRESCO, AutoColor(5), 1)
+            .Tag("DWBA prior - Mario's version near 3 MeV"),
+        Calc("./personal_calculations/ADWA/prior/ALL_noZR_LEA/fort.202", "FRESCO", Format::FRESCO, AutoColor(6), 1)
+            .Tag("ADWA prior - All changes no ZR and LEA"),
+        Calc("./personal_calculations/DWBA/prior/ALL_noZR_LEA/fort.202", "FRESCO", Format::FRESCO, AutoColor(7), 1)
+            .Tag("DWBA prior - All changes no ZR and LEA"),
+        Calc("./personal_calculations/DWBA/prior/ALL/fort.202", "FRESCO", Format::FRESCO, AutoColor(8), 1)
+            .Tag("DWBA prior - All changes with ZR and LEA"),
+        Calc("./personal_calculations/ADWA/prior/ALL/fort.202", "FRESCO", Format::FRESCO, AutoColor(9), 1)
+            .Tag("ADWA prior - All changes with ZR and LEA"),
+    };
+    PlotOptions optComparison;
+    optComparison.title = "Total comparison";
+    optComparison.canvasName = "cComparison";
+    optComparison.saveAs = "./Figures/compare_comparison.png";
+    DrawComparison(calc_comparison, optComparison);
+
+    // --- Total comparison  with ZR LEA ---
+    std::vector<Calc> calc_comparison_ZR_LEA = {
+        Calc("../../FranckCalculations/DWUCK4_personal_calculations/good_calculations/v1/xs_dw4.n", "DWUCK4",
+             Format::DWUCK4, AutoColor(0), 1)
+            .Tag("both SO - my version 3 MeV"),
+        Calc("../../FranckCalculations/DWUCK4_examples_Franck/3MeV_Ex_pwave_noOscilation/xs_dw4.n", "DWUCK4",
+             Format::DWUCK4, AutoColor(1), 1)
+            .Tag("no SO - Franck's version 3 MeV"),
+        Calc("./7Lidp8Li_prior/fort.202", "FRESCO", Format::FRESCO, AutoColor(3), 1)
+            .Tag("ADWA prior - Mario's version near 3 MeV"),
+        Calc("./7Lidp8Li_DWBA_prior/fort.202", "FRESCO", Format::FRESCO, AutoColor(5), 1)
+            .Tag("DWBA prior - Mario's version near 3 MeV"),
+        Calc("./personal_calculations/DWBA/prior/ALL/fort.202", "FRESCO", Format::FRESCO, AutoColor(8), 1)
+            .Tag("DWBA prior - All changes with ZR and LEA"),
+        Calc("./personal_calculations/ADWA/prior/ALL/fort.202", "FRESCO", Format::FRESCO, AutoColor(9), 1)
+            .Tag("ADWA prior - All changes with ZR and LEA"),
+    };
+    PlotOptions optComparison_ZR_LEA;
+    optComparison_ZR_LEA.title = "Total comparison ZR LEA";
+    optComparison_ZR_LEA.canvasName = "cComparison ZR LEA";
+    optComparison_ZR_LEA.saveAs = "./Figures/compare_comparison_ZR_LEA.png";
+    DrawComparison(calc_comparison_ZR_LEA, optComparison_ZR_LEA);
 }
