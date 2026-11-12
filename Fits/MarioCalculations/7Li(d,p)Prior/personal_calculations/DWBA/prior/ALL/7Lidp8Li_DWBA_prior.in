@@ -1,7 +1,8 @@
 d(7be,p)8Be @ 70 MeV;
 NAMELIST
 &FRESCO hcm=0.05 rmatch=50 rintp=0.1 hnl=0.1 rnl=30.00 centre=0.0 jtmin=0.0 jtmax=17 absend=-1.0
-thmin=0.00 thmax=-180.00 thinc=1.00 iter=1 nnu=36 cutr=-8
+! inh = 2 for zero-range transfer; otherwise, 0
+thmin=0.00 thmax=-180.00 thinc=1.00 iter=1 nnu=36 cutr=-8 inh=2
 chans=1 xstabl=1 smats=4
 elab=14.532 /
 &PARTITION namet='7li' masst=7.0144 zt=3 namep='d' massp=2.0141 zp=1 nex=1 / 
@@ -31,7 +32,7 @@ elab=14.532 /
 &pot /
 &Overlap kn1=1  ic1=2 ic2=1 in=2 kind=0 nn=1 l=1 sn=0.5 ia=1 ib=1 j=1.5 kbpot=3 be=-0.738 nk= 200 
 isc=4 ipc=0 er= -1.01000 dm=1.0087  nfl=-301 nam=1 ampl=1 /
-&Overlap kn1=2 ic1=1 ic2=2 in=1 kind=0 nn=1 l=0 sn=0.5 ia=1 ib=1 j=0.5 kbpot=6 be=2.2245 isc=1 ipc=0 nam=1 ampl=1 /
+&Overlap kn1=2 kn2=3 ic1=2 ic2=1 in=-1 kind=3 nn=1 l=0 lmax=2 sn=0.5 j=0.5 kbpot=6 krpot=0 be=2.2245 isc=7 ipc=0 nam=1 ampl=1 /
 &overlap /
 &Coupling icto=-2 icfrom=1 kind=5 ip1=0 ip2=0 ip3=0 p1=125.19 p2=0.7457/ 
 &CFP /

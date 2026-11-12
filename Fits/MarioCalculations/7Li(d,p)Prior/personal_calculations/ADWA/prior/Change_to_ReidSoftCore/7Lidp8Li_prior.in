@@ -27,9 +27,9 @@ elab=14.532 /
 &POT kp=6 type=4 shape=5 p(1:3)= 1.0  0.0000  1.0 / ! SO target
 &POT kp=6 type=7 shape=5 p(1:3)= 1.0  0.0000  1.0 / ! n-p tensor force
 &pot /
-&Overlap kn1=1  ic1=2 ic2=1 in=2 kind=0 nn=1 l=1 sn=0.5 ia=1 ib=1 j=1.5 kbpot=3 be=-0.738 nk= 200 
+&Overlap kn1=1  ic1=2 ic2=1 in=2 kind=0 nn=1 l=1 sn=0.5 ia=1 ib=1 j=1.5 kbpot=3 be=-0.738 nk= 200
 isc=4 ipc=0 er= -1.01000 dm=1.0087  nfl=-301 nam=1 ampl=1 /
-&Overlap kn1=2 ic1=1 ic2=2 in=1 kind=0 nn=1 l=0 sn=0.5 ia=1 ib=1 j=0.5 kbpot=6 be=2.2245 isc=1 ipc=0 nam=1 ampl=1 /
+&Overlap kn1=2 kn2=3 ic1=2 ic2=1 in=-1 kind=3 nn=1 l=0 lmax=2 sn=0.5 j=0.5 kbpot=6 krpot=0 be=2.2245 isc=7 ipc=0 nam=1 ampl=1 /
 &overlap /
 &Coupling icto=-2 icfrom=1 kind=7 ip1=1 ip2=-1 ip3=5 / 
 &CFP /

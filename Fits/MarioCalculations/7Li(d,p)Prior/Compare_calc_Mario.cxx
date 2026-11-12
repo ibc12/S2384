@@ -340,18 +340,25 @@ void Compare_calc_Mario()
     std::vector<Calc> calc_DWBA_prior = {
         Calc("./7Lidp8Li_DWBA_prior/fort.202", "FRESCO", Format::FRESCO, AutoColor(0), 1)
             .Tag("DWBA prior - Mario's version near 3 MeV"),
-        Calc("./personal_calculations/DWBA/prior/DA1p_change/fort.202", "FRESCO", Format::FRESCO, AutoColor(1), 1)
-            .Tag("DWBA prior - DA1p change"),
-        Calc("./personal_calculations/DWBA/prior/Correct_exitOMP/fort.202", "FRESCO", Format::FRESCO, AutoColor(2), 1)
-            .Tag("DWBA prior - Correct exit OMP"),
-        Calc("./personal_calculations/DWBA/prior/Correct_remanentTerm/fort.202", "FRESCO", Format::FRESCO, AutoColor(3),
-             1)
-            .Tag("DWBA prior - Correct remanent term"),
-        Calc("./personal_calculations/DWBA/prior/LEA_ZR/fort.202", "FRESCO", Format::FRESCO, AutoColor(4), 1)
-            .Tag("DWBA prior - LEA ZR change"),
+        // Calc("./personal_calculations/DWBA/prior/DA1p_change/fort.202", "FRESCO", Format::FRESCO, AutoColor(1), 1)
+        //     .Tag("DWBA prior - DA1p change"),
+        // Calc("./personal_calculations/DWBA/prior/Correct_exitOMP/fort.202", "FRESCO", Format::FRESCO, AutoColor(2),
+        // 1)
+        //     .Tag("DWBA prior - Correct exit OMP"),
+        // Calc("./personal_calculations/DWBA/prior/Correct_remanentTerm/fort.202", "FRESCO", Format::FRESCO,
+        // AutoColor(3),
+        //      1)
+        //     .Tag("DWBA prior - Correct remanent term"),
+        // Calc("./personal_calculations/DWBA/prior/LEA_ZR/fort.202", "FRESCO", Format::FRESCO, AutoColor(4), 1)
+        //     .Tag("DWBA prior - LEA ZR change"),
         Calc("./personal_calculations/DWBA/prior/Change_to_ReidSoftCore/fort.202", "FRESCO", Format::FRESCO,
              AutoColor(5), 1)
-            .Tag("DWBA prior - RedSoftCore"),
+            .Tag("DWBA prior - RedSoftCore L=0"),
+        Calc("./personal_calculations/DWBA/prior/Change_to_ReidSoftCore_L2/fort.202", "FRESCO", Format::FRESCO,
+             AutoColor(6), 1)
+            .Tag("DWBA prior - RedSoftCore L=0,2"),
+        Calc("./personal_calculations/DWBA/prior/ALL_noZR_LEA/fort.202", "FRESCO", Format::FRESCO, AutoColor(7), 1)
+            .Tag("DWBA prior - All changes no ZR and LEA"),
     };
     PlotOptions optDWBAprior;
     optDWBAprior.title = "DWBA prior comparison";

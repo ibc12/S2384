@@ -1,7 +1,8 @@
 d(7be,p)8Be @ 70 MeV;
 NAMELIST
 &FRESCO hcm=0.05 rmatch=70 rintp=0.1 hnl=0.1 rnl=30.00 centre=0.0 jtmin=0.0 jtmax=17 absend=-1.0
-thmin=0.00 thmax=180.00 thinc=1.00 iter=1 nnu=36 cutr=-8
+! inh = 2 for zero-range transfer; otherwise, 0
+thmin=0.00 thmax=180.00 thinc=1.00 iter=1 nnu=36 cutr=-8 inh=2
 chans=1 xstabl=1 smats=4
 elab=14.532 /
 &PARTITION namet='7li' masst=7.0144 zt=3 namep='d' massp=2.0141 zp=1 nex=1 / 
