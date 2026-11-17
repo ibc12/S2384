@@ -20,121 +20,104 @@
 #include "PhysExperiment.h"
 
 #include <fstream>
+#include <iostream>
 #include <string>
 #include <vector>
 
 #include "../../PrettyStyle.C"
 #include "../Histos.h"
 
+// Lee un fichero con columnas x y sy y devuelve un TGraphErrors (vacio si no existe)
+TGraphErrors* ReadXS(const std::string& path)
+{
+    auto* g {new TGraphErrors()};
+    std::ifstream in(path);
+    if(!in.is_open())
+    {
+        std::cout << "[MergeSilL1] WARNING: no se puede abrir " << path << '\n';
+        return g;
+    }
+    double x, y, sy;
+    while(in >> x >> y >> sy)
+    {
+        int n = g->GetN();
+        g->SetPoint(n, x, y);
+        g->SetPointError(n, 0., sy); // ex = 0, ey = sy
+    }
+    return g;
+}
+
+// Junta dos graficos: primero L1 y luego sil (para mantener el orden)
+TGraphErrors* MergeGraphs(TGraphErrors* gL1, TGraphErrors* gSil)
+{
+    auto* g {new TGraphErrors()};
+    for(auto* src : {gL1, gSil})
+    {
+        for(int i = 0; i < src->GetN(); ++i)
+        {
+            double x, y;
+            src->GetPoint(i, x, y);
+            int n = g->GetN();
+            g->SetPoint(n, x, y);
+            g->SetPointError(n, src->GetErrorX(i), src->GetErrorY(i));
+        }
+    }
+    return g;
+}
+
+// Pipeline para los picos v0..v8: lectura, fusion, comparacion con p-wave y d-wave
+void ProcessUnbound(const std::string& peak)
+{
+    const std::string silPath {"./Outputs/xs/" + peak + "_xs_lDependent.dat"};
+    const std::string l1Path {"../7Li_dp_testL1/Outputs/xs/" + peak + "_xs_lDependent.dat"};
+    const std::string pWave {"./Inputs/Preliminary_xs_p_d_waves_unbound/p_wave/fresco/fort.202"};
+    const std::string dWave {"./Inputs/Preliminary_xs_p_d_waves_unbound/d_wave/fresco/fort.202"};
+
+    auto* gSil {ReadXS(silPath)};
+    auto* gL1 {ReadXS(l1Path)};
+    if(gSil->GetN() == 0 && gL1->GetN() == 0)
+    {
+        std::cout << "[MergeSilL1] Sin datos para " << peak << ", se salta\n";
+        return;
+    }
+    auto* gMerged {MergeGraphs(gL1, gSil)};
+
+    // Se crean en el heap para que no se destruyan al salir de la funcion
+    // (igual que quedaban vivos al final de MergeSilL1 en la version original)
+    auto* comp {new Angular::Comparator("Merged " + peak, gMerged)};
+    comp->Add("p-wave", pWave);
+    comp->Add("d-wave", dWave);
+    comp->Fit();
+    comp->Draw("", true);
+
+    auto* compSil {new Angular::Comparator("Sil " + peak, gSil)};
+    compSil->Add("p-wave", pWave);
+    compSil->Add("d-wave", dWave);
+    compSil->Fit();
+    compSil->Draw("", true);
+
+    auto* compL1 {new Angular::Comparator("L1 " + peak, gL1)};
+    compL1->Add("p-wave", pWave);
+    compL1->Add("d-wave", dWave);
+    compL1->Fit();
+    compL1->Draw("", true);
+}
+
 void MergeSilL1()
 {
     PrettyStyle();
-    // Sil xs
-    TGraphErrors* g_sil_xs {new TGraphErrors()};
-    {
-        std::ifstream in("./Outputs/xs/g0_xs_lDependent.dat");
 
-        double x, y, sy;
-        while(in >> x >> y >> sy)
-        {
-            int n = g_sil_xs->GetN();
-            g_sil_xs->SetPoint(n, x, y);
-            g_sil_xs->SetPointError(n, 0., sy); // ex = 0, ey = sy
-        }
-    }
+    // ---------- g0 (ground state) ----------
+    auto* g_sil_xs {ReadXS("./Outputs/xs/g0_xs_lDependent.dat")};
+    auto* g_L1_xs {ReadXS("../7Li_dp_testL1/Outputs/xs/g0_xs_lDependent.dat")};
+    auto* g_merged {MergeGraphs(g_L1_xs, g_sil_xs)};
 
-    // L1 xs
-    TGraphErrors* g_L1_xs {new TGraphErrors()};
-    {
-        std::ifstream in("../7Li_dp_testL1/Outputs/xs/g0_xs_lDependent.dat");
-
-        double x, y, sy;
-        while(in >> x >> y >> sy)
-        {
-            int n = g_L1_xs->GetN();
-            g_L1_xs->SetPoint(n, x, y);
-            g_L1_xs->SetPointError(n, 0., sy); // ex = 0, ey = sy
-        }
-    }
-
-    // Create a TGraphErrors that merges both
-    TGraphErrors* g_merged {new TGraphErrors()};
-    int nSil = g_sil_xs->GetN();
-    int nL1 = g_L1_xs->GetN();
-
-    // Copy L1 points firstto have them sorted
-    for(int i = 0; i < nL1; ++i)
-    {
-        double x, y, ex, ey;
-        g_L1_xs->GetPoint(i, x, y);
-        ex = g_L1_xs->GetErrorX(i);
-        ey = g_L1_xs->GetErrorY(i);
-        g_merged->SetPoint(g_merged->GetN(), x, y);
-        g_merged->SetPointError(g_merged->GetN() - 1, ex, ey);
-    }
-    // Copy sil points
-    for(int i = 0; i < nSil; ++i)
-    {
-        double x, y, ex, ey;
-        g_sil_xs->GetPoint(i, x, y);
-        ex = g_sil_xs->GetErrorX(i);
-        ey = g_sil_xs->GetErrorY(i);
-        g_merged->SetPoint(g_merged->GetN(), x, y);
-        g_merged->SetPointError(g_merged->GetN() - 1, ex, ey);
-    }
-
-    // Do the same for the 1st excited state
-    TGraphErrors* g_sil_xs_1st {new TGraphErrors()};
-    {
-        std::ifstream in("./Outputs/xs/g1_xs_lDependent.dat");
-
-        double x, y, sy;
-        while(in >> x >> y >> sy)
-        {
-            int n = g_sil_xs_1st->GetN();
-            g_sil_xs_1st->SetPoint(n, x, y);
-            g_sil_xs_1st->SetPointError(n, 0., sy); // ex = 0, ey = sy
-        }
-    }
-
-    TGraphErrors* g_L1_xs_1st {new TGraphErrors()};
-    {
-        std::ifstream in("../7Li_dp_testL1/Outputs/xs/g1_xs_lDependent.dat");
-
-        double x, y, sy;
-        while(in >> x >> y >> sy)
-        {
-            int n = g_L1_xs_1st->GetN();
-            g_L1_xs_1st->SetPoint(n, x, y);
-            g_L1_xs_1st->SetPointError(n, 0., sy); // ex = 0, ey = sy
-        }
-    }
-    TGraphErrors* g_merged_1st {new TGraphErrors()};
-    int nSil_1st = g_sil_xs_1st->GetN();
-    int nL1_1st = g_L1_xs_1st->GetN();
-    // Copy L1 points firstto have them sorted
-    for(int i = 0; i < nL1_1st; ++i)
-    {
-        double x, y, ex, ey;
-        g_L1_xs_1st->GetPoint(i, x, y);
-        ex = g_L1_xs_1st->GetErrorX(i);
-        ey = g_L1_xs_1st->GetErrorY(i);
-        g_merged_1st->SetPoint(g_merged_1st->GetN(), x, y);
-        g_merged_1st->SetPointError(g_merged_1st->GetN() - 1, ex, ey);
-    }
-    // Copy sil points
-    for(int i = 0; i < nSil_1st; ++i)
-    {
-        double x, y, ex, ey;
-        g_sil_xs_1st->GetPoint(i, x, y);
-        ex = g_sil_xs_1st->GetErrorX(i);
-        ey = g_sil_xs_1st->GetErrorY(i);
-        g_merged_1st->SetPoint(g_merged_1st->GetN(), x, y);
-        g_merged_1st->SetPointError(g_merged_1st->GetN() - 1, ex, ey);
-    }
+    // ---------- g1 (1st excited state) ----------
+    auto* g_sil_xs_1st {ReadXS("./Outputs/xs/g1_xs_lDependent.dat")};
+    auto* g_L1_xs_1st {ReadXS("../7Li_dp_testL1/Outputs/xs/g1_xs_lDependent.dat")};
+    auto* g_merged_1st {MergeGraphs(g_L1_xs_1st, g_sil_xs_1st)};
 
     Angular::Comparator comp {"Merged g.s", g_merged};
-    // comp.Add("DA1pcorr", "./Inputs/gs_DA1pcorr_Delaroche/21.g0");
     comp.Add("ADWA", "../7Li_dp/Inputs/gs_ADWA/fort.202");
     comp.Add("ADWA DWUCK", "../FranckCalculations/DWUCK4_personal_calculations/good_calculations/gs/xs_dw4.n");
     comp.Fit();
@@ -170,4 +153,8 @@ void MergeSilL1()
     compL11.Add("ADWA DWUCK", "../FranckCalculations/DWUCK4_personal_calculations/good_calculations/g1/xs_dw4.n");
     compL11.Fit();
     compL11.Draw("", true);
+
+    // ---------- v0 ... v8 (estados no ligados) ----------
+    for(int i = 0; i <= 8; ++i)
+        ProcessUnbound("v" + std::to_string(i));
 }

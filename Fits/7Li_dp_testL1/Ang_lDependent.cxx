@@ -50,7 +50,7 @@ void Ang_lDependent(bool isLab = false)
     // Init intervals
     double thetaMin = isLab ? 70.0 : 8;
     double thetaMax = isLab ? 80.0 : 40;
-    double thetaStep = isLab ? 2.5 : 4.0;
+    double thetaStep = isLab ? 2.5 : 2.0;
     Angular::Intervals ivs {thetaMin, thetaMax, S2384Fit::Exdp_7Li, thetaStep, 2};
     if(isLab)
         def.Foreach([&](float thetalab, double ex) { ivs.Fill(thetalab, ex); }, {"fThetaLight", "Ex"});
