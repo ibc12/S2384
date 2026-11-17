@@ -466,4 +466,76 @@ void Compare_calc_Mario()
     optComparison_ZR_LEA.canvasName = "cComparison ZR LEA";
     optComparison_ZR_LEA.saveAs = "./Figures/compare_comparison_ZR_LEA.png";
     DrawComparison(calc_comparison_ZR_LEA, optComparison_ZR_LEA);
+
+    // --- Franck and some FRESCO comparisons ---
+    std::vector<Calc> calc_Franck_FRESCO = {
+        Calc("../../FranckCalculations/DWUCK4_examples_Franck/3MeV_Ex_pwave_noOscilation/xs_dw4.n", "DWUCK4",
+             Format::DWUCK4, AutoColor(1), 1)
+            .Tag("no SO - Franck's version 3 MeV"),
+        Calc("./personal_calculations/ADWA/prior/ALL_noZR_LEA/fort.202", "FRESCO", Format::FRESCO, AutoColor(2), 1)
+            .Tag("ADWA prior - All changes no ZR and LEA"),
+        Calc("./personal_calculations/DWBA/prior/ALL_noZR_LEA/fort.202", "FRESCO", Format::FRESCO, AutoColor(3), 1)
+            .Tag("DWBA prior - All changes no ZR and LEA"),
+
+    };
+    PlotOptions optFranck_FRESCO;
+    optFranck_FRESCO.title = "Franck and some FRESCO comparisons";
+    optFranck_FRESCO.canvasName = "cFranck_FRESCO";
+    optFranck_FRESCO.saveAs = "./Figures/compare_Franck_FRESCO.png";
+    DrawComparison(calc_Franck_FRESCO, optFranck_FRESCO);
+
+    // --- DWUCK - FRESCO comparison ---
+    std::vector<Calc> calc_DWUCK_FRESCO = {
+        Calc("../../FranckCalculations/DWUCK4_personal_calculations/good_calculations/v0_noSO/xs_dw4.n", "DWUCK4",
+             Format::DWUCK4, AutoColor(1), 1)
+            .Tag("no SO - My version"),
+        Calc("./personal_calculations/ADWA/prior/ALL_noZR_LEA_v0/fort.202", "FRESCO", Format::FRESCO, AutoColor(2), 1)
+            .Tag("ADWA prior - All changes no ZR and LEA"),
+
+    };
+    PlotOptions optDWUCK_FRESCO;
+    optDWUCK_FRESCO.title = "DWUCK - FRESCO comparison";
+    optDWUCK_FRESCO.canvasName = "cDWUCK_FRESCO";
+    optDWUCK_FRESCO.saveAs = "./Figures/compare_DWUCK_FRESCO.png";
+    DrawComparison(calc_DWUCK_FRESCO, optDWUCK_FRESCO);
+
+    // --- test RSP parameters ---
+    std::vector<Calc> calc_test_RSP = {
+        Calc("../../FranckCalculations/DWUCK4_personal_calculations/good_calculations/v0_noSO/xs_dw4.n", "DWUCK4",
+             Format::DWUCK4, AutoColor(1), 1)
+            .Tag("no SO - My version"),
+        Calc("./personal_calculations/ADWA/prior/ALL_noZR_LEA_test_RSP/100/fort.202", "FRESCO", Format::FRESCO,
+             AutoColor(2), 1)
+            .Tag("ADWA prior - All changes no ZR and LEA - RSP = 100"),
+        Calc("./personal_calculations/ADWA/prior/ALL_noZR_LEA_test_RSP/150/fort.202", "FRESCO", Format::FRESCO,
+             AutoColor(3), 1)
+            .Tag("ADWA prior - All changes no ZR and LEA - RSP = 150"),
+        Calc("./personal_calculations/ADWA/prior/ALL_noZR_LEA_test_RSP/200/fort.202", "FRESCO", Format::FRESCO,
+             AutoColor(4), 1)
+            .Tag("ADWA prior - All changes no ZR and LEA - RSP = 200"),
+        Calc("./personal_calculations/ADWA/prior/ALL_noZR_LEA_test_RSP/400/fort.202", "FRESCO", Format::FRESCO,
+             AutoColor(6), 1)
+            .Tag("ADWA prior - All changes no ZR and LEA - RSP = 400"),
+
+    };
+    PlotOptions opttest_RSP;
+    opttest_RSP.title = "Test RSP parameters";
+    opttest_RSP.canvasName = "ctest_RSP";
+    opttest_RSP.saveAs = "./Figures/compare_test_RSP.png";
+    DrawComparison(calc_test_RSP, opttest_RSP);
+
+    // --- test L=2---
+    std::vector<Calc> calc_test_L2 = {
+        Calc("./personal_calculations/ADWA/prior/ALL_noZR_LEA_test_L2/dwuck/xs_dw4.n", "DWUCK4",
+             Format::DWUCK4, AutoColor(1), 1)
+            .Tag("no SO - Franck's version 3MeV L=2"),
+        Calc("./personal_calculations/ADWA/prior/ALL_noZR_LEA_test_L2/fresco/fort.202", "FRESCO", Format::FRESCO,
+             AutoColor(6), 1)
+            .Tag("ADWA prior - All changes no ZR and LEA - L=2"),
+    };
+    PlotOptions opttest_L2;
+    opttest_L2.title = "Test L=2 parameters";
+    opttest_L2.canvasName = "ctest_L2";
+    opttest_L2.saveAs = "./Figures/compare_test_L2.png";
+    DrawComparison(calc_test_L2, opttest_L2);
 }

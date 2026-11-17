@@ -31,7 +31,7 @@ void GetOMPsParameters()
     ActPhysics::Particle ph {heavy};
 
     // Excitation energy of the heavy particle (8Li)
-    double Ex {3}; // Excitation energy of the heavy particle (8Li)
+    double Ex {2.255}; // Excitation energy of the heavy particle (8Li)
     // double Ex {0.981};
     // double Ex {2.255};
     // double Ex {3.2};
