@@ -78,7 +78,9 @@ constexpr int validationZone = 8; // Minimum distance from the last voxel to the
 // Angular resolution (FWHM, deg): 3.5 for deuterons (and tritons), 6 for protons. See GetThetaResFWHM()
 constexpr double thetaResFWHMDefault = 3.5;
 constexpr double thetaResFWHMProton = 6.0;
-constexpr double rpXcut = 240.0; // Cut in rp.x for the dp channel in mm (in the begining was 240.0)
+// Cut in rp.x for the dp channel in mm (in the begining was 240.0). See GetRpXcut()
+constexpr double rpXcutDefault = 240.0;
+constexpr double rpXcut7Li_dpgs = 230.0;
 constexpr std::pair<double, double> phiRangePositive {16., 160.};   // Range of positive phi in deg for the experiment
 constexpr std::pair<double, double> phiRangeNegative {-160., -16.}; // Range of negative phi in deg for the experiment
 using voxelKey = std::tuple<int, int, int>;                         // ix,iy,iz
@@ -128,6 +130,14 @@ double GetThetaResFWHM(const std::string& light)
     if(light == "1H")
         return thetaResFWHMProton;
     return thetaResFWHMDefault;
+}
+
+// Cut in rp.x (mm) for the dp channel (light = 1H): 230 for the 7Li beam, 240 otherwise
+double GetRpXcut(const std::string& beam, double ex)
+{
+    if(beam == "7Li" && ex == 0.0)
+        return rpXcut7Li_dpgs;
+    return rpXcutDefault;
 }
 
 void ApplyThetaRes(double& theta, double fwhm)
@@ -575,6 +585,10 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
     // Angular resolution (FWHM, deg) depending on the light particle (1H -> 6, otherwise 3.5)
     const double thetaResFWHM {GetThetaResFWHM(light)};
     std::cout << "Angular resolution FWHM for light = " << light << ": " << thetaResFWHM << " deg" << '\n';
+    // Cut in rp.x for the dp channel depending on the beam (230 for 7Li, 240 otherwise)
+    const double rpXcut {GetRpXcut(beam, Ex)};
+    // if(light == "1H" && Ex == 0.0)
+    //     std::cout << "RP x cut for beam = " << beam << ": " << rpXcut << " mm" << '\n';
     // Runner: contains utility functions to execute multiple actions as rotate directions
     ActSim::Runner runner(nullptr, nullptr, gRandom, 0);
     // Initialize detectors
