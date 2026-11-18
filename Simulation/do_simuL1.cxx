@@ -40,6 +40,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -443,6 +444,63 @@ bool IsLastVoxelFarFromBorders(const ActRoot::Voxel::XYZPointF& lastPoint, const
 }
 
 // ============================================================
+// Fiducial cut in z of the last voxel, equivalent to the per-run zDrift cut of Pipe0_PreProcess.
+// In the data the cut is at (meanEdge +- nSigma * sigmaEdge). The edge position moves with the beam z (and
+// with the drift velocity mismatch), but what removes real events is the margin nSigma * sigma to the edge.
+// The simulation works in absolute z (pads at z = 0, cathode at z = tpc.Z()), so only the margins are used:
+// cut at z < nSigma * sigmaStart and z > tpc.Z() - nSigma * sigmaEnd.
+// ============================================================
+struct ZMargins
+{
+    double pad {};     // mm from the pad plane (z = 0)
+    double cathode {}; // mm from the cathode (z = tpc.Z())
+};
+
+// Mean margins (nSigma * sigma) of the runs in [runMin, runMax] of the per-run file
+ZMargins GetZMargins(int runMin, int runMax, double nSigma = 3.0,
+                     const std::string& file = "../Macros/L1PID/Outputs/zDrift_cut_perRun.dat")
+{
+    std::ifstream fin(file);
+    if(!fin.is_open())
+        throw std::runtime_error("Could not open " + file);
+    std::string line;
+    double sumS {}, sumE {};
+    int n {};
+    while(std::getline(fin, line))
+    {
+        if(line.empty() || line[0] == '#')
+            continue;
+        std::istringstream iss(line);
+        int run;
+        double meanS, sigmaS, meanE, sigmaE;
+        if(!(iss >> run >> meanS >> sigmaS >> meanE >> sigmaE))
+            continue;
+        if(run < runMin || run > runMax)
+            continue;
+        sumS += sigmaS;
+        sumE += sigmaE;
+        n++;
+    }
+    if(n == 0)
+        throw std::runtime_error("No runs in [" + std::to_string(runMin) + ", " + std::to_string(runMax) + "] in " +
+                                 file);
+    ZMargins m {nSigma * sumS / n, nSigma * sumE / n};
+    std::cout << "Z margins runs " << runMin << "-" << runMax << " (" << n << " runs): pad = " << m.pad
+              << " mm, cathode = " << m.cathode << " mm\n";
+    return m;
+}
+
+// Run range of the z chunk associated to each emittance period
+std::pair<int, int> GetZRunRange(const std::string& beam, const std::string& periodLabel)
+{
+    if(beam == "7Li")
+        return {66, 82};
+    if(periodLabel == "pre")
+        return {19, 65}; // 11Li before the 7Li beam
+    return {95, 122};    // 11Li after the 7Li beam
+}
+
+// ============================================================
 // Track length helpers, replicating ActRoot::MergerDetector::TrackLengthFromLightIt
 // - The line is fitted ONCE, in pad units (voxel indices; the fitter adds +0.5 to each coordinate itself).
 // - RawTL (scale = false): RP (vertex in pad units, no offset) and last voxel (+0.5 offset, centred)
@@ -530,6 +588,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
         TH3D* hist {};
         double fraction {};
         int nPadsThreshold {nPadsThresholdDefault};
+        ZMargins zMargins {}; // z fiducial margins of the run chunk associated to this period
     };
     std::vector<EmittanceEntry> emittances;
 
@@ -540,7 +599,8 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
         if(!h)
             throw std::runtime_error("Could not load beam emittance histogram for 7Li");
         h->SetDirectory(nullptr);
-        emittances.push_back({h, 1.0});
+        const auto [rmin, rmax] = GetZRunRange(beam, "");
+        emittances.push_back({h, 1.0, nPadsThresholdDefault, GetZMargins(rmin, rmax)});
     }
     else if(beam == "11Li")
     {
@@ -584,18 +644,22 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
                 throw std::runtime_error("Could not load beam emittance histogram: " + fname);
             h->SetDirectory(nullptr);
 
+            // z fiducial margins of the run chunk associated to this period
+            const auto [rmin, rmax] = GetZRunRange(beam, suffix);
+            const auto zm = GetZMargins(rmin, rmax);
+
             if(suffix == preLabel)
             {
                 // Same histogram, two entries with different pad threshold
-                emittances.push_back({h, frac * fracPreBefore, nPadsThresholdPreBeforeL1});
-                emittances.push_back({h, frac * fracPreAfter, nPadsThresholdDefault});
+                emittances.push_back({h, frac * fracPreBefore, nPadsThresholdPreBeforeL1, zm});
+                emittances.push_back({h, frac * fracPreAfter, nPadsThresholdDefault, zm});
                 std::cout << "Loaded emittance: " << fname << " split -> before (" << frac * fracPreBefore << ", "
                           << nPadsThresholdPreBeforeL1 << " pads), after (" << frac * fracPreAfter << ", "
                           << nPadsThresholdDefault << " pads)\n";
             }
             else
             {
-                emittances.push_back({h, frac, nPadsThresholdDefault});
+                emittances.push_back({h, frac, nPadsThresholdDefault, zm});
                 std::cout << "Loaded emittance: " << fname << " (fraction = " << frac << ")\n";
             }
         }
@@ -780,6 +844,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
     int nextPrint {step};
     int percent {};
     int nBadTL {}; // events rejected because RawTL / TL (or the fit) was NaN / non-positive
+    int nZCut {};  // events rejected by the z fiducial cut (margins to pad plane / cathode)
     for(int it = 0; it < niter; it++)
     {
         // Print progress
@@ -996,8 +1061,15 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
 
         // Last voxel in mm (voxel centre) for the border check
         const auto lastPoint = VoxelToMM(clusterRaw.GetVoxels().back().GetPosition());
-        if(!IsLastVoxelFarFromBorders(lastPoint, tpc))
+        if(!IsLastVoxelFarFromBorders(lastPoint, tpc)) // Experimental cuts in x/y 
             continue;
+
+        // Experimental cut in z: pad plane and cathode margins (z = 0 and z = tpc.Z())
+        if(lastPoint.Z() < em.zMargins.pad || lastPoint.Z() > tpc.Z() - em.zMargins.cathode)
+        {
+            nZCut++;
+            continue;
+        }
 
         // RawTL: pad-unit line, vertex (pad units) -> last voxel (centred). Then experimental cut
         const PointF vertexPadFloat(float(vertexPad.X()), float(vertexPad.Y()), float(vertexPad.Z()));
@@ -1069,6 +1141,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
 
 
     std::cout << RESET << "\nEvents rejected for invalid TL: " << nBadTL << '\n';
+    std::cout << "Events rejected by z fiducial cut: " << nZCut << '\n';
 
     // Compute efficiency side, front and total
     auto* effCM {new TEfficiency {*hTheta3CM, *hThetaCMAll}};
