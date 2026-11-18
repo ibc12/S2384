@@ -40,6 +40,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 
@@ -73,8 +74,10 @@ constexpr int nPadsThresholdDefault =
 constexpr int nPadsThresholdPreBeforeL1 = 19; // Minimum number of pads outside the exclusion zone to consider an event
                                               // valid just for the 11Li runs before the L1 trigger change
 constexpr int validationZone = 8; // Minimum distance from the last voxel to the TPC borders in mm (from detector.conf)
-constexpr double thetaResFWHM = 3.5; // 3.5 for deuteriums, 6 for protons
-constexpr double rpXcut = 240.0;     // Cut in rp.x for the dp channel in mm (in the begining was 240.0)
+// Angular resolution (FWHM, deg): 3.5 for deuterons (and tritons), 6 for protons. See GetThetaResFWHM()
+constexpr double thetaResFWHMDefault = 3.5;
+constexpr double thetaResFWHMProton = 6.0;
+constexpr double rpXcut = 240.0; // Cut in rp.x for the dp channel in mm (in the begining was 240.0)
 constexpr std::pair<double, double> phiRangePositive {16., 160.};   // Range of positive phi in deg for the experiment
 constexpr std::pair<double, double> phiRangeNegative {-160., -16.}; // Range of negative phi in deg for the experiment
 using voxelKey = std::tuple<int, int, int>;                         // ix,iy,iz
@@ -117,9 +120,18 @@ void ApplyNaN(double& e, double t = 0, const std::string& comment = "stopped")
         e = std::nan(comment.c_str());
 }
 
-void ApplyThetaRes(double& theta)
+// Angular resolution (FWHM, deg) depending on the light particle:
+// 1H -> 6 deg, anything else (2H, 3H) -> 3.5 deg
+double GetThetaResFWHM(const std::string& light)
 {
-    double sigma {thetaResFWHM / 2.355}; // FWHM to sigma
+    if(light == "1H")
+        return thetaResFWHMProton;
+    return thetaResFWHMDefault;
+}
+
+void ApplyThetaRes(double& theta, double fwhm)
+{
+    double sigma {fwhm / 2.355}; // FWHM to sigma
     theta = gRandom->Gaus(theta, sigma * TMath::DegToRad());
 }
 
@@ -502,6 +514,9 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
     // Set number of iterations
     const int niter {static_cast<int>(inspect ? 1e5 : (isPS ? 8e5 : 4e5))};
     gRandom->SetSeed(0);
+    // Angular resolution (FWHM, deg) depending on the light particle (1H -> 6, otherwise 3.5)
+    const double thetaResFWHM {GetThetaResFWHM(light)};
+    std::cout << "Angular resolution FWHM for light = " << light << ": " << thetaResFWHM << " deg" << '\n';
     // Runner: contains utility functions to execute multiple actions as rotate directions
     ActSim::Runner runner(nullptr, nullptr, gRandom, 0);
     // Initialize detectors
@@ -868,7 +883,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
             // Save without resolution
             theta3LabSampled = theta3Lab;
             // Apply angle resolution
-            ApplyThetaRes(theta3Lab);
+            ApplyThetaRes(theta3Lab, thetaResFWHM);
             theta3CM = kin->ReconstructTheta3CMFromLab(T3Lab, theta3Lab);
 
             // Heavy
@@ -899,7 +914,7 @@ void do_simuL1(const std::string& beam, const std::string& target, const std::st
             // Save without resolution
             theta3LabSampled = theta3Lab;
             // Apply angle resolution
-            ApplyThetaRes(theta3Lab);
+            ApplyThetaRes(theta3Lab, thetaResFWHM);
 
             theta3CMBefore = kin->ReconstructTheta3CMFromLab(T3Lab, theta3LabSampled) *
                              TMath::RadToDeg(); // this is in deg, because of xs sampling in other case

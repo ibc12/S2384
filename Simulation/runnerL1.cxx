@@ -2,14 +2,20 @@
 #include "TString.h"
 #include "TSystem.h"
 
+#include <algorithm>
+#include <atomic>
+#include <cstdlib>
+#include <iostream>
+#include <mutex>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <unordered_map>
 #include <vector>
 
+#include "./GetSigma.cxx"
 #include "./do_simuL1.cxx"
 #include "./plotter.cxx"
-#include "./GetSigma.cxx"
 
 void runnerL1(TString what = "simu", bool inspect = false)
 {
@@ -39,10 +45,10 @@ void runnerL1(TString what = "simu", bool inspect = false)
             // Exs = {5.400, 6.100, 6.530, 7.100};
             // Exs = {0, 0.981};
             // Exs = {4.100, 5.400, 6.100, 6.530, 7.100};
-        // Exs = {2.255};
-        // Exs = {0.};
-        // Exs = {0, 0.981, 2.255, 3.210, 4.100, 5.400, 6.100, 6.530, 7.100, 8.000, 9.000, 10.000};
-        Exs = {2.700, 8.600};
+            // Exs = {2.255};
+            // Exs = {0.};
+            // Exs = {0, 0.981, 2.255, 3.210, 4.100, 5.400, 6.100, 6.530, 7.100, 8.000, 9.000, 10.000};
+            Exs = {2.700, 4.600, 8.100, 8.600};
     }
 
     else if(neutronPS == 0 && protonPS == 0 && target == "2H" && light == "2H") // Elastic and Inelastic scattering
@@ -72,14 +78,12 @@ void runnerL1(TString what = "simu", bool inspect = false)
     // suffix = "" -> final file; suffix = "_part<i>" -> partial file of job i
     auto outName {[&](double ex, const TString& suffix = "")
                   {
-                      return TString::Format("%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_L1%s.root",
-                                             outDir.Data(), target.c_str(), light.c_str(), ex, neutronPS, protonPS,
-                                             suffix.Data());
+                      return TString::Format("%s/%s_%s_TRIUMF_Eex_%.3f_nPS_%d_pPS_%d_L1%s.root", outDir.Data(),
+                                             target.c_str(), light.c_str(), ex, neutronPS, protonPS, suffix.Data());
                   }};
 
     // Run simu or plot
     ROOT::EnableThreadSafety();
-    auto worker {[](TString str) { return gSystem->Exec(str.Data()); }};
     if(what.Contains("simu"))
     {
         gSystem->mkdir(outDir.Data(), true); // recursive, does nothing if it already exists
@@ -91,37 +95,83 @@ void runnerL1(TString what = "simu", bool inspect = false)
         }
         else
         {
-            // Number of parallel jobs per Ex
-            const int ncores {isPS ? 8 : 2};
+            // Number of parts in which each Ex is split (granularity of the work)
+            const int nParts {isPS ? 8 : 2};
+            // Maximum number of simultaneous ROOT processes (global, across all Ex)
+            const int maxJobs {12};
 
-            // Process each Ex splitting the work in ncores jobs
-            for(const auto& ex : Exs)
+            // Task queue: one task per (Ex, part)
+            struct Task
             {
-                TString haddout {outName(ex)};
-                TString haddlist {};
-                std::vector<std::thread> threads;
-                threads.reserve(ncores);
+                size_t iEx;
+                int part;
+            };
+            std::vector<Task> tasks;
+            tasks.reserve(Exs.size() * nParts);
+            for(size_t iEx = 0; iEx < Exs.size(); iEx++)
+                for(int i = 1; i <= nParts; i++)
+                    tasks.push_back({iEx, i});
 
-                for(int i = 1; i <= ncores; i++)
+            std::vector<int> remaining(Exs.size(), nParts); // pending parts per Ex
+            std::mutex mtx;                                 // protects remaining and std::cout
+            std::atomic<size_t> next {0};                   // index of the next task to take
+
+            auto poolWorker {
+                [&]()
                 {
-                    TString partFile {outName(ex, TString::Format("_part%d", i))};
-                    auto str {TString::Format(
-                        "root -l -b -q -x 'do_simuL1.cxx(\"%s\",\"%s\",\"%s\",\"%s\",%d,%d,%f,%f,%d,\"%s\")'",
-                        beam.c_str(), target.c_str(), light.c_str(), heavy.c_str(), neutronPS, protonPS, Tbeam, ex,
-                        inspect, partFile.Data())};
-                    haddlist += partFile + " ";
-                    threads.emplace_back(worker, str);
-                }
-                // Wait for all jobs of this Ex
-                for(auto& th : threads)
-                    th.join();
+                    while(true)
+                    {
+                        const size_t t {next++};
+                        if(t >= tasks.size())
+                            break;
+                        const size_t iEx {tasks[t].iEx};
+                        const double ex {Exs[iEx]};
+                        const TString partFile {outName(ex, TString::Format("_part%d", tasks[t].part))};
+                        const TString cmd {
+                            TString::Format("root -l -b -q -x "
+                                            "'do_simuL1.cxx(\"%s\",\"%s\",\"%s\",\"%s\",%d,%d,%f,%f,%d,\"%s\")'",
+                                            beam.c_str(), target.c_str(), light.c_str(), heavy.c_str(), neutronPS,
+                                            protonPS, Tbeam, ex, inspect, partFile.Data())};
+                        std::system(cmd.Data());
 
-                // Merge and clean
-                std::cout << "Output file: " << haddout << '\n';
-                std::cout << "Input files: " << haddlist << '\n';
-                gSystem->Exec(TString::Format("hadd -f %s %s", haddout.Data(), haddlist.Data()).Data());
-                gSystem->Exec(TString::Format("rm %s", haddlist.Data()).Data());
-            }
+                        // Did I finish the last part of this Ex?
+                        bool last {false};
+                        {
+                            std::lock_guard<std::mutex> lock {mtx};
+                            last = (--remaining[iEx] == 0);
+                        }
+                        if(!last)
+                            continue;
+
+                        // Merge and clean this Ex without waiting for the others
+                        const TString haddout {outName(ex)};
+                        TString haddlist {};
+                        for(int i = 1; i <= nParts; i++)
+                            haddlist += outName(ex, TString::Format("_part%d", i)) + " ";
+                        {
+                            std::lock_guard<std::mutex> lock {mtx};
+                            std::cout << "Output file: " << haddout << '\n';
+                            std::cout << "Input files: " << haddlist << '\n';
+                        }
+                        const int rc {
+                            std::system(TString::Format("hadd -f %s %s", haddout.Data(), haddlist.Data()).Data())};
+                        if(rc == 0)
+                            std::system(TString::Format("rm -f %s", haddlist.Data()).Data());
+                        else
+                        {
+                            std::lock_guard<std::mutex> lock {mtx};
+                            std::cerr << "hadd failed for Ex = " << ex << ". Partial files kept for inspection\n";
+                        }
+                    }
+                }};
+
+            const int nThreads {std::min<int>(maxJobs, static_cast<int>(tasks.size()))};
+            std::vector<std::thread> pool;
+            pool.reserve(nThreads);
+            for(int i = 0; i < nThreads; i++)
+                pool.emplace_back(poolWorker);
+            for(auto& th : pool)
+                th.join();
         }
     }
     else if(what.Contains("plot"))
